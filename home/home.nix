@@ -15,8 +15,6 @@
     ../themes/catppuccin.nix
   ];
 
-  disabledModules = [ "programs/hyprpanel" ];
-
   home = {
     username = user;
     homeDirectory = "/home/${user}";
