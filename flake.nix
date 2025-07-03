@@ -20,8 +20,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
+
     hyprpanel.url = "github:Jas-SinghFSU/HyprPanel";
-    hyprpanel.inputs.nixpkgs.follows = "nixpkgs";
 
     hyprspace = {
       url = "github:KZDKM/Hyprspace";
@@ -41,10 +41,8 @@
       system = "x86_64-linux";
       homeStateVersion = "25.05";
       user = "sadiq";
-
       pkgs = import nixpkgs {
         inherit system;
-        overlays = [ inputs.hyprpanel.overlay ];
         config.allowUnfree = true;
       };
 
