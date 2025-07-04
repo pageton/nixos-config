@@ -32,7 +32,7 @@
 
     aliases = {
       # Status and Logs
-      gi = "git init";
+      i = "init";
       st = "status";
       co = "checkout";
       br = "branch";
