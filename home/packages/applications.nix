@@ -8,4 +8,5 @@ with pkgs;
   obs-studio
   obsidian
   vlc
+  nautilus
 ]
