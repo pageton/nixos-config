@@ -8,5 +8,6 @@
     ./htop.nix
     ./eza.nix
     ./aliases.nix
+    ./tmux.nix
   ];
 }
