@@ -76,5 +76,6 @@
     };
   };
 
+  services.upower.enable = true;
   environment.systemPackages = [ pkgs.home-manager ];
 }
