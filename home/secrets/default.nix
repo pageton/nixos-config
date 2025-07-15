@@ -8,6 +8,14 @@
     defaultSopsFile = ./secrets.yaml;
 
     secrets = {
+      gpg-private-key = {
+        path = "/home/${user}/.gnupg/private.key";
+        mode = "0600";
+      };
+      gpg-public-key = {
+        path = "/home/${user}/.gnupg/public.key";
+        mode = "0644";
+      };
       signing-key = {
         path = "/home/${user}/.ssh/id_rsa";
         mode = "0600";
