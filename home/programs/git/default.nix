@@ -3,6 +3,10 @@
     enable = true;
     userName = "Sadiq";
     userEmail = "pageton@proton.me";
+    signing = {
+      key = "5684AD6E4045F283";
+      signByDefault = true;
+    };
 
     ignores = [
       ".cache/"
@@ -31,8 +35,9 @@
     };
 
     aliases = {
-      # Status and Logs
+      # Init
       i = "init";
+      # Status and Logs
       st = "status";
       co = "checkout";
       br = "branch";
