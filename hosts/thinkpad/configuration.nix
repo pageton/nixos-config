@@ -22,7 +22,7 @@
 
   networking.hostName = hostname;
   powerManagement.enable = true;
-  programs.gamemode.enable = false;
+  programs.gamemode.enable = lib.mkForce false;
 
   services = {
     power-profiles-daemon.enable = false;
@@ -62,9 +62,7 @@
   };
 
   hardware.nvidia = {
-    powerManagement = {
-      finegrained = false;
-    };
+    powerManagement.finegrained = false;
     prime = {
       offload = {
         enable = true;
@@ -72,9 +70,9 @@
       };
       sync.enable = false;
       # Integrated
-      intelBusId = "PCI:00:02.0";
+      intelBusId = "PCI:0:2:0";
       # Dedicated
-      nvidiaBusId = "PCI:02:00.0";
+      nvidiaBusId = "PCI:2:0:0";
     };
   };
 
