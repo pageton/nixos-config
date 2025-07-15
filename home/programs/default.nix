@@ -7,5 +7,6 @@
     ./spicetify
     ./lazygit
     ./git
+    ./gpg
   ];
 }
