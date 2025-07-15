@@ -11,6 +11,7 @@
     ./hardware-configuration.nix
     ./local-packages.nix
     ../../nixos/modules
+    ../../themes/catppuccin.nix
   ];
 
   boot.kernelParams = [
@@ -63,6 +64,17 @@
   hardware.nvidia = {
     powerManagement = {
       finegrained = false;
+    };
+    prime = {
+      offload = {
+        enable = true;
+        enableOffloadCmd = true;
+      };
+      sync.enable = false;
+      # Integrated
+      intelBusId = "PCI:00:02.0";
+      # Dedicated
+      nvidiaBusId = "PCI:02:00.0";
     };
   };
 
