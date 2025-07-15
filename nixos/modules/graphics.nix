@@ -12,7 +12,6 @@ in
   boot.kernelParams = [
     "nvidia-drm.modeset=1" # Enable mode setting for Wayland
     "nvidia.NVreg_PreserveVideoMemoryAllocations=1" # Improves resume after sleep
-    "nvidia.NVreg_RegistryDwords=PowerMizerEnable=0x1;PerfLevelSrc=0x2222;PowerMizerLevel=0x3;PowerMizerDefault=0x3;PowerMizerDefaultAC=0x3" # Performance/power optimizations
   ];
 
   # Blacklist nouveau to avoid conflicts
@@ -46,7 +45,6 @@ in
       nvidiaSettings = true; # Nvidia settings utility
       modesetting.enable = true; # Required for Wayland
       package = nvidiaDriverChannel;
-      forceFullCompositionPipeline = true; # Prevents screen tearing
 
       powerManagement = {
         enable = true; # Power management
