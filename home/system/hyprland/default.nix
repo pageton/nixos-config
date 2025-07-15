@@ -8,6 +8,8 @@ let
   rounding = config.theme.rounding;
   blur = config.theme.blur;
   background = "rgb(" + config.lib.stylix.colors.base00 + ")";
+  hostname = builtins.getEnv "HOSTNAME";
+  isThinkpad = hostname == "thinkpad";
 in
 {
 
@@ -41,11 +43,11 @@ in
         "systemctl --user enable --now nextcloud-client.service  &"
       ];
 
-      monitor = [ "DP-5,preferred,auto,auto" ];
+      monitor = if isThinkpad then [ ",1920x1200@60,auto,1" ] else [ ",2560x1440@165,auto,1" ];
 
       env = [
-        "XCURSOR_SIZE,24"
-        "HYPRCURSOR_SIZE,24"
+        "XCURSOR_SIZE,${if isThinkpad then "20" else "24"}"
+        "HYPRCURSOR_SIZE,${if isThinkpad then "20" else "24"}"
         "XDG_CURRENT_DESKTOP,Hyprland"
         "MOZ_ENABLE_WAYLAND,1"
         "ANKI_WAYLAND,1"
@@ -71,7 +73,6 @@ in
 
       cursor = {
         no_hardware_cursors = true;
-        default_monitor = "DP-5";
       };
 
       general = {
@@ -143,7 +144,7 @@ in
         kb_layout = "us,ara";
         kb_variant = "";
         kb_model = "";
-        kb_options = "grp:ctrl_space_toggle";
+        kb_options = "grp:caps_toggle";
         kb_rules = "";
         follow_mouse = true;
         sensitivity = 0.5;
@@ -154,8 +155,6 @@ in
           natural_scroll = false;
         };
       };
-
     };
-
   };
 }
