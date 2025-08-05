@@ -1,4 +1,6 @@
-{ config, ... }:
+# Hyprpanel is the bar on top of the screen
+# Display information like workspaces, battery, wifi, ...
+{ config, user, ... }:
 let
   transparentButtons = config.theme.bar.transparentButtons;
 
@@ -22,6 +24,9 @@ let
   position = config.theme.bar.position; # "top" ou "bottom"
 
   notificationOpacity = 90;
+
+  homeDir = "/home/${user}";
+
 in
 {
   wayland.windowManager.hyprland.settings.exec-once = [ "hyprpanel" ];
@@ -46,6 +51,7 @@ in
               "systray"
               "volume"
               "bluetooth"
+              "battery"
               "network"
               "clock"
               "notifications"
@@ -117,7 +123,6 @@ in
       theme.osd.margins = "0px 0px 0px 10px";
       theme.osd.muted_zero = true;
 
-      menus.clock.weather.location = "Basra";
       menus.clock.weather.unit = "metric";
       menus.dashboard.powermenu.confirmation = false;
       menus.dashboard.powermenu.avatar.image = "~/.face.icon";
@@ -138,9 +143,30 @@ in
       menus.dashboard.shortcuts.right.shortcut1.icon = "";
       menus.dashboard.shortcuts.right.shortcut1.command = "hyprpicker -a";
       menus.dashboard.shortcuts.right.shortcut1.tooltip = "Color Picker";
+
       menus.dashboard.shortcuts.right.shortcut3.icon = "󰄀";
       menus.dashboard.shortcuts.right.shortcut3.command = "screenshot region swappy";
       menus.dashboard.shortcuts.right.shortcut3.tooltip = "Screenshot";
+
+      menus.dashboard.directories.left.directory1.label = "     Home";
+      menus.dashboard.directories.left.directory1.command = "xdg-open ${homeDir}";
+
+      menus.dashboard.directories.left.directory2.label = "󰲂     Documents";
+      menus.dashboard.directories.left.directory2.command = "xdg-open ${homeDir}/Documents";
+
+      menus.dashboard.directories.left.directory3.label = "󰉍     Downloads";
+      menus.dashboard.directories.left.directory3.command = "xdg-open ${homeDir}/Downloads";
+
+      menus.dashboard.directories.right.directory1.label = "     Desktop";
+      menus.dashboard.directories.right.directory1.command = "xdg-open ${homeDir}/Desktop";
+
+      menus.dashboard.directories.right.directory2.label = "     Videos";
+      menus.dashboard.directories.right.directory2.command = "xdg-open ${homeDir}/Videos";
+
+      menus.dashboard.directories.right.directory3.label = "󰉏     Pictures";
+      menus.dashboard.directories.right.directory3.command = "xdg-open ${homeDir}/Pictures";
+
+      menus.power.lowBatteryNotification = true;
 
       wallpaper.enable = false;
 
