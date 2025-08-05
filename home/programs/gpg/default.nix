@@ -1,6 +1,7 @@
-{ pkgs
-, lib
-, ...
+{
+  pkgsStable,
+  lib,
+  ...
 }:
 
 {
@@ -31,10 +32,10 @@
     };
   };
 
-  services.gpg-agent = lib.mkIf (!pkgs.stdenv.isDarwin) {
+  services.gpg-agent = lib.mkIf (!pkgsStable.stdenv.isDarwin) {
     enable = true;
     defaultCacheTtl = 86400;
     enableSshSupport = true;
-    pinentry.package = lib.mkDefault pkgs.pinentry-gnome3;
+    pinentry.package = lib.mkDefault pkgsStable.pinentry-gnome3;
   };
 }
