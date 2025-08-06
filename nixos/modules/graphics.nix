@@ -24,7 +24,7 @@ in
     GBM_BACKEND = "nvidia-drm"; # Graphics backend for Wayland
     __GLX_VENDOR_LIBRARY_NAME = "nvidia"; # Use Nvidia driver for GLX
     WLR_NO_HARDWARE_CURSORS = "1"; # Fix for cursors on Wayland
-    NIXOS_OZONE_WL = "1"; # Wayland support for Electron apps
+    ELECTRON_OZONE_PLATFORM_HINT = "auto";
     __GL_GSYNC_ALLOWED = "1"; # Enable G-Sync if available
     __GL_VRR_ALLOWED = "1"; # Enable VRR (Variable Refresh Rate)
     WLR_DRM_NO_ATOMIC = "1"; # Fix for some issues with Hyprland
@@ -41,7 +41,7 @@ in
   # Nvidia configuration
   hardware = {
     nvidia = {
-      open = false; # Proprietary driver for better performance
+      open = false;
       nvidiaSettings = true; # Nvidia settings utility
       modesetting.enable = true; # Required for Wayland
       package = nvidiaDriverChannel;
@@ -58,14 +58,14 @@ in
       enable32Bit = true;
 
       extraPackages = with pkgs; [
-        nvidia-vaapi-driver
-        vaapiVdpau
-        libvdpau-va-gl
-        mesa
-        egl-wayland
-        vulkan-loader
-        vulkan-validation-layers
-        libva
+        nvidia-vaapi-driver # VA-API support
+        vaapiVdpau # VDPAU for VA-API
+        libvdpau-va-gl # VDPAU for VA-API
+        mesa # Vulkan driver
+        egl-wayland # EGL for Wayland
+        vulkan-loader # Vulkan loader
+        vulkan-validation-layers # Vulkan validation layers
+        libva # Video Acceleration
       ];
     };
   };
@@ -81,8 +81,8 @@ in
 
   # Additional useful packages
   environment.systemPackages = with pkgs; [
-    vulkan-tools
-    glxinfo
+    vulkan-tools # Vulkan debugging tools
+    glxinfo # GLX information
     libva-utils # VA-API debugging tools
   ];
 }
