@@ -10,7 +10,7 @@
       "$mod,C, exec, quickmenu"
       "$shiftMod,SPACE, exec, hyprfocus-toggle"
       "$mod, E, exec, ${pkgs.kitty}/bin/kitty -e yazi"
-      "$shiftMod, E, exec, nautilus"
+      "$shiftMod, R, exec, nautilus"
       "$mod,Q, killactive,"
       "$mod,W, togglefloating,"
       "$mod,F, fullscreen"
@@ -18,14 +18,16 @@
       "$mod,l, movefocus, r"
       "$mod,k, movefocus, u"
       "$mod,j, movefocus, d"
-      "$shiftMod,up, focusmonitor, -1"
-      "$shiftMod,down, focusmonitor, 1"
-      "$shiftMod,left, layoutmsg, addmaster"
-      "$shiftMod,right, layoutmsg, removemaster"
-      "$mod,P, exec, hyprshot -m window -o ~/Pictures/screenshots"
-      "$shiftMod,P, exec, hyprshot -m region -o ~/Pictures/screenshots"
-      "$mod,S, togglespecialworkspace, magic"
-      "$shiftMod,S, movetoworkspace, special:magic"
+      "$shiftMod, up, focusmonitor, -1"
+      "$shiftMod, down, focusmonitor, 1"
+      "$shiftMod, left, layoutmsg, addmaster"
+      "$shiftMod, right, layoutmsg, removemaster"
+      "$mod, P, exec, hyprshot -m window -o ~/Pictures/screenshots"
+      "$shiftMod, P, exec, hyprshot -m region -o ~/Pictures/screenshots"
+      "$mod, S, togglespecialworkspace, magic"
+      "$shiftMod, S, movetoworkspace, special:magic"
+      "$mod, A, pin"
+      "$shiftMod, grave, workspace, previous"
       "$shiftMod,T, exec, hyprpanel-toggle"
       "$mod,V, exec, clipboard"
       "$shiftMod,E, exec, ${pkgs.wofi-emoji}/bin/wofi-emoji"
@@ -33,16 +35,17 @@
       "$mod,F3, exec, night-shift"
     ]
     ++ (builtins.concatLists (
-      builtins.genList (
-        i:
-        let
-          ws = i + 1;
-        in
-        [
-          "$mod,code:1${toString i}, workspace, ${toString ws}"
-          "$mod SHIFT,code:1${toString i}, movetoworkspace, ${toString ws}"
-        ]
-      ) 9
+      builtins.genList
+        (
+          i:
+          let
+            ws = i + 1;
+          in
+          [
+            "$mod,code:1${toString i}, workspace, ${toString ws}"
+            "$mod SHIFT,code:1${toString i}, movetoworkspace, ${toString ws}"
+          ]
+        ) 9
     ));
 
     bindm = [
