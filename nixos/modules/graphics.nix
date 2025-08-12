@@ -1,3 +1,5 @@
+# Graphics and NVIDIA driver configuration.
+
 { pkgs, config, ... }:
 
 let

@@ -1,3 +1,5 @@
+# Nix package manager configuration (flakes, GC, etc.).
+
 { inputs, ... }:
 
 {

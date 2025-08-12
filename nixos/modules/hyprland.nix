@@ -1,3 +1,5 @@
+# Hyprland Wayland compositor configuration.
+
 { inputs, pkgs, ... }:
 
 {
@@ -15,7 +17,6 @@
     polkit.enable = true;
     pam.services = {
       hyprlock = { };
-      gdm.enableGnomeKeyring = true;
     };
   };
 }
