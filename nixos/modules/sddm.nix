@@ -1,10 +1,11 @@
 # SDDM configuration (login screen).
 
-{ pkgs
-, inputs
-, config
-, lib
-, ...
+{
+  pkgs,
+  inputs,
+  config,
+  lib,
+  ...
 }:
 let
   foreground = config.theme.textColorOnWallpaper;
