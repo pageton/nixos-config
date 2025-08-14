@@ -1,3 +1,5 @@
+# User and authentication configuration.
+
 { pkgs, user, ... }:
 
 {

@@ -1,3 +1,5 @@
+# X server configuration.
+
 {
   services.xserver = {
     enable = true;

@@ -1,3 +1,5 @@
+# Main NixOS configuration for the 'pc' host.
+
 {
   pkgs,
   stateVersion,
@@ -10,6 +12,7 @@
     ./hardware-configuration.nix
     ./local-packages.nix
     ../../nixos/modules
+    ./modules
     ../../themes/catppuccin.nix
   ];
 
@@ -17,9 +20,14 @@
 
   system = {
     inherit stateVersion;
-    autoUpgrade.enable = true;
-    autoUpgrade.dates = "weekly";
   };
 
-  environment.systemPackages = [ pkgs.home-manager ];
+  mySystem.gaming = {
+    enable = true;
+    enableGamescope = true;
+  };
+
+  environment.systemPackages = with pkgs; [
+    home-manager
+  ];
 }

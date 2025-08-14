@@ -1,21 +1,38 @@
-{ pkgsStable, ... }:
+# Gaming-related configurations (Steam, MangoHud, etc.).
 
 {
-  programs = {
-    gamemode.enable = true;
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
-    steam = {
-      enable = true;
-      gamescopeSession.enable = true;
+{
+  options.mySystem.gaming = {
+    enable = lib.mkEnableOption "gaming support with Steam and related tools";
+
+    enableGamescope = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Enable gamescope session for Steam";
     };
   };
 
-  environment.sessionVariables = {
-    STEAM_EXTRA_COMPAT_TOOLS_PATHS = "\${HOME}/.steam/root/compatibilitytools.d";
-  };
+  config = lib.mkIf config.mySystem.gaming.enable {
+    programs = {
+      steam = {
+        enable = true;
+        gamescopeSession.enable = config.mySystem.gaming.enableGamescope;
+      };
+    };
 
-  environment.systemPackages = with pkgsStable; [
-    mangohud
-    protonup
-  ];
+    environment.sessionVariables = {
+      STEAM_EXTRA_COMPAT_TOOLS_PATHS = "\${HOME}/.steam/root/compatibilitytools.d";
+    };
+
+    environment.systemPackages = with pkgs; [
+      mangohud # Vulkan overlay
+      protonup # Proton compatibility tool
+    ];
+  };
 }

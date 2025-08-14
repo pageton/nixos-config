@@ -8,16 +8,16 @@
   options.theme = lib.mkOption {
     type = lib.types.attrs;
     default = {
-      rounding = 17;
+      rounding = 15;
       gaps-in = 8;
       gaps-out = 8 * 2;
-      active-opacity = 0.97;
+      active-opacity = 0.98;
       inactive-opacity = 0.94;
       blur = true;
       border-size = 3;
       animation-speed = "fast"; # "fast" | "medium" | "slow"
       fetch = "none"; # "nerdfetch" | "neofetch" | "pfetch" | "none"
-      textColorOnWallpaper = config.lib.stylix.colors.base01; # Color of the text displayed on the wallpaper (Lockscreen, display manager, ...)
+      textColorOnWallpaper = config.lib.stylix.colors.base05; # Color of the text displayed on the wallpaper (Lockscreen, display manager, ...)
 
       bar = {
         # Hyprpanel

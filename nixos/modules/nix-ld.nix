@@ -1,3 +1,5 @@
+# Nix-ld configuration for running non-Nix binaries.
+
 { pkgsStable, ... }:
 
 {

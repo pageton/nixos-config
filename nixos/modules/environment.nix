@@ -1,3 +1,5 @@
+# Environment variables and session settings.
+
 {
   environment.sessionVariables = rec {
     TERMINAL = "kitty";
