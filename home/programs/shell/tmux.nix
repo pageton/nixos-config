@@ -8,6 +8,7 @@
     prefix = "C-s";
     terminal = "tmux-256color";
     keyMode = "vi";
+    historyLimit = 50000;
 
     extraConfig = ''
        set -as terminal-features ",kitty*:RGB"
@@ -134,4 +135,10 @@
       tokyo-night-tmux
     ];
   };
+
+  programs.zsh.initContent = ''
+    if command -v tmux &> /dev/null && [ -z "$TMUX" ]; then
+      tmux attach || tmux new
+    fi
+  '';
 }
