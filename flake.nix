@@ -27,6 +27,8 @@
       url = "github:KZDKM/Hyprspace";
       inputs.hyprland.follows = "hyprland";
     };
+
+    neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
   };
 
   outputs =
@@ -44,6 +46,9 @@
       pkgs = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
+        overlays = [
+          inputs.neovim-nightly-overlay.overlays.default
+        ];
       };
 
       pkgsStable = import nixpkgs-stable {
@@ -100,6 +105,7 @@
             homeStateVersion
             user
             pkgsStable
+            system
             ;
         };
 
