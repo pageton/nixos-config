@@ -1,8 +1,10 @@
-{ pkgs, ... }:
+{
+  pkgs,
+  ...
+}:
 
 with pkgs;
 [
-  neovim
   age
   sops
   helix
