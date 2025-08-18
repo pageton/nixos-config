@@ -8,5 +8,6 @@
     ./lazygit
     ./git
     ./gpg
+    ./neovim
   ];
 }
