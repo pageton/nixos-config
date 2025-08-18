@@ -1,5 +1,52 @@
-require("plugins")
-require("lsp")
+-- Vim Packages
+vim.pack.add({
+	{ src = "https://github.com/catppuccin/nvim" },
+	{ src = "https://github.com/echasnovski/mini.pick" },
+	{ src = "https://github.com/neovim/nvim-lspconfig" },
+	{ src = "https://github.com/chomosuke/typst-preview.nvim" },
+	{ src = "https://github.com/wakatime/vim-wakatime" },
+	{ src = "https://github.com/numToStr/Comment.nvim" },
+	{ src = "https://github.com/folke/todo-comments.nvim" },
+	{ src = "https://github.com/folke/which-key.nvim" },
+	{ src = "https://github.com/nvim-lua/plenary.nvim" },
+	{ src = "https://github.com/nvim-treesitter/nvim-treesitter", version = "master" },
+	{ src = "https://github.com/supermaven-inc/supermaven-nvim" },
+	{ src = "https://github.com/nvim-neo-tree/neo-tree.nvim" },
+	{ src = "https://github.com/nvim-tree/nvim-web-devicons" },
+	{ src = "https://github.com/MunifTanjim/nui.nvim" },
+	{ src = "https://github.com/christoomey/vim-tmux-navigator" },
+	{ src = "https://github.com/lukas-reineke/indent-blankline.nvim" },
+	{ src = "https://github.com/nvim-lualine/lualine.nvim" },
+	{ src = "https://github.com/nvim-telescope/telescope.nvim" },
+	{ src = "https://github.com/nvim-telescope/telescope-ui-select.nvim" },
+	{ src = "https://github.com/hrsh7th/nvim-cmp" },
+	{ src = "https://github.com/hrsh7th/cmp-nvim-lsp" },
+	{ src = "https://github.com/hrsh7th/cmp-buffer" },
+	{ src = "https://github.com/hrsh7th/cmp-path" },
+	{ src = "https://github.com/hrsh7th/cmp-cmdline" },
+	{
+		src = "https://github.com/L3MON4D3/LuaSnip",
+		version = "v2.*",
+		build = "make install_jsregex",
+	},
+	{ src = "https://github.com/saadparwaiz1/cmp_luasnip" },
+	{ src = "https://github.com/rafamadriz/friendly-snippets" },
+	{ src = "https://github.com/onsails/lspkind.nvim" },
+	{ src = "https://github.com/nvimtools/none-ls.nvim" },
+	{ src = "https://github.com/mason-org/mason.nvim" },
+	{ src = "https://github.com/kylechui/nvim-surround" },
+	{ src = "https://github.com/stevearc/conform.nvim" },
+	{ src = "https://github.com/windwp/nvim-autopairs" },
+	{ src = "https://github.com/akinsho/bufferline.nvim" },
+	{ src = "https://github.com/mfussenegger/nvim-lint" },
+	{ src = "https://github.com/olexsmir/gopher.nvim" },
+	{ src = "https://github.com/antosha417/nvim-lsp-file-operations" },
+	{ src = "https://github.com/stevearc/dressing.nvim" },
+	{ src = "https://github.com/windwp/nvim-ts-autotag" },
+	{ src = "https://github.com/folke/neodev.nvim", opts = {} },
+	{ src = "https://github.com/mason-org/mason-lspconfig.nvim" },
+	{ src = "https://github.com/WhoIsSethDaniel/mason-tool-installer.nvim" },
+})
 
 vim.cmd([[set mouse=]])
 vim.o.number = true
@@ -8,7 +55,6 @@ vim.o.relativenumber = true
 vim.o.signcolumn = "yes"
 vim.o.wrap = false
 vim.o.tabstop = 2
-vim.o.smartindent = true
 vim.o.swapfile = false
 vim.o.termguicolors = true
 vim.o.cursorcolumn = false
@@ -20,6 +66,8 @@ vim.o.winborder = "rounded"
 vim.o.undofile = true
 vim.o.timeout = true
 vim.o.timeoutlen = 500
+vim.o.expandtab = true
+vim.lsp.enable("lua_ls", "gopls")
 -- vim.cmd("colorscheme catppuccin-mocha")
 
 -- Bindings
@@ -146,6 +194,48 @@ if not vim.g.supermaven_initialized then
 	vim.g.supermaven_initialized = true
 end
 
+require("nvim-treesitter.configs").setup({
+	highlight = {
+		enable = true,
+	},
+	indent = {
+		enable = true,
+	},
+	autotag = {
+		enable = true,
+	},
+	incremental_selection = {
+		enable = true,
+		keymaps = {
+			init_selection = "<leader>gnn",
+			node_incremental = "<leader>grn",
+			scope_incremental = false,
+			node_decremental = "<bs>",
+		},
+	},
+	ensure_installed = {
+		"lua",
+		"python",
+		"javascript",
+		"typescript",
+		"go",
+		"html",
+		"css",
+		"json",
+		"bash",
+		"markdown",
+		"rust",
+		"zig",
+		"c",
+		"toml",
+		"dockerfile",
+		"yaml",
+		"nix",
+	},
+	auto_install = true,
+	sync_install = true,
+})
+
 require("catppuccin").setup({
 	flavour = "mocha",
 	integrations = {
@@ -160,7 +250,6 @@ vim.cmd("colorscheme catppuccin")
 require("mini.pick").setup()
 require("todo-comments").setup()
 require("Comment").setup()
-require("mason").setup()
 require("dressing").setup({
 	input = {
 		enabled = true,
@@ -308,40 +397,6 @@ if ok_cmp and ok_luasnip and ok_lspkind then
 	})
 end
 
-local function setup_none_ls()
-	local null_ls = require("null-ls")
-	local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
-	null_ls.setup({
-		sources = {
-			null_ls.builtins.formatting.stylua,
-			null_ls.builtins.formatting.biome,
-			null_ls.builtins.formatting.gofumpt,
-			null_ls.builtins.formatting.goimports_reviser,
-			null_ls.builtins.formatting.golines.with({
-				extra_args = { "--max-len=120", "--shorten-comments" },
-			}),
-			null_ls.builtins.formatting.nixpkgs_fmt,
-		},
-		on_attach = function(client, bufnr)
-			if client:supports_method("textDocument/formatting") then
-				vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
-				vim.api.nvim_create_autocmd("BufWritePre", {
-					group = augroup,
-					buffer = bufnr,
-					callback = function()
-						vim.lsp.buf.format({ bufnr = bufnr, timeout_ms = 2000 })
-					end,
-				})
-			end
-		end,
-	})
-	vim.keymap.set("n", "<leader>lf", function()
-		vim.lsp.buf.format({ async = true })
-	end, { desc = "Format with LSP" })
-end
-
-setup_none_ls()
-
 local conform = require("conform")
 conform.setup({
 	formatters_by_ft = {
@@ -396,3 +451,193 @@ vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "InsertLeave" }, {
 vim.keymap.set("n", "<leader>l", function()
 	lint.try_lint()
 end, { desc = "Trigger linting for current file" })
+
+local null_ls = require("null-ls")
+local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
+
+null_ls.setup({
+	sources = {
+		null_ls.builtins.formatting.stylua,
+		null_ls.builtins.formatting.biome,
+		null_ls.builtins.formatting.gofumpt,
+		null_ls.builtins.formatting.goimports_reviser,
+		null_ls.builtins.formatting.golines.with({
+			extra_args = { "--max-len=120", "--shorten-comments" },
+		}),
+		null_ls.builtins.formatting.nixpkgs_fmt,
+		-- null_ls.builtins.formatting.gofmt,
+	},
+	on_attach = function(client, bufnr)
+		if client:supports_method("textDocument/formatting") then
+			vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
+			vim.api.nvim_create_autocmd("BufWritePre", {
+				group = augroup,
+				buffer = bufnr,
+				callback = function()
+					vim.lsp.buf.format({ bufnr = bufnr, timeout_ms = 2000 })
+				end,
+			})
+		end
+	end,
+})
+
+require("mason").setup({
+	ui = {
+		icons = {
+			package_installed = "✓",
+			package_pending = "➜",
+			package_uninstalled = "✗",
+		},
+	},
+})
+
+local cmp_nvim_lsp = require("cmp_nvim_lsp")
+local capabilities = cmp_nvim_lsp.default_capabilities()
+local lspconfig = require("lspconfig")
+local util = require("lspconfig.util")
+require("mason-lspconfig").setup({
+	automatic_installation = true,
+	ensure_installed = {
+		"lua_ls",
+		"gopls",
+		"nil_ls",
+		"ts_ls",
+		"biome",
+		"svelte",
+		"tailwindcss",
+		"html",
+	},
+	handlers = {
+		function(server_name)
+			lspconfig[server_name].setup({
+				capabilities = capabilities,
+			})
+		end,
+		["lua_ls"] = function()
+			lspconfig.lua_ls.setup({
+				capabilities = capabilities,
+				settings = {
+					Lua = {
+						diagnostics = { globals = { "vim" } },
+						completion = { callSnippet = "Replace" },
+					},
+				},
+			})
+		end,
+		["gopls"] = function()
+			lspconfig.gopls.setup({
+				cmd = { "gopls" },
+				filetypes = { "go", "gomod", "gowork", "gotmpl" },
+				root_dir = util.root_pattern("go.work", "go.mod", ".git"),
+				capabilities = capabilities,
+				init_options = {
+					hints = {
+						assignVariableTypes = true,
+						compositeLiteralFields = true,
+						compositeLiteralTypes = true,
+						constantValues = true,
+						functionTypeParameters = true,
+						parameterNames = true,
+						rangeVariableTypes = true,
+					},
+				},
+				settings = {
+					gopls = {
+						formatting = true,
+						analyses = { unusedparams = true, shadow = true },
+						staticcheck = true,
+						completeUnimported = true,
+						usePlaceholders = true,
+						hoverKind = "Structured",
+						linksInHover = true,
+						experimentalPostfixCompletions = true,
+					},
+				},
+			})
+		end,
+		["nil_ls"] = function()
+			lspconfig.nil_ls.setup({
+				capabilities = capabilities,
+				filetypes = { "nix" },
+				settings = {
+					["nil"] = {
+						formatting = { command = { "nixpkgs-fmt" } },
+					},
+				},
+			})
+		end,
+		["svelte"] = function()
+			lspconfig.svelte.setup({
+				capabilities = capabilities,
+				on_attach = function(client, _)
+					vim.api.nvim_create_autocmd("BufWritePost", {
+						pattern = { "*.svelte", "*.js", "*.ts" },
+						callback = function(ctx)
+							client.notify("$/onDidChangeTsOrJsFile", { uri = ctx.match })
+						end,
+					})
+				end,
+			})
+		end,
+		["graphql"] = function()
+			lspconfig.graphql.setup({
+				capabilities = capabilities,
+				filetypes = { "graphql", "gql", "svelte", "typescriptreact", "javascriptreact" },
+			})
+		end,
+	},
+})
+
+require("neodev").setup({})
+
+vim.diagnostic.config({
+	virtual_text = true,
+	-- signs = true,
+	underline = true,
+	update_in_insert = false,
+	signs = {
+		text = {
+			[vim.diagnostic.severity.ERROR] = " ",
+			[vim.diagnostic.severity.WARN] = " ",
+			[vim.diagnostic.severity.HINT] = " ",
+			[vim.diagnostic.severity.INFO] = " ",
+		},
+	},
+})
+
+vim.api.nvim_create_autocmd("LspAttach", {
+	group = vim.api.nvim_create_augroup("UserLspConfig", {}),
+	callback = function(ev)
+		local opts = { buffer = ev.buf, silent = true }
+		opts.desc = "Show LSP references"
+		vim.keymap.set("n", "gR", "<cmd>Telescope lsp_references<CR>", opts)
+		opts.desc = "Go to declaration"
+		vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts)
+		opts.desc = "Show LSP definitions"
+		vim.keymap.set("n", "gd", "<cmd>Telescope lsp_definitions<CR>", opts)
+		opts.desc = "Show LSP implementations"
+		vim.keymap.set("n", "gi", "<cmd>Telescope lsp_implementations<CR>", opts)
+		opts.desc = "Show LSP type definitions"
+		vim.keymap.set("n", "gt", "<cmd>Telescope lsp_type_definitions<CR>", opts)
+		opts.desc = "See available code actions"
+		vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, opts)
+		opts.desc = "Smart rename"
+		vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
+		opts.desc = "Show buffer diagnostics"
+		vim.keymap.set("n", "<leader>D", "<cmd>Telescope diagnostics bufnr=0<CR>", opts)
+		opts.desc = "Show line diagnostics"
+		vim.keymap.set("n", "<leader>d", vim.diagnostic.open_float, opts)
+		opts.desc = "Show documentation for what is under cursor"
+		vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
+		opts.desc = "Restart LSP"
+		vim.keymap.set("n", "<leader>rs", ":LspRestart<CR>", opts)
+		opts.desc = "Go to Definition"
+		vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
+		opts.desc = "Hover"
+		vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
+		opts.desc = "References"
+		vim.keymap.set("n", "<leader>gr", vim.lsp.buf.references, opts)
+		opts.desc = "Code Action"
+		vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, opts)
+	end,
+})
