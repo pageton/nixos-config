@@ -12,6 +12,7 @@
       etree = "eza --tree --level=1 --icons";
       cd = "z";
       ci = "zi";
+      c = "clear";
 
       # Quick navigation
       ".." = "cd ..";
