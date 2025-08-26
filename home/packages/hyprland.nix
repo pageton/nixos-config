@@ -6,7 +6,7 @@ with pkgs;
   xdg-desktop-portal-gtk
   wl-clipboard
   clipman
-  libsForQt5.xwaylandvideobridge
+  kdePackages.xwaylandvideobridge
   qt5.qtwayland
   qt6.qtwayland
   libsForQt5.qt5ct
