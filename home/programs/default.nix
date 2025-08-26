@@ -9,5 +9,6 @@
     ./git
     ./gpg
     ./neovim
+    ./zen
   ];
 }
