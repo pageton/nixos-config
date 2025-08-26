@@ -37,5 +37,10 @@
     source = ./profile_picture.png;
   };
 
+  stylix.targets.zen-browser = {
+    enable = true;
+    profileNames = [ "default" ];
+  };
+
   programs.home-manager.enable = true;
 }
