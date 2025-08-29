@@ -21,5 +21,6 @@
     ./upower.nix
     ./users.nix
     ./xserver.nix
+    ./nh.nix
   ];
 }
