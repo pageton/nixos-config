@@ -3,7 +3,7 @@
   wayland.windowManager.hyprland.settings = {
     bind = [
       "$mod,T, exec, uwsm app -- ${pkgs.kitty}/bin/kitty"
-      "$mod,B, exec,  uwsm app -- zen"
+      "$mod,B, exec, zen"
       "$shiftMod,L, exec,  uwsm app -- ${pkgs.hyprlock}/bin/hyprlock"
       "$mod,X, exec, powermenu"
       "$mod,SPACE, exec, menu"
