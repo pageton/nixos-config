@@ -1,9 +1,8 @@
-{
-  homeStateVersion,
-  user,
-  pkgs,
-  pkgsStable,
-  ...
+{ homeStateVersion
+, user
+, pkgs
+, pkgsStable
+, ...
 }:
 
 {
@@ -35,11 +34,6 @@
 
   home.file.".face.icon" = {
     source = ./profile_picture.png;
-  };
-
-  stylix.targets.zen-browser = {
-    enable = true;
-    profileNames = [ "default" ];
   };
 
   programs.home-manager.enable = true;
