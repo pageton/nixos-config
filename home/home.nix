@@ -1,8 +1,9 @@
-{ homeStateVersion
-, user
-, pkgs
-, pkgsStable
-, ...
+{
+  homeStateVersion,
+  user,
+  pkgs,
+  pkgsStable,
+  ...
 }:
 
 {
