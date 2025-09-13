@@ -6,6 +6,7 @@
 {
   # Enable Zsh as the system-wide default shell
   programs.zsh.enable = true;
+  services.cloudflare-warp.enable = true;
 
   users = {
     # Set Zsh as the default shell for all users
