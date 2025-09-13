@@ -9,5 +9,6 @@
     defaultEditor = true;
     package = inputs.neovim-nightly-overlay.packages.${system}.neovim;
   };
-  xdg.configFile."nvim".source = /home/sadiq/System/home/programs/neovim;
+
+  xdg.configFile."nvim/init.lua".source = ./init.lua;
 }
