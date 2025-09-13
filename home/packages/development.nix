@@ -21,4 +21,9 @@
   goimports-reviser
   gofumpt
   lua-language-server
+  biome
+  ruff
+  stylua
+  nil
+  nixpkgs-fmt
 ])
