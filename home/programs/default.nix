@@ -1,5 +1,4 @@
 { ... }:
-
 {
   imports = [
     ./shell
@@ -9,6 +8,5 @@
     ./git
     ./gpg
     ./neovim
-    ./zen
   ];
 }
