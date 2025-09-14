@@ -21,6 +21,7 @@
   goimports-reviser
   gofumpt
   lua-language-server
+  typescript-language-server
   biome
   ruff
   stylua
