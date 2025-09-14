@@ -1,3 +1,4 @@
+vim.cmd([[set mouse=]])
 vim.o.number = true
 vim.o.relativenumber = true
 vim.o.signcolumn = "yes"
@@ -14,6 +15,7 @@ vim.o.cursorcolumn = false
 vim.o.hlsearch = false
 vim.o.undofile = true
 vim.o.termguicolors = true
+vim.o.timeoutlen = 500
 
 vim.keymap.set("n", "<leader>o", ":update<CR> :source<CR>")
 vim.keymap.set("n", "<leader>w", ":write<CR>")
@@ -40,6 +42,7 @@ vim.keymap.set("n", "<leader>sv", "<C-w>v", { desc = "Split window vertically" }
 vim.keymap.set("n", "<leader>sh", "<C-w>s", { desc = "Split window horizontally" })
 vim.keymap.set("n", "<leader>se", "<C-w>=", { desc = "Make splits equal size" })
 vim.keymap.set("n", "<leader>sx", "<cmd>close<CR>", { desc = "Close current split" })
+vim.keymap.set("n", "<leader>cc", "<cmd>ClaudeCode<CR>", { desc = "Toggle Claude Code" })
 
 vim.diagnostic.config({
 	virtual_text = true,
@@ -116,6 +119,8 @@ vim.pack.add({
 	{ src = "https://github.com/akinsho/toggleterm.nvim" },
 
 	{ src = "https://github.com/wakatime/vim-wakatime" },
+
+	{ src = "https://github.com/greggh/claude-code.nvim" },
 })
 
 vim.api.nvim_create_autocmd("LspAttach", {
@@ -145,6 +150,15 @@ require("which-key").setup({
 	},
 })
 
+local last_press = 0
+vim.keymap.set("n", "<CR>", function()
+	local current_time = vim.fn.reltimefloat(vim.fn.reltime())
+	if current_time - last_press < 0.5 then
+		require("which-key").show()
+	end
+	last_press = current_time
+end)
+
 require("toggleterm").setup({
 	size = 20,
 	open_mapping = [[<leader>tr]],
@@ -153,7 +167,7 @@ require("toggleterm").setup({
 	shade_terminals = true,
 	shading_factor = 2,
 	start_in_insert = true,
-	insert_mappings = true,
+	insert_mappings = false,
 	persist_size = true,
 	direction = "horizontal",
 	close_on_exit = true,
@@ -183,7 +197,7 @@ function _G.set_terminal_keymaps()
 	vim.api.nvim_buf_set_keymap(0, "t", "<C-l>", [[<C-\><C-n><C-W>l]], opts)
 end
 
-vim.cmd("autocmd! TermOpen term://* lua set_terminal_keymaps()")
+-- vim.cmd("autocmd! TermOpen term://* lua set_terminal_keymaps()")
 
 require("dressing").setup({
 	input = {
@@ -215,6 +229,20 @@ require("bufferline").setup({
 	},
 })
 
+require("claude-code").setup({
+	window = {
+		position = "float",
+		float = {
+			width = "90%", -- Take up 90% of the editor width
+			height = "90%", -- Take up 90% of the editor height
+			row = "center", -- Center vertically
+			col = "center", -- Center horizontally
+			relative = "editor",
+			border = "double", -- Use double border style
+		},
+	},
+})
+
 require("neo-tree").setup({
 	filesystem = {
 		filtered_items = {
@@ -230,7 +258,7 @@ require("neo-tree").setup({
 	},
 	window = {
 		position = "left",
-		width = 30,
+		width = 35,
 	},
 })
 
