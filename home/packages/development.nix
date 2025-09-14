@@ -1,30 +1,17 @@
 { pkgs, pkgsStable }:
 
 (with pkgsStable; [
-  gcc
-  cmake
+  gcc # C/C++ compiler
+  cmake # C/C++ build system
 ])
 
 ++ (with pkgs; [
-  rustc
-  cargo
-  go
-  sqlite
-  just
-  bun
-  nodejs
-  air
-  python311
-  python311Packages.pip
-  gopls
-  golines
-  goimports-reviser
-  gofumpt
-  lua-language-server
-  typescript-language-server
-  biome
-  ruff
-  stylua
-  nil
-  nixpkgs-fmt
+  rustc # Rust compiler
+  cargo # Rust package manager
+  sqlite # SQLite database
+  just # Justfile runner
+  lua-language-server # Lua language server
+  stylua # Lua formatter
+  nil # Nix language server
+  nixpkgs-fmt # Nix formatting
 ])
