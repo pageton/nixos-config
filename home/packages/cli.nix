@@ -24,5 +24,5 @@ with pkgs;
   tokei
   yazi
   gh
-  gemini-cli
+  claude-code
 ]
