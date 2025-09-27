@@ -2,9 +2,9 @@
 
 with pkgs;
 [
-  peaclock
-  cbonsai
-  pipes
-  cmatrix
-  cava
+  peaclock # Clock
+  cbonsai # Bonsai
+  pipes # Pipes
+  cmatrix # Matrix
+  cava # Audio visualizer
 ]
