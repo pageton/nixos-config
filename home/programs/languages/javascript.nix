@@ -192,7 +192,7 @@ in
       supabase-cli # Supabase CLI
 
       # Container and orchestration
-      dockerfile-language-server-nodejs # Dockerfile language server
+      dockerfile-language-server # Dockerfile language server
     ];
 
     # Environment variables for JavaScript/TypeScript development
