@@ -121,18 +121,9 @@ vim.pack.add({
 	{ src = "https://github.com/wakatime/vim-wakatime" },
 
 	{ src = "https://github.com/greggh/claude-code.nvim" },
-})
 
-vim.api.nvim_create_autocmd("LspAttach", {
-	callback = function(ev)
-		local client = vim.lsp.get_client_by_id(ev.data.client_id)
-		if client:supports_method("textDocument/completion") then
-			vim.lsp.completion.enable(true, client.id, ev.buf, { autotrigger = true })
-		end
-	end,
+	{ src = "https://github.com/olrtg/nvim-emmet" },
 })
-
-vim.cmd("set completeopt+=noselect")
 
 require("mini.pick").setup()
 
@@ -414,6 +405,8 @@ vim.keymap.set("n", "<leader>dt", "<cmd>GoTagAdd toml<CR>", { desc = "Add toml s
 vim.keymap.set("n", "<leader>dy", "<cmd>GoTagAdd yaml<CR>", { desc = "Add yaml struct tag" })
 vim.keymap.set("n", "<leader>ds", "<cmd>GoTagAdd sql<CR>", { desc = "Add sql struct tag" })
 
+vim.keymap.set({ "n", "v" }, "<leader>xe", require("nvim-emmet").wrap_with_abbreviation)
+
 vim.keymap.set({ "n", "i" }, "<C-_>", function()
 	require("Comment.api").toggle.linewise.current()
 end, { noremap = true, silent = true })
@@ -425,7 +418,7 @@ end, { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>f", ":Pick files<CR>")
 vim.keymap.set("n", "<leader>h", ":Pick help<CR>")
 
-vim.lsp.enable({ "lua_ls", "ts_ls", "gopls", "nil" })
+-- vim.lsp.enable({ "lua_ls", "ts_ls", "nil" })
 vim.keymap.set("n", "<leader>lf", vim.lsp.buf.format)
 
 vim.keymap.set("n", "<C-n>", ":Neotree toggle<CR>", { desc = "Toggle Neo-Tree" })
@@ -585,6 +578,49 @@ lspconfig.gopls.setup({
 
 lspconfig.nil_ls.setup({
 	capabilities = capabilities,
+})
+
+lspconfig.html.setup({
+	capabilities = capabilities,
+})
+
+lspconfig.tailwindcss.setup({
+	capabilities = capabilities,
+})
+
+lspconfig.emmet_language_server.setup({
+	filetypes = {
+		"css",
+		"eruby",
+		"html",
+		"javascript",
+		"javascriptreact",
+		"less",
+		"sass",
+		"scss",
+		"pug",
+		"typescriptreact",
+	},
+	init_options = {
+		---@type table<string, string>
+		includeLanguages = {},
+		--- @type string[]
+		excludeLanguages = {},
+		--- @type string[]
+		extensionsPath = {},
+		--- @type table<string, any>
+		preferences = {},
+		--- @type boolean Defaults to `true`
+		showAbbreviationSuggestions = true,
+		--- @type "always" | "never" Defaults to `"always"`
+		showExpandedAbbreviation = "always",
+		--- @type boolean Defaults to `false`
+		showSuggestionsAsSnippets = false,
+		--- @type table<string, any>
+		syntaxProfiles = {},
+		--- @type table<string, string>
+		variables = {},
+	},
 })
 
 local null_ls = require("null-ls")
