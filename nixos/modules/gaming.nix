@@ -33,6 +33,7 @@
     environment.systemPackages = with pkgs; [
       mangohud # Vulkan overlay
       protonup # Proton compatibility tool
+      (bottles.override { removeWarningPopup = true; })
     ];
   };
 }
