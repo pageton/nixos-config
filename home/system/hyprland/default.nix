@@ -17,7 +17,6 @@ in
     ./animations.nix
     ./bindings.nix
     ./polkitagent.nix
-    ./hyprspace.nix
   ];
 
   wayland.windowManager.hyprland = {
