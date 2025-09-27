@@ -16,11 +16,13 @@
       package = pkgs.go; # Use the standard Go package
 
       # Go environment configuration
-      goPath = "go"; # GOPATH relative to home directory
-      goBin = "go/bin"; # GOBIN relative to home directory
+      env = {
+        GOPATH = "go"; # GOPATH relative to home directory
+        GOBIN = "go/bin"; # GOBIN relative to home directory
+        # Private Go modules (for private repositories)
+        GOPRIVATE = [ ]; # Add private module patterns here
 
-      # Private Go modules (for private repositories)
-      goPrivate = [ ]; # Add private module patterns here
+      };
     };
 
     # Zsh shell aliases for efficient Go development
