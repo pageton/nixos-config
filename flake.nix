@@ -27,11 +27,6 @@
 
     hyprpanel.url = "github:Jas-SinghFSU/HyprPanel";
 
-    hyprspace = {
-      url = "github:KZDKM/Hyprspace";
-      inputs.hyprland.follows = "hyprland";
-    };
-
     neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
 
   };
