@@ -123,8 +123,6 @@ vim.pack.add({
 	{ src = "https://github.com/greggh/claude-code.nvim" },
 
 	{ src = "https://github.com/olrtg/nvim-emmet" },
-
-	{ src = "https://github.com/AndrewRadev/tagalong.vim" },
 })
 
 require("mini.pick").setup()
@@ -436,6 +434,14 @@ vim.keymap.set("n", "<leader>tt", ":TodoTelescope<CR>", { desc = "Show TODO comm
 
 vim.cmd(":hi statusline guibg=NONE")
 
+require("nvim-ts-autotag").setup({
+	opts = {
+		enable_close = true,
+		enable_rename = true,
+		enable_close_on_slash = false,
+	},
+})
+
 require("nvim-treesitter.configs").setup({
 	highlight = {
 		enable = true,
@@ -444,8 +450,7 @@ require("nvim-treesitter.configs").setup({
 		enable = true,
 	},
 	autotag = {
-		enable = true,
-		enable_rename = true,
+		enable = false,
 	},
 	incremental_selection = {
 		enable = true,
