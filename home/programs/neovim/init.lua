@@ -123,6 +123,8 @@ vim.pack.add({
 	{ src = "https://github.com/greggh/claude-code.nvim" },
 
 	{ src = "https://github.com/olrtg/nvim-emmet" },
+
+	{ src = "https://github.com/AndrewRadev/tagalong.vim" },
 })
 
 require("mini.pick").setup()
@@ -443,6 +445,7 @@ require("nvim-treesitter.configs").setup({
 	},
 	autotag = {
 		enable = true,
+		enable_rename = true,
 	},
 	incremental_selection = {
 		enable = true,
