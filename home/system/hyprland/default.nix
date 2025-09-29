@@ -119,10 +119,6 @@ in
         drop_at_cursor = true;
       };
 
-      gestures = {
-        workspace_swipe = true;
-      };
-
       misc = {
         vfr = true;
         disable_hyprland_logo = true;
