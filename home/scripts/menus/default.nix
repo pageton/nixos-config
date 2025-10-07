@@ -1,6 +1,19 @@
 { pkgs, ... }:
 
 let
+  windowSwitcher = pkgs.writeScriptBin "window-switcher" ''
+    #!/bin/sh
+    # Get list of all windows with workspace, class, and title information
+    windows=$(hyprctl clients -j | jq -r '.[] | "\(.workspace.id):\(.workspace.name) - \(.class) - \(.title)"')
+    selected=$(echo "$windows" | wofi --dmenu --prompt "Switch to window" --width 800)
+
+    if [[ -n "$selected" ]]; then
+      # Find the window address and focus it
+      address=$(hyprctl clients -j | jq -r --arg sel "$selected" '.[] | select("\(.workspace.id):\(.workspace.name) - \(.class) - \(.title)" == $sel) | .address')
+      hyprctl dispatch focuswindow "address:$address"
+    fi
+  '';
+
   menu = pkgs.writeShellScriptBin "menu" ''
     if pgrep wofi; then
     	pkill wofi
@@ -86,5 +99,6 @@ in
     powermenu
     lock
     quickmenu
+    windowSwitcher
   ];
 }
