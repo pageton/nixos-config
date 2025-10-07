@@ -30,6 +30,5 @@ with pkgs;
   bemoji
   playerctl
   grimblast
-  cliphist
   wtype
 ]
