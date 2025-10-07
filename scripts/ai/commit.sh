@@ -52,7 +52,7 @@ if [[ $# -gt 0 ]]; then
         shift
     fi
 
-    if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    if [[ $# -gt 0 ]] && ([[ "$1" == "-h" || "$1" == "--help" ]]); then
         show_usage
         exit 0
     fi
