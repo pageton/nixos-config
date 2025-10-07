@@ -1,18 +1,4 @@
 { pkgs, ... }:
-let
-  windowSwitcher = pkgs.writeScriptBin "window-switcher" ''
-    #!/bin/sh
-    # Get list of all windows with workspace, class, and title information
-    windows=$(hyprctl clients -j | jq -r '.[] | "\(.workspace.id):\(.workspace.name) - \(.class) - \(.title)"')
-    selected=$(echo "$windows" | wofi --dmenu --prompt "Switch to window" --width 800)
-
-    if [[ -n "$selected" ]]; then
-      # Find the window address and focus it
-      address=$(hyprctl clients -j | jq -r --arg sel "$selected" '.[] | select("\(.workspace.id):\(.workspace.name) - \(.class) - \(.title)" == $sel) | .address')
-      hyprctl dispatch focuswindow "address:$address"
-    fi
-  '';
-in
 {
   wayland.windowManager.hyprland.settings = {
     bind = [
@@ -24,7 +10,7 @@ in
       "$mod,C, exec, quickmenu"
       "$shiftMod,SPACE, exec, hyprfocus-toggle"
       "$mod, E, exec, ${pkgs.kitty}/bin/kitty -e yazi"
-      "$mod, W, exec, ${windowSwitcher}/bin/window-switcher"
+      "$mod, W, exec, window-switcher"
       "$shiftMod, R, exec, nautilus"
       "$mod,Q, killactive,"
       "$mod,F, togglefloating,"
@@ -44,23 +30,26 @@ in
       "$mod, A, pin"
       "$shiftMod, grave, workspace, previous"
       "$shiftMod,T, exec, hyprpanel-toggle"
-      "$mod,V, exec, clipman pick -t wofi"
+      "$mod,V, exec, cliphist list | wofi --dmenu --prompt 'Clipboard' | cliphist decode | wl-copy"
       "$shiftMod,E, exec, ${pkgs.wofi-emoji}/bin/wofi-emoji"
       "$mod,F2, exec, night-shift"
       "$mod,F3, exec, night-shift"
       "LAlt,P, exec, ${pkgs.hyprpicker}/bin/hyprpicker --autocopy"
+      "$ctrlMod, L, exec, hyprctl keyword general:layout dwindle" # Switch to dwindle layout
+      "$ctrlMod SHIFT, L, exec, hyprctl keyword general:layout master" # Switch to master layout
     ]
     ++ (builtins.concatLists (
-      builtins.genList (
-        i:
-        let
-          ws = i + 1;
-        in
-        [
-          "$mod,code:1${toString i}, workspace, ${toString ws}"
-          "$mod SHIFT,code:1${toString i}, movetoworkspace, ${toString ws}"
-        ]
-      ) 9
+      builtins.genList
+        (
+          i:
+          let
+            ws = i + 1;
+          in
+          [
+            "$mod,code:1${toString i}, workspace, ${toString ws}"
+            "$shiftMod ,code:1${toString i}, movetoworkspace, ${toString ws}"
+          ]
+        ) 9
     ));
 
     bindm = [
@@ -74,6 +63,13 @@ in
       "$shiftMod,h, resizeactive, -30 0"
       "$shiftMod,k, resizeactive, 0 -30"
       "$shiftMod,j, resizeactive, 0 30"
+    ];
+
+    binded = [
+      "$ctrlMod, h, Move active window to the left, exec, $moveactivewindow -30 0 || hyprctl dispatch movewindow l"
+      "$ctrlMod, l, Move active window to the right, exec, $moveactivewindow 30 0 || hyprctl dispatch movewindow r"
+      "$ctrlMod, k, Move active window up, exec, $moveactivewindow 0 -30 || hyprctl dispatch movewindow u"
+      "$ctrlMod, j, Move active window down, exec, $moveactivewindow 0 30 || hyprctl dispatch movewindow d"
     ];
 
     bindl = [
