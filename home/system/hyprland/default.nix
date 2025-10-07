@@ -40,9 +40,11 @@ in
         "systemctl --user enable --now hyprpaper.service &"
         "systemctl --user enable --now hypridle.service &"
         "systemctl --user enable --now nextcloud-client.service  &"
+        "wl-paste -t text --watch clipman store" # Primary clipboard
+        "wl-paste -p -t text --watch clipman store -P --histpath=\"~/.local/share/clipman-primary.json\""
       ];
 
-      monitor = if isThinkpad then [ ",1920x1200@60,auto,1" ] else [ ",2560x1440@165,auto,1" ];
+      monitor = ",preferred,auto,1";
 
       env = [
         "XCURSOR_SIZE,${if isThinkpad then "20" else "24"}"
@@ -135,6 +137,7 @@ in
         "float, title:^(Media viewer)$"
         "float, title:^(Picture-in-Picture)$"
         "pin, title:^(Picture-in-Picture)$"
+        "pin,class:^(showmethekey-gtk)$" # Pin window to stay visible
         "idleinhibit focus, class:^(mpv|.+exe|celluloid)$"
         "idleinhibit focus, class:^(brave-browser)$, title:^(.*YouTube.*)$"
         "idleinhibit fullscreen, class:^(brave-browser)$"
@@ -142,6 +145,7 @@ in
         "dimaround, class:^(xdg-desktop-portal-gtk)$"
         "dimaround, class:^(polkit-gnome-authentication-agent-1)$"
         "dimaround, class:^(brave-browser)$, title:^(File Upload)$"
+        "opacity 0.95 0.85, class:^(Alacritty|kitty|foot)$" # Terminal transparency
         "rounding 0, xwayland:1"
       ];
 
