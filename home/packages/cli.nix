@@ -24,5 +24,4 @@ with pkgs;
   tokei # Code statistics tool (lines of code)
   yazi # TUI file manager (fast, ranger-like)
   gh # GitHub CLI tool
-  claude-code # Claude AI coding assistant
 ]
