@@ -24,6 +24,10 @@
         path = "/home/${user}/.ssh/id_rsa.pub";
         mode = "0644";
       };
+      zai-api-key = {
+        mode = "0644";
+      };
+
     };
   };
 
