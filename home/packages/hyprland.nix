@@ -31,4 +31,5 @@ with pkgs;
   playerctl
   grimblast
   wtype
+  cliphist
 ]
