@@ -120,9 +120,8 @@
       setopt INC_APPEND_HISTORY   # Append commands in execution order
       setopt SHARE_HISTORY        # Share history across shell sessions
 
-      # Extend PATH with additional directories
-      export PATH="$HOME/.npm-global/bin:$PATH"  # NPM global packages
-      export PATH="$HOME/.cache/.bun/bin:$PATH"  # Bun global packages
+      # Extend PATH with additional directories (early in PATH for priority)
+      export PATH="$HOME/.cache/.bun/bin:$HOME/.npm-global/bin:$HOME/.local/share/pnpm:$PATH"  # Bun, NPM, and pnpm global packages
       export PATH="$HOME/.local/bin:$PATH"       # Local user binaries
       export PATH="$HOME/.cargo/bin:$PATH"       # Rust/Cargo binaries
       export PATH="$HOME/go/bin:$PATH"           # Go binaries
