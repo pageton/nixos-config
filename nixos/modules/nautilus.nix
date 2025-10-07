@@ -29,8 +29,7 @@
     });
   '';
 
-  # Enforce Gruvbox theming (inherits from Stylix, but explicit for consistency)
   environment.variables = {
-    GTK_THEME = "Gruvbox-Dark";
+    GTK_THEME = "catppuccin-mocha";
   };
 }

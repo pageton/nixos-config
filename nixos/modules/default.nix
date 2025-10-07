@@ -22,5 +22,6 @@
     ./users.nix
     ./xserver.nix
     ./nh.nix
+    ./scripts.nix
   ];
 }
