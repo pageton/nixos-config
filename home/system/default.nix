@@ -8,7 +8,6 @@
     ./hyprpaper
     ./hyprpanel
     ./wofi
-    ./clipman
     ./qt
   ];
 }
