@@ -12,11 +12,9 @@
 let
   # Configurable list of global npm packages to install
   globalNpmPackages = [
-    "opencode-ai"
     "@google/gemini-cli"
-    "@charmland/crush"
-    "@openai/codex"
     "@anthropic-ai/claude-code"
+    "opencode-ai"
   ];
 in
 {
@@ -219,39 +217,40 @@ in
       "${config.home.homeDirectory}/.cache/.bun/bin" # Bun global packages
       "${config.home.homeDirectory}/.local/share/pnpm" # pnpm binaries
       "${config.home.homeDirectory}/.deno/bin" # Deno binaries
+      "${pkgs.bun}/bin" # Bun binaries
     ];
 
     # Automatic workspace directory creation and global package installation
     activation.createJSWorkspace = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      $DRY_RUN_CMD mkdir -p $HOME/Projects/javascript    # Create JavaScript projects directory
-      $DRY_RUN_CMD mkdir -p $HOME/Projects/typescript    # Create TypeScript projects directory
-      $DRY_RUN_CMD mkdir -p $HOME/Projects/react         # Create React projects directory
-      $DRY_RUN_CMD mkdir -p $HOME/Projects/node          # Create Node.js projects directory
-      $DRY_RUN_CMD mkdir -p $HOME/.npm-global            # Create global npm packages directory
+      BUN_BIN="${pkgs.bun}/bin/bun"  # Use Bun from Nix directly
+
+      # Create workspace directories
+      $DRY_RUN_CMD mkdir -p $HOME/Projects/javascript
+      $DRY_RUN_CMD mkdir -p $HOME/Projects/typescript
+      $DRY_RUN_CMD mkdir -p $HOME/Projects/react
+      $DRY_RUN_CMD mkdir -p $HOME/Projects/node
+      $DRY_RUN_CMD mkdir -p $HOME/.npm-global
 
       # Configure npm to use global directory
       if command -v npm &> /dev/null; then
         $DRY_RUN_CMD npm config set prefix "$HOME/.npm-global"
       fi
 
-      # Install/update global npm packages using bun (if available)
-      if command -v bun &> /dev/null; then
-        echo "📦 Managing global npm packages with bun..."
+      # Install/update global npm packages using Bun
+      if [ -x "$BUN_BIN" ]; then
+        echo "📦 Managing global npm packages with Bun..."
         for package in ${lib.escapeShellArgs globalNpmPackages}; do
-           if bun pm ls -g | grep -q "$package"; then
-             echo "Updating $package..."
-             if ! $DRY_RUN_CMD bun update -g "$package"; then
-               echo "❌ Failed to update $package"
-             fi
-           else
-             echo "Installing $package..."
-             if ! $DRY_RUN_CMD bun install -g "$package"; then
-               echo "❌ Failed to install $package"
-               echo "   Try manual installation: bun install -g $package"
-             fi
-           fi
-         done
+          if "$BUN_BIN" pm ls -g | grep -q "$package"; then
+            echo "Updating $package..."
+            "$BUN_BIN" update -g "$package" || echo "❌ Failed to update $package"
+          else
+            echo "Installing $package..."
+            "$BUN_BIN" install -g "$package" || echo "❌ Failed to install $package"
+          fi
+        done
         echo "✔ Global packages management completed"
+      else
+        echo "⚠️ Bun not found at $BUN_BIN"
       fi
     '';
   };
