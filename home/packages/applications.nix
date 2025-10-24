@@ -6,10 +6,17 @@ with pkgs;
   brave # Brave browser
   telegram-desktop # Telegram desktop
   obs-studio # OBS Studio
-  obsidian # Obsidian
+  # obsidian # Obsidian
   vlc # VLC media player
-  nautilus # Nautilus file manager
   vesktop # Discord desktop client
   vscode # Visual Studio Code
   chromium # Chromium web browser
+  # Gaming and compatibility tools
+  (bottles.override { removeWarningPopup = true; }) # Run Windows applications on Linux
+  rustdesk # Remote desktop software
+  anydesk # Remote desktop software
+  wineWowPackages.stagingFull
+  winetricks
+  samba
+  kdePackages.dolphin # KDE file manager
 ]

@@ -14,4 +14,5 @@
   stylua # Lua formatter
   nil # Nix language server
   nixpkgs-fmt # Nix formatting
+  bruno # API Client
 ])
