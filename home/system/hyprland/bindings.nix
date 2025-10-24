@@ -2,19 +2,19 @@
 {
   wayland.windowManager.hyprland.settings = {
     bind = [
-      "$mod,T, exec, uwsm app -- ${pkgs.kitty}/bin/kitty"
+      "$mod,T, exec, uwsm app -- ${pkgs.alacritty}/bin/alacritty"
       "$mod,B, exec, brave"
       "$shiftMod,HOME, exec,  uwsm app -- ${pkgs.hyprlock}/bin/hyprlock"
       "$mod,X, exec, powermenu"
       "$mod,SPACE, exec, menu"
       "$mod,C, exec, quickmenu"
       "$shiftMod,SPACE, exec, hyprfocus-toggle"
-      "$mod, E, exec, ${pkgs.kitty}/bin/kitty -e yazi"
+      "$mod, E, exec, ${pkgs.alacritty}/bin/alacritty -e yazi"
       "$mod, W, exec, window-switcher"
-      "$shiftMod, R, exec, nautilus"
+      "$shiftMod, R, exec, dolphin"
       "$mod,Q, killactive,"
       "$mod,F, togglefloating,"
-      "$mod,F, fullscreen"
+      "$shiftMod, F, fullscreen"
       "$mod,h, movefocus, l"
       "$mod,l, movefocus, r"
       "$mod,k, movefocus, u"
@@ -39,17 +39,16 @@
       "$ctrlMod SHIFT, L, exec, hyprctl keyword general:layout master" # Switch to master layout
     ]
     ++ (builtins.concatLists (
-      builtins.genList
-        (
-          i:
-          let
-            ws = i + 1;
-          in
-          [
-            "$mod,code:1${toString i}, workspace, ${toString ws}"
-            "$shiftMod ,code:1${toString i}, movetoworkspace, ${toString ws}"
-          ]
-        ) 9
+      builtins.genList (
+        i:
+        let
+          ws = i + 1;
+        in
+        [
+          "$mod,code:1${toString i}, workspace, ${toString ws}"
+          "$shiftMod ,code:1${toString i}, movetoworkspace, ${toString ws}"
+        ]
+      ) 9
     ));
 
     bindm = [

@@ -3,7 +3,6 @@
 {
   imports = [
     ./hyprland
-    ./hypridle
     ./hyprlock
     ./hyprpaper
     ./hyprpanel
