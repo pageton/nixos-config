@@ -18,11 +18,7 @@
 
   networking.hostName = hostname;
 
-  system = {
-    inherit stateVersion;
-  };
+  system = { inherit stateVersion; };
 
-  environment.systemPackages = with pkgs; [
-    home-manager
-  ];
+  environment.systemPackages = with pkgs; [ home-manager ];
 }
