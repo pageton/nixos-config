@@ -7,7 +7,7 @@
 set -euo pipefail
 
 # Configuration
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"  # Currently unused
 API_URL="https://api.z.ai/api/coding/paas/v4"
 DEFAULT_MODEL="glm-4.5-air"
 DEEP_MODEL="glm-4.6"
@@ -139,8 +139,8 @@ fi
 show_loading() {
     local pid=$1
     local delay=0.1
-    local spinstr='|/-\'
-    while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
+    local spinstr='|/\-'
+    while ps -p "$pid" >/dev/null 2>&1; do
         local temp=${spinstr#?}
         printf "\r Thinking... %c" "$spinstr"
         local spinstr=$temp${spinstr%"$temp"}
@@ -213,12 +213,6 @@ RESPONSE=$(cat "$TEMP_RESPONSE")
 
 # Clean up temp file
 rm -f "$TEMP_RESPONSE"
-
-# Check if request was successful
-if [[ $? -ne 0 ]]; then
-    print_error "Failed to make API request"
-    exit 1
-fi
 
 # Parse response
 CLEAN_RESPONSE=""

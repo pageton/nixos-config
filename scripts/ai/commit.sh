@@ -2,6 +2,7 @@
 # commit.sh - Generate conventional commit messages using AI
 # Usage: ./commit.sh (in any git repository with staged changes)
 
+# shellcheck disable=SC2209  # Disable false positive for environment variable assignments
 set -euo pipefail
 
 # Configuration
@@ -11,7 +12,7 @@ ASK_SCRIPT="$SCRIPT_DIR/ask.sh"
 # Colors for output
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
+# YELLOW='\033[1;33m'  # Currently unused but available for future use
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
@@ -52,7 +53,7 @@ if [[ $# -gt 0 ]]; then
         shift
     fi
 
-    if [[ $# -gt 0 ]] && ([[ "$1" == "-h" || "$1" == "--help" ]]); then
+    if [[ "$1" == "-h" || "$1" == "--help" ]]; then
         show_usage
         exit 0
     fi
@@ -68,18 +69,23 @@ fi
 get_commit_context() {
     local num_commits=${1:-5}
     echo "Recent commit history (last $num_commits):"
-    GIT_PAGER=cat git log --oneline -n "$num_commits" 2>/dev/null || echo "No previous commits"
+    local git_output
+    git_output="$(GIT_PAGER=cat git log --oneline -n "$num_commits" 2>/dev/null || echo "No previous commits")"
+    echo "$git_output"
 }
 
 get_branch_context() {
-    local current_branch=$(git branch --show-current 2>/dev/null || echo "unknown")
+    local current_branch
+    current_branch=$(git branch --show-current 2>/dev/null || echo "unknown")
     echo "Current branch: $current_branch"
 
     # Try to detect base branch
     if git remote get-url origin >/dev/null 2>&1; then
-        local default_branch=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
+        local default_branch
+    default_branch=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
         if [[ "$current_branch" != "$default_branch" ]]; then
-            local ahead_count=$(git rev-list --count HEAD ^"origin/$default_branch" 2>/dev/null || echo "0")
+            local ahead_count
+    ahead_count=$(git rev-list --count HEAD ^"origin/$default_branch" 2>/dev/null || echo "0")
             if [[ "$ahead_count" -gt 0 ]]; then
                 echo "Commits ahead of $default_branch: $ahead_count"
             fi
@@ -91,25 +97,35 @@ analyze_changes() {
     echo "Change analysis:"
 
     # Categorize changes
-    local new_files=$(GIT_PAGER=cat git diff --cached --name-status | grep '^A' | cut -f2- | tr '\n' ' ' || true)
-    local modified_files=$(GIT_PAGER=cat git diff --cached --name-status | grep '^M' | cut -f2- | tr '\n' ' ' || true)
-    local deleted_files=$(GIT_PAGER=cat git diff --cached --name-status | grep '^D' | cut -f2- | tr '\n' ' ' || true)
+    local new_files
+    new_files="$(GIT_PAGER=cat git diff --cached --name-status | grep '^A' | cut -f2- | tr '\n' ' ' || true)"
+    local modified_files
+    modified_files="$(GIT_PAGER=cat git diff --cached --name-status | grep '^M' | cut -f2- | tr '\n' ' ' || true)"
+    local deleted_files
+    deleted_files="$(GIT_PAGER=cat git diff --cached --name-status | grep '^D' | cut -f2- | tr '\n' ' ' || true)"
 
     [[ -n "$new_files" ]] && echo "New files: $new_files"
     [[ -n "$modified_files" ]] && echo "Modified files: $modified_files"
     [[ -n "$deleted_files" ]] && echo "Deleted files: $deleted_files"
 
     # Intelligent diff handling - use stat instead of full diff to avoid bat
-    local diff_size=$(GIT_PAGER=cat git diff --cached | wc -l)
+    local diff_size
+    diff_size="$(GIT_PAGER=cat git diff --cached | wc -l)"
     if [[ "$diff_size" -gt 1000 ]]; then
-        print_warning "Large diff detected ($diff_size lines). Using summarized analysis."
-        GIT_PAGER=cat git diff --cached --stat=120,120
+        echo "[WARNING] Large diff detected ($diff_size lines). Using summarized analysis."
+        local diff_stat
+        diff_stat="$(GIT_PAGER=cat git diff --cached --stat=120,120)"
+        echo "$diff_stat"
         echo ""
         echo "Key file changes:"
-        GIT_PAGER=cat git diff --cached --numstat | head -15 | awk '{printf "  %s: +%s -%s lines\n", $3, $1, $2}'
+        local diff_numstat
+        diff_numstat="$(GIT_PAGER=cat git diff --cached --numstat | head -15 | awk '{printf "  %s: +%s -%s lines\n", $3, $1, $2}')"
+        echo "$diff_numstat"
     else
         # Use stat instead of full diff to avoid bat opening
-        GIT_PAGER=cat git diff --cached --stat
+        local diff_summary
+        diff_summary="$(GIT_PAGER=cat git diff --cached --stat)"
+        echo "$diff_summary"
     fi
 }
 
