@@ -1,13 +1,12 @@
 { ... }:
 {
   imports = [
-    ./shell
-    ./kitty
+    ./terminal
     ./spicetify
-    ./lazygit
-    ./git
-    ./gpg
     ./neovim
     ./languages
+    ./terminal
+    ./shell
+    ./gpg
   ];
 }

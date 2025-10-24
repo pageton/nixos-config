@@ -60,12 +60,11 @@ vim.diagnostic.config({
 
 vim.pack.add({
 	{ src = "https://github.com/catppuccin/nvim" },
-	{ src = "https://github.com/neovim/nvim-lspconfig" },
 	{ src = "https://github.com/echasnovski/mini.pick" },
 	{ src = "https://github.com/nvim-lualine/lualine.nvim" },
-
+	{ src = "https://github.com/neovim/nvim-lspconfig" },
 	{ src = "https://github.com/nvim-treesitter/nvim-treesitter", version = "master" },
-
+	{ src = "https://github.com/malbertzard/inline-fold.nvim" },
 	{ src = "https://github.com/hrsh7th/nvim-cmp" },
 	{ src = "https://github.com/hrsh7th/cmp-nvim-lsp" },
 	{ src = "https://github.com/hrsh7th/cmp-buffer" },
@@ -189,6 +188,36 @@ function _G.set_terminal_keymaps()
 end
 
 -- vim.cmd("autocmd! TermOpen term://* lua set_terminal_keymaps()")
+
+require("inline-fold").setup({
+	defaultPlaceholder = "…",
+	queries = {
+		html = {
+			{ pattern = 'class="([^"]*)"' },
+			{ pattern = 'href="(.-)"' },
+			{ pattern = 'src="(.-)"' },
+		},
+		javascriptreact = {
+			{ pattern = 'className="([^"]*)"' },
+			{ pattern = 'href="(.-)"' },
+			{ pattern = 'src="(.-)"' },
+		},
+		typescriptreact = {
+			{ pattern = 'className="([^"]*)"' },
+			{ pattern = 'href="(.-)"' },
+			{ pattern = 'src="(.-)"' },
+		},
+	},
+})
+
+vim.api.nvim_create_autocmd({ "BufEnter", "BufWinEnter" }, {
+	pattern = { "*.html", "*.tsx", "*.jsx" },
+	callback = function(_)
+		if not require("inline-fold.module").isHidden then
+			vim.cmd("InlineFoldToggle")
+		end
+	end,
+})
 
 require("dressing").setup({
 	input = {
@@ -419,7 +448,7 @@ vim.keymap.set("n", "<leader>f", ":Pick files<CR>")
 vim.keymap.set("n", "<leader>h", ":Pick help<CR>")
 
 -- vim.lsp.enable({ "lua_ls", "ts_ls", "nil" })
-vim.keymap.set("n", "<leader>lf", vim.lsp.buf.format)
+vim.keymap.set("n", "<leader>f", vim.lsp.buf.format)
 
 vim.keymap.set("n", "<C-n>", ":Neotree toggle<CR>", { desc = "Toggle Neo-Tree" })
 
@@ -430,7 +459,7 @@ vim.keymap.set("n", "<C-f>", telescope_builtin.live_grep, { desc = "Find text" }
 vim.keymap.set("n", "<leader>:", telescope_builtin.command_history, { desc = "Command history" })
 vim.keymap.set("n", "<leader><leader>", telescope_builtin.oldfiles, { desc = "Recently opened files" })
 
-vim.keymap.set("n", "<leader>tt", ":TodoTelescope<CR>", { desc = "Show TODO comments" })
+vim.keymap.set("n", "<leader>td", ":TodoTelescope<CR>", { desc = "Show TODO comments" })
 
 vim.cmd(":hi statusline guibg=NONE")
 
@@ -569,43 +598,129 @@ cmp.setup.cmdline("!", {
 	},
 })
 
-local lspconfig = require("lspconfig")
+vim.api.nvim_create_autocmd("BufWritePre", {
+	pattern = "*.go",
+	callback = function()
+		local params = vim.lsp.util.make_range_params()
+		params.context = { only = { "source.organizeImports" } }
+		local result = vim.lsp.buf_request_sync(0, "textDocument/codeAction", params)
+		for cid, res in pairs(result or {}) do
+			for _, r in pairs(res.result or {}) do
+				if r.edit then
+					local enc = (vim.lsp.get_client_by_id(cid) or {}).offset_encoding or "utf-16"
+					vim.lsp.util.apply_workspace_edit(r.edit, enc)
+				end
+			end
+		end
+		vim.lsp.buf.format({ async = false })
+	end,
+})
+
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-lspconfig.lua_ls.setup({
+vim.lsp.config["luals"] = {
+	cmd = { "lua-language-server" },
+	filetypes = { "lua" },
 	capabilities = capabilities,
-})
+}
 
-lspconfig.ts_ls.setup({
+vim.lsp.config["gopls"] = {
 	capabilities = capabilities,
-})
+	settings = {
+		gopls = {
+			hints = {
+				assignVariableTypes = true,
+				compositeLiteralFields = true,
+				compositeLiteralTypes = true,
+				constantValues = true,
+				functionTypeParameters = true,
+				parameterNames = true,
+				rangeVariableTypes = true,
+			},
+			analyses = {
+				unusedparams = true,
+				shadow = true,
+			},
+			staticcheck = true,
+			gofumpt = true,
+			completeUnimported = true,
+			usePlaceholders = true,
+			hoverKind = "Structured",
+			linksInHover = true,
+			experimentalPostfixCompletions = true,
+		},
+	},
+}
 
-lspconfig.gopls.setup({
+vim.lsp.config["tsls"] = {
+	cmd = { "typescript-language-server", "--stdio" },
+	filetypes = {
+		"javascript",
+		"javascriptreact",
+		"javascript.jsx",
+		"typescript",
+		"typescriptreact",
+		"typescript.tsx",
+		"vue",
+	},
+	preferences = {
+		includeInlayParameterNameHints = "all",
+		includeInlayPropertyDeclarationTypeHints = true,
+		includeInlayFunctionLikeReturnTypeHints = true,
+		includeInlayVariableTypeHints = true,
+		includeInlayEnumMemberValueHints = true,
+	},
+	codeActionsOnSave = {
+		["source.organizeImports"] = true,
+	},
+	suggestions = {
+		completeFunctionCalls = true,
+		classMemberSnippets = true,
+		objectLiteralMethodSnippets = true,
+		autoImports = true,
+	},
 	capabilities = capabilities,
-})
+}
 
-lspconfig.nil_ls.setup({
+vim.lsp.config["nil_ls"] = {
+	cmd = { "nil" },
+	filetypes = { "nix" },
 	capabilities = capabilities,
-})
+}
 
-lspconfig.html.setup({
+vim.lsp.config["html"] = {
+	filetypes = { "html" },
 	capabilities = capabilities,
-})
+}
 
-lspconfig.cssls.setup({
+vim.lsp.config["cssls"] = {
+	filetypes = { "css" },
 	capabilities = capabilities,
-})
+}
 
-lspconfig.tailwindcss.setup({
+vim.lsp.config["tailwindcss"] = {
+	cmd = { "tailwindcss-language-server", "--stdio" },
 	capabilities = capabilities,
-})
+	filetypes = {
+		"html",
+		"javascript",
+		"typescript",
+		"javascriptreact",
+		"typescriptreact",
+		"vue",
+		"css",
+		"javascript.jsx",
+		"typescript.tsx",
+	},
+}
 
-lspconfig.emmet_language_server.setup({
+vim.lsp.config["emmet_language_server"] = {
 	filetypes = {
 		"css",
 		"eruby",
 		"html",
 		"javascript",
+		"typescript",
 		"javascriptreact",
 		"less",
 		"sass",
@@ -633,7 +748,9 @@ lspconfig.emmet_language_server.setup({
 		--- @type table<string, string>
 		variables = {},
 	},
-})
+}
+
+vim.lsp.enable({ "luals", "tsls", "gopls", "nil_ls", "html", "cssls", "tailwindcss", "emmet_language_server" })
 
 local null_ls = require("null-ls")
 local augroup = vim.api.nvim_create_augroup("LspFormatting", {})

@@ -1,8 +1,4 @@
-{
-  pkgsStable,
-  lib,
-  ...
-}:
+{ pkgsStable, lib, ... }:
 
 {
   programs.gpg = {
@@ -36,6 +32,10 @@
     enable = true;
     defaultCacheTtl = 86400;
     enableSshSupport = true;
-    pinentry.package = lib.mkDefault pkgsStable.pinentry-gnome3;
+    pinentry.package = pkgsStable.pinentry-qt;
   };
+
+  # home.sessionVariables = {
+  # GPG_TTY = "${builtins.toString (builtins.getEnv "TTY")}";
+  # };
 }
