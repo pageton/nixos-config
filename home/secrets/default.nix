@@ -44,7 +44,5 @@
 
   systemd.user.services.mbsync.Unit.After = [ "sops-nix.service" ];
 
-  wayland.windowManager.hyprland.settings.exec-once = [
-    "systemctl --user start sops-nix"
-  ];
+  wayland.windowManager.hyprland.settings.exec-once = [ "systemctl --user start sops-nix" ];
 }
