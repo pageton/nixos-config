@@ -1,5 +1,3 @@
 # Power management configuration
 
-{
-  programs.gamemode.enable = false;
-}
+{ programs.gamemode.enable = false; }

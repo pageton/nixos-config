@@ -1,7 +1,3 @@
 # Imports all PC modules.
 
-{
-  imports = [
-    ./power.nix
-  ];
-}
+{ imports = [ ./power.nix ]; }
