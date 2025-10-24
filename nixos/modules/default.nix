@@ -5,7 +5,6 @@
     ./audio.nix
     ./bluetooth.nix
     ./bootloader.nix
-    ./nautilus.nix
     ./environment.nix
     ./gaming.nix
     ./sddm.nix
@@ -23,5 +22,7 @@
     ./xserver.nix
     ./nh.nix
     ./scripts.nix
+    ./monitoring.nix
+    ./xdg-desktop-portal.nix
   ];
 }

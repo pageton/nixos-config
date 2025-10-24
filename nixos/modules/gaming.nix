@@ -28,12 +28,14 @@
 
     environment.sessionVariables = {
       STEAM_EXTRA_COMPAT_TOOLS_PATHS = "\${HOME}/.steam/root/compatibilitytools.d";
+      SDL_VIDEODRIVER = "x11";
+      WINE_HIDE_NVIDIA_GPU = "1";
+      PROTON_LOG = "1";
     };
 
     environment.systemPackages = with pkgs; [
       mangohud # Vulkan overlay
       protonup # Proton compatibility tool
-      (bottles.override { removeWarningPopup = true; })
     ];
   };
 }
