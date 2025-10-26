@@ -11,7 +11,7 @@ set -euo pipefail
 API_URL="https://api.z.ai/api/coding/paas/v4"
 DEFAULT_MODEL="glm-4.5-air"
 DEEP_MODEL="glm-4.6"
-API_KEY_FILE="$HOME/.config/sops-nix/secrets/zai-api-key"
+API_KEY_FILE="$HOME/.config/zai"
 
 # Colors for output
 GREEN='\033[0;32m'
