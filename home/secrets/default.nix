@@ -1,8 +1,7 @@
-{
-  inputs,
-  user,
-  pkgs,
-  ...
+{ inputs
+, user
+, pkgs
+, ...
 }:
 
 {
@@ -34,6 +33,8 @@
       zai-api-key = {
         path = "/home/${user}/.config/zai";
       };
+
+      wakatime-api-key = { };
 
     };
   };
