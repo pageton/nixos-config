@@ -45,7 +45,7 @@
       pkgs = import nixpkgs {
         inherit system;
         allowUnfree = true; # Allow proprietary packages
-        allowBroken = false; # Don't allow broken packages
+        allowBroken = true; # Don't allow broken packages
         allowInsecure = false; # Don't allow insecure packages
         allowUnsupportedSystem = false; # Don't allow unsupported systems
         overlays = [ inputs.neovim-nightly-overlay.overlays.default ]; # Add the neovim-nightly-overlay
