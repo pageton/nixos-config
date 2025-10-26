@@ -1,13 +1,13 @@
 # NVIDIA graphics configuration for ThinkPad.
 # This module configures NVIDIA Optimus (hybrid graphics) for ThinkPad laptops,
 # enabling proper switching between integrated Intel and dedicated NVIDIA GPUs.
-
+{ lib, ... }:
 {
   hardware.nvidia = {
     # Power management settings for NVIDIA GPU - CRITICAL for battery life
     powerManagement = {
       enable = true; # Enable NVIDIA power management
-      finegrained = true; # Fine-grained power control (30-50% battery savings)
+      finegrained = lib.mkForce true; # Fine-grained power control (30-50% battery savings)
     };
 
     # NVIDIA Optimus (PRIME) configuration for hybrid graphics
