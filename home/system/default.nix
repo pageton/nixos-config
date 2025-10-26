@@ -8,5 +8,6 @@
     ./hyprpanel
     ./wofi
     ./qt
+    ./hypridle
   ];
 }
