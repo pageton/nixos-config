@@ -2,13 +2,13 @@
 # This module enables nix-ld, which allows running dynamically linked
 # executables that were not built for NixOS by providing common shared libraries.
 
-{ pkgsStable, ... }:
+{ pkgs, ... }:
 
 {
   programs.nix-ld = {
     enable = true;
 
-    libraries = with pkgsStable; [
+    libraries = with pkgs; [
       # Core system libraries
       stdenv.cc.cc
       libgcc
@@ -20,6 +20,9 @@
       bzip2
       xz
       openssl
+
+      # Printing support
+      cups
 
       # XCB protocol library
       xorg.libxcb

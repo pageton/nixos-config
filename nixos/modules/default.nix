@@ -24,5 +24,8 @@
     ./scripts.nix
     ./monitoring.nix
     ./xdg-desktop-portal.nix
+    ./cleanup.nix
+    ./browser-deps.nix
+    ./stability.nix
   ];
 }
