@@ -8,5 +8,7 @@
     ./terminal
     ./shell
     ./gpg
+    ./obs
+    ./glance
   ];
 }
