@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  hostname,
+  ...
+}:
 let
   border-size = config.theme.border-size;
   gaps-in = config.theme.gaps-in;
@@ -8,7 +13,6 @@ let
   rounding = config.theme.rounding;
   blur = config.theme.blur;
   background = "rgb(" + config.lib.stylix.colors.base00 + ")";
-  hostname = builtins.getEnv "HOSTNAME";
   isThinkpad = hostname == "thinkpad";
 in
 {
