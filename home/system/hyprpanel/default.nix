@@ -143,8 +143,8 @@ in
       menus.dashboard.powermenu.avatar.image = lib.mkForce "~/.face.icon";
 
       menus.dashboard.shortcuts.left.shortcut1.icon = lib.mkForce "";
-      menus.dashboard.shortcuts.left.shortcut1.command = lib.mkForce "zen";
-      menus.dashboard.shortcuts.left.shortcut1.tooltip = lib.mkForce "Zen";
+      menus.dashboard.shortcuts.left.shortcut1.command = lib.mkForce "brave";
+      menus.dashboard.shortcuts.left.shortcut1.tooltip = lib.mkForce "Brave";
       menus.dashboard.shortcuts.left.shortcut2.icon = lib.mkForce "󰅶";
       menus.dashboard.shortcuts.left.shortcut2.command = lib.mkForce "caffeine";
       menus.dashboard.shortcuts.left.shortcut2.tooltip = lib.mkForce "Caffeine";
