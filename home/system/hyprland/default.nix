@@ -40,8 +40,8 @@ in
       exec-once = [
         "dbus-update-activation-environment --systemd --all &"
         "systemctl --user enable --now hyprpaper.service &"
-        "systemctl --user enable --now nextcloud-client.service  &"
         "wl-paste -t text --watch clipman store &" # Primary clipboard
+        "swayosd-server &"
         "wl-paste --watch -p clipman store -P ~/.local/share/clipman-primary.json &"
         "wl-paste --type text --watch cliphist store &" # Clipboard manager for text
         "wl-paste --type image --watch cliphist store &" # Clipboard manager for images
