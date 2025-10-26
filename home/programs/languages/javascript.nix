@@ -169,7 +169,6 @@ in
       biome # JavaScript/TypeScript formatter
 
       # Build tools and bundlers
-      vite # Next generation frontend tooling
       esbuild # Extremely fast JavaScript bundler
       swc # Super-fast TypeScript/JavaScript compiler
 
