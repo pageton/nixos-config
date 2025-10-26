@@ -3,8 +3,6 @@
 with pkgs;
 [
   age # File encryption tool (age)
-  sops # Secrets management tool (works with age, GPG, etc.)
-  helix # Terminal-based text editor
   tree # Directory tree listing tool
   file # File type detection tool
   jq # JSON processor and query tool
@@ -21,4 +19,5 @@ with pkgs;
   tokei # Code statistics tool (lines of code)
   yazi # TUI file manager (fast, ranger-like)
   gh # GitHub CLI tool
+  cloudflared # Cloudflare tunnel CLI tool
 ]
