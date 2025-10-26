@@ -27,6 +27,37 @@
         };
       };
 
+      font = {
+        builtin_box_drawing = true;
+
+        normal = {
+          family = lib.mkForce "JetBrainsMono Nerd Font";
+          style = lib.mkForce "Bold";
+        };
+
+        bold = {
+          family = "JetBrains Mono";
+          style = "ExtraBold";
+        };
+
+        italic = {
+          family = "JetBrains Mono";
+          style = "Italic";
+        };
+
+        bold_italic = {
+          family = "JetBrains Mono";
+          style = "BoldItalic";
+        };
+
+        size = lib.mkForce 13.0;
+
+        offset = {
+          x = 0;
+          y = 1; # Slight vertical offset for better readability
+        };
+      };
+
       # Scrolling
       scrolling = {
         history = 50000; # Increased from default 10k
