@@ -4,6 +4,7 @@
   lib,
   config,
   user,
+  hostname,
   ...
 }:
 let
@@ -31,7 +32,6 @@ let
   notificationOpacity = 90;
 
   homeDir = "/home/${user}";
-  hostname = builtins.getEnv "HOSTNAME";
   isThinkpad = hostname == "thinkpad";
 
 in
