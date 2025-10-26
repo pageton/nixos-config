@@ -51,6 +51,20 @@ all:
 update:
 	nix flake update
 
+# Update Nixpkgs
+update-pkgs:
+    @echo -e "\n➤ Updating Nixpkgs…"
+    nix flake update nixpkgs
+# Update Nixpkgs-stable
+update-pkgs-stable:
+    @echo -e "\n➤ Updating Nixpkgs-stable…"
+    nix flake update nixpkgs-stable
+
+# update neovim-nightly-overlay
+update-neovim:
+    @echo -e "\n➤ Updating neovim-nightly-overlay…"
+    nix flake update neovim-nightly-overlay
+
 # Clean up build artifacts and caches
 clean:
 	@echo -e "\n➤ Cleaning up build artifacts and caches…"
