@@ -7,5 +7,6 @@
     ./hyprfocus
     ./notification
     ./hyprpanel
+    ./caffeine
   ];
 }
