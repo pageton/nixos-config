@@ -37,7 +37,7 @@
 
   home.sessionVariables = {
     # Qt platform preference - Wayland first, X11 fallback
-    QT_QPA_PLATFORM = "wayland;xcb";
+    QT_QPA_PLATFORM = "xcb";
 
     # Maintain Qt5 compatibility for legacy applications
     DISABLE_QT5_COMPAT = "0";
@@ -53,5 +53,12 @@
     GDK_DPI_SCALE = "1"; # GTK DPI scaling
   };
 
+  stylix.targets = {
+    # Enable core desktop theming
+    gtk.enable = true; # Apply theme to GTK applications
+    qt.enable = true; # Apply theme to Qt applications
+  };
+
+  fonts.fontconfig.enable = true;
   programs.home-manager.enable = true;
 }
