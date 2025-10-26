@@ -1,12 +1,11 @@
-{ pkgs, ... }:
+{ pkgs, pkgsStable, ... }:
 
-with pkgs;
-[
+(with pkgsStable; [ kdePackages.xwaylandvideobridge ])
+++ (with pkgs; [
   xdg-desktop-portal-hyprland
   xdg-desktop-portal-gtk
   wl-clipboard
   clipman
-  kdePackages.xwaylandvideobridge
   qt5.qtwayland
   qt6.qtwayland
   libsForQt5.qt5ct
@@ -32,4 +31,5 @@ with pkgs;
   grimblast
   wtype
   cliphist
-]
+  swayosd
+])
