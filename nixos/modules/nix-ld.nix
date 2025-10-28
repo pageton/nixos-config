@@ -62,6 +62,7 @@
       cairo
       gdk-pixbuf
       gtk3
+      gtk4
       pango
       alsa-lib
       libdrm
