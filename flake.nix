@@ -26,16 +26,22 @@
 
     hyprpanel.url = "github:Jas-SinghFSU/HyprPanel";
 
+    zen-browser = {
+      url = "github:0xc000022070/zen-browser-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
 
   };
 
   outputs =
-    { self
-    , nixpkgs
-    , nixpkgs-stable
-    , home-manager
-    , ...
+    {
+      self,
+      nixpkgs,
+      nixpkgs-stable,
+      home-manager,
+      ...
     }@inputs:
     let
       system = "x86_64-linux";
@@ -89,40 +95,34 @@
       ];
     in
     {
-      nixosConfigurations = nixpkgs.lib.foldl'
-        (
-          configs: host:
-            configs // { "${host.hostname}" = makeSystem { inherit (host) hostname stateVersion; }; }
-        )
-        { }
-        hosts;
+      nixosConfigurations = nixpkgs.lib.foldl' (
+        configs: host:
+        configs // { "${host.hostname}" = makeSystem { inherit (host) hostname stateVersion; }; }
+      ) { } hosts;
 
-      homeConfigurations = nixpkgs.lib.foldl'
-        (
-          configs: host:
-            configs
-            // {
-              "${user}@${host.hostname}" = home-manager.lib.homeManagerConfiguration {
-                inherit pkgs;
-                extraSpecialArgs = {
-                  inherit
-                    inputs
-                    homeStateVersion
-                    user
-                    pkgsStable
-                    system
-                    ;
-                  hostname = host.hostname;
-                };
+      homeConfigurations = nixpkgs.lib.foldl' (
+        configs: host:
+        configs
+        // {
+          "${user}@${host.hostname}" = home-manager.lib.homeManagerConfiguration {
+            inherit pkgs;
+            extraSpecialArgs = {
+              inherit
+                inputs
+                homeStateVersion
+                user
+                pkgsStable
+                system
+                ;
+              hostname = host.hostname;
+            };
 
-                modules = [
-                  ./home/home.nix
-                  inputs.stylix.homeModules.stylix
-                ];
-              };
-            }
-        )
-        { }
-        hosts;
+            modules = [
+              ./home/home.nix
+              inputs.stylix.homeModules.stylix
+            ];
+          };
+        }
+      ) { } hosts;
     };
 }
