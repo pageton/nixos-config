@@ -57,6 +57,11 @@
     # Enable core desktop theming
     gtk.enable = true; # Apply theme to GTK applications
     qt.enable = true; # Apply theme to Qt applications
+    # Configure Zen Browser theming
+    zen-browser = {
+      enable = true; # Enable Zen Browser theming
+      profileNames = [ "default" ]; # Apply to default profile
+    };
   };
 
   fonts.fontconfig.enable = true;
