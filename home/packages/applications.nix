@@ -3,7 +3,6 @@
 with pkgs;
 [
   tor-browser # Tor browser
-  brave # Brave browser
   telegram-desktop # Telegram desktop
   obsidian # Obsidian
   vlc # VLC media player
