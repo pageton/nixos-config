@@ -2,14 +2,15 @@
 {
   wayland.windowManager.hyprland.settings = {
     bind = [
-      "$mod,T, exec, uwsm app -- ${pkgs.alacritty}/bin/alacritty"
-      "$mod,B, exec, brave"
+      "$mod, Return, exec, uwsm app -- ${pkgs.ghostty}/bin/ghostty +new-window"
+      "$mod, T, exec, uwsm app -- ${pkgs.alacritty}/bin/alacritty --class=scratchpad"
+      "$mod,B, exec, zen"
       "$shiftMod,HOME, exec,  uwsm app -- ${pkgs.hyprlock}/bin/hyprlock"
       "$mod,X, exec, powermenu"
       "$mod,SPACE, exec, menu"
       "$mod,C, exec, quickmenu"
       "$shiftMod,SPACE, exec, hyprfocus-toggle"
-      "$mod, E, exec, ${pkgs.alacritty}/bin/alacritty -e yazi"
+      "$mod, E, exec, ${pkgs.ghostty}/bin/ghostty -e yazi"
       "$mod, W, exec, window-switcher"
       "$shiftMod, R, exec, dolphin"
       "$mod,Q, killactive,"

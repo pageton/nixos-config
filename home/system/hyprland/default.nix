@@ -146,13 +146,38 @@ in
         "pin, title:^(Picture-in-Picture)$"
         "pin,class:^(showmethekey-gtk)$" # Pin window to stay visible
         "idleinhibit focus, class:^(mpv|.+exe|celluloid)$"
-        "idleinhibit focus, class:^(brave-browser)$, title:^(.*YouTube.*)$"
-        "idleinhibit fullscreen, class:^(brave-browser)$"
+        "idleinhibit focus, class:^(zen)$, title:^(.*YouTube.*)$"
+        "opacity 0.95, class:(zen)" # Browser transparency
+        "idleinhibit fullscreen, class:^(zen)$"
         "dimaround, class:^(gcr-prompter)$"
         "dimaround, class:^(xdg-desktop-portal-gtk)$"
         "dimaround, class:^(polkit-gnome-authentication-agent-1)$"
         "dimaround, class:^(brave-browser)$, title:^(File Upload)$"
-        "opacity 0.95 0.85, class:^(Alacritty|kitty|foot)$" # Terminal transparency
+
+        # Special workspace rules
+        "bordersize 0, floating:0, onworkspace:w[t1]" # No borders on special workspace
+
+        # General window behavior
+        "suppressevent maximize, class:.*" # Disable maximize for all windows
+        "nofocus,class:^$,title:^$,xwayland:1,floating:1,fullscreen:0,pinned:0"
+
+        # XWayland video bridge (fixes screen sharing)
+        "opacity 0.0 override, class:^(xwaylandvideobridge)$"
+        "noanim, class:^(xwaylandvideobridge)$"
+        "noinitialfocus, class:^(xwaylandvideobridge)$"
+        "maxsize 1 1, class:^(xwaylandvideobridge)$"
+        "noblur, class:^(xwaylandvideobridge)$"
+        "nofocus, class:^(xwaylandvideobridge)$"
+
+        # Scratchpad configuration
+        "float, title:^(scratchpad)$"
+        "float,class:^(scratchpad)$"
+        "noanim,class:^(scratchpad)$"
+        "pin,class:^(scratchpad)$"
+        "size 60% 60%,class:^(scratchpad)$"
+        "center,class:^(scratchpad)$"
+
+        "opacity 0.95 0.85, class:^(Alacritty|kitty|foot|Ghostty)$" # Terminal transparency
         "rounding 0, xwayland:1"
       ];
 
