@@ -1,7 +1,8 @@
-{ inputs
-, user
-, pkgs
-, ...
+{
+  inputs,
+  user,
+  pkgs,
+  ...
 }:
 
 {
