@@ -10,5 +10,6 @@
     ./gpg
     ./obs
     ./glance
+    ./zen
   ];
 }
