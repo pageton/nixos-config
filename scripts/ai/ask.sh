@@ -9,9 +9,9 @@ set -euo pipefail
 # Configuration
 # SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"  # Currently unused
 API_URL="https://api.z.ai/api/coding/paas/v4"
-DEFAULT_MODEL="glm-4.5-air"
+DEFAULT_MODEL="glm-4.6"
 DEEP_MODEL="glm-4.6"
-API_KEY_FILE="$HOME/.config/zai"
+API_KEY_FILE="$HOME/zai"
 
 # Colors for output
 GREEN='\033[0;32m'

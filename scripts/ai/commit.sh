@@ -25,18 +25,18 @@ print_error() { echo -e "${RED}✗${NC} $1"; }
 show_usage() {
     echo "Usage: $0 [options]"
     echo ""
-    echo "Generate conventional commit messages based on staged changes."
+    echo "Generate conventional commit messages based on staged changes using GLM-4.6."
     echo "This script analyzes git staged changes and creates proper commit messages."
     echo ""
     echo "Examples:"
-    echo "  $0              # Generate commit message for staged changes"
-    echo "  $0 -d           # Use deep model for better analysis"
+    echo "  $0              # Generate commit messages for staged changes"
+    echo "  $0 -h           # Show this help message"
     echo ""
     echo "The script will:"
     echo "  1. Check for staged changes"
-    echo "  2. Analyze the diff content"
-    echo "  3. Generate conventional commit message"
-    echo "  4. Copy to clipboard for easy use"
+    echo "  2. Analyze the diff content and repository context"
+    echo "  3. Generate 3 conventional commit message options"
+    echo "  4. Copy first option to clipboard for easy use"
 }
 
 # Check if ask.sh exists
@@ -46,18 +46,19 @@ if [[ ! -f "$ASK_SCRIPT" ]]; then
 fi
 
 # Parse command line arguments
-USE_DEEP_MODEL=false
-if [[ $# -gt 0 ]]; then
-    if [[ "$1" == "-d" || "$1" == "--deep" ]]; then
-        USE_DEEP_MODEL=true
-        shift
-    fi
-
-    if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-        show_usage
-        exit 0
-    fi
-fi
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help)
+            show_usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            show_usage
+            exit 1
+            ;;
+    esac
+done
 
 # Check if we're in a git repository
 if ! git rev-parse --git-dir >/dev/null 2>&1; then
@@ -93,6 +94,112 @@ get_branch_context() {
     fi
 }
 
+analyze_project_type() {
+    echo "Project Type Analysis:"
+
+    # Detect project type from files and structure
+    local project_type="Unknown"
+    local languages=()
+    local frameworks=()
+    local build_systems=()
+
+    # Analyze file extensions and patterns
+    local files
+    files="$(git ls-files 2>/dev/null | head -50 || echo "")"
+
+    # Detect languages
+    if echo "$files" | grep -E '\.(js|jsx|ts|tsx|json)$' >/dev/null; then
+        languages+=("JavaScript/TypeScript")
+        if echo "$files" | grep -E 'package\.json$' >/dev/null; then
+            build_systems+=("npm/yarn")
+        fi
+        if echo "$files" | grep -E 'react|jsx|tsx' >/dev/null; then
+            frameworks+=("React")
+        fi
+        if echo "$files" | grep -E 'vue|svelte|angular' >/dev/null; then
+            frameworks+=("Frontend Framework")
+        fi
+    fi
+
+    if echo "$files" | grep -E '\.(py)$' >/dev/null; then
+        languages+=("Python")
+        if echo "$files" | grep -E 'requirements\.txt|setup\.py|pyproject\.toml$' >/dev/null; then
+            build_systems+=("pip/poetry")
+        fi
+        if echo "$files" | grep -E 'django|flask|fastapi' >/dev/null; then
+            frameworks+=("Web Framework")
+        fi
+    fi
+
+    if echo "$files" | grep -E '\.(rs)$' >/dev/null; then
+        languages+=("Rust")
+        if echo "$files" | grep -E 'Cargo\.toml$' >/dev/null; then
+            build_systems+=("Cargo")
+        fi
+    fi
+
+    if echo "$files" | grep -E '\.(go)$' >/dev/null; then
+        languages+=("Go")
+        if echo "$files" | grep -E 'go\.mod$' >/dev/null; then
+            build_systems+=("Go modules")
+        fi
+    fi
+
+    if echo "$files" | grep -E '\.(java|kt)$' >/dev/null; then
+        languages+=("Java/Kotlin")
+        if echo "$files" | grep -E 'pom\.xml|build\.gradle$' >/dev/null; then
+            build_systems+=("Maven/Gradle")
+        fi
+    fi
+
+    if echo "$files" | grep -E '\.(c|cpp|h|hpp)$' >/dev/null; then
+        languages+=("C/C++")
+        if echo "$files" | grep -E 'Makefile|CMakeLists\.txt$' >/dev/null; then
+            build_systems+=("Make/CMake")
+        fi
+    fi
+
+    if echo "$files" | grep -E '\.(nix|flake)$' >/dev/null; then
+        languages+=("Nix/NixOS")
+        build_systems+=("Nix Flakes")
+    fi
+
+    if echo "$files" | grep -E '\.dockerfile$|docker-compose\.yml$' >/dev/null; then
+        frameworks+=("Docker")
+    fi
+
+    # Detect CI/CD
+    if echo "$files" | grep -E '\.(yml|yaml)$' | grep -E 'github|gitlab|ci|cd' >/dev/null; then
+        frameworks+=("CI/CD")
+    fi
+
+    # Detect project type
+    if echo "$files" | grep -E 'README|CHANGELOG|LICENSE' >/dev/null; then
+        project_type="Library/Package"
+    elif echo "$files" | grep -E 'src|app|index\.' >/dev/null; then
+        project_type="Application"
+    elif echo "$files" | grep -E '\.(nix|yaml|toml)$' >/dev/null; then
+        project_type="Configuration"
+    elif echo "$files" | grep -E '\.(md|txt|rst)$' >/dev/null; then
+        project_type="Documentation"
+    fi
+
+    echo "  Type: $project_type"
+    [[ ${#languages[@]} -gt 0 ]] && echo "  Languages: ${languages[*]}"
+    [[ ${#frameworks[@]} -gt 0 ]] && echo "  Frameworks: ${frameworks[*]}"
+    [[ ${#build_systems[@]} -gt 0 ]] && echo "  Build Systems: ${build_systems[*]}"
+
+    # File structure insights
+    local total_files
+    total_files="$(echo "$files" | wc -l | tr -d ' ')"
+    echo "  Total files in repo: $total_files"
+
+    # Directory structure
+    local dirs
+    dirs="$(echo "$files" | xargs dirname | sort -u | head -10 | tr '\n' ' ')"
+    [[ -n "$dirs" ]] && echo "  Main directories: $dirs"
+}
+
 analyze_changes() {
     echo "Change analysis:"
 
@@ -112,7 +219,7 @@ analyze_changes() {
     local diff_size
     diff_size="$(GIT_PAGER=cat git diff --cached | wc -l)"
     if [[ "$diff_size" -gt 1000 ]]; then
-        echo "[WARNING] Large diff detected ($diff_size lines). Using summarized analysis."
+        print_warning "Large diff detected ($diff_size lines). Using summarized analysis."
         local diff_stat
         diff_stat="$(GIT_PAGER=cat git diff --cached --stat=120,120)"
         echo "$diff_stat"
@@ -129,95 +236,203 @@ analyze_changes() {
     fi
 }
 
+# Loading animation
+show_loading() {
+    local pid=$1
+    local delay=0.1
+    local spinstr='|/\-'
+    while ps -p "$pid" >/dev/null 2>&1; do
+        local temp=${spinstr#?}
+        printf "\r Generating commits... %c" "$spinstr"
+        local spinstr=$temp${spinstr%"$temp"}
+        sleep $delay
+    done
+    # Clear the entire line properly
+    printf "\r\033[K"
+}
+
 # Check if there are staged changes
 if ! git diff --cached --quiet; then
-    print_info "Analyzing repository context and staged changes..."
+    # Get comprehensive context silently
+    get_branch_context >/dev/null
+    get_commit_context >/dev/null
+    analyze_changes >/dev/null
 
-    # Get comprehensive context
-    echo ""
-    get_branch_context
-    echo ""
-    get_commit_context
-    echo ""
-    analyze_changes
+    # Enhanced intelligent system prompt with deep context awareness
+    SYSTEM_PROMPT="You are an expert software engineer and conventional commit specialist. Analyze the repository structure, programming languages, frameworks, recent commit patterns, and current changes to generate exactly ONE optimal conventional commit message.
 
-    # Enhanced system prompt with repository context awareness
-    SYSTEM_PROMPT="You are an expert in Conventional Commits specification and repository analyst. Analyze the provided repository context, recent commit patterns, and current changes to generate exactly ONE proper conventional commit message.
+INTELLIGENT CONTEXT ANALYSIS:
+1. Project Type Detection:
+   - Identify if web app, CLI tool, library, config, docs, etc.
+   - Detect programming languages and frameworks used
+   - Recognize build systems (npm, cargo, make, etc.)
+   - Identify testing frameworks and CI/CD setup
 
-CONTEXT ANALYSIS GUIDELINES:
-- Consider recent commit history for consistency patterns
-- Understand branch context (feature branch vs main branch)
-- Analyze file types and categorize change impacts
-- Choose scope based on main component affected
-- Consider the change magnitude and user impact
+2. Change Impact Assessment:
+   - Categorize by affected components (frontend, backend, api, config, etc.)
+   - Determine user-facing vs internal changes
+   - Assess breaking changes vs patches
+   - Identify performance vs feature vs bug fix impacts
 
-CRITICAL: You must provide ONLY ONE commit message, not multiple options.
+3. Semantic Analysis:
+   - Understand the intent behind code changes
+   - Distinguish between additions, modifications, deletions
+   - Recognize dependency updates vs code changes
+   - Identify configuration vs implementation changes
 
-Rules:
-1. Use format: <type>[optional scope]: <description>
-2. Types: feat, fix, docs, style, refactor, test, chore, perf, ci, build, security, release, revert
-3. Scope: reflect main component (auth, api, ui, config, scripts, ai, nixos, modules)
-4. Description: short, imperative, user-facing impact focus
-5. Maintain consistency with recent commit patterns
-6. Use present tense, imperative mood ('add' not 'added')
-7. Keep description under 50 characters when possible
-8. For feature branches, use more descriptive scopes
-9. For main branch, be more conservative with types
+COMMIT TYPE SELECTION STRATEGY:
+- feat: NEW functionality, features, capabilities for end users
+- fix: BUG fixes, error resolution, broken functionality
+- refactor: CODE restructuring without functional changes
+- perf: PERFORMANCE improvements, optimizations
+- docs: DOCUMENTATION only changes (README, comments, docs)
+- style: CODE style, formatting, linting changes only
+- test: TEST additions, modifications, improvements
+- chore: MAINTENANCE, dependencies, build process, config
+- ci: CI/CD, pipeline, automation changes
+- build: BUILD system, compilation, packaging changes
+- security: SECURITY fixes, vulnerabilities, hardening
+- revert: UNDO of previous commits
 
-Change Type Guidelines:
-- New functionality: feat[scope]: add feature description
-- Bug fixes: fix[scope]: resolve issue description
-- Documentation: docs[scope]: update documentation type
-- Refactoring: refactor[scope]: improve code structure
-- Configuration: chore[scope]: update configuration
-- Performance: perf[scope]: optimize performance aspect
-- Build/CI: ci[scope]: improve build/deployment process
+SCOPE DETERMINATION:
+- Use natural component boundaries (auth, api, ui, db, utils)
+- Reflect logical grouping (user management, payments, analytics)
+- Consider framework/module boundaries (react, server, client)
+- Keep it concise but descriptive (2-15 characters max)
 
-Examples:
-- feat(ai): add conventional commit message generator
-- fix(nixos): resolve SOPS configuration issue
-- docs(scripts): update AI assistant documentation
-- refactor(modules): simplify configuration structure
-- chore(config): update development environment settings
+DESCRIPTION GUIDELINES:
+- Imperative mood: \"add\" not \"added\", \"fix\" not \"fixed\"
+- Present tense, active voice
+- Focus on WHAT changed, not HOW
+- User impact perspective when applicable
+- Maximum 72 characters total (including scope)
+- Minimum impact description, avoid redundancy
 
-IMPORTANT: Generate exactly ONE commit message. Consider the repository context and recent patterns for consistency."
+INTELLIGENT EXAMPLES BY PROJECT TYPE:
+
+Web Application:
+- feat(auth): implement user login with OAuth2
+- fix(api): resolve user profile data leak
+- refactor(components): extract reusable button component
+- perf(images): lazy load product images
+- docs(readme): update setup instructions
+
+CLI Tool:
+- feat(cli): add batch processing mode
+- fix(parser): handle malformed input gracefully
+- refactor(commands): simplify command structure
+- test(unit): add argument validation tests
+- chore(deps): update dependencies to latest
+
+Library/Package:
+- feat(api): add async streaming support
+- fix(types): resolve TypeScript typing errors
+- refactor(core): simplify internal architecture
+- docs(api): update JSDoc for public methods
+- build(release): prepare v2.0.0 release
+
+Configuration/Infra:
+- fix(docker): resolve container networking issue
+- chore(k8s): update deployment manifests
+- security(ssl): enforce HTTPS redirects
+- ci(github): add automated testing workflow
+- refactor(terraform): simplify resource structure
+
+ADVANCED ANALYSIS RULES:
+1. Prioritize user impact over implementation details
+2. Consider the size and scope of changes
+3. Maintain consistency with project's commit style
+4. Use appropriate technical language for the project
+5. Avoid vague terms like \"update\" or \"improve\"
+6. Be specific about what functionality changed
+
+CONTEXTUAL AWARENESS:
+- Dependency updates: chore(deps): update react to v18
+- Configuration changes: fix(config): resolve environment variables
+- Refactoring large codebases: refactor(modules): restructure data access layer
+- Breaking changes: feat(api): breaking: change user endpoint response format
+- Performance optimizations: perf(database): optimize query performance
+- Security patches: security(auth): prevent session hijacking
+
+CRITICAL: Generate exactly 3 distinct commit message options, each with a different perspective on the changes. Each option should follow conventional commit format but focus on different aspects (user impact, technical implementation, or maintenance).
+
+Provide exactly 3 numbered options:
+1. [User-focused perspective] - emphasizes functionality and user impact
+2. [Technical perspective] - emphasizes implementation details and code changes
+3. [Maintenance perspective] - emphasizes dependencies, configuration, or housekeeping
+
+Each option should be a complete, valid conventional commit message on its own line."
+
+    # Enhanced repository analysis with project intelligence
+    PROJECT_INSIGHTS=$(analyze_project_type)
 
     # Get comprehensive repository analysis
     REPO_ANALYSIS=$(cat <<EOF
 Repository Analysis:
 
+=== PROJECT TYPE & STRUCTURE ===
+$PROJECT_INSIGHTS
+
+=== GIT CONTEXT ===
 $(get_branch_context)
 
 $(get_commit_context 5)
 
+=== CURRENT CHANGES ===
 $(analyze_changes)
 EOF
 )
 
-    AI_PROMPT="Analyze this complete repository context and generate a conventional commit message:
+    AI_PROMPT="Analyze this complete repository context and generate 3 conventional commit message options:
 
 $REPO_ANALYSIS
 
-Based on the repository context, recent commit patterns, branch information, and current changes, provide an appropriate conventional commit message that maintains consistency with the project's commit history."
+Based on the repository context, recent commit patterns, branch information, and current changes, provide 3 distinct conventional commit message options from different perspectives."
 
-    # Call ask.sh to generate commit message, capturing only the final result
-    if [[ "$USE_DEEP_MODEL" == "true" ]]; then
-        COMMIT_MESSAGE=$("$ASK_SCRIPT" -s "$SYSTEM_PROMPT" -d "$AI_PROMPT" 2>/dev/null | tail -1)
-    else
-        COMMIT_MESSAGE=$("$ASK_SCRIPT" -s "$SYSTEM_PROMPT" "$AI_PROMPT" 2>/dev/null | tail -1)
+    # Call ask.sh to generate commit message options
+    OUTPUT_FILE=$(mktemp)
+    "$ASK_SCRIPT" -s "$SYSTEM_PROMPT" "$AI_PROMPT" 2>/dev/null > "$OUTPUT_FILE" &
+    bg_pid=$!
+    show_loading $bg_pid
+    wait $bg_pid
+    COMMIT_OPTIONS=$(tr -d '\0' < "$OUTPUT_FILE")
+    rm -f "$OUTPUT_FILE"
+
+    # Extract numbered options from the AI response
+    option1=$(echo "$COMMIT_OPTIONS" | grep -E '^1\.' | sed 's/^1\. *//' | head -1)
+    option2=$(echo "$COMMIT_OPTIONS" | grep -E '^2\.' | sed 's/^2\. *//' | head -1)
+    option3=$(echo "$COMMIT_OPTIONS" | grep -E '^3\.' | sed 's/^3\. *//' | head -1)
+
+    # If no numbered options found, try to extract any commit messages
+    if [[ -z "$option1" ]]; then
+        all_commits=$(echo "$COMMIT_OPTIONS" | grep -E '^(feat|fix|refactor|docs|style|test|chore|perf|ci|build|security|release|revert)' | head -3)
+
+        IFS=$'\n' read -r option1 option2 option3 <<< "$all_commits"
     fi
 
-    # Clean up the commit message (remove extra whitespace)
-    COMMIT_MESSAGE=$(echo "$COMMIT_MESSAGE" | xargs)  # xargs trims whitespace
-
-    # Copy to clipboard
-    if command -v wl-copy >/dev/null 2>&1; then
-        echo "$COMMIT_MESSAGE" | wl-copy
-    fi
-
+    # Display the 3 options
     echo ""
-    # Display only the commit message
-    echo "$COMMIT_MESSAGE"
+    print_info "Suggested commit messages:"
+    echo ""
+
+    if [[ -n "$option1" ]]; then
+        echo "1. $option1"
+    fi
+
+    if [[ -n "$option2" ]]; then
+        echo "2. $option2"
+    fi
+
+    if [[ -n "$option3" ]]; then
+        echo "3. $option3"
+    fi
+
+    # Copy first option to clipboard for convenience
+    if [[ -n "$option1" ]] && command -v wl-copy >/dev/null 2>&1; then
+        echo "$option1" | wl-copy
+        echo ""
+        print_success "First option copied to clipboard!"
+    fi
 
 else
     print_error "No staged changes found"
