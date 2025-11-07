@@ -645,7 +645,7 @@ vim.lsp.config["gopls"] = {
 			gofumpt = true,
 			completeUnimported = true,
 			usePlaceholders = true,
-			hoverKind = "Structured",
+			hoverKind = "FullDocumentation",
 			linksInHover = true,
 			experimentalPostfixCompletions = true,
 		},
