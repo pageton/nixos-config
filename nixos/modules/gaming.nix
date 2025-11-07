@@ -35,7 +35,7 @@
 
     environment.systemPackages = with pkgs; [
       mangohud # Vulkan overlay
-      protonup # Proton compatibility tool
+      protonup-ng # Proton compatibility tool
     ];
   };
 }

@@ -5,7 +5,7 @@
 {
   environment.sessionVariables = rec {
     # Default terminal emulator for applications that need one
-    TERMINAL = "ghostty";
+    TERMINAL = "alacritty";
 
     # Default text editor for applications that need one
     EDITOR = "nvim";

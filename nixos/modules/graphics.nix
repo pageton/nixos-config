@@ -64,7 +64,7 @@ in
       # Additional graphics packages for full hardware acceleration
       extraPackages = with pkgs; [
         nvidia-vaapi-driver # NVIDIA VA-API driver for video acceleration
-        vaapiVdpau # VDPAU backend for VA-API
+        libva-vdpau-driver # VDPAU backend for VA-API
         libvdpau-va-gl # OpenGL backend for VDPAU
         mesa # Mesa Vulkan drivers
         egl-wayland # EGL platform for Wayland
@@ -87,7 +87,7 @@ in
   # Additional graphics debugging and utility packages
   environment.systemPackages = with pkgs; [
     vulkan-tools # Vulkan debugging and information tools
-    glxinfo # OpenGL and GLX information utility
+    mesa-demos # OpenGL and GLX information utility
     libva-utils # VA-API debugging and testing utilities
   ];
 
