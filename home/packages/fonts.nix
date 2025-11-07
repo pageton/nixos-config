@@ -7,7 +7,7 @@ with pkgs;
   noto-fonts # Comprehensive font collection
   noto-fonts-lgc-plus # Extended language coverage
   texlivePackages.hebrew-fonts # Hebrew language support
-  noto-fonts-emoji # Emoji font support
+  noto-fonts-color-emoji # Emoji font support
   font-awesome # Icon font for UI elements
   powerline-fonts # Special characters for status bars
   powerline-symbols # Additional powerline symbols
