@@ -20,9 +20,12 @@
     };
 
     oh-my-zsh = {
-      enable = true;
-      custom = builtins.toString ./custom_omz_dir;
-      theme = "oxide";
+      enable = true; # Enable Oh My Zsh framework
+      custom = builtins.path {
+        path = ./custom_omz_dir;
+        name = "oh-my-zsh-custom";
+      }; # Custom themes and plugins
+      theme = "oxide"; # Custom oxide theme
 
       plugins = [
         # Core functionality
