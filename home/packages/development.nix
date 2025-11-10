@@ -8,6 +8,9 @@
 ++ (with pkgs; [
   rustc # Rust compiler
   cargo # Rust package manager
+  rust-analyzer # Rust language server
+  clippy # Rust linter
+  rustfmt # Rust formatter
   sqlite # SQLite database
   just # Justfile runner
   lua-language-server # Lua language server
