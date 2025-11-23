@@ -1,10 +1,9 @@
 # Main NixOS configuration for the 'thinkpad' host.
 
-{
-  pkgs,
-  stateVersion,
-  hostname,
-  ...
+{ pkgs
+, stateVersion
+, hostname
+, ...
 }:
 
 {
@@ -13,7 +12,6 @@
     ./local-packages.nix
     ../../nixos/modules
     ./modules
-    ../../themes/catppuccin.nix
   ];
 
   networking.hostName = hostname;
