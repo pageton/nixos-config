@@ -15,5 +15,4 @@ with pkgs;
   wineWowPackages.stagingFull
   samba
   kdePackages.dolphin # KDE file manager
-  materialgram
 ]
