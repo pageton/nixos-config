@@ -1,8 +1,7 @@
-{
-  lib,
-  pkgs,
-  config,
-  ...
+{ lib
+, pkgs
+, config
+, ...
 }:
 {
   options.theme = lib.mkOption {
@@ -32,6 +31,18 @@
 
   config.stylix = {
     enable = true;
+
+    targets = {
+      # Enable core desktop theming
+      gtk.enable = true; # Apply theme to GTK applications
+      qt.enable = true; # Apply theme to Qt applications
+      helix.enable = false;
+      # Configure Zen Browser theming
+      zen-browser = {
+        enable = true; # Enable Zen Browser theming
+        profileNames = [ "default" ]; # Apply to default profile
+      };
+    };
 
     # Mocha
     # See https://tinted-theming.github.io/tinted-gallery/ for more schemes
