@@ -11,5 +11,8 @@
     ./obs
     ./glance
     ./zen
+    ./brave
+    ./helix
+    ./zellij
   ];
 }
