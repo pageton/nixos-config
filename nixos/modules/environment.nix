@@ -8,7 +8,7 @@
     TERMINAL = "alacritty";
 
     # Default text editor for applications that need one
-    EDITOR = "nvim";
+    EDITOR = "hx";
 
     # XDG Base Directory specification for user binaries
     XDG_BIN_HOME = "$HOME/.local/bin";

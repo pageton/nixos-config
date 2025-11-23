@@ -89,6 +89,7 @@ in
     vulkan-tools # Vulkan debugging and information tools
     mesa-demos # OpenGL and GLX information utility
     libva-utils # VA-API debugging and testing utilities
+    cudaPackages.cudatoolkit # CUDA development tools
   ];
 
   # Udev rules for NVIDIA device access

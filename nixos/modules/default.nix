@@ -27,5 +27,6 @@
     ./cleanup.nix
     ./browser-deps.nix
     ./stability.nix
+    ./virtualisation.nix
   ];
 }
