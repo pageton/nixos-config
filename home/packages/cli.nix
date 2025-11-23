@@ -20,4 +20,5 @@ with pkgs;
   yazi # TUI file manager (fast, ranger-like)
   gh # GitHub CLI tool
   cloudflared # Cloudflare tunnel CLI tool
+  lazydocker # Terminal UI for Docker management
 ]
