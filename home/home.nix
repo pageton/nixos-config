@@ -1,9 +1,8 @@
-{
-  homeStateVersion,
-  user,
-  pkgs,
-  pkgsStable,
-  ...
+{ homeStateVersion
+, user
+, pkgs
+, pkgsStable
+, ...
 }:
 
 {
@@ -12,7 +11,7 @@
     ./programs
     ./scripts
     ./secrets
-    ../themes/catppuccin.nix
+    ./themes/catppucin.nix
   ];
 
   home = {
@@ -51,17 +50,6 @@
     QT_ENABLE_HIGHDPI_SCALING = "1"; # Enable high DPI scaling
     GDK_SCALE = "1"; # GTK scaling for consistency
     GDK_DPI_SCALE = "1"; # GTK DPI scaling
-  };
-
-  stylix.targets = {
-    # Enable core desktop theming
-    gtk.enable = true; # Apply theme to GTK applications
-    qt.enable = true; # Apply theme to Qt applications
-    # Configure Zen Browser theming
-    zen-browser = {
-      enable = true; # Enable Zen Browser theming
-      profileNames = [ "default" ]; # Apply to default profile
-    };
   };
 
   fonts.fontconfig.enable = true;
