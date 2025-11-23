@@ -1,8 +1,7 @@
-{
-  config,
-  lib,
-  hostname,
-  ...
+{ config
+, lib
+, hostname
+, ...
 }:
 let
   border-size = config.theme.border-size;
@@ -43,6 +42,7 @@ in
 
       exec-once = [
         "dbus-update-activation-environment --systemd --all &"
+        "systemctl --user start glance"
         "systemctl --user enable --now hyprpaper.service &"
         "wl-paste -t text --watch clipman store &" # Primary clipboard
         "swayosd-server &"
@@ -146,9 +146,9 @@ in
         "pin, title:^(Picture-in-Picture)$"
         "pin,class:^(showmethekey-gtk)$" # Pin window to stay visible
         "idleinhibit focus, class:^(mpv|.+exe|celluloid)$"
-        "idleinhibit focus, class:^(zen)$, title:^(.*YouTube.*)$"
+        "idleinhibit focus, class:^(zen|brave-browser)$, title:^(.*YouTube.*)$"
         "opacity 0.95, class:(zen)" # Browser transparency
-        "idleinhibit fullscreen, class:^(zen)$"
+        "idleinhibit fullscreen, class:^(zen|brave-browser)$"
         "dimaround, class:^(gcr-prompter)$"
         "dimaround, class:^(xdg-desktop-portal-gtk)$"
         "dimaround, class:^(polkit-gnome-authentication-agent-1)$"
