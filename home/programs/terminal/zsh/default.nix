@@ -43,7 +43,6 @@
 
         # System utilities
         "systemd"
-        "tmux"
         "history-substring-search"
 
         # Enhanced navigation
@@ -71,7 +70,7 @@
       LS_COLORS = "di=1;34:ln=1;36:so=1;35:pi=1;33:ex=1;32:bd=1;33:cd=1;33:su=1;31:sg=1;31:tw=1;34:ow=1;34";
 
       # Default applications for development
-      EDITOR = "nvim"; # Default text editor
+      EDITOR = "hx"; # Default text editor
       PAGER = "bat"; # Default pager with syntax highlighting
       MANPAGER = "sh -c 'col -bx | bat -l man -p'"; # Enhanced man page viewer
 
@@ -226,11 +225,10 @@
         fi
       }
 
-      # Auto-start Tmux in graphical sessions (skip in TTY)
-      if [ -z "$TMUX" ] && [ -n "$DISPLAY" ]; then
-        tmux attach-session -t default || tmux new-session -s default  # Attach to existing or create new session
+       # Auto-start Zellij in graphical sessions (skip in TTY)
+      if [ -z "$ZELLIJ" ] && [ -n "$DISPLAY" ]; then
+        zellij attach --create default
       fi
-
       # Initialize Universal Wayland Session Manager (UWSM)
       if uwsm check may-start > /dev/null && uwsm select; then
         exec systemd-cat -t uwsm_start uwsm start default  # Start UWSM with logging
