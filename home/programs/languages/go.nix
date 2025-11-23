@@ -67,7 +67,7 @@
       delve # Go debugger
       golangci-lint # Comprehensive Go linter
       air # Live reload for Go applications
-
+      golangci-lint-langserver
       # Code formatting and generation
       gofumpt # Stricter version of gofmt
       golines # Go line formatter
