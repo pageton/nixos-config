@@ -18,4 +18,8 @@
   nil # Nix language server
   nixpkgs-fmt # Nix formatting
   bruno # API Client
+  burpsuite
+  # Container and orchestration tools
+  docker-compose # Docker container orchestration
+  docker # Docker CLI
 ])
