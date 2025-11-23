@@ -4,7 +4,7 @@
     bind = [
       "$mod, Return, exec, uwsm app -- ${pkgs.alacritty}/bin/alacritty"
       "$mod, T, exec, uwsm app -- ${pkgs.alacritty}/bin/alacritty --class=scratchpad"
-      "$mod,B, exec, zen"
+      "$mod,B, exec, brave"
       "$shiftMod,HOME, exec,  uwsm app -- ${pkgs.hyprlock}/bin/hyprlock"
       "$mod,X, exec, powermenu"
       "$mod,SPACE, exec, menu"
@@ -35,7 +35,7 @@
       "$shiftMod,E, exec, ${pkgs.wofi-emoji}/bin/wofi-emoji"
       "$mod,F2, exec, night-shift"
       "$mod,F3, exec, night-shift"
-      "LAlt,P, exec, ${pkgs.hyprpicker}/bin/hyprpicker --autocopy"
+      # "LAlt,P, exec, ${pkgs.hyprpicker}/bin/hyprpicker --autocopy"
       "$ctrlMod, L, exec, hyprctl keyword general:layout dwindle" # Switch to dwindle layout
       "$ctrlMod SHIFT, L, exec, hyprctl keyword general:layout master" # Switch to master layout
     ]
