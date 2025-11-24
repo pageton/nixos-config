@@ -1,5 +1,9 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 
+let
+  homeDir = config.home.homeDirectory;
+  zjstatus = "${homeDir}/System/home/programs/zellij/plugins/zjstatus.wasm";
+in
 {
   imports = [
     ./bindings.nix
@@ -19,7 +23,7 @@
       pane_frames = false;
       mouse_mode = false;
       session_serialization = false;
-      plugins.zjstatus.location = "file:${builtins.toString ./plugins/zjstatus.wasm}";
+      plugins.zjstatus.location = "file:${zjstatus}";
       themes = {
         default = {
           bg = "#585b70";
