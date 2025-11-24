@@ -1,5 +1,4 @@
 {
-
   programs.helix.languages = {
     language-server.gopls = {
       command = "gopls";
@@ -33,12 +32,36 @@
       };
     };
 
+    language-server.tabby-ml = {
+      command = "npx";
+      args = [
+        "tabby-agent"
+        "--lsp"
+        "--stdio"
+      ];
+    };
+
     language = [
       {
         name = "go";
-        language-servers = [ "gopls" ];
+        language-servers = [
+          "gopls"
+          "tabby-ml"
+        ];
         auto-format = true;
+        formatter = {
+          command = "gofumpt";
+          args = [ ];
+        };
         comment-token = "//";
+      }
+      {
+        name = "nix";
+        language-servers = [
+          "nixd"
+          "nil"
+          "tabby-ml"
+        ];
       }
     ];
   };

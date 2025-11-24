@@ -53,6 +53,7 @@
       };
       keys.normal = {
         space.w = ":write";
+        space.q = ":quit";
         space.f = ":fmt";
         space.r = ":config-reload";
         g.a = "code_action";
@@ -70,10 +71,15 @@
         A-q = [ ":reflow" ];
         C-y = [ "scroll_up" ];
         C-e = [ "scroll_down" ];
+        p = "paste_clipboard_before";
+        y = [ "yank_to_clipboard" ];
 
         space.space = {
           b = ":sh git blame -L %{cursor_line},%{cursor_line} %{buffer_name}";
         };
+
+        C-n = "file_picker";
+        C-p = "file_picker";
 
         A-c = {
           u = ":pipe ccase -t upper";
@@ -101,8 +107,6 @@
             "goto_definition"
           ];
         };
-        p = "paste_clipboard_before";
-        y = "yank_to_clipboard";
       };
       keys.insert = {
         j.k = "normal_mode";
@@ -131,6 +135,7 @@
           s = ":pipe ccase -t snake";
           k = ":pipe ccase -t kebab";
         };
+        y = [ "yank_to_clipboard" ];
         A-q = [ ":reflow" ];
         g.f = {
           c = [ "goto_file" ];
