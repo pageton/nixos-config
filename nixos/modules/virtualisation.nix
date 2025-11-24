@@ -8,6 +8,7 @@
     # Docker container runtime
     docker = {
       enable = true;
+      enableNvidia = true;
       enableOnBoot = false; # Enable Docker socket but not daemon
     };
   };
