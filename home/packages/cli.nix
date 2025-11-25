@@ -21,4 +21,5 @@ with pkgs;
   gh # GitHub CLI tool
   cloudflared # Cloudflare tunnel CLI tool
   lazydocker # Terminal UI for Docker management
+  zip # Archiving tool
 ]
