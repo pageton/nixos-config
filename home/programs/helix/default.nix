@@ -9,20 +9,30 @@
     settings = {
       theme = "catppuccin_mocha";
       editor = {
+
         file-picker = {
           hidden = false;
           ignore = false;
           git-ignore = true;
         };
+
         whitespace.render = {
           newline = "none";
           space = "all";
           tab = "all";
         };
+
         lsp = {
           display-messages = true;
           display-inlay-hints = true;
         };
+
+        cursor-shape = {
+          normal = "block";
+          insert = "bar";
+          select = "block";
+        };
+
         line-number = "relative";
         end-of-line-diagnostics = "hint";
         cursorline = true;
@@ -57,22 +67,46 @@
         space.f = ":fmt";
         space.r = ":config-reload";
         g.a = "code_action";
+
+        V = [
+          "select_mode"
+          "extend_to_line_bounds"
+        ];
+
         C-k = [
           "extend_to_line_bounds"
           "delete_selection"
           "move_line_up"
-          "paste_before"
+          "paste_clipboard_before"
         ];
+
+        D = [
+          "extend_to_line_bounds"
+          "delete_selection"
+        ];
+
         C-j = [
           "extend_to_line_bounds"
           "delete_selection"
-          "paste_after"
+          "paste_clipboard_after"
         ];
         A-q = [ ":reflow" ];
         C-y = [ "scroll_up" ];
         C-e = [ "scroll_down" ];
-        p = "paste_clipboard_before";
+
+        p = [
+          "delete_selection"
+          "paste_clipboard_before"
+        ];
+
+        c = [
+          "yank_to_clipboard"
+          "delete_selection"
+        ];
+
         y = [ "yank_to_clipboard" ];
+
+        R = "redo";
 
         space.space = {
           b = ":sh git blame -L %{cursor_line},%{cursor_line} %{buffer_name}";
@@ -136,7 +170,35 @@
           k = ":pipe ccase -t kebab";
         };
         y = [ "yank_to_clipboard" ];
+        C-k = [
+          "extend_to_line_bounds"
+          "delete_selection"
+          "move_line_up"
+          "paste_clipboard_before"
+        ];
+
+        C-j = [
+          "extend_to_line_bounds"
+          "delete_selection"
+          "paste_clipboard_after"
+        ];
+
+        p = [
+          "delete_selection"
+          "paste_clipboard_before"
+        ];
+
+        c = [
+          "yank_to_clipboard"
+          "delete_selection"
+        ];
+
+        d = [
+          "delete_selection"
+        ];
+
         A-q = [ ":reflow" ];
+
         g.f = {
           c = [ "goto_file" ];
           v = [
@@ -144,6 +206,7 @@
             "jump_view_up"
             "goto_file"
           ];
+
           h = [
             "hsplit"
             "jump_view_up"

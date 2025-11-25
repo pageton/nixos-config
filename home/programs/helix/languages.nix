@@ -41,7 +41,20 @@
       ];
     };
 
+    language-server.sqls = {
+      command = "sqls";
+      shell = true;
+    };
+
     language = [
+      {
+        name = "sql";
+        language-servers = [
+          "sqls"
+          "tabby-ml"
+        ];
+        file-types = [ "sql" ];
+      }
       {
         name = "go";
         language-servers = [
