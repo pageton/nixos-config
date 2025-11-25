@@ -75,6 +75,7 @@
       impl # Generate interface implementations
       gomodifytags # Modify struct field tags
       goimports-reviser # Go imports formatter
+      sqls # SQL language server
 
       # Security and quality tools
       govulncheck # Go vulnerability checker
