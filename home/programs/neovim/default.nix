@@ -1,4 +1,4 @@
-{ inputs, system, ... }:
+{ inputs, pkgs, ... }:
 
 {
   programs.neovim = {
@@ -7,7 +7,7 @@
     vimAlias = true;
     vimdiffAlias = true;
     defaultEditor = true;
-    package = inputs.neovim-nightly-overlay.packages.${system}.neovim;
+    package = inputs.neovim-nightly-overlay.packages.${pkgs.stdenv.hostPlatform.system}.neovim;
   };
 
   xdg.configFile."nvim/init.lua".source = ./init.lua;
