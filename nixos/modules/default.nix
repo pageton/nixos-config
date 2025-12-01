@@ -1,5 +1,4 @@
 # Imports all NixOS modules.
-
 {
   imports = [
     ./audio.nix
@@ -28,5 +27,6 @@
     ./browser-deps.nix
     ./stability.nix
     ./virtualisation.nix
+    ./mullvad.nix
   ];
 }

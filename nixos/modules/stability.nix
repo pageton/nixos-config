@@ -1,8 +1,6 @@
 # System stability and service conflict resolution.
 # This module implements various stability improvements including memory management,
-
 { pkgsStable, ... }:
-
 {
   services = {
     # Early OOM (Out of Memory) killer to prevent system lockups
