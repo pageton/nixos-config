@@ -1,7 +1,8 @@
-{ lib
-, pkgs
-, config
-, ...
+{
+  lib,
+  pkgs,
+  config,
+  ...
 }:
 {
   options.theme = lib.mkOption {
@@ -31,12 +32,16 @@
 
   config.stylix = {
     enable = true;
+    enableReleaseChecks = false;
 
     targets = {
       # Enable core desktop theming
       gtk.enable = true; # Apply theme to GTK applications
       qt.enable = true; # Apply theme to Qt applications
       helix.enable = false;
+      neovim.enable = false;
+      nvf.enable = false;
+      alacritty.enable = false;
       # Configure Zen Browser theming
       zen-browser = {
         enable = true; # Enable Zen Browser theming
