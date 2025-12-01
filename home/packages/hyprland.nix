@@ -1,7 +1,5 @@
-{ pkgs, pkgsStable, ... }:
-
-(with pkgsStable; [ kdePackages.xwaylandvideobridge ])
-++ (with pkgs; [
+{ pkgs, ... }:
+(with pkgs; [
   xdg-desktop-portal-hyprland
   xdg-desktop-portal-gtk
   wl-clipboard

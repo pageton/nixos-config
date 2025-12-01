@@ -1,5 +1,4 @@
 { pkgs, ... }:
-
 with pkgs;
 [
   tor-browser # Tor browser

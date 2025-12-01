@@ -1,5 +1,4 @@
 { pkgs, ... }:
-
 with pkgs;
 [
   age # File encryption tool (age)
@@ -22,4 +21,5 @@ with pkgs;
   cloudflared # Cloudflare tunnel CLI tool
   lazydocker # Terminal UI for Docker management
   zip # Archiving tool
+  goose-cli
 ]
