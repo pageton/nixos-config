@@ -3,7 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.05";
+    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.11";
 
     home-manager = {
       url = "github:nix-community/home-manager/master";
@@ -31,8 +31,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
-
+    nvf.url = "github:notashelf/nvf";
   };
 
   outputs =
@@ -45,7 +44,7 @@
     }@inputs:
     let
       system = "x86_64-linux";
-      homeStateVersion = "25.05";
+      homeStateVersion = "25.11";
       user = "sadiq";
       pkgs = import nixpkgs {
         inherit system;
@@ -53,7 +52,6 @@
         allowBroken = true; # Don't allow broken packages
         allowInsecure = false; # Don't allow insecure packages
         allowUnsupportedSystem = false; # Don't allow unsupported systems
-        overlays = [ inputs.neovim-nightly-overlay.overlays.default ]; # Add the neovim-nightly-overlay
       };
 
       pkgsStable = import nixpkgs-stable {
@@ -65,7 +63,10 @@
       };
 
       makeSystem =
-        { hostname, stateVersion }:
+        {
+          hostname,
+          stateVersion,
+        }:
         nixpkgs.lib.nixosSystem {
           inherit system;
           specialArgs = {
@@ -86,11 +87,11 @@
       hosts = [
         {
           hostname = "desktop";
-          stateVersion = "25.05";
+          stateVersion = "25.11";
         }
         {
           hostname = "thinkpad";
-          stateVersion = "25.05";
+          stateVersion = "25.11";
         }
       ];
     in
