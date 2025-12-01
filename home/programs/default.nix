@@ -3,7 +3,6 @@
   imports = [
     ./terminal
     ./spicetify
-    ./neovim
     ./languages
     ./terminal
     ./shell
@@ -13,6 +12,6 @@
     ./zen
     ./brave
     ./helix
-    ./zellij
+    ./nvf
   ];
 }

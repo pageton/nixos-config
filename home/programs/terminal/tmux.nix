@@ -62,8 +62,6 @@
        bind -n M-s split-window -v
        bind -n M-v split-window -h
 
-       bind -n M-f new-window -c ~/flake "nvim -c 'Telescope find_files' flake.nix"
-       bind -n M-n new-window -c ~/.config/nvim "nvim -c 'Telescope find_files' init.lua"
        bind -n M-Enter new-window
        bind -n M-c kill-pane
        bind -n M-q kill-window
@@ -100,18 +98,6 @@
         '';
       }
 
-      # Enhanced navigation
-      {
-        plugin = vim-tmux-navigator;
-        extraConfig = ''
-          # Smart pane switching with awareness of Vim splits
-          set -g @vim_navigator_mapping_left "C-h"
-          set -g @vim_navigator_mapping_down "C-j"
-          set -g @vim_navigator_mapping_up "C-k"
-          set -g @vim_navigator_mapping_right "C-l"
-        '';
-      }
-
       # Copy to system clipboard
       {
         plugin = yank;
@@ -131,7 +117,6 @@
 
       # Sensible defaults
       sensible
-      vim-tmux-navigator
       tokyo-night-tmux
     ];
   };
