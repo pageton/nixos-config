@@ -82,7 +82,7 @@
       enableExtraDiagnostics = true;
       enableFormat = true;
       enableTreesitter = true;
-
+      rust.enable = true;
       go.enable = true;
       markdown = {
         enable = true;
