@@ -1,7 +1,8 @@
-{ config
-, lib
-, hostname
-, ...
+{
+  config,
+  lib,
+  hostname,
+  ...
 }:
 let
   border-size = config.theme.border-size;
@@ -15,7 +16,6 @@ let
   isThinkpad = hostname == "thinkpad";
 in
 {
-
   imports = [
     ./animations.nix
     ./bindings.nix
