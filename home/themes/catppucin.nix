@@ -42,6 +42,7 @@
       neovim.enable = false;
       nvf.enable = false;
       alacritty.enable = false;
+      hyprpanel.enable = false;
       # Configure Zen Browser theming
       zen-browser = {
         enable = true; # Enable Zen Browser theming
