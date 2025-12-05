@@ -1,9 +1,7 @@
 # Hyprland Wayland compositor configuration.
 # This module configures Hyprland as the Wayland window manager with
 # Universal Wayland Session Manager (UWSM) and necessary security services.
-
 { pkgs, ... }:
-
 {
   programs.hyprland = {
     enable = true; # Enable Hyprland window manager
@@ -17,6 +15,7 @@
     # PAM services for authentication
     pam.services = {
       hyprlock = { }; # PAM service for Hyprland screen locker
+      sddm.enableGnomeKeyring = true;
     };
   };
 

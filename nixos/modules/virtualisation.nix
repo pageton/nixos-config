@@ -1,14 +1,15 @@
 # Virtualisation (Docker) configuration.
 # This module enables various virtualization technologies for running
-
-{ pkgsStable, user, ... }:
-
+{
+  pkgsStable,
+  user,
+  ...
+}:
 {
   virtualisation = {
     # Docker container runtime
     docker = {
       enable = true;
-      enableNvidia = true;
       enableOnBoot = false; # Enable Docker socket but not daemon
     };
   };
