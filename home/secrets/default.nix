@@ -4,7 +4,6 @@
   pkgs,
   ...
 }:
-
 {
   imports = [ inputs.sops-nix.homeManagerModules.sops ];
 
@@ -25,18 +24,17 @@
       gpg-public-key = {
         path = "/home/${user}/.gnupg/public.key";
       };
-      signing-key = {
-        path = "/home/${user}/.ssh/id_rsa";
+      ssh-private-key = {
+        path = "/home/${user}/.ssh/id_ed25519";
       };
-      signing-pub-key = {
-        path = "/home/${user}/.ssh/id_rsa.pub";
+      ssh-public-key = {
+        path = "/home/${user}/.ssh/id_ed25519.pub";
       };
       zai-api-key = {
         path = "/home/${user}/.config/zai";
       };
 
       wakatime-api-key = { };
-
     };
   };
 
