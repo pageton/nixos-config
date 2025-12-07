@@ -1,5 +1,4 @@
 { config, ... }:
-
 {
   imports = [ ./aliases.nix ];
 
@@ -120,6 +119,10 @@
       setopt HIST_VERIFY          # Show expanded command before execution
       setopt INC_APPEND_HISTORY   # Append commands in execution order
       setopt SHARE_HISTORY        # Share history across shell sessions
+
+      # Enable Wayland support for SDL
+      export SDL_VIDEODRIVER=wayland
+      export SDL_RENDER_DRIVER=opengles2
 
       # Extend PATH with additional directories (early in PATH for priority)
       export PATH="$HOME/.cache/.bun/bin:$HOME/.npm-global/bin:$HOME/.local/share/pnpm:$PATH"  # Bun, NPM, and pnpm global packages

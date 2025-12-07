@@ -1,5 +1,4 @@
 { pkgsStable, ... }:
-
 with pkgsStable;
 [
   coreutils
@@ -12,4 +11,5 @@ with pkgsStable;
   jpegoptim
   fastfetch
   microfetch
+  scrcpy
 ]

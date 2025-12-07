@@ -1,8 +1,6 @@
 { pkgs, ... }:
 {
-  imports = [
-    ./languages.nix
-  ];
+  imports = [ ./languages.nix ];
   programs.helix = {
     enable = true;
     package = pkgs.helix;
@@ -193,9 +191,7 @@
           "delete_selection"
         ];
 
-        d = [
-          "delete_selection"
-        ];
+        d = [ "delete_selection" ];
 
         A-q = [ ":reflow" ];
 

@@ -1,9 +1,5 @@
 # NVF is a Neovim configuration that provides a minimal setup with essential plugins and configurations.
-{
-  inputs,
-  pkgs,
-  ...
-}:
+{ inputs, pkgs, ... }:
 {
   imports = [
     inputs.nvf.homeManagerModules.default

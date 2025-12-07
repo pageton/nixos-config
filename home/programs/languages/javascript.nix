@@ -2,10 +2,11 @@
 # This module configures JavaScript/TypeScript development environment
 # with runtimes, package managers, LSP support, and project workspace setup.
 
-{ config
-, lib
-, pkgs
-, ...
+{
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 
 let

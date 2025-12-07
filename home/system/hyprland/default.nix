@@ -177,8 +177,14 @@ in
         "size 60% 60%,class:^(scratchpad)$"
         "center,class:^(scratchpad)$"
 
+        # Scrcpy
+        "float,class:^(.*scrcpy.*)"
+        "size 503 1119,class:^(.*scrcpy.*)"
+
         "opacity 0.95 0.85, class:^(Alacritty|kitty|foot|Ghostty)$" # Terminal transparency
         "rounding 0, xwayland:1"
+
+        "opacity 1.0 1.0, class:Waydroid"
       ];
 
       layerrule = [

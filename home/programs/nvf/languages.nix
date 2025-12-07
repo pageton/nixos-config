@@ -84,6 +84,7 @@
       enableTreesitter = true;
       rust.enable = true;
       go.enable = true;
+      python.enable = true;
       markdown = {
         enable = true;
         format.type = "prettierd";
