@@ -1,10 +1,11 @@
-{ pkgs, pkgsStable }:
-
+{
+  pkgs,
+  pkgsStable,
+}:
 (with pkgsStable; [
   gcc # C/C++ compiler
   cmake # C/C++ build system
 ])
-
 ++ (with pkgs; [
   rustc # Rust compiler
   cargo # Rust package manager
@@ -22,4 +23,6 @@
   # Container and orchestration tools
   docker-compose # Docker container orchestration
   docker # Docker CLI
+  cmake # C/C++ build system
+  gdb # C/C++ debugger
 ])
