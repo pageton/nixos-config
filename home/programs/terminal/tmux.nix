@@ -107,6 +107,18 @@
         '';
       }
 
+      # Enhanced navigation
+      {
+        plugin = vim-tmux-navigator;
+        extraConfig = ''
+          # Smart pane switching with awareness of Vim splits
+          set -g @vim_navigator_mapping_left "C-h"
+          set -g @vim_navigator_mapping_down "C-j"
+          set -g @vim_navigator_mapping_up "C-k"
+          set -g @vim_navigator_mapping_right "C-l"
+        '';
+      }
+
       # Better search
       {
         plugin = copycat;
