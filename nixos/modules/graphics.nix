@@ -1,9 +1,11 @@
 # Graphics and NVIDIA driver configuration.
 # This module configures NVIDIA graphics drivers with optimized settings
 # for gaming, Wayland compositors, and hardware acceleration.
-
-{ pkgs, config, ... }:
-
+{
+  pkgs,
+  config,
+  ...
+}:
 let
   # Using stable driver to match kernel module version
   nvidiaDriverChannel = config.boot.kernelPackages.nvidiaPackages.stable;

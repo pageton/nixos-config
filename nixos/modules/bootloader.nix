@@ -1,5 +1,4 @@
 # Bootloader configuration (GRUB - no theme).
-
 {
   boot.loader = {
     # Disable systemd-boot
