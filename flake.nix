@@ -63,10 +63,7 @@
       };
 
       makeSystem =
-        {
-          hostname,
-          stateVersion,
-        }:
+        { hostname, stateVersion }:
         nixpkgs.lib.nixosSystem {
           inherit system;
           specialArgs = {
