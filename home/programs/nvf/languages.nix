@@ -2,8 +2,7 @@
   lib,
   pkgs,
   ...
-}:
-{
+}: {
   programs.nvf.settings.vim = {
     diagnostics = {
       enable = true;
@@ -19,12 +18,17 @@
         underline = true;
         update_in_insert = true;
         virtual_text = {
-          format = lib.generators.mkLuaInline /* lua */ ''
-            function(diagnostic)
-              return string.format("%s", diagnostic.message)
-              --return string.format("%s (%s)", diagnostic.message, diagnostic.source)
-            end
-          '';
+          format =
+            lib.generators.mkLuaInline
+            /*
+            lua
+            */
+            ''
+              function(diagnostic)
+                return string.format("%s", diagnostic.message)
+                --return string.format("%s (%s)", diagnostic.message, diagnostic.source)
+              end
+            '';
         };
       };
       nvim-lint = {
@@ -84,10 +88,10 @@
       enableTreesitter = true;
       rust.enable = true;
       go.enable = true;
+      clang.enable = true;
       python.enable = true;
       markdown = {
         enable = true;
-        format.type = "prettierd";
         extensions = {
           markview-nvim = {
             enable = true;
