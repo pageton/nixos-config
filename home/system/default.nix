@@ -1,13 +1,12 @@
-{ ... }:
-
-{
+{...}: {
   imports = [
     ./hyprland
     ./hyprlock
     ./hyprpaper
     ./hyprpanel
-    ./wofi
+    # ./wofi
     ./qt
     ./hypridle
+    ./vicinae
   ];
 }
