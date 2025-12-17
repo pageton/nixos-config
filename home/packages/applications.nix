@@ -1,6 +1,5 @@
-{ pkgs, ... }:
-with pkgs;
-[
+{pkgs, ...}:
+with pkgs; [
   tor-browser # Tor browser
   telegram-desktop # Telegram desktop
   obsidian # Obsidian
@@ -8,11 +7,11 @@ with pkgs;
   vesktop # Discord desktop client
   vscode # Visual Studio Code
   # Gaming and compatibility tools
-  (bottles.override { removeWarningPopup = true; }) # Run Windows applications on Linux
-  rustdesk # Remote desktop software
-  anydesk # Remote desktop software
+  (bottles.override {removeWarningPopup = true;}) # Run Windows applications on Linux
   wineWowPackages.stagingFull
   samba
   kdePackages.dolphin # KDE file manager
   zed-editor
+  remmina # RDP client
+  antigravity
 ]
