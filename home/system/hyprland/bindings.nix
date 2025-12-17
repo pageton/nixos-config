@@ -1,56 +1,55 @@
-{ pkgs, ... }:
-{
+{pkgs, ...}: {
   wayland.windowManager.hyprland.settings = {
-    bind = [
-      "$mod, Return, exec, uwsm app -- ${pkgs.alacritty}/bin/alacritty"
-      "$mod, T, exec, uwsm app -- ${pkgs.alacritty}/bin/alacritty --class=scratchpad"
-      "$mod,B, exec, brave"
-      "$shiftMod,HOME, exec,  uwsm app -- ${pkgs.hyprlock}/bin/hyprlock"
-      "$mod,X, exec, powermenu"
-      "$mod,SPACE, exec, menu"
-      "$mod,C, exec, quickmenu"
-      "$shiftMod,SPACE, exec, hyprfocus-toggle"
-      "$mod, E, exec, ${pkgs.alacritty}/bin/alacritty -e yazi"
-      "$mod, W, exec, window-switcher"
-      "$shiftMod, R, exec, dolphin"
-      "$mod,Q, killactive,"
-      "$mod,F, togglefloating,"
-      "$shiftMod, F, fullscreen"
-      "$mod,h, movefocus, l"
-      "$mod,l, movefocus, r"
-      "$mod,k, movefocus, u"
-      "$mod,j, movefocus, d"
-      "$shiftMod, up, focusmonitor, -1"
-      "$shiftMod, down, focusmonitor, 1"
-      "$shiftMod, left, layoutmsg, addmaster"
-      "$shiftMod, right, layoutmsg, removemaster"
-      "$mod, P, exec, hyprshot -m window -o ~/Pictures/screenshots"
-      "$shiftMod, P, exec, hyprshot -m region -o ~/Pictures/screenshots"
-      "$mod, S, togglespecialworkspace, magic"
-      "$shiftMod, S, movetoworkspace, special:magic"
-      "$mod, A, pin"
-      "$shiftMod, grave, workspace, previous"
-      "$shiftMod,T, exec, hyprpanel-toggle"
-      "$mod,V, exec, cliphist list | wofi --dmenu --prompt 'Clipboard' | cliphist decode | wl-copy"
-      "$shiftMod,E, exec, ${pkgs.wofi-emoji}/bin/wofi-emoji"
-      "$mod,F2, exec, night-shift"
-      "$mod,F3, exec, night-shift"
-      # "LAlt,P, exec, ${pkgs.hyprpicker}/bin/hyprpicker --autocopy"
-      "$ctrlMod, L, exec, hyprctl keyword general:layout dwindle" # Switch to dwindle layout
-      "$ctrlMod SHIFT, L, exec, hyprctl keyword general:layout master" # Switch to master layout
-    ]
-    ++ (builtins.concatLists (
-      builtins.genList (
-        i:
-        let
-          ws = i + 1;
-        in
-        [
-          "$mod,code:1${toString i}, workspace, ${toString ws}"
-          "$shiftMod ,code:1${toString i}, movetoworkspace, ${toString ws}"
-        ]
-      ) 9
-    ));
+    bind =
+      [
+        "$mod, Return, exec, uwsm app -- ${pkgs.alacritty}/bin/alacritty"
+        "$mod, T, exec, uwsm app -- ${pkgs.alacritty}/bin/alacritty --class=scratchpad"
+        "$mod,B, exec, brave"
+        "$shiftMod,HOME, exec,  uwsm app -- ${pkgs.hyprlock}/bin/hyprlock"
+        "$mod,X, exec, powermenu"
+        "$mod,SPACE, exec, vicinae toggle"
+        "$mod,C, exec, quickmenu"
+        "$shiftMod,SPACE, exec, hyprfocus-toggle"
+        "$mod, E, exec, ${pkgs.alacritty}/bin/alacritty -e yazi"
+        "$mod, W, exec, window-switcher"
+        "$shiftMod, R, exec, dolphin"
+        "$mod,Q, killactive,"
+        "$mod,F, togglefloating,"
+        "$shiftMod, F, fullscreen"
+        "$mod,h, movefocus, l"
+        "$mod,l, movefocus, r"
+        "$mod,k, movefocus, u"
+        "$mod,j, movefocus, d"
+        "$shiftMod, up, focusmonitor, -1"
+        "$shiftMod, down, focusmonitor, 1"
+        "$shiftMod, left, layoutmsg, addmaster"
+        "$shiftMod, right, layoutmsg, removemaster"
+        "$mod, P, exec, hyprshot -m window -o ~/Pictures/screenshots"
+        "$shiftMod, P, exec, hyprshot -m region -o ~/Pictures/screenshots"
+        "$mod, S, togglespecialworkspace, magic"
+        "$shiftMod, S, movetoworkspace, special:magic"
+        "$mod, A, pin"
+        "$shiftMod, grave, workspace, previous"
+        "$shiftMod,T, exec, hyprpanel-toggle"
+        "$mod,V, exec, cliphist list | wofi --dmenu --prompt 'Clipboard' | cliphist decode | wl-copy"
+        "$shiftMod,E, exec, ${pkgs.wofi-emoji}/bin/wofi-emoji"
+        "$mod,F2, exec, night-shift"
+        "$mod,F3, exec, night-shift"
+        # "LAlt,P, exec, ${pkgs.hyprpicker}/bin/hyprpicker --autocopy"
+        "$ctrlMod, L, exec, hyprctl keyword general:layout dwindle" # Switch to dwindle layout
+        "$ctrlMod SHIFT, L, exec, hyprctl keyword general:layout master" # Switch to master layout
+      ]
+      ++ (builtins.concatLists (
+        builtins.genList (
+          i: let
+            ws = i + 1;
+          in [
+            "$mod,code:1${toString i}, workspace, ${toString ws}"
+            "$shiftMod ,code:1${toString i}, movetoworkspace, ${toString ws}"
+          ]
+        )
+        9
+      ));
 
     bindm = [
       "$mod,mouse:272, movewindow"
