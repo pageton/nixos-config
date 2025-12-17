@@ -25,4 +25,5 @@
   docker # Docker CLI
   cmake # C/C++ build system
   gdb # C/C++ debugger
+  redisinsight # Redis GUI
 ])
