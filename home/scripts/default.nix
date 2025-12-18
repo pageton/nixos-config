@@ -1,6 +1,4 @@
-{ ... }:
-
-{
+{...}: {
   imports = [
     ./menus
     ./sounds
@@ -8,5 +6,7 @@
     ./notification
     ./hyprpanel
     ./caffeine
+    ./ai
+    ./build
   ];
 }

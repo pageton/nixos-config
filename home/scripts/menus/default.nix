@@ -1,6 +1,4 @@
-{ pkgs, ... }:
-
-let
+{pkgs, ...}: let
   windowSwitcher = pkgs.writeScriptBin "window-switcher" ''
     #!/bin/sh
     # Get list of all windows with workspace, class, and title information
@@ -92,13 +90,20 @@ let
     ${pkgs.hyprlock}/bin/hyprlock
   '';
 
-in
-{
+  clipboard = pkgs.writeShellScriptBin "clipboard" ''
+    if pgrep wofi; then
+      pkill wofi
+    else
+      cliphist list | wofi --dmenu --prompt "Clipboard" | cliphist decode | wl-copy
+    fi
+  '';
+in {
   home.packages = [
     menu
     powermenu
     lock
     quickmenu
     windowSwitcher
+    clipboard
   ];
 }
