@@ -1,8 +1,7 @@
 # Hyprland Wayland compositor configuration.
 # This module configures Hyprland as the Wayland window manager with
 # Universal Wayland Session Manager (UWSM) and necessary security services.
-{ pkgs, ... }:
-{
+{pkgs, ...}: {
   programs.hyprland = {
     enable = true; # Enable Hyprland window manager
     withUWSM = true; # Enable Universal Wayland Session Manager for better session handling
@@ -14,8 +13,8 @@
 
     # PAM services for authentication
     pam.services = {
-      hyprlock = { }; # PAM service for Hyprland screen locker
-      sddm.enableGnomeKeyring = true;
+      hyprlock = {}; # PAM service for Hyprland screen locker
+      sddm.kwallet.enable = true; # Enable KWallet for password storage
     };
   };
 
@@ -23,6 +22,6 @@
   xdg.portal = {
     enable = true;
     wlr.enable = true; # Enable wlroots portal
-    extraPortals = [ pkgs.xdg-desktop-portal-gtk ]; # GTK portal for file dialogs
+    extraPortals = [pkgs.xdg-desktop-portal-gtk]; # GTK portal for file dialogs
   };
 }
