@@ -20,7 +20,6 @@
     ./users.nix
     ./xserver.nix
     ./nh.nix
-    ./scripts.nix
     ./monitoring.nix
     ./xdg-desktop-portal.nix
     ./cleanup.nix
