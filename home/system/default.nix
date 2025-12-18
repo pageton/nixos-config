@@ -4,9 +4,9 @@
     ./hyprlock
     ./hyprpaper
     ./hyprpanel
-    # ./wofi
+    ./wofi
     ./qt
-    ./hypridle
+    # ./hypridle
     ./vicinae
   ];
 }
