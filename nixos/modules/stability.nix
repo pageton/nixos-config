@@ -4,8 +4,7 @@
   pkgsStable,
   lib,
   ...
-}:
-{
+}: {
   boot.kernel.sysctl = {
     "fs.file-max" = 1000000; # Integer: System-wide file descriptor limit
     "net.core.somaxconn" = 65536; # Integer: Max pending connections
@@ -40,8 +39,8 @@
 
     dbus = {
       packages = with pkgsStable; [
-        gnome-keyring
-        gcr
+        kdePackages.kwallet
+        libsecret
       ];
     };
   };
