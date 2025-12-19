@@ -37,10 +37,15 @@
       enable = false;
     };
 
+    # Enable udisks2 for automatic mounting of removable media
+    udisks2 = {
+      enable = true;
+    };
+
     dbus = {
       packages = with pkgsStable; [
-        kdePackages.kwallet
-        libsecret
+        gnome-keyring
+        gcr
       ];
     };
   };
