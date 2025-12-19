@@ -3,8 +3,7 @@
   lib,
   hostname,
   ...
-}:
-let
+}: let
   border-size = config.theme.border-size;
   gaps-in = config.theme.gaps-in;
   gaps-out = config.theme.gaps-out;
@@ -14,8 +13,7 @@ let
   blur = config.theme.blur;
   background = "rgb(" + config.lib.stylix.colors.base00 + ")";
   isThinkpad = hostname == "thinkpad";
-in
-{
+in {
   imports = [
     ./animations.nix
     ./bindings.nix
@@ -27,7 +25,7 @@ in
     xwayland.enable = true;
     systemd = {
       enable = false;
-      variables = [ "--all" ];
+      variables = ["--all"];
     };
     package = null;
     portalPackage = null;
@@ -37,25 +35,33 @@ in
       "$shiftMod" = "SUPER_SHIFT";
       "$ctrlMod" = "SUPER_CTRL";
 
-      "$moveactivewindow" =
-        "grep -q 'true' <<< $(hyprctl activewindow -j | jq -r .floating) && hyprctl dispatch moveactive";
+      "$moveactivewindow" = "grep -q 'true' <<< $(hyprctl activewindow -j | jq -r .floating) && hyprctl dispatch moveactive";
 
       exec-once = [
         "dbus-update-activation-environment --systemd --all &"
         "systemctl --user start glance"
         "systemctl --user enable --now hyprpaper.service &"
-        "wl-paste -t text --watch clipman store &" # Primary clipboard
         "swayosd-server &"
-        "wl-paste --watch -p clipman store -P ~/.local/share/clipman-primary.json &"
-        "wl-paste --type text --watch cliphist store &" # Clipboard manager for text
-        "wl-paste --type image --watch cliphist store &" # Clipboard manager for images
+        "wl-paste --type text --watch cliphist store" # Clipboard manager for text
+        "wl-paste --type image --watch cliphist store" # Clipboard manager for images
+        # Enhanced clipboard management
+        "wl-paste -t text --watch clipman store" # Primary clipboard
+        "wl-paste -p -t text --watch clipman store -P --histpath=\"~/.local/share/clipman-primary.json\""
       ];
 
       monitor = ",preferred,auto,1";
 
       env = [
-        "XCURSOR_SIZE,${if isThinkpad then "20" else "24"}"
-        "HYPRCURSOR_SIZE,${if isThinkpad then "20" else "24"}"
+        "XCURSOR_SIZE,${
+          if isThinkpad
+          then "20"
+          else "24"
+        }"
+        "HYPRCURSOR_SIZE,${
+          if isThinkpad
+          then "20"
+          else "24"
+        }"
         "XDG_CURRENT_DESKTOP,Hyprland"
         "MOZ_ENABLE_WAYLAND,1"
         "ANKI_WAYLAND,1"
@@ -102,7 +108,10 @@ in
           render_power = 3;
         };
         blur = {
-          enabled = if blur then "true" else "false";
+          enabled =
+            if blur
+            then "true"
+            else "false";
           size = 18;
         };
       };
