@@ -27,5 +27,6 @@
     ./stability.nix
     ./virtualisation.nix
     ./mullvad.nix
+    ./security.nix
   ];
 }
