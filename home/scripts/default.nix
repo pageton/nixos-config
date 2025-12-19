@@ -8,5 +8,6 @@
     ./caffeine
     ./ai
     ./build
+    ./nerdfont-fzf
   ];
 }
