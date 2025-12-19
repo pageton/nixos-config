@@ -8,5 +8,7 @@
     ./qt
     # ./hypridle
     ./vicinae
+    ./mime
+    ./udiskie
   ];
 }
