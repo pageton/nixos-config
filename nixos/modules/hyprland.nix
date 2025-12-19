@@ -14,7 +14,7 @@
     # PAM services for authentication
     pam.services = {
       hyprlock = {}; # PAM service for Hyprland screen locker
-      sddm.kwallet.enable = true; # Enable KWallet for password storage
+      sddm.enableGnomeKeyring = true; # Enable GNOME keyring for SDDM
     };
   };
 
