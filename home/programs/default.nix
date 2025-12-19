@@ -1,10 +1,8 @@
-{ ... }:
-{
+{...}: {
   imports = [
     ./terminal
     ./spicetify
     ./languages
-    ./terminal
     ./shell
     ./gpg
     ./obs
@@ -13,5 +11,7 @@
     ./brave
     ./helix
     ./nvf
+    ./thunar
+    ./discord
   ];
 }
