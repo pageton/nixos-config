@@ -12,7 +12,7 @@
         "$shiftMod,SPACE, exec, hyprfocus-toggle"
         "$mod, E, exec, ${pkgs.alacritty}/bin/alacritty -e yazi"
         "$mod, W, exec, window-switcher"
-        "$shiftMod, R, exec, dolphin"
+        "$shiftMod, R, exec, thunar"
         "$mod,Q, killactive,"
         "$mod,F, togglefloating,"
         "$shiftMod, F, fullscreen"
