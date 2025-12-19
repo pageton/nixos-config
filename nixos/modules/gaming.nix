@@ -1,15 +1,10 @@
 # Gaming-related configurations (Steam, MangoHud, etc.).
-# This module provides a custom gaming configuration with Steam,
-# performance monitoring, and compatibility tools for running Windows games.
-
 {
   config,
   lib,
   pkgs,
   ...
-}:
-
-{
+}: {
   # Custom module options for gaming configuration
   options.mySystem.gaming = {
     enable = lib.mkEnableOption "gaming support with Steam and related tools";
@@ -42,6 +37,9 @@
     environment.systemPackages = with pkgs; [
       mangohud # Vulkan overlay for performance monitoring
       protonup-ng # Tool for managing Proton compatibility layers
+      lutris # Open gaming platform for managing multiple game sources
+      wine # Compatibility layer for running Windows programs
+      winetricks # Helper for configuring Wine
     ];
   };
 }
