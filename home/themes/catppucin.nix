@@ -3,8 +3,7 @@
   pkgs,
   config,
   ...
-}:
-{
+}: {
   options.theme = lib.mkOption {
     type = lib.types.attrs;
     default = {
@@ -43,10 +42,11 @@
       nvf.enable = false;
       alacritty.enable = false;
       hyprpanel.enable = false;
+      nixcord.enable = false;
       # Configure Zen Browser theming
       zen-browser = {
         enable = true; # Enable Zen Browser theming
-        profileNames = [ "default" ]; # Apply to default profile
+        profileNames = ["default"]; # Apply to default profile
       };
     };
 
