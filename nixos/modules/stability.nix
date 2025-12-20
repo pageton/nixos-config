@@ -61,6 +61,8 @@
     DefaultLimitNPROC=65536
   '';
 
+  security.rtkit.enable = true;
+
   # PAM session limits
   security.pam.loginLimits = [
     {
@@ -80,6 +82,12 @@
       type = "-";
       item = "stack";
       value = "unlimited";
+    }
+    {
+      domain = "*";
+      type = "-";
+      item = "nice";
+      value = "-20";
     }
   ];
 }
