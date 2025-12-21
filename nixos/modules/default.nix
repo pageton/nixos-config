@@ -28,5 +28,6 @@
     ./virtualisation.nix
     ./mullvad.nix
     ./security.nix
+    ./tailscale.nix
   ];
 }
