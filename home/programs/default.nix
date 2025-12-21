@@ -13,5 +13,6 @@
     ./nvf
     ./thunar
     ./discord
+    ./tailscale
   ];
 }
