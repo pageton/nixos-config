@@ -1,15 +1,19 @@
 # Virtualisation (Docker, VirtualBox, libvirt) configuration.
 {
   pkgsStable,
+  lib,
   user,
+  config,
   ...
-}:
-{
+}: {
   # Kernel modules required for virtualization
   boot.kernelModules = [
     "kvm-intel" # Intel KVM support
     "kvm" # Kernel Virtual Machine support
   ];
+
+  # Enable IP forwarding for container networking
+  boot.kernel.sysctl."net.ipv4.ip_forward" = 1;
 
   virtualisation = {
     # Docker container runtime
@@ -30,6 +34,11 @@
       package = pkgsStable.qemu_kvm; # QEMU with KVM acceleration
       swtpm.enable = true; # Software TPM for VMs
     };
+
+    incus = {
+      enable = true;
+      ui.enable = true;
+    }; # Incus UI for managing virtual machines
   };
 
   # Add user to virtualization groups for proper access
@@ -40,6 +49,8 @@
       "vboxusers" # Access to VirtualBox VMs
       "libvirtd" # Access to libvirt VMs
       "kvm" # Access to KVM for hardware acceleration
+      "incus-admin" # Access to Incus UI
+      "incus" # Access to Incus VMs
     ];
   };
 
@@ -54,8 +65,28 @@
     swtpm # Software TPM for VMs
   ];
 
-  # Allow libvirt default bridge through the firewall
-  networking.firewall.trustedInterfaces = [ "virbr0" ];
+  networking = {
+    firewall = {
+      # Allow libvirt default bridge through the firewall
+      trustedInterfaces = ["virbr0" "incusbr0"];
+
+      # Allow DHCP and DNS for Incus containers
+      allowedUDPPorts = [53 67];
+      allowedUDPPortRanges = [
+        {
+          from = 67;
+          to = 67;
+        } # DHCP server
+        {
+          from = 53;
+          to = 53;
+        } # DNS server
+      ];
+    };
+
+    # Enable NFTables for firewalling
+    nftables.enable = true;
+  };
 
   # Enable virt-manager desktop integration if needed
   programs.virt-manager.enable = true;
