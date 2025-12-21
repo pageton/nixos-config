@@ -25,7 +25,7 @@ lint:
 # Check all missing imports
 modules:
     @echo -e "\n➤ Checking modules"
-    @nix run nixpkgs#time -- -f "⏱ Completed in %E" bash ./scripts/build/modules-check.sh
+    @nix run nixpkgs#time -- -f "⏱ Completed in %E" modules-check
 
 # Switch Home-Manager generation
 home:
@@ -59,11 +59,6 @@ update-pkgs:
 update-pkgs-stable:
     @echo -e "\n➤ Updating Nixpkgs-stable…"
     nix flake update nixpkgs-stable
-
-# update neovim-nightly-overlay
-update-neovim:
-    @echo -e "\n➤ Updating neovim-nightly-overlay…"
-    nix flake update neovim-nightly-overlay
 
 # Clean up build artifacts and caches
 clean:
