@@ -14,4 +14,5 @@ with pkgs; [
   antigravity
   youtube-music # YouTube Music desktop client
   kdePackages.ark # KDE archive manager
+  element-desktop # Matrix client
 ]
