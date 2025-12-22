@@ -3,17 +3,18 @@
   user,
   pkgs,
   pkgsStable,
+  lib,
+  hostname,
   ...
-}:
-
-{
-  imports = [
-    ./system
-    ./programs
-    ./scripts
-    ./secrets
-    ./themes/catppucin.nix
-  ];
+}: {
+  imports =
+    [
+      ./secrets
+      ./programs
+      ./scripts
+    ]
+    ++ lib.optional (hostname != "server") ./system
+    ++ lib.optional (hostname != "server") ./themes/catppucin.nix;
 
   home = {
     username = user;
@@ -23,19 +24,28 @@
 
   nixpkgs.config.allowUnfree = true;
 
-  home.packages =
-    let
-      # Import packages from custom package definitions
-      Pkgs = import ./packages { inherit pkgs pkgsStable; };
-    in
-    # All packages from custom definitions
-    Pkgs;
+  home.packages = lib.concatLists [
+    (
+      if hostname != "server"
+      then let Pkgs = import ./packages {inherit pkgs pkgsStable;}; in Pkgs
+      else []
+    )
 
-  home.file.".face.icon" = {
+    (
+      if hostname == "server"
+      then [
+        pkgs.just
+        pkgs.vim
+      ]
+      else []
+    )
+  ];
+
+  home.file.".face.icon" = lib.mkIf (hostname != "server") {
     source = ./profile_picture.png;
   };
 
-  home.sessionVariables = {
+  home.sessionVariables = lib.mkIf (hostname != "server") {
     # Qt platform preference - Wayland first, X11 fallback
     QT_QPA_PLATFORM = "xcb";
 
@@ -53,6 +63,6 @@
     GDK_DPI_SCALE = "1"; # GTK DPI scaling
   };
 
-  fonts.fontconfig.enable = true;
+  fonts.fontconfig.enable = lib.mkDefault (hostname != "server");
   programs.home-manager.enable = true;
 }
