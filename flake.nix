@@ -29,6 +29,11 @@
     nixcord.url = "github:kaylorben/nixcord";
     vicinae.url = "github:vicinaehq/vicinae";
     nvf.url = "github:notashelf/nvf";
+
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
@@ -74,7 +79,29 @@
         };
         modules = [
           ./hosts/${hostname}/configuration.nix
+          inputs.disko.nixosModules.disko
           inputs.stylix.nixosModules.stylix
+        ];
+      };
+
+    makeHome = {
+      hostname,
+    }:
+      home-manager.lib.homeManagerConfiguration {
+        inherit pkgs;
+        extraSpecialArgs = {
+          inherit
+            inputs
+            homeStateVersion
+            user
+            pkgsStable
+            system
+            hostname
+            ;
+        };
+        modules = [
+          ./home/home.nix
+          inputs.stylix.homeModules.stylix
         ];
       };
 
@@ -85,6 +112,10 @@
       }
       {
         hostname = "thinkpad";
+        stateVersion = "25.11";
+      }
+      {
+        hostname = "server";
         stateVersion = "25.11";
       }
     ];
@@ -99,27 +130,7 @@
     homeConfigurations =
       nixpkgs.lib.foldl' (
         configs: host:
-          configs
-          // {
-            "${user}@${host.hostname}" = home-manager.lib.homeManagerConfiguration {
-              inherit pkgs;
-              extraSpecialArgs = {
-                inherit
-                  inputs
-                  homeStateVersion
-                  user
-                  pkgsStable
-                  system
-                  ;
-                inherit (host) hostname;
-              };
-
-              modules = [
-                ./home/home.nix
-                inputs.stylix.homeModules.stylix
-              ];
-            };
-          }
+          configs // {"${user}@${host.hostname}" = makeHome {inherit (host) hostname;};}
       ) {}
       hosts;
   };
