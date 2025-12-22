@@ -1,6 +1,5 @@
 # Yazi file manager configuration.
 # This module configures Yazi, a terminal file manager written in Rust
-
 {
   # Enable Yazi terminal file manager
   programs.yazi = {

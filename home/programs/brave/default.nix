@@ -1,6 +1,10 @@
 # Brave Browser configuration
 {
-  programs.brave = {
+  lib,
+  hostname,
+  ...
+}: {
+  programs.brave = lib.mkIf (hostname != "server") {
     enable = true;
     extensions = [
       "bfogiafebfohielmmehodmfbbebbbpei" # Keeper Password Manager

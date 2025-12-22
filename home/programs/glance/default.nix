@@ -1,17 +1,12 @@
 # Glance dashboard configuration.
 # This module configures Glance, a self-hosted dashboard that aggregates
 # Features include RSS feeds, weather, calendar, bookmarks, and more.
-
 {
-  config,
   lib,
   pkgs,
   ...
 }:
-
-with lib;
-
-{
+with lib; {
   # Glance dashboard service configuration
   services.glance = {
     enable = true; # Enable the Glance dashboard service

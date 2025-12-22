@@ -1,5 +1,8 @@
 # Discord configuration for NixOS
-{inputs, ...}: {
+{
+  inputs,
+  ...
+}: {
   imports = [inputs.nixcord.homeModules.nixcord];
 
   programs.nixcord = {

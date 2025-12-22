@@ -1,5 +1,4 @@
-{ pkgsStable, ... }:
-{
+{pkgsStable, ...}: {
   programs.tmux = {
     enable = true;
     mouse = true;

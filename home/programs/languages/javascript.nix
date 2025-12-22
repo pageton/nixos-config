@@ -6,6 +6,7 @@
   config,
   lib,
   pkgs,
+  hostname,
   ...
 }:
 
@@ -221,7 +222,7 @@ in
     ];
 
     # Automatic workspace directory creation and global package installation
-    activation.createJSWorkspace = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    activation.createJSWorkspace = lib.mkIf (hostname != "server") (lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       BUN_BIN="${pkgs.bun}/bin/bun"  # Use Bun from Nix directly
 
       # Create workspace directories
@@ -252,6 +253,6 @@ in
       else
         echo "⚠️ Bun not found at $BUN_BIN"
       fi
-    '';
+    '');
   };
 }

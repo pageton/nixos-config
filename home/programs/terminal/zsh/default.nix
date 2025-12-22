@@ -1,6 +1,5 @@
-{ config, ... }:
-{
-  imports = [ ./aliases.nix ];
+{config, ...}: {
+  imports = [./aliases.nix];
 
   programs.zsh = {
     enable = true;

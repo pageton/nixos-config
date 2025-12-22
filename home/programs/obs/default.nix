@@ -1,9 +1,11 @@
 # OBS Studio configuration.
-
-{ pkgsStable, ... }:
-
 {
-  programs.obs-studio = {
+  pkgsStable,
+  lib,
+  hostname,
+  ...
+}: {
+  programs.obs-studio = lib.mkIf (hostname != "server") {
     enable = true; # Enable OBS Studio for streaming and recording
 
     # OBS Studio plugins for enhanced functionality

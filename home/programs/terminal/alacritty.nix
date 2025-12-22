@@ -1,7 +1,6 @@
 # Alacritty terminal emulator configuration.
 # This module configures Alacritty, a fast, cross-platform, OpenGL terminal emulator
-{ lib, ... }:
-{
+{lib, ...}: {
   # Enable Alacritty terminal emulator
   programs.alacritty = {
     enable = true;
@@ -153,7 +152,7 @@
       # Terminal shell configuration
       terminal.shell = {
         program = "zsh";
-        args = [ "-l" ];
+        args = ["-l"];
       };
 
       # Working directory

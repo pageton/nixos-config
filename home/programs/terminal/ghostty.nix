@@ -17,7 +17,7 @@
       gtk-quick-terminal-layer = "top";
       quick-terminal-keyboard-interactivity = "exclusive";
       quick-terminal-autohide = true;
-      keybind = [ "global:super+tab=toggle_quick_terminal" ];
+      keybind = ["global:super+tab=toggle_quick_terminal"];
     };
   };
 }
