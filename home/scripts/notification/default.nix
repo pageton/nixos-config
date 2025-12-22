@@ -1,5 +1,9 @@
-{ pkgs, ... }:
-let
+{
+  lib,
+  hostname,
+  pkgs,
+  ...
+}: let
   notif = pkgs.writeShellScriptBin "notif" ''
     NOTIF_FOLDER="/tmp/notif"
     sender_id=$1
@@ -19,8 +23,6 @@ let
     "$description" \
     > "$NOTIF_FOLDER/$sender_id"
   '';
-
-in
-{
-  home.packages = [ notif ];
+in {
+  home.packages = lib.mkIf (hostname != "server") [notif];
 }

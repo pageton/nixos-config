@@ -1,5 +1,9 @@
-{ pkgs, ... }:
-let
+{
+  lib,
+  hostname,
+  pkgs,
+  ...
+}: let
   hyprfocus-on = pkgs.writeShellScriptBin "hyprfocus-on" ''
     hyprpanel-hide
 
@@ -30,9 +34,8 @@ let
       hyprfocus-on
     fi
   '';
-in
-{
-  home.packages = [
+in {
+  home.packages = lib.mkIf (hostname != "server") [
     hyprfocus-on
     hyprfocus-off
     hyprfocus-toggle

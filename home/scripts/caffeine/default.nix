@@ -5,8 +5,12 @@
 #- - `caffeine-status` - Check if hypridle is running. (0/1)
 #- - `caffeine-status-icon` - Check if hypridle is running. (icon)
 #- - `caffeine` - Toggle hypridle.
-{ pkgs, ... }:
-let
+{
+  lib,
+  hostname,
+  pkgs,
+  ...
+}: let
   caffeine-status = pkgs.writeShellScriptBin "caffeine-status" ''
     [[ $(pidof "hypridle") ]] && echo "0" || echo "1"
   '';
@@ -24,9 +28,8 @@ let
       ${pkgs.swayosd}/bin/swayosd-client --custom-message="Caffeine Off" --custom-icon="emblem-default"
     fi
   '';
-in
-{
-  home.packages = [
+in {
+  home.packages = lib.mkIf (hostname != "server") [
     caffeine-status
     caffeine
     caffeine-status-icon

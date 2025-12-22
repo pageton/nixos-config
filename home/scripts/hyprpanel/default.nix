@@ -1,5 +1,9 @@
-{ pkgs, ... }:
-let
+{
+  lib,
+  hostname,
+  pkgs,
+  ...
+}: let
   hyprpanel-toggle = pkgs.writeShellScriptBin "hyprpanel-toggle" ''
     hyprpanel toggleWindow bar-0
     hyprpanel toggleWindow bar-1
@@ -33,9 +37,8 @@ let
     [ $(pgrep "hyprpanel") ] && pkill hyprpanel
     hyprctl dispatch exec hyprpanel
   '';
-in
-{
-  home.packages = [
+in {
+  home.packages = lib.mkIf (hostname != "server") [
     hyprpanel-toggle
     hyprpanel-reload
     hyprpanel-hide

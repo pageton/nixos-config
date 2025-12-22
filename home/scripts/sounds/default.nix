@@ -1,5 +1,9 @@
-{ pkgs, ... }:
-let
+{
+  lib,
+  hostname,
+  pkgs,
+  ...
+}: let
   increments = "5";
   sound-change = pkgs.writeShellScriptBin "sound-change" ''
     [[ $1 == "mute" ]] && wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
@@ -29,9 +33,8 @@ let
   sound-toggle = pkgs.writeShellScriptBin "sound-toggle" ''
     sound-change mute
   '';
-in
-{
-  home.packages = [
+in {
+  home.packages = lib.mkIf (hostname != "server") [
     sound-change
     sound-up
     sound-down

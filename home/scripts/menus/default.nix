@@ -1,4 +1,9 @@
-{pkgs, ...}: let
+{
+  lib,
+  hostname,
+  pkgs,
+  ...
+}: let
   windowSwitcher = pkgs.writeScriptBin "window-switcher" ''
     #!/bin/sh
     # Get list of all windows with workspace, class, and title information
@@ -98,7 +103,7 @@
     fi
   '';
 in {
-  home.packages = [
+  home.packages = lib.mkIf (hostname != "server") [
     menu
     powermenu
     lock
