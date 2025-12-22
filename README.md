@@ -442,7 +442,7 @@ config = lib.mkIf (hostname == "desktop") {
 ### Gaming
 
 - **Gamescope**: For Steam games
-- ** optimizations**: GPU drivers, performance tweaks
+- **optimizations**: GPU drivers, performance tweaks
 
 ---
 
