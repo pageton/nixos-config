@@ -1,11 +1,12 @@
 # Virtualisation (Docker, VirtualBox, libvirt) configuration.
 {
   pkgsStable,
-  lib,
   user,
-  config,
+  lib,
+  hostname,
   ...
-}: {
+}:
+lib.mkIf (hostname != "server") {
   # Kernel modules required for virtualization
   boot.kernelModules = [
     "kvm-intel" # Intel KVM support
@@ -68,10 +69,16 @@
   networking = {
     firewall = {
       # Allow libvirt default bridge through the firewall
-      trustedInterfaces = ["virbr0" "incusbr0"];
+      trustedInterfaces = [
+        "virbr0"
+        "incusbr0"
+      ];
 
       # Allow DHCP and DNS for Incus containers
-      allowedUDPPorts = [53 67];
+      allowedUDPPorts = [
+        53
+        67
+      ];
       allowedUDPPortRanges = [
         {
           from = 67;

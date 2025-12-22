@@ -2,10 +2,13 @@
 # This module provides system libraries and environment settings needed for
 # Puppeteer and other Chrome-based tools. Note: Most libraries are provided by
 # the nix-ld module, this focuses on environment configuration.
-
-{ pkgs, lib, ... }:
-
 {
+  lib,
+  hostname,
+  pkgs,
+  ...
+}:
+lib.mkIf (hostname != "server") {
   # Add browser-related packages to system
   environment.systemPackages = with pkgs; [
     # Install Chromium directly for testing and fallback

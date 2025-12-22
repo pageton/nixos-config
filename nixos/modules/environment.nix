@@ -1,14 +1,18 @@
 # Environment variables and session settings.
 # This module configures system-wide environment variables that affect
 # application behavior, default programs, and system paths.
-
 {
+  lib,
+  hostname,
+  ...
+}:
+lib.mkIf (hostname != "server") {
   environment.sessionVariables = rec {
     # Default terminal emulator for applications that need one
     TERMINAL = "alacritty";
 
     # Default text editor for applications that need one
-    EDITOR = "hx";
+    EDITOR = "nvim";
 
     # XDG Base Directory specification for user binaries
     XDG_BIN_HOME = "$HOME/.local/bin";

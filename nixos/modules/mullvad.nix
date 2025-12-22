@@ -11,5 +11,5 @@
   };
 
   # Add Mullvad VPN to system packages for CLI access
-  environment.systemPackages = with pkgs; [mullvad-vpn];
+  environment.systemPackages = with pkgs; lib.optional (hostname != "server") mullvad-vpn;
 }

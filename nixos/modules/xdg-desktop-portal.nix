@@ -1,10 +1,13 @@
 # XDG Desktop Portal Configuration
 # This module provides proper configuration for xdg-desktop-portal services
 # optimized for Hyprland Wayland environment
-
-{ pkgs, ... }:
-
 {
+  pkgs,
+  lib,
+  hostname,
+  ...
+}:
+lib.mkIf (hostname != "server") {
   # Install xdg-desktop-portal and related packages
   environment.systemPackages = with pkgs; [
     xdg-desktop-portal
@@ -34,9 +37,9 @@
           "hyprland"
           "gtk"
         ];
-        "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
-        "org.freedesktop.impl.portal.Screenshot" = [ "hyprland" ];
-        "org.freedesktop.impl.portal.ScreenCast" = [ "hyprland" ];
+        "org.freedesktop.impl.portal.FileChooser" = ["gtk"];
+        "org.freedesktop.impl.portal.Screenshot" = ["hyprland"];
+        "org.freedesktop.impl.portal.ScreenCast" = ["hyprland"];
       };
     };
   };

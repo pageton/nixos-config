@@ -1,16 +1,14 @@
 # File cleanup services configuration.
 # This module provides automated cleanup services for various directories
 # to prevent disk space issues from accumulating temporary files.
-
 {
-  config,
-  lib,
   pkgs,
   user,
+  lib,
+  hostname,
   ...
 }:
-
-{
+lib.mkIf (hostname != "server") {
   # Telegram downloads cleanup service
   systemd = {
     services = {
@@ -49,7 +47,7 @@
     timers = {
       "cleanup-telegram-downloads" = {
         description = "Timer for Telegram downloads cleanup";
-        wantedBy = [ "timers.target" ];
+        wantedBy = ["timers.target"];
         timerConfig = {
           OnCalendar = "daily";
           Persistent = true;
@@ -59,7 +57,7 @@
 
       "cleanup-downloads" = {
         description = "Timer for general downloads cleanup";
-        wantedBy = [ "timers.target" ];
+        wantedBy = ["timers.target"];
         timerConfig = {
           OnCalendar = "weekly";
           Persistent = true;
@@ -69,7 +67,7 @@
 
       "cleanup-cache" = {
         description = "Timer for cache cleanup";
-        wantedBy = [ "timers.target" ];
+        wantedBy = ["timers.target"];
         timerConfig = {
           OnCalendar = "monthly";
           Persistent = true;
@@ -86,7 +84,7 @@
         mkdir -p /home/${user}/Downloads/Telegram\ Desktop
         chown ${user}:users /home/${user}/Downloads/Telegram\ Desktop
       '';
-      deps = [ ];
+      deps = [];
     };
   };
 }

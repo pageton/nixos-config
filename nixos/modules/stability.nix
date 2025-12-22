@@ -3,6 +3,7 @@
 {
   pkgsStable,
   lib,
+  hostname,
   ...
 }: {
   boot.kernel.sysctl = {
@@ -37,12 +38,11 @@
       enable = false;
     };
 
-    # Enable udisks2 for automatic mounting of removable media
-    udisks2 = {
-      enable = true;
-    };
+    # Enable udisks2 for automatic mounting of removable media (desktop only)
+    udisks2.enable = lib.mkIf (hostname != "server") true;
 
-    dbus = {
+    # DBus packages for GUI keyring and credentials (desktop only)
+    dbus = lib.mkIf (hostname != "server") {
       packages = with pkgsStable; [
         gnome-keyring
         gcr
@@ -61,7 +61,8 @@
     DefaultLimitNPROC=65536
   '';
 
-  security.rtkit.enable = true;
+  # Real-time kit for multimedia tasks (desktop only)
+  security.rtkit.enable = lib.mkIf (hostname != "server") true;
 
   # PAM session limits
   security.pam.loginLimits = [

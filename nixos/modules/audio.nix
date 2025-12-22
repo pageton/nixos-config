@@ -1,19 +1,19 @@
 # Audio configuration (PipeWire).
-
-{ config, lib, ... }:
-
 {
+  config,
+  lib,
+  hostname,
+  ...
+}: {
   # Validation: Ensure PulseAudio and PipeWire don't conflict
-  assertions = [
+  assertions = lib.mkIf (hostname != "server") [
     {
       assertion = !(config.services.pulseaudio.enable && config.services.pipewire.enable);
       message = "PulseAudio and PipeWire cannot be enabled simultaneously";
     }
   ];
 
-  security.rtkit.enable = true;
-
-  services = {
+  services = lib.mkIf (hostname != "server") {
     pulseaudio.enable = false;
 
     pipewire = {

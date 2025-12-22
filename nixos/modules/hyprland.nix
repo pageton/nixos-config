@@ -1,7 +1,13 @@
 # Hyprland Wayland compositor configuration.
 # This module configures Hyprland as the Wayland window manager with
 # Universal Wayland Session Manager (UWSM) and necessary security services.
-{pkgs, ...}: {
+{
+  pkgs,
+  lib,
+  hostname,
+  ...
+}:
+lib.mkIf (hostname != "server") {
   programs.hyprland = {
     enable = true; # Enable Hyprland window manager
     withUWSM = true; # Enable Universal Wayland Session Manager for better session handling
