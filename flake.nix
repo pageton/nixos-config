@@ -46,6 +46,11 @@
     system = "x86_64-linux";
     homeStateVersion = "25.11";
     user = "sadiq";
+    gitConfig = {
+      name = "Sadiq";
+      email = "pageton@proton.me";
+      signingKey = "5684AD6E4045F283";
+    };
     pkgs = import nixpkgs {
       inherit system;
       allowUnfree = true; # Allow proprietary packages
@@ -75,6 +80,7 @@
             hostname
             user
             pkgsStable
+            gitConfig
             ;
         };
         modules = [
@@ -84,9 +90,7 @@
         ];
       };
 
-    makeHome = {
-      hostname,
-    }:
+    makeHome = {hostname}:
       home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
         extraSpecialArgs = {
@@ -97,6 +101,7 @@
             pkgsStable
             system
             hostname
+            gitConfig
             ;
         };
         modules = [
