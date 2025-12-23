@@ -1,15 +1,13 @@
 # Go programming language configuration.
 # This module configures the Go programming language environment
 # with development tools, LSP support, and project workspace setup.
-
 {
   config,
   lib,
   pkgs,
+  hostname,
   ...
-}:
-
-{
+}: {
   programs = {
     go = {
       enable = true; # Enable Go programming language
@@ -17,11 +15,10 @@
 
       # Go environment configuration
       env = {
-        GOPATH = "go"; # GOPATH relative to home directory
-        GOBIN = "go/bin"; # GOBIN relative to home directory
+        GOPATH = lib.mkIf (hostname != "server") "go"; # GOPATH relative to home directory
+        GOBIN = lib.mkIf (hostname != "server") "go/bin"; # GOBIN relative to home directory
         # Private Go modules (for private repositories)
-        GOPRIVATE = [ ]; # Add private module patterns here
-
+        GOPRIVATE = []; # Add private module patterns here
       };
     };
 
@@ -103,9 +100,11 @@
     ];
 
     # Automatic workspace directory creation
-    activation.createGoWorkspace = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    activation.createGoWorkspace = lib.hm.dag.entryAfter ["writeBoundary"] ''
       $DRY_RUN_CMD mkdir -p $HOME/go/{bin,pkg,src}       # Create Go workspace structure
-      $DRY_RUN_CMD mkdir -p $HOME/Projects/go            # Create projects directory
+      ${lib.optionalString (hostname != "server") ''
+        $DRY_RUN_CMD mkdir -p $HOME/Projects/go          # Create projects directory
+      ''}
     '';
   };
 }

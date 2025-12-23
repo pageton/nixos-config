@@ -1,15 +1,14 @@
 # Python programming language configuration.
 # This module configures Python development environment with tools,
 # package management, LSP support, and project workspace setup.
-
 {
   config,
   lib,
   pkgs,
+  hostname,
   ...
 }:
-
-{
+lib.mkIf (hostname != "server") {
   programs = {
     # Python development aliases
     zsh.shellAliases = {
@@ -319,7 +318,7 @@
     ];
 
     # Automatic workspace directory creation
-    activation.createPythonWorkspace = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    activation.createPythonWorkspace = lib.hm.dag.entryAfter ["writeBoundary"] ''
             $DRY_RUN_CMD mkdir -p $HOME/Projects/python    # Create Python projects directory
             $DRY_RUN_CMD mkdir -p $HOME/Projects/django    # Create Django projects directory
             $DRY_RUN_CMD mkdir -p $HOME/Projects/flask     # Create Flask projects directory
