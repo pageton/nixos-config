@@ -9,9 +9,8 @@ with pkgs; [
   (bottles.override {removeWarningPopup = true;}) # Run Windows applications on Linux
   wineWowPackages.stagingFull
   samba
-  zed-editor
   remmina # RDP client
-  antigravity
+  antigravity-fhs
   youtube-music # YouTube Music desktop client
   kdePackages.ark # KDE archive manager
   element-desktop # Matrix client
