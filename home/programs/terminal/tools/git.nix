@@ -1,11 +1,11 @@
 # Git version control configuration.
 # This module configures Git with user settings, GPG signing, global ignores,
 # and useful aliases for efficient development workflow.
-{
+{gitConfig, ...}: {
   programs.git = {
     enable = true;
     signing = {
-      key = "5684AD6E4045F283";
+      key = gitConfig.signingKey;
       signByDefault = true;
     };
 
@@ -24,11 +24,10 @@
 
     settings = {
       user = {
-        name = "Sadiq";
-        email = "pageton@proton.me";
+        inherit (gitConfig) name email;
       };
       core = {
-        editor = "hx";
+        editor = "nvim";
       };
       init = {
         defaultBranch = "main";
