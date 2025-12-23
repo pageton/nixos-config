@@ -4,13 +4,7 @@
   hostname,
   ...
 }: let
-  border-size = config.theme.border-size;
-  gaps-in = config.theme.gaps-in;
-  gaps-out = config.theme.gaps-out;
-  active-opacity = config.theme.active-opacity;
-  inactive-opacity = config.theme.inactive-opacity;
-  rounding = config.theme.rounding;
-  blur = config.theme.blur;
+  inherit (config.theme) border-size gaps-in gaps-out active-opacity inactive-opacity rounding blur;
   background = "rgb(" + config.lib.stylix.colors.base00 + ")";
   isThinkpad = hostname == "thinkpad";
 in {
@@ -101,7 +95,7 @@ in {
       decoration = {
         active_opacity = active-opacity;
         inactive_opacity = inactive-opacity;
-        rounding = rounding;
+        inherit rounding;
         shadow = {
           enabled = true;
           range = 20;
