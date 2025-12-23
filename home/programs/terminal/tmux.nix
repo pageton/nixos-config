@@ -1,4 +1,4 @@
-{pkgsStable, ...}: {
+{pkgs, ...}: {
   programs.tmux = {
     enable = true;
     mouse = true;
@@ -76,7 +76,7 @@
        set -g activity-action other
     '';
 
-    plugins = with pkgsStable.tmuxPlugins; [
+    plugins = with pkgs.tmuxPlugins; [
       # Session management and persistence
       {
         plugin = resurrect;
