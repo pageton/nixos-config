@@ -45,9 +45,10 @@
     source = ./profile_picture.png;
   };
 
+  # Environment variables for session-wide configuration
   home.sessionVariables = lib.mkIf (hostname != "server") {
     # Qt platform preference - Wayland first, X11 fallback
-    QT_QPA_PLATFORM = "xcb";
+    QT_QPA_PLATFORM = "wayland;xcb";
 
     # Maintain Qt5 compatibility for legacy applications
     DISABLE_QT5_COMPAT = "0";
