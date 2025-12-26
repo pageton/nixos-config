@@ -5,9 +5,9 @@
     ./hyprpaper
     ./hyprpanel
     ./wofi
+    ./fuzzel
     ./qt
     # ./hypridle
-    ./vicinae
     ./mime
     ./udiskie
   ];
