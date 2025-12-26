@@ -7,7 +7,7 @@
   programs.brave = lib.mkIf (hostname != "server") {
     enable = true;
     extensions = [
-      "bfogiafebfohielmmehodmfbbebbbpei" # Keeper Password Manager
+      "nngceckbapebfimnlniiiahkandclblb" # Bitwarden Password Manager
       "ielooaepfhfcnmihgnabkldnpddnnldl" # Multilanguage Translator
       "mpbjkejclgfgadiemmefgebjfooflfhl" # Buster: Captcha Solver for Humans
       "amefmmaoenlhckgaoppgnmhlcolehkho" # github-vscode-icons
