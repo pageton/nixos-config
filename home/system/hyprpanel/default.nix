@@ -7,7 +7,7 @@
   hostname,
   ...
 }: let
-  transparentButtons = config.theme.bar.transparentButtons;
+  inherit (config.theme.bar) transparentButtons floating transparent position;
 
   accent = "#${config.lib.stylix.colors.base0D}";
   accent-alt = "#${config.lib.stylix.colors.base03}";
@@ -18,22 +18,13 @@
   font = "${config.stylix.fonts.serif.name}";
   fontSizeForHyprpanel = "${toString config.stylix.fonts.sizes.desktop}px";
 
-  rounding = config.theme.rounding;
-  border-size = config.theme.border-size;
-
-  gaps-out = config.theme.gaps-out;
-  gaps-in = config.theme.gaps-in;
-
-  floating = config.theme.bar.floating;
-  transparent = config.theme.bar.transparent;
-  position = config.theme.bar.position; # "top" ou "bottom"
-
+  inherit (config.theme) rounding border-size gaps-out gaps-in;
   notificationOpacity = 90;
 
   homeDir = "/home/${user}";
   isThinkpad = hostname == "thinkpad";
 in {
-  # wayland.windowManager.hyprland.settings.exec-once = [ "hyprpanel" ];
+  wayland.windowManager.hyprland.settings.exec-once = ["hyprpanel"];
 
   programs.hyprpanel = {
     enable = true;
