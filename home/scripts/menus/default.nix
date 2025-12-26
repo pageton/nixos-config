@@ -25,6 +25,22 @@
     fi
   '';
 
+  launchWrapper = pkgs.writeShellScriptBin "launch-wrapper" ''
+    WS=$(hyprctl -j monitors | jq -r '.[0].activeWorkspace.id')
+
+    echo "Workspace $WS - Launching: $*" >> ~/fuzzel.log
+
+    hyprctl dispatch exec "[workspace $WS silent]" -- "$@" &
+  '';
+
+  fuzzel-menu = pkgs.writeShellScriptBin "fuzzel-menu" ''
+    if pgrep -x fuzzel >/dev/null; then
+      pkill fuzzel
+    else
+      fuzzel --launch-prefix="${pkgs.lib.getExe launchWrapper} %s" &
+    fi
+  '';
+
   powermenu = pkgs.writeShellScriptBin "powermenu" ''
     if pgrep wofi; then
     	pkill wofi
@@ -102,13 +118,106 @@
       cliphist list | wofi --dmenu --prompt "Clipboard" | cliphist decode | wl-copy
     fi
   '';
+
+  fuzzel-clipboard = pkgs.writeShellScriptBin "fuzzel-clipboard" ''
+    if pgrep -x fuzzel; then
+      pkill fuzzel
+    else
+      cliphist list | fuzzel --dmenu --prompt "Clipboard " --placeholder "Search clipboard..." | cliphist decode | wl-copy
+    fi
+  '';
+
+  fuzzel-powermenu = pkgs.writeShellScriptBin "fuzzel-powermenu" ''
+    if pgrep -x fuzzel; then
+      pkill fuzzel
+    else
+      options=(
+        "󰌾 Lock"
+        "󰍃 Logout"
+        " Suspend"
+        "󰑐 Reboot"
+        "󰿅 Shutdown"
+      )
+
+      selected=$(printf '%s\n' "''${options[@]}" | fuzzel --dmenu --prompt "Powermenu " --placeholder "Search powermenu...")
+      selected=''${selected:2}
+
+      case $selected in
+        "Lock")
+          ${pkgs.hyprlock}/bin/hyprlock
+          ;;
+        "Logout")
+          hyprctl dispatch exit
+          ;;
+        "Suspend")
+          systemctl suspend
+          ;;
+        "Reboot")
+          systemctl reboot
+          ;;
+        "Shutdown")
+          systemctl poweroff
+          ;;
+      esac
+    fi
+  '';
+
+  fuzzel-quickmenu = pkgs.writeShellScriptBin "fuzzel-quickmenu" ''
+    if pgrep -x fuzzel; then
+      pkill fuzzel
+    else
+      options=(
+        "󰅶 Caffeine"
+        "󰖔 Night-shift"
+        "󰈊 Hyprpicker"
+        "󰖂 Toggle VPN"
+      )
+
+      selected=$(printf '%s\n' "''${options[@]}" | fuzzel --dmenu --prompt "Quickmenu " --placeholder "Search quickmenu...")
+      selected=''${selected:2}
+
+      case $selected in
+        "Caffeine")
+          caffeine
+          ;;
+        "Night-shift")
+          night-shift
+          ;;
+        "Hyprpicker")
+          sleep 0.2 && ${pkgs.hyprpicker}/bin/hyprpicker -a
+          ;;
+        "Toggle VPN")
+          openvpn-toggle
+          ;;
+      esac
+    fi
+  '';
+
+  fuzzel-window-switcher = pkgs.writeShellScriptBin "fuzzel-window-switcher" ''
+    #!/bin/sh
+    # Get list of all windows with workspace, class, and title information
+    windows=$(hyprctl clients -j | jq -r '.[] | "\(.workspace.id):\(.workspace.name) - \(.class) - \(.title)"')
+    selected=$(echo "$windows" | fuzzel --dmenu --prompt "Switch to window " --placeholder "Search window...")
+
+    if [[ -n "$selected" ]]; then
+      # Find the window address and focus it
+      address=$(hyprctl clients -j | jq -r --arg sel "$selected" '.[] | select("\(.workspace.id):\(.workspace.name) - \(.class) - \(.title)" == $sel) | .address')
+      hyprctl dispatch focuswindow "address:$address"
+    fi
+  '';
 in {
   home.packages = lib.mkIf (hostname != "server") [
     menu
+    fuzzel-menu
     powermenu
+    fuzzel-powermenu
     lock
     quickmenu
+    fuzzel-quickmenu
     windowSwitcher
+    fuzzel-window-switcher
     clipboard
+    fuzzel-clipboard
+    launchWrapper
   ];
 }
