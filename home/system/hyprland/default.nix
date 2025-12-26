@@ -180,6 +180,11 @@ in {
         "size 60% 60%,class:^(scratchpad)$"
         "center,class:^(scratchpad)$"
 
+        # Telegram Mini Apps
+        "float, class:^(org.telegram.desktop)$, title:^(Mini App:.*)$"
+        "center, class:^(org.telegram.desktop)$, title:^(Mini App:.*)$"
+        "size 473 876, class:^(org.telegram.desktop)$, title:^(Mini App:.*)$"
+
         # Scrcpy
         "float,class:^(.*scrcpy.*)"
         "size 503 1119,class:^(.*scrcpy.*)"
