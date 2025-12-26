@@ -8,7 +8,7 @@
     # ctrl + m to toggle the menubar
     packages = with pkgs; [
       xfce.thunar
-      xfce.xfconf
+      xfconf
       xfce.tumbler
       xfce.thunar-archive-plugin
       xfce.thunar-volman
