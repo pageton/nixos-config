@@ -1,5 +1,4 @@
-{ pkgs, ... }:
-{
+{pkgs, ...}: {
   programs.nvf.settings.vim = {
     undoFile.enable = true;
     utility = {
@@ -10,7 +9,7 @@
     tabline.nvimBufferline.enable = true;
     notes.todo-comments.enable = true;
     assistant = {
-      supermaven-nvim = {
+      neocodeium = {
         enable = true;
         setupOpts = {
           keymaps.accept_suggestion = "<A-Tab>";
