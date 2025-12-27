@@ -47,7 +47,7 @@
           style = "BoldItalic";
         };
 
-        size = lib.mkForce 13.0;
+        size = lib.mkForce 12.5;
 
         offset = {
           x = 0;
