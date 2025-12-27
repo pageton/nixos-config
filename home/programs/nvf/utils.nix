@@ -11,9 +11,7 @@
     assistant = {
       neocodeium = {
         enable = true;
-        setupOpts = {
-          keymaps.accept_suggestion = "<A-Tab>";
-        };
+        keymaps.accept = "<A-Tab>";
       };
     };
     statusline.lualine.enable = true;
