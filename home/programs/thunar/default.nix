@@ -7,14 +7,12 @@
   home = {
     # ctrl + m to toggle the menubar
     packages = with pkgs; [
-      xfce.thunar
-      xfconf
-      xfce.tumbler
-      xfce.thunar-archive-plugin
-      xfce.thunar-volman
-      xfce.thunar-media-tags-plugin
-      p7zip
-      xarchiver
+      thunar # file explorer
+      xfconf # config for thunar
+      tumbler # thumbnailer
+      thunar-archive-plugin # archive support
+      thunar-volman # mount support
+      thunar-media-tags-plugin # media support
     ];
 
     sessionVariables = {

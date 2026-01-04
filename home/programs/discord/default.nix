@@ -1,12 +1,12 @@
 # Discord configuration for NixOS
-{
-  inputs,
-  ...
-}: {
+{inputs, ...}: {
   imports = [inputs.nixcord.homeModules.nixcord];
 
   programs.nixcord = {
     enable = true;
-    config = {frameless = true;};
+    vesktop.enable = true;
+    config = {
+      frameless = true;
+    };
   };
 }
