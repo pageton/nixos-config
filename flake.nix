@@ -27,7 +27,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixcord.url = "github:kaylorben/nixcord";
-    vicinae.url = "github:vicinaehq/vicinae";
     nvf.url = "github:notashelf/nvf";
 
     disko = {
@@ -53,18 +52,22 @@
     };
     pkgs = import nixpkgs {
       inherit system;
-      allowUnfree = true; # Allow proprietary packages
-      allowBroken = true; # Don't allow broken packages
-      allowInsecure = false; # Don't allow insecure packages
-      allowUnsupportedSystem = false; # Don't allow unsupported systems
+      config = {
+        allowUnfree = true; # Allow proprietary packages
+        allowBroken = true; # Don't allow broken packages
+        allowInsecure = false; # Don't allow insecure packages
+        allowUnsupportedSystem = false; # Don't allow unsupported systems
+      };
     };
 
     pkgsStable = import nixpkgs-stable {
       inherit system;
-      allowUnfree = true;
-      allowBroken = false;
-      allowInsecure = false;
-      allowUnsupportedSystem = false;
+      config = {
+        allowUnfree = true;
+        allowBroken = false;
+        allowInsecure = false;
+        allowUnsupportedSystem = false;
+      };
     };
 
     makeSystem = {
