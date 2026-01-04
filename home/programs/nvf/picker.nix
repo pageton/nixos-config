@@ -43,7 +43,7 @@
         key = "bb";
         mode = "n";
         silent = true;
-        action = "<cmd>lua Snacks.explorer({ hidden = true, ignored = true })<cr>";
+        action = "<cmd>lua Snacks.explorer({ hidden = true, ignored = true, layout = { width = 40 } })<cr>";
         desc = "File Explorer";
       }
       {

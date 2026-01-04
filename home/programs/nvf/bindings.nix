@@ -5,7 +5,7 @@
       whichKey = {
         enable = true;
         # TODO: registers
-        register = { };
+        register = {};
       };
     };
     keymaps = [
@@ -55,6 +55,13 @@
         silent = true;
         action = "<cmd>bnext<cr>";
         desc = "Next Buffer";
+      }
+      {
+        key = "<C-w>";
+        mode = "n";
+        silent = true;
+        action = "<cmd>bdelete<cr>";
+        desc = "Delete Buffer";
       }
       {
         key = "<C-[>";
