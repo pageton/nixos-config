@@ -41,8 +41,7 @@
   systemd.user.services.mbsync.Unit.After = [ "sops-nix.service" ];
 
   home.packages = with pkgs; [
-    sops
-    age
+    age # Encryption tool
   ];
 
   wayland.windowManager.hyprland.settings.exec-once = [ "systemctl --user start sops-nix" ];
