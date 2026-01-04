@@ -2,4 +2,6 @@
   lib,
   hostname,
   ...
-}: {services.upower.enable = lib.mkDefault (hostname != "server");}
+}: {
+  services.upower.enable = lib.mkDefault (hostname != "server");
+}

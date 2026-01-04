@@ -29,5 +29,12 @@
     ./mullvad.nix
     ./security.nix
     ./tailscale.nix
+    ./bitwarden.nix
+    ./nginx.nix
+    ./postgresql.nix
+    ./sandboxing.nix
+    ./macchanger.nix
+    ./dnscrypt-proxy.nix
+    ./flatpak.nix
   ];
 }

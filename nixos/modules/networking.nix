@@ -1,15 +1,14 @@
-{
-  lib,
-  hostname,
-  user,
-  ...
-}:
 # Networking and security configuration module
 {
-  # NetworkManager - Enable only on desktop/laptop (GUI networking)
+  lib,
+  user,
+  hostname,
+  ...
+}: {
+  # NetworkManager - Enable only on workstations (GUI networking)
   networking.networkmanager.enable = lib.mkDefault (hostname != "server");
 
-  # SSH server - Always enabled with different security settings per host
+  # SSH server - Always enabled with different security settings per host type
   services.openssh = {
     enable = true; # Enable SSH on all hosts
 
@@ -32,17 +31,12 @@
   networking.firewall = {
     enable = true; # Enable firewall on all hosts
 
-    # Allow ping from outside only on desktop (disable on server for security)
+    # Allow ping from outside only on workstations (disable on server for security)
     allowPing = hostname != "server";
 
-    # TCP ports - Conditional based on host type
-    allowedTCPPorts =
-      # SSH always available on all hosts (port 22)
-      [22]
-      # Server-specific services (local-only where possible)
-      ++ lib.optionals (hostname == "server") [
-        6379 # Redis (bound to 127.0.0.1)
-      ];
+    # TCP ports - SSH always available on all hosts (port 22)
+    # Additional ports configured in respective modules (nginx, redis, etc.)
+    allowedTCPPorts = [22];
   };
 
   # Server-only: SSH authorized keys for secure remote access

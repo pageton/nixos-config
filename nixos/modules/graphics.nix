@@ -2,16 +2,16 @@
 # This module configures NVIDIA graphics drivers with optimized settings
 # for gaming, Wayland compositors, and hardware acceleration.
 {
-  lib,
-  hostname,
-  pkgs,
   config,
+  lib,
+  pkgs,
+  hostname,
   ...
 }: let
   # Using stable driver to match kernel module version
   nvidiaDriverChannel = config.boot.kernelPackages.nvidiaPackages.stable;
-in
-  lib.mkIf (hostname != "server") {
+in {
+  config = lib.mkIf (hostname != "server") {
     # Video drivers configuration for Xorg and Wayland
     services.xserver.videoDrivers = ["nvidia"]; # Use NVIDIA proprietary driver
 
@@ -102,4 +102,5 @@ in
       KERNEL=="nvidiactl", GROUP="video", MODE="0660"
       KERNEL=="nvidia-modeset", GROUP="video", MODE="0660"
     '';
-  }
+  };
+}

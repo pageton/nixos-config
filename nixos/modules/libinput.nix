@@ -6,5 +6,5 @@
   hostname,
   ...
 }: {
-  services.libinput.enable = lib.mkDefault (hostname != "server"); # Enable libinput for input device management
+  services.libinput.enable = lib.mkDefault (hostname != "server"); # Enable libinput for workstations
 }

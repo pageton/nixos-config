@@ -1,8 +1,8 @@
 # System stability and high-performance networking optimization.
 # Ultra-high RPS tuning for load testing and development environments.
 {
-  pkgsStable,
   lib,
+  pkgsStable,
   hostname,
   ...
 }: {
@@ -38,10 +38,10 @@
       enable = false;
     };
 
-    # Enable udisks2 for automatic mounting of removable media (desktop only)
+    # Enable udisks2 for automatic mounting of removable media (workstations only)
     udisks2.enable = lib.mkIf (hostname != "server") true;
 
-    # DBus packages for GUI keyring and credentials (desktop only)
+    # DBus packages for GUI keyring and credentials (workstations only)
     dbus = lib.mkIf (hostname != "server") {
       packages = with pkgsStable; [
         gnome-keyring
@@ -61,7 +61,7 @@
     DefaultLimitNPROC=65536
   '';
 
-  # Real-time kit for multimedia tasks (desktop only)
+  # Real-time kit for multimedia tasks (workstations only)
   security.rtkit.enable = lib.mkIf (hostname != "server") true;
 
   # PAM session limits

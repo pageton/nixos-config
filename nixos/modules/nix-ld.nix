@@ -3,8 +3,8 @@
 # executables that were not built for NixOS by providing common shared libraries.
 {
   lib,
-  hostname,
   pkgs,
+  hostname,
   ...
 }: {
   programs.nix-ld = lib.mkIf (hostname != "server") {
