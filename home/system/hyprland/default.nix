@@ -4,7 +4,16 @@
   hostname,
   ...
 }: let
-  inherit (config.theme) border-size gaps-in gaps-out active-opacity inactive-opacity rounding blur;
+  inherit
+    (config.theme)
+    border-size
+    gaps-in
+    gaps-out
+    active-opacity
+    inactive-opacity
+    rounding
+    blur
+    ;
   background = "rgb(" + config.lib.stylix.colors.base00 + ")";
   isThinkpad = hostname == "thinkpad";
 in {
@@ -18,7 +27,7 @@ in {
     enable = true;
     xwayland.enable = true;
     systemd = {
-      enable = false;
+      enable = true;
       variables = ["--all"];
     };
     package = null;
@@ -38,9 +47,6 @@ in {
         "swayosd-server &"
         "wl-paste --type text --watch cliphist store" # Clipboard manager for text
         "wl-paste --type image --watch cliphist store" # Clipboard manager for images
-        # Enhanced clipboard management
-        "wl-paste -t text --watch clipman store" # Primary clipboard
-        "wl-paste -p -t text --watch clipman store -P --histpath=\"~/.local/share/clipman-primary.json\""
       ];
 
       monitor = ",preferred,auto,1";
@@ -90,6 +96,7 @@ in {
         border_size = border-size;
         layout = "master";
         "col.inactive_border" = lib.mkForce background;
+        allow_tearing = false;
       };
 
       decoration = {
@@ -106,7 +113,11 @@ in {
             if blur
             then "true"
             else "false";
+          ignore_opacity = false;
+          new_optimizations = true;
+          xray = false;
           size = 18;
+          passes = 2;
         };
       };
 
@@ -126,7 +137,6 @@ in {
         new_on_top = true;
         mfact = 0.55;
         orientation = "left"; # Default to vertical split (master on left)
-        inherit_fullscreen = true;
         smart_resizing = true;
         drop_at_cursor = true;
       };
@@ -137,10 +147,10 @@ in {
         disable_splash_rendering = true;
         disable_autoreload = true;
         focus_on_activate = true;
-        new_window_takes_over_fullscreen = 2;
+        on_focus_under_fullscreen = 1; # Replaces master:inherit_fullscreen (0=focus,1=prevent,2=allow)
       };
 
-      windowrulev2 = [
+      windowrule2 = [
         "float, tag:modal"
         "pin, tag:modal"
         "center, tag:modal"
@@ -195,10 +205,7 @@ in {
         "opacity 1.0 1.0, class:Waydroid"
       ];
 
-      layerrule = [
-        "noanim, launcher"
-        "noanim, ^ags-.*"
-      ];
+      layerrule = [];
 
       input = {
         kb_layout = "us,ara";

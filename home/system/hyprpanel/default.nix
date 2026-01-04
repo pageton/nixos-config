@@ -24,8 +24,6 @@
   homeDir = "/home/${user}";
   isThinkpad = hostname == "thinkpad";
 in {
-  wayland.windowManager.hyprland.settings.exec-once = ["hyprpanel"];
-
   programs.hyprpanel = {
     enable = true;
 
