@@ -9,5 +9,6 @@
     ./ai
     ./build
     ./nerdfont-fzf
+    ./screenshot
   ];
 }
