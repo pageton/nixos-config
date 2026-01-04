@@ -18,5 +18,14 @@
 
   networking.hostName = hostname;
 
+  mySystem = {
+    nginx.enable = true;
+    bitwarden.enable = true;
+    postgresql = {
+      enable = true;
+      enableTCPIP = true;
+    };
+  };
+
   system.stateVersion = stateVersion;
 }
