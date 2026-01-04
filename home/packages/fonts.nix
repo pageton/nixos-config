@@ -1,7 +1,5 @@
-{ pkgs, pkgsStable }:
-
-with pkgs;
-[
+{pkgs, ...}:
+with pkgs; [
   dejavu_fonts # Fallback sans-serif font
   jetbrains-mono # Primary monospace font
   noto-fonts # Comprehensive font collection
