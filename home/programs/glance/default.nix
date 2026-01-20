@@ -167,6 +167,10 @@ with lib; {
                       symbol = "TON11419-USD";
                       name = "Toncoin";
                     }
+                    {
+                      symbol = "XMR-USD";
+                      name = "Monero";
+                    }
                   ];
                 }
                 {
