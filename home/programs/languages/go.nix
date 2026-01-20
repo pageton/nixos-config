@@ -32,6 +32,7 @@
       gofmt = "gofumpt -w"; # Format Go code with gofumpt
       golint = "golangci-lint run"; # Run comprehensive linter
       goair = "air"; # Live reload with Air
+      godo = "go doc"; # Generate Go documentation
 
       # Debugging commands
       godebug = "dlv debug"; # Start Delve debugger

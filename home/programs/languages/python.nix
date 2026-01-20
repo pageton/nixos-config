@@ -5,6 +5,7 @@
   config,
   lib,
   pkgs,
+  pkgsStable,
   hostname,
   ...
 }:
@@ -256,7 +257,7 @@ lib.mkIf (hostname != "server") {
       python3Packages.pytest-xdist # Parallel test execution
 
       # Package management
-      poetry # Python dependency management
+      pkgsStable.poetry
       pipenv # Python virtual environment management
       uv # Fast Python package installer and resolver
 
