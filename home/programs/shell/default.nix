@@ -19,7 +19,6 @@
   # Essential Nix development tools
   home.packages = with pkgs; [
     # Nix formatting and linting
-    nixfmt-rfc-style # Nix code formatter (RFC 166 style)
     statix # Nix linter for best practices
     deadnix # Find dead code in Nix expressions
     nixd # Nix language server
