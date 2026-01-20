@@ -12,6 +12,7 @@ with pkgsStable; [
   # === Communication and Collaboration ===
   element-desktop # Matrix protocol client for Element
   telegram-desktop # Telegram messaging application
+  ayugram-desktop
   remmina # Remote desktop client
 
   # === Productivity and Knowledge Management ===
