@@ -102,8 +102,11 @@
   gtk.gtk3.bookmarks = [
     "file:///home/${user}/Downloads Downloads"
     "file:///home/${user}/Pictures Pictures"
-    "file:///home/${user}/.config/nixos NixOS"
-    "file:///home/${user}/dev Development"
+    "file:///home/${user}/Documents Documents"
+    "file:///home/${user}/Games Games"
+    "file:///home/${user}/System NixOS"
+    "file:///home/${user}/Developer Development"
+    "file:///home/${user}/Projects Projects"
   ];
 
   xdg.configFile."Thunar/uca.xml".text = ''
