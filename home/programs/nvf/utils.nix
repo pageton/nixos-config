@@ -69,7 +69,6 @@
         pkgs.vimPlugins.cmp-buffer
         pkgs.vimPlugins.cmp-path
         pkgs.vimPlugins.cmp_luasnip
-        pkgs.vimPlugins.friendly-snippets
       ];
     };
 
@@ -98,6 +97,35 @@
           vim.notify("cmp not ready yet, retrying...", vim.log.levels.WARN)
         end
       end, 100)
+
+      -- Auto organize imports on save for Go
+      vim.api.nvim_create_autocmd("BufWritePre", {
+        pattern = "*.go",
+        callback = function()
+          local params = vim.lsp.util.make_range_params()
+          params.context = {only = {"source.organizeImports"}}
+          local result = vim.lsp.buf_request_sync(0, "textDocument/codeAction", params)
+          for cid, res in pairs(result or {}) do
+            for _, r in pairs(res.result or {}) do
+              if r.edit then
+                local enc = (vim.lsp.get_client_by_id(cid) or {}).offset_encoding or "utf-16"
+                vim.lsp.util.apply_workspace_edit(r.edit, enc)
+              end
+            end
+          end
+        end,
+      })
+
+      -- Auto organize imports on save for TypeScript/JavaScript
+      vim.api.nvim_create_autocmd("BufWritePre", {
+        pattern = "*.{ts,tsx,js,jsx}",
+        callback = function()
+          vim.lsp.buf.code_action({
+            context = {only = {"source.organizeImports"}},
+            apply = true,
+          })
+        end,
+      })
     '';
 
     snippets.luasnip.enable = true;

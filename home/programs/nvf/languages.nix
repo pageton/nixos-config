@@ -92,6 +92,7 @@
       python.enable = true;
       markdown = {
         enable = true;
+        format.enable = false;
         extensions = {
           markview-nvim = {
             enable = true;
