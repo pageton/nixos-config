@@ -45,6 +45,10 @@
     source = ./profile_picture.png;
   };
 
+  xdg.autostart.entries.remmina-applet = {
+    enable = false;
+  };
+
   # Environment variables for session-wide configuration
   home.sessionVariables = lib.mkIf (hostname != "server") {
     # Qt platform preference - Wayland first, X11 fallback
