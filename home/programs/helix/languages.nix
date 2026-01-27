@@ -32,39 +32,16 @@
       };
     };
 
-    language-server.tabby-ml = {
-      command = "npx";
-      args = [
-        "tabby-agent"
-        "--lsp"
-        "--stdio"
-      ];
-    };
-
-    language-server.sqls = {
-      command = "sqls";
-      shell = true;
-    };
-
     language = [
-      {
-        name = "sql";
-        language-servers = [
-          "sqls"
-          "tabby-ml"
-        ];
-        file-types = [ "sql" ];
-      }
       {
         name = "go";
         language-servers = [
           "gopls"
-          "tabby-ml"
         ];
         auto-format = true;
         formatter = {
           command = "gofumpt";
-          args = [ ];
+          args = [];
         };
         comment-token = "//";
       }
@@ -73,7 +50,6 @@
         language-servers = [
           "nixd"
           "nil"
-          "tabby-ml"
         ];
       }
     ];
