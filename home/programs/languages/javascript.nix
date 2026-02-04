@@ -1,25 +1,22 @@
 # JavaScript/TypeScript programming language configuration.
 # This module configures JavaScript/TypeScript development environment
 # with runtimes, package managers, LSP support, and project workspace setup.
-
 {
   config,
   lib,
   pkgs,
   hostname,
   ...
-}:
-
-let
+}: let
   # Configurable list of global npm packages to install
   globalNpmPackages = [
     "@google/gemini-cli"
     "@anthropic-ai/claude-code"
+    "@openai/codex"
     "opencode-ai"
     "tabby-agent"
   ];
-in
-{
+in {
   programs = {
     # JavaScript/TypeScript runtimes and package managers
     zsh.shellAliases = {
@@ -222,7 +219,7 @@ in
     ];
 
     # Automatic workspace directory creation and global package installation
-    activation.createJSWorkspace = lib.mkIf (hostname != "server") (lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    activation.createJSWorkspace = lib.mkIf (hostname != "server") (lib.hm.dag.entryAfter ["writeBoundary"] ''
       BUN_BIN="${pkgs.bun}/bin/bun"  # Use Bun from Nix directly
 
       # Create workspace directories

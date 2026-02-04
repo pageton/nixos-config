@@ -21,6 +21,7 @@
       ./terminal
       ./thunar
       ./nvf
+      ./zellij
       ./isolation
     ];
 }

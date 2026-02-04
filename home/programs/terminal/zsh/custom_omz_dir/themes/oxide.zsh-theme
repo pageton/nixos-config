@@ -53,7 +53,7 @@ FMT_UNSTAGED="%{$oxide_reset_color%} %{$oxide_orange%}●"
 FMT_STAGED="%{$oxide_reset_color%} %{$oxide_cwd_color%}✚"
 FMT_ACTION="(%{$oxide_cwd_color%}%a%{$oxide_reset_color%})"
 FMT_VCS_STATUS="on %{$oxide_turquoise%} %b%u%c%{$oxide_reset_color%}"
-IN_NIX=$([ "$SHLVL" -gt 2 ] && echo " in$oxide_turquoise nix-shell$oxide_reset_color " || echo " ")
+IN_NIX=$([ -n "$IN_NIX_SHELL" ] && echo " in$oxide_turquoise nix-shell$oxide_reset_color " || echo " ")
 
 zstyle ':vcs_info:*' enable git svn
 zstyle ':vcs_info:*' check-for-changes true

@@ -41,7 +41,6 @@
 
         # System utilities
         "systemd"
-        "tmux"
         "history-substring-search"
 
         # Enhanced navigation
@@ -228,14 +227,9 @@
         fi
       }
 
-      # Auto-start Tmux in graphical sessions (skip in TTY)
-      if [ -z "$TMUX" ] && [ -n "$DISPLAY" ]; then
-        tmux attach-session -t default || tmux new-session -s default  # Attach to existing or create new session
-      fi
-
-      # Initialize Universal Wayland Session Manager (UWSM)
-      if uwsm check may-start > /dev/null && uwsm select; then
-        exec systemd-cat -t uwsm_start uwsm start default  # Start UWSM with logging
+      # Auto-start Zellij in graphical sessions (skip in TTY)
+      if [ -z "$ZELLIJ" ]; then
+        zellij
       fi
 
       # Source Home Manager environment variables

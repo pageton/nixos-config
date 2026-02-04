@@ -19,12 +19,12 @@ with lib; {
         port = mkDefault 8080;
       };
 
-      # Catppuccin Mocha theme
+      # Kanagawa Wave theme
       theme = {
-        background-color = mkForce "240 21 15";
-        primary-color = mkForce "217 92 83";
-        positive-color = mkForce "115 54 76";
-        negative-color = mkForce "347 70 65";
+        background-color = mkForce "240 13 14";
+        primary-color = mkForce "218 52 67";
+        positive-color = mkForce "107 17 50";
+        negative-color = mkForce "359 51 51";
         contrast-multiplier = mkForce 1.2;
         text-saturation-multiplier = mkForce 1.3;
       };

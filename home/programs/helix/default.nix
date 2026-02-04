@@ -9,7 +9,7 @@
     enable = true;
     package = pkgs.helix;
     settings = {
-      theme = "catppuccin_mocha";
+      theme = "kanagawa";
       editor = {
         file-picker = {
           hidden = false;

@@ -1,6 +1,7 @@
 # Thunar is a file explorer
 {
   pkgs,
+  lib,
   user,
   ...
 }: {
@@ -90,11 +91,11 @@
 
   gtk = {
     iconTheme = {
-      name = "WhiteSur";
-      package = pkgs.whitesur-icon-theme.override {
+      name = lib.mkDefault "WhiteSur";
+      package = lib.mkDefault (pkgs.whitesur-icon-theme.override {
         boldPanelIcons = true;
         alternativeIcons = true;
-      };
+      });
     };
   };
 
