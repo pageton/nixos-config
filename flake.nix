@@ -27,7 +27,20 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixcord.url = "github:kaylorben/nixcord";
+    niri = {
+      url = "github:sodiboo/niri-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs-stable.follows = "nixpkgs-stable";
+    };
+    noctalia = {
+      url = "github:noctalia-dev/noctalia-shell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nvf.url = "github:notashelf/nvf";
+    nix-wallpaper = {
+      url = "github:lunik1/nix-wallpaper";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     disko = {
       url = "github:nix-community/disko";
@@ -58,6 +71,9 @@
         allowInsecure = false; # Don't allow insecure packages
         allowUnsupportedSystem = false; # Don't allow unsupported systems
       };
+      overlays = [
+        inputs.niri.overlays.niri
+      ];
     };
 
     pkgsStable = import nixpkgs-stable {
@@ -90,6 +106,7 @@
           ./hosts/${hostname}/configuration.nix
           inputs.disko.nixosModules.disko
           inputs.stylix.nixosModules.stylix
+          inputs.niri.nixosModules.niri
         ];
       };
 
@@ -110,6 +127,8 @@
         modules = [
           ./home/home.nix
           inputs.stylix.homeModules.stylix
+          inputs.niri.homeModules.config
+          inputs.noctalia.homeModules.default
         ];
       };
 
@@ -137,8 +156,7 @@
 
     homeConfigurations =
       nixpkgs.lib.foldl' (
-        configs: host:
-          configs // {"${user}@${host.hostname}" = makeHome {inherit (host) hostname;};}
+        configs: host: configs // {"${user}@${host.hostname}" = makeHome {inherit (host) hostname;};}
       ) {}
       hosts;
   };
