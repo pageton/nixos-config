@@ -1,9 +1,13 @@
 {...}: {
   imports = [
     ./hyprland
-    ./hyprlock
-    ./hyprpaper
-    ./hyprpanel
+    ./niri
+    # ./hyprlock
+    # ./hyprpaper
+    # ./hyprpanel
+    # ./waybar    # Replaced by Noctalia shell
+    # ./swaync    # Replaced by Noctalia notifications
+    ./noctalia
     ./wofi
     ./fuzzel
     ./qt

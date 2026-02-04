@@ -4,7 +4,7 @@
     bind =
       [
         "$mod, Return, exec, uwsm app -- ${pkgs.alacritty}/bin/alacritty"
-        "$mod, T, exec, uwsm app -- ${pkgs.alacritty}/bin/alacritty --class=scratchpad"
+        "$mod, T, exec, uwsm app -- ${pkgs.alacritty}/bin/alacritty -t scratchpad"
         "$mod, B, exec, launch-wrapper uwsm app -- ${pkgs.brave}/bin/brave"
         "$shiftMod,HOME, exec,  uwsm app -- ${pkgs.hyprlock}/bin/hyprlock"
         "$mod,X, exec, fuzzel-powermenu"
