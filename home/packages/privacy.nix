@@ -7,7 +7,7 @@
 with pkgs;
 with pkgsStable; [
   # === Privacy-Focused Browsers ===
-  librewolf # Privacy-focused Firefox fork
+  # librewolf # Privacy-focused Firefox fork
   tor # Tor client and service
   tor-browser # Tor Browser Bundle
 

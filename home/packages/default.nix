@@ -13,6 +13,7 @@
     ./utilities.nix
     ./fonts.nix
     ./privacy.nix
+    ./lsp.nix
   ];
 in
   # Import each chunk with both pkgs & pkgsStable, then flatten into one big list
