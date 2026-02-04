@@ -2,6 +2,8 @@
   lib,
   pkgs,
   config,
+  inputs,
+  system,
   ...
 }: {
   options.theme = lib.mkOption {
@@ -51,25 +53,25 @@
       };
     };
 
-    # Mocha
+    # Kanagawa Wave
     # See https://tinted-theming.github.io/tinted-gallery/ for more schemes
     base16Scheme = {
-      base00 = "0F0F15"; # Default Background
-      base01 = "15151A"; # Lighter Background (Used for status bars, line number and folding marks)
-      base02 = "313244"; # Selection Background
-      base03 = "45475a"; # Comments, Invisibles, Line Highlighting
-      base04 = "585b70"; # Dark Foreground (Used for status bars)
-      base05 = "cdd6f4"; # Default Foreground, Caret, Delimiters, Operators
-      base06 = "f5e0dc"; # Light Foreground (Not often used)
-      base07 = "b4befe"; # Light Background (Not often used)
-      base08 = "f38ba8"; # Variables, XML Tags, Markup Link Text, Markup Lists, Diff Deleted
-      base09 = "fab387"; # Integers, Boolean, Constants, XML Attributes, Markup Link Url
-      base0A = "f9e2af"; # Classes, Markup Bold, Search Text Background
-      base0B = "a6e3a1"; # Strings, Inherited Class, Markup Code, Diff Inserted
-      base0C = "94e2d5"; # Support, Regular Expressions, Escape Characters, Markup Quotes
-      base0D = "89b4fa"; # Functions, Methods, Attribute IDs, Headings, Accent color
-      base0E = "cba6f7"; # Keywords, Storage, Selector, Markup Italic, Diff Changed
-      base0F = "f2cdcd"; # Deprecated, Opening/Closing Embedded Language Tags, e.g. <?php ?>
+      base00 = "1F1F28"; # Default Background (sumiInk1)
+      base01 = "16161D"; # Lighter Background (sumiInk0)
+      base02 = "223249"; # Selection Background (winterBlue)
+      base03 = "54546D"; # Comments, Invisibles (sumiInk6)
+      base04 = "727169"; # Dark Foreground (oldWhite)
+      base05 = "DCD7BA"; # Default Foreground (fujiWhite)
+      base06 = "C8C093"; # Light Foreground (oldWhite lighter)
+      base07 = "717C7C"; # Light Background
+      base08 = "C34043"; # Variables, XML Tags (autumnRed)
+      base09 = "FFA066"; # Integers, Boolean, Constants (surimiOrange)
+      base0A = "C0A36E"; # Classes, Search Text (boatYellow2)
+      base0B = "76946A"; # Strings, Diff Inserted (autumnGreen)
+      base0C = "6A9589"; # Support, RegExp (waveAqua1)
+      base0D = "7E9CD8"; # Functions, Methods, Accent (crystalBlue)
+      base0E = "957FB8"; # Keywords, Diff Changed (oniViolet)
+      base0F = "D27E99"; # Deprecated (sakuraPink)
     };
 
     icons = {
@@ -108,9 +110,18 @@
     };
 
     polarity = "dark";
-    image = pkgs.fetchurl {
-      url = "https://raw.githubusercontent.com/orangci/walls-catppuccin-mocha/master/cat-vibin.png";
-      sha256 = "sha256-Hg27Gp4JBrYIC5B1Uaz8QkUskwD3pBhgEwE1FW7VBYo=";
-    };
+    image = "${
+      inputs.nix-wallpaper.packages.${system}.default.override {
+        backgroundColor = "#1F1F28"; # sumiInk1
+        logoColors = {
+          color0 = "#7E9CD8"; # crystalBlue
+          color1 = "#957FB8"; # oniViolet
+          color2 = "#7E9CD8"; # crystalBlue
+          color3 = "#957FB8"; # oniViolet
+          color4 = "#7E9CD8"; # crystalBlue
+          color5 = "#957FB8"; # oniViolet
+        };
+      }
+    }/share/wallpapers/nixos-wallpaper.png";
   };
 }
