@@ -62,9 +62,7 @@ in
         enable = true;
         wayland.enable = true;
         theme = "sddm-astronaut-theme";
-        settings = {
-          Wayland.SessionDir = "${pkgs.hyprland}/share/wayland-sessions";
-        };
+        # Session discovery via services.displayManager.sessionPackages (supports both Hyprland and niri)
       };
     };
 

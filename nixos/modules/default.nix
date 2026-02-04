@@ -9,6 +9,7 @@
     ./sddm.nix
     ./graphics.nix
     ./hyprland.nix
+    ./niri.nix
     ./i18n.nix
     ./libinput.nix
     ./networking.nix

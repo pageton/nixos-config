@@ -1,9 +1,12 @@
 # Bootloader configuration (GRUB - no theme).
 {
   lib,
+  pkgs,
   hostname,
   ...
 }: {
+  boot.kernelPackages = pkgs.linuxPackages_6_18;
+
   boot.loader = lib.mkForce (
     if hostname == "server"
     then {
@@ -28,3 +31,4 @@
     }
   );
 }
+
