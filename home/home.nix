@@ -14,7 +14,7 @@
       ./scripts
     ]
     ++ lib.optional (hostname != "server") ./system
-    ++ lib.optional (hostname != "server") ./themes/catppucin.nix;
+    ++ lib.optional (hostname != "server") ./themes/kanagawa.nix;
 
   home = {
     username = user;
@@ -41,7 +41,7 @@
     )
   ];
 
-  home.file.".face.icon" = lib.mkIf (hostname != "server") {
+  home.file.".face" = lib.mkIf (hostname != "server") {
     source = ./profile_picture.png;
   };
 
