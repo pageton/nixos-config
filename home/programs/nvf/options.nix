@@ -36,7 +36,7 @@
       enable = true;
       name = lib.mkForce "catppuccin";
       style = lib.mkForce "mocha";
-      transparent = lib.mkForce true;
+      transparent = lib.mkForce false;
     };
   };
 }

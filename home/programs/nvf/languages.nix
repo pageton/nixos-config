@@ -54,6 +54,39 @@
       inlayHints.enable = true;
       null-ls.enable = true;
       servers.nixd.settings.nil.nix.autoArchive = true;
+      servers.gopls = {
+        settings = {
+          analyses = {
+            unusedparams = true;
+            shadow = true;
+            unusedwrite = true;
+            fillstruct = true;
+            nonewvars = true;
+            fieldalignment = false;  # Expensive for large files
+          };
+          staticcheck = false;  # Disable for large files
+          gofumpt = true;
+          codelenses = {
+            gc_details = false;  # Disable for large files
+            generate = true;
+            regenerate_cgo = true;
+            run_govulncheck = true;
+            test = true;
+            tidy = true;
+            upgrade_dependency = true;
+            vendor = true;
+          };
+          usePlaceholders = true;
+          completeUnimported = true;
+          experimentalPostfixCompletions = true;
+          experimentalWorkspaceModule = true;
+          semanticTokens = true;
+          directoryFilters = [
+            "-vendor"
+            "-node_modules"
+          ];
+        };
+      };
       otter-nvim = {
         enable = true;
         setupOpts = {
@@ -109,6 +142,7 @@
       html.enable = true;
       bash.enable = true;
       nix.enable = true;
+      lua.enable = true;
       tailwind.enable = true;
     };
     formatter = {
