@@ -5,7 +5,7 @@
 [![Flakes](https://img.shields.io/badge/Flakes-Enabled-5277C3?style=for-the-badge)](https://nixos.wiki/wiki/Flakes)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-A modular, reproducible NixOS flake configuration managing multiple hosts (desktop, laptop, and server) with Home-Manager integration.
+A modular, reproducible NixOS flake configuration managing multiple hosts (desktop and laptop) with Home-Manager integration.
 
 ## Table of Contents
 
@@ -25,7 +25,7 @@ A modular, reproducible NixOS flake configuration managing multiple hosts (deskt
 
 This repository contains a declarative NixOS configuration using flakes with the following features:
 
-- **Multi-host support**: `desktop`, `thinkpad` (laptop), and `server`
+- **Multi-host support**: `desktop` and `thinkpad` (laptop)
 - **Modular architecture**: Reusable NixOS and Home-Manager modules
 - **Desktop environment**: Hyprland (Wayland) with Catppuccin theming
 - **Security**: SOPS encrypted secrets, Mullvad VPN, Tor support
@@ -38,7 +38,6 @@ This repository contains a declarative NixOS configuration using flakes with the
 |------|-------------|--------------|
 | `desktop` | Desktop PC | Gaming (Gamescope), full desktop environment |
 | `thinkpad` | Laptop | NVIDIA GPU, power management (TLP) |
-| `server` | Server | Minimal, no desktop environment |
 
 ---
 
@@ -129,11 +128,6 @@ System/
 │   │   ├── configuration.nix
 │   │   ├── hardware-configuration.nix
 │   │   ├── local-packages.nix
-│   │   └── modules/
-│   └── server/                  # Server configuration
-│       ├── configuration.nix
-│       ├── hardware-configuration.nix
-│       └── disk-config.nix
 │
 ├── nixos/modules/               # Shared NixOS system modules
 │   ├── default.nix              # Module loader
@@ -203,7 +197,7 @@ This configuration uses the following flakes:
 | **nixcord** | Discord theming |
 | **vicinae** | IPC utility for Hyprland |
 | **nvf** | Neovim configuration framework |
-| **disko** | Disk management for NixOS |
+
 
 ---
 
