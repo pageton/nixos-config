@@ -25,7 +25,7 @@
     sandboxing = {
       enable = true;
       enableUserNamespaces = true;
-      enableWrappedBinaries = false;
+      enableWrappedBinaries = true;
     };
     bluetooth = {
       enable = true;
@@ -35,7 +35,7 @@
       enable = true;
     };
     mullvadVpn = {
-      enable = true;
+      enable = false;
     };
     tor = {
       enable = true;

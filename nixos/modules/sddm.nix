@@ -2,7 +2,6 @@
 {
   pkgs,
   lib,
-  hostname,
   ...
 }: let
   sddmBackground = pkgs.fetchurl {
@@ -53,8 +52,7 @@
         HighlightBackgroundColor = "#cdd6f4";
       };
   };
-in
-  lib.mkIf (hostname != "server") {
+in {
     services.displayManager = {
       sddm = {
         package = pkgs.kdePackages.sddm;

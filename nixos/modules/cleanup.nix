@@ -2,13 +2,11 @@
 # This module provides automated cleanup services for various directories
 # to prevent disk space issues from accumulating temporary files.
 {
-  lib,
   pkgs,
   user,
-  hostname,
   ...
 }: {
-  config = lib.mkIf (hostname != "server") {
+  config = {
     # Telegram downloads cleanup service
     systemd = {
       services = {

@@ -2,12 +2,10 @@
 # This module enables nix-ld, which allows running dynamically linked
 # executables that were not built for NixOS by providing common shared libraries.
 {
-  lib,
   pkgs,
-  hostname,
   ...
 }: {
-  programs.nix-ld = lib.mkIf (hostname != "server") {
+  programs.nix-ld = {
     enable = true;
 
     libraries = with pkgs; [
@@ -27,27 +25,27 @@
       cups
 
       # XCB protocol library
-      xorg.libxcb
+      libxcb
 
       # X11 and graphics
-      xorg.libX11
-      xorg.libXext
-      xorg.libXi
-      xorg.libXrender
-      xorg.libXft
-      xorg.libXcursor
-      xorg.libXrandr
-      xorg.libXinerama
+      libx11
+      libxext
+      libxi
+      libxrender
+      libxft
+      libxcursor
+      libxrandr
+      libxinerama
       libGL
 
       # Additional X11 libraries for Chrome/Chromium
-      xorg.libXcomposite
-      xorg.libXdamage
-      xorg.libXfixes
-      xorg.libXScrnSaver
-      xorg.libXtst
-      xorg.libxkbfile
-      xorg.libxshmfence
+      libxcomposite
+      libxdamage
+      libxfixes
+      libxscrnsaver
+      libxtst
+      libxkbfile
+      libxshmfence
 
       # System services
       dbus

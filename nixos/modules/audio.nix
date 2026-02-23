@@ -2,18 +2,17 @@
 {
   config,
   lib,
-  hostname,
   ...
 }: {
   # Validation: Ensure PulseAudio and PipeWire don't conflict
-  config.assertions = lib.mkIf (hostname != "server") [
+  config.assertions = [
     {
       assertion = !(config.services.pulseaudio.enable && config.services.pipewire.enable);
       message = "PulseAudio and PipeWire cannot be enabled simultaneously";
     }
   ];
 
-  config.services = lib.mkIf (hostname != "server") {
+  config.services = {
     pulseaudio.enable = false;
 
     pipewire = {

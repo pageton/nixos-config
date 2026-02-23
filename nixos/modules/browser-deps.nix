@@ -3,20 +3,18 @@
 # Puppeteer and other Chrome-based tools. Note: Most libraries are provided by
 # the nix-ld module, this focuses on environment configuration.
 {
-  lib,
   pkgs,
-  hostname,
   ...
 }: {
-  config = lib.mkIf (hostname != "server") {
+  config = {
     # Add browser-related packages to system
     environment.systemPackages = with pkgs; [
       # Install Chromium directly for testing and fallback
       chromium
 
       # Virtual display for headful mode (useful for debugging and screenshots)
-      xorg.xvfb
-      xorg.xauth
+      xvfb-run
+      xauth
     ];
 
     # Set environment variables for Chrome and Puppeteer

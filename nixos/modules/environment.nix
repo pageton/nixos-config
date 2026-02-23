@@ -7,6 +7,9 @@
     # Default text editor for applications that need one
     EDITOR = "nvim";
 
+    # Fix Java Swing/AWT applications (e.g. BurpSuite) on Wayland
+    _JAVA_AWT_WM_NONREPARENTING = "1";
+
     # XDG Base Directory specification for user binaries
     XDG_BIN_HOME = "$HOME/.local/bin";
 

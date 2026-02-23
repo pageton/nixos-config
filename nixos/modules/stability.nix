@@ -1,48 +1,33 @@
-# System stability and high-performance networking optimization.
-# Ultra-high RPS tuning for load testing and development environments.
+# System stability, resource limits, and high-performance networking tuning.
 {
   lib,
   pkgsStable,
-  hostname,
   ...
-}: {
-  boot.kernel.sysctl = {
-    "fs.file-max" = 1000000; # Integer: System-wide file descriptor limit
-    "net.core.somaxconn" = 65536; # Integer: Max pending connections
-    "net.core.netdev_max_backlog" = 250000; # Integer: Max network queue backlog
-    "net.ipv4.tcp_max_syn_backlog" = 65536; # Integer: Max pending SYN connections
-    "net.ipv4.ip_local_port_range" = "1024\t65535"; # String: Port range (tab-separated, conservative)
-    "kernel.pid_max" = 4194303; # Integer: Maximum process ID
+}:
 
-    # Connection reuse and scalability (conservative settings)
-    "net.ipv4.tcp_tw_reuse" = 1; # Integer: Reuse TIME_WAIT sockets
-    "net.ipv4.tcp_fin_timeout" = 15; # Integer: FIN timeout for closed sockets
-
-    # SYN handling
-    "net.ipv4.tcp_syncookies" = lib.mkDefault 1; # Integer: Protects against SYN floods
-
-    # TCP buffer tuning - integers for single values
-    "net.core.rmem_max" = 16777216; # Integer: Max receive buffer (16 MB)
-    "net.core.wmem_max" = 16777216; # Integer: Max send buffer (16 MB)
-    "net.ipv4.tcp_rmem" = "4096\t87380\t16777216"; # String: TCP receive buffer (tab-separated)
-    "net.ipv4.tcp_wmem" = "4096\t65536\t16777216"; # String: TCP send buffer (tab-separated)
-
-    # Memory management - integers for single values
-    "vm.swappiness" = 10; # Integer: Swap tendency
-    "vm.dirty_ratio" = 15; # Integer: Max dirty memory percentage
-    "vm.dirty_background_ratio" = 5; # Integer: Background flush threshold
-  };
-
+{
   services = {
-    earlyoom = {
-      enable = false;
+    fstrim = {
+      enable = true;
+      interval = "weekly";
     };
 
+    earlyoom = {
+      enable = true;
+      freeMemThreshold = 8; # 8% ≈ 2.6GB on 32GB
+      freeSwapThreshold = 10;
+      enableNotifications = true; # Desktop notification on kill
+    };
+
+    # Resolve conflict: earlyoom sets systembus-notify=true, smartd (via Scrutiny) sets false.
+    # We want notifications enabled for earlyoom OOM-kill alerts.
+    systembus-notify.enable = lib.mkForce true;
+
     # Enable udisks2 for automatic mounting of removable media (workstations only)
-    udisks2.enable = lib.mkIf (hostname != "server") true;
+    udisks2.enable = true;
 
     # DBus packages for GUI keyring and credentials (workstations only)
-    dbus = lib.mkIf (hostname != "server") {
+    dbus = {
       packages = with pkgsStable; [
         gnome-keyring
         gcr
@@ -50,22 +35,51 @@
     };
   };
 
-  systemd.settings.Manager = {
-    DefaultLimitNOFILE = 200000; # Systemd-wide FD limit
-    DefaultLimitNPROC = 65536; # Systemd-wide process limit
+  boot.kernel.sysctl = {
+    "fs.file-max" = 1000000;
+    "net.core.somaxconn" = 65536;
+    "net.core.netdev_max_backlog" = 250000;
+    "net.ipv4.tcp_max_syn_backlog" = 65536;
+    "net.ipv4.ip_local_port_range" = "1024\t65535";
+    "kernel.pid_max" = 4194303;
+    "net.ipv4.tcp_fin_timeout" = 15;
+
+    # TCP buffer tuning
+    "net.core.rmem_max" = 16777216; # 16 MB
+    "net.core.wmem_max" = 16777216; # 16 MB
+    "net.ipv4.tcp_rmem" = "4096\t87380\t16777216";
+    "net.ipv4.tcp_wmem" = "4096\t65536\t16777216";
+
+    # Memory management
+    "vm.swappiness" = 10;
+    "vm.dirty_ratio" = 15;
+    "vm.dirty_background_ratio" = 5;
+    "vm.vfs_cache_pressure" = 50; # Keep dentries/inodes longer (good for dev work with large codebases)
+
+    # TCP optimizations
+    "net.ipv4.tcp_fastopen" = 3; # Client+server TFO (saves 1 RTT on HTTPS connections)
+    "net.ipv4.tcp_mtu_probing" = 1; # Discover path MTU (helps on VPN tunnels like Mullvad)
   };
 
-  # Use systemd.user.extraConfig instead (correct approach)
-  systemd.user.extraConfig = ''
-    DefaultLimitNOFILE=200000
-    DefaultLimitNPROC=65536
-  '';
+  systemd.settings.Manager = {
+    DefaultTimeoutStopSec = "30s";
+    DefaultTimeoutStartSec = "30s";
+    DefaultDeviceTimeoutSec = "30s";
+    DefaultLimitNOFILE = 200000;
+    DefaultLimitNPROC = 65536;
+  };
 
   # Real-time kit for multimedia tasks (workstations only)
-  security.rtkit.enable = lib.mkIf (hostname != "server") true;
+  security.rtkit.enable = true;
 
-  # PAM session limits
+  # PAM session limits (consolidated — includes core dump disable from security/hardening.nix)
   security.pam.loginLimits = [
+    {
+      domain = "*";
+      type = "hard";
+      item = "core";
+      value = "0"; # Disable core dumps (security hardening)
+    }
     {
       domain = "*";
       type = "-";
@@ -82,13 +96,7 @@
       domain = "*";
       type = "-";
       item = "stack";
-      value = "unlimited";
-    }
-    {
-      domain = "*";
-      type = "-";
-      item = "nice";
-      value = "-20";
+      value = "65536"; # 64 MB
     }
   ];
 }

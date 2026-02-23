@@ -46,6 +46,9 @@ in {
         enable = false;
         ui.enable = false;
       }; # Incus UI for managing virtual machines
+
+      # Waydroid Android container
+      waydroid.enable = true;
     };
 
     # Add user to virtualization groups for proper access

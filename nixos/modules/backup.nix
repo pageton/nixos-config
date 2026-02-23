@@ -1,0 +1,71 @@
+# Automated restic backups with retention policy.
+{
+  config,
+  lib,
+  user,
+  ...
+}:
+
+{
+  options.mySystem.backup = {
+    enable = lib.mkEnableOption "automated restic backups";
+
+    repository = lib.mkOption {
+      type = lib.types.str;
+      default = "/var/backup/restic";
+      example = "s3:s3.amazonaws.com/my-backup-bucket";
+      description = "Restic backup repository path (local or remote).";
+    };
+
+    passwordFile = lib.mkOption {
+      type = lib.types.str;
+      default = "/run/secrets/restic-password";
+      description = "Path to file containing the restic repository password. Configure via sops-nix or write manually.";
+    };
+  };
+
+  config = lib.mkIf config.mySystem.backup.enable {
+    services.restic.backups.home = {
+      initialize = true;
+      passwordFile = config.mySystem.backup.passwordFile;
+      inherit (config.mySystem.backup) repository;
+
+      user = "root";
+
+      paths = [
+        "/home/${user}/Projects"
+        "/home/${user}/Documents"
+        "/home/${user}/System"
+        "/home/${user}/.gnupg"
+        "/home/${user}/.ssh"
+        # SECURITY: .config/sops excluded — contains age private key.
+        # Backing up the key alongside encrypted secrets defeats encryption.
+        # Back up the age key separately via offline means (USB, paper).
+      ];
+
+      exclude = [
+        "node_modules"
+        ".direnv"
+        "target"
+        ".cache"
+        "__pycache__"
+        "*.pyc"
+        ".git/objects"
+        "*.tmp"
+        "*.log"
+      ];
+
+      timerConfig = {
+        OnCalendar = "daily";
+        Persistent = true;
+        RandomizedDelaySec = "1h";
+      };
+
+      pruneOpts = [
+        "--keep-daily 7"
+        "--keep-weekly 4"
+        "--keep-monthly 6"
+      ];
+    };
+  };
+}

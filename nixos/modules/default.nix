@@ -1,41 +1,62 @@
 # Imports all NixOS modules.
 {
   imports = [
+    # Core system
+    ./bootloader.nix
+    ./nix.nix
+    ./users.nix
+    ./timezone.nix
+    ./i18n.nix
+    ./environment.nix
+    ./stability.nix
+    ./validation.nix # Cross-module conflict assertions
+
+    # Hardware
     ./audio.nix
     ./bluetooth.nix
-    ./bootloader.nix
-    ./environment.nix
-    ./gaming.nix
-    ./sddm.nix
     ./graphics.nix
-    ./hyprland.nix
-    ./niri.nix
-    ./i18n.nix
     ./libinput.nix
-    ./networking.nix
-    ./nix-ld.nix
-    ./nix.nix
-    ./timezone.nix
-    ./tor.nix
     ./upower.nix
-    ./users.nix
+
+    # Desktop environment
+    ./niri.nix
+    ./sddm.nix
     ./xserver.nix
-    ./nh.nix
-    ./monitoring.nix
     ./xdg-desktop-portal.nix
-    ./cleanup.nix
-    ./browser-deps.nix
-    ./stability.nix
-    ./virtualisation.nix
-    ./mullvad.nix
-    ./security.nix
-    ./tailscale.nix
-    ./bitwarden.nix
-    ./nginx.nix
-    ./postgresql.nix
-    ./sandboxing.nix
-    ./macchanger.nix
+
+    # Networking
+    ./networking.nix
     ./dnscrypt-proxy.nix
+    ./mullvad.nix
+    ./tailscale.nix
+    ./tor.nix
+
+    # Security
+    ./security.nix # Kernel hardening, firewall, AppArmor, opsec, AIDE
+    ./sandboxing.nix # Firejail and bubblewrap sandboxing
+    ./opensnitch.nix # Application firewall with network logging
+    ./macchanger.nix
+
+    # Applications
+    ./browser-deps.nix
     ./flatpak.nix
+    ./gaming.nix
+
+    # Virtualisation
+    ./virtualisation.nix
+    ./nix-ld.nix
+
+    # Monitoring and observability
+    ./monitoring.nix
+    ./scrutiny.nix # SMART disk health monitoring
+    ./loki.nix # Loki log aggregation with Promtail
+
+    # Boot optimization
+    ./boot-optimization.nix # Defer monitoring services from blocking boot
+
+    # Maintenance
+    ./cleanup.nix
+    ./backup.nix # Restic backups with retention
+    ./nh.nix
   ];
 }
