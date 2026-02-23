@@ -3,7 +3,6 @@
   pkgsStable,
 }: let
   chunks = [
-    ./hyprland.nix
     ./cli.nix
     ./cool.nix
     ./development.nix
@@ -11,9 +10,10 @@
     ./multimedia.nix
     ./networking.nix
     ./utilities.nix
-    ./fonts.nix
+    ./niri.nix
     ./privacy.nix
     ./lsp.nix
+    ./system-monitoring.nix
   ];
 in
   # Import each chunk with both pkgs & pkgsStable, then flatten into one big list

@@ -11,8 +11,8 @@ with pkgsStable; [
 
   # === Communication and Collaboration ===
   element-desktop # Matrix protocol client for Element
-  telegram-desktop # Telegram messaging application
-  ayugram-desktop
+  telegram-desktop # Telegram messaging application (uses GNOME portal via QT_QPA_PLATFORMTHEME)
+  ayugram-desktop # Alternative Telegram client
   remmina # Remote desktop client
 
   # === Productivity and Knowledge Management ===

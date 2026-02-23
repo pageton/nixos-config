@@ -11,6 +11,7 @@ with pkgsStable; [
 
   # === Media Processing ===
   ffmpeg # Complete multimedia processing toolkit
+  ghostscript # PostScript/PDF interpreter (for snacks.image PDF rendering)
   ffmpegthumbnailer # Video thumbnail generator for file managers
 
   # === Media Information ===

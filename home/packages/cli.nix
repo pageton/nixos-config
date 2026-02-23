@@ -1,83 +1,94 @@
 # Command-line interface tools and utilities for file management,
 # text processing, system monitoring, and development workflows.
+# NOTE: fzf and carapace are managed by programs.* modules.
+#       yt-dlp is firejail-wrapped at system level.
+#       gh is managed by programs.gh module.
 {pkgsStable, ...}:
 with pkgsStable; [
+  # === Backup and Storage ===
+  borgbackup # Deduplicating backup program
+  restic # Modern backup program
+
+  # === Container Analysis ===
+  dive # Docker image layer analyzer
+
+  # === Data Format Utilities ===
+  fx # Interactive JSON viewer and processor
+
+  # === Documentation ===
+  glow # Terminal Markdown renderer
+  tealdeer # Fast tldr pages client
+
   # === File and Directory Management ===
+  duf # Enhanced df with better formatting
+  dust # Modern du with tree visualization
   fd # Modern find replacement with intuitive syntax
   fselect # SQL-like file selection tool
-  ncdu # Interactive disk usage analyzer
-  dust # Modern du with tree visualization
-  duf # Enhanced df with better formatting
-  dua # Modern disk usage analyzer
+  trash-cli # Safe rm replacement (for snacks.explorer)
 
-  # === Text Processing and Search ===
-  ripgrep # Fast grep replacement with modern features
-  fzf # Command-line fuzzy finder
-  jq # JSON processor and query tool
-  yq # YAML processor similar to jq
-  htmlq # HTML processor like jq for HTML
-  sd # Modern sed replacement
-  choose # Modern cut/awk replacement
-
-  # === System Information and Monitoring ===
-  fastfetch # Fast system information display
-  microfetch # Minimal system information
-  onefetch # Git repository information tool
-  tokei # Code statistics and analysis
-  procs # Modern process viewer (ps replacement)
-
-  # === Development and Version Control ===
-  lazydocker # Terminal UI for Docker management
-  gh # GitHub CLI tool
-  glab # GitLab CLI tool
-  hcloud # Hetzner Cloud CLI
-  delta # Modern diff viewer for Git
-
-  # === Media Processing and Download ===
-  yt-dlp # YouTube and video downloader
-  imagemagick # Image manipulation and processing suite
-
-  # === Performance Measurement and Benchmarking ===
-  hyperfine # Command-line benchmarking tool
-  flamegraph # Performance visualization tool
+  # === General Utilities ===
+  actionlint # GitHub Actions linter
+  bc # Arbitrary precision calculator
+  codespell # Spell checker for source code
+  rsync # Fast file synchronization tool
+  typos # Source code spell checker
+  watchexec # Execute commands on file changes
 
   # === HTTP Client Tools ===
-  curlie # Modern curl replacement with colors
   xh # Friendly HTTP client
 
   # === Log Processing and Analysis ===
   angle-grinder # Log processing tool
 
+  # === Media Processing ===
+  imagemagick # Image manipulation and processing suite
+
   # === Network Analysis ===
-  wireshark-cli # Network protocol analyzer (CLI)
   mitmproxy # HTTP proxy for debugging and analysis
+  wireshark-cli # Network protocol analyzer (CLI)
 
-  # === Container Analysis ===
-  dive # Docker image layer analyzer
+  # === Nix Tooling ===
+  nix-diff # Derivation-level diff between NixOS generations
+  nvd # Nix version diff tool
 
-  # === Backup and Storage ===
-  restic # Modern backup program
-  borgbackup # Deduplicating backup program
+  # === Performance Measurement and Benchmarking ===
+  flamegraph # Performance visualization tool
+  hyperfine # Command-line benchmarking tool
 
-  # === Data Format Utilities ===
-  fx # Interactive JSON viewer and processor
+  # === Shell UI ===
+  gum # TUI components for shell scripts
+
+  # === System Information and Monitoring ===
+  fastfetch # Fast system information display
+  microfetch # Minimal system information
+  onefetch # Git repository information tool
+  procs # Modern process viewer (ps replacement)
+  tokei # Code statistics and analysis
+
+  # === Terminal Effects ===
+  cmatrix # Matrix rain terminal effect
+  peaclock # Terminal clock
 
   # === Terminal Theming ===
   vivid # LS_COLORS theme generator
 
-  # === General Utilities ===
-  bc # Arbitrary precision calculator
-  rsync # Fast file synchronization tool
+  # === Text Processing and Search ===
+  ast-grep # AST-aware structural code search
+  choose # Modern cut/awk replacement
+  htmlq # HTML processor like jq for HTML
+  jq # JSON processor and query tool
+  ripgrep # Fast grep replacement with modern features
+  sd # Modern sed replacement
+  semgrep # Semantic code analysis and search
+  yq # YAML processor similar to jq
 
-  # === File Watching and Automation ===
-  watchexec # Execute commands on file changes
-  entr # Run commands when files change
-
-  # === File Type Detection ===
-  file # File type detection tool
-
-  # === Tunneling ===
-  cloudflared # Cloudflare tunnel CLI tool
-  ngrok # Open source tunneling application
-  localtunnel # Local HTTP tunnel
+  # === Version Control ===
+  git-absorb # Auto-fixup commits into their targets
+  git-cliff # Auto-generate changelogs from conventional commits
+  git-crypt # Transparent file encryption in repos
+  git-extras # 60+ git utilities (git-summary, git-effort, git-standup, etc.)
+  glab # GitLab CLI tool
+  hcloud # Hetzner Cloud CLI
+  lazydocker # Terminal UI for Docker management
+  serie # Git log TUI viewer
 ]

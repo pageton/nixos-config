@@ -44,8 +44,16 @@ with pkgsStable; [
 
   # === Documentation and Conversion ===
   pandoc # Universal document converter
+  tectonic # Modern LaTeX engine (for snacks.image LaTeX rendering)
+  mermaid-cli # Mermaid diagram CLI renderer (for snacks.image)
+
+  # === Parser and Syntax Tools ===
+  tree-sitter # Tree-sitter CLI for parser generation
 
   # === Rust Development ===
   rustc # Rust programming language compiler
   cargo # Rust package manager and build tool
+
+  # === Reverse Engineering and Dynamic Analysis ===
+  frida-tools # Dynamic instrumentation toolkit for reverse engineering
 ]
