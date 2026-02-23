@@ -7,7 +7,6 @@
   lib,
   pkgs,
   user,
-  hostname,
   ...
 }: let
   nerdfont-fzf = pkgs.writeShellScriptBin "nerdfont-fzf" ''
@@ -21,8 +20,7 @@
     echo "Copied to clipboard: $fzf_result"
     ${pkgs.wl-clipboard}/bin/wl-copy "$fzf_result"
   '';
-in
-  lib.mkIf (hostname != "server") {
+in {
     home.packages = [nerdfont-fzf];
 
     xdg.configFile."nerdfont_glyphnames.json" = {
