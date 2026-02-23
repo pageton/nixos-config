@@ -21,12 +21,10 @@
       url = "github:Gerg-L/spicetify-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    hyprpanel.url = "github:Jas-SinghFSU/HyprPanel";
-    zen-browser = {
-      url = "github:0xc000022070/zen-browser-flake";
+    nixcord = {
+      url = "github:FlameFlag/nixcord";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nixcord.url = "github:kaylorben/nixcord";
     niri = {
       url = "github:sodiboo/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -36,14 +34,12 @@
       url = "github:noctalia-dev/noctalia-shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nvf.url = "github:notashelf/nvf";
-    nix-wallpaper = {
-      url = "github:lunik1/nix-wallpaper";
+    nvf = {
+      url = "github:notashelf/nvf";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    disko = {
-      url = "github:nix-community/disko";
+    nix-wallpaper = {
+      url = "github:lunik1/nix-wallpaper";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -58,6 +54,7 @@
     system = "x86_64-linux";
     homeStateVersion = "25.11";
     user = "sadiq";
+    constants = import ./shared/constants.nix;
     gitConfig = {
       name = "Sadiq";
       email = "pageton@proton.me";
@@ -67,7 +64,7 @@
       inherit system;
       config = {
         allowUnfree = true; # Allow proprietary packages
-        allowBroken = true; # Don't allow broken packages
+        allowBroken = false; # Don't allow broken packages
         allowInsecure = false; # Don't allow insecure packages
         allowUnsupportedSystem = false; # Don't allow unsupported systems
       };
@@ -104,7 +101,6 @@
         };
         modules = [
           ./hosts/${hostname}/configuration.nix
-          inputs.disko.nixosModules.disko
           inputs.stylix.nixosModules.stylix
           inputs.niri.nixosModules.niri
         ];
@@ -122,6 +118,7 @@
             system
             hostname
             gitConfig
+            constants
             ;
         };
         modules = [
@@ -139,10 +136,6 @@
       }
       {
         hostname = "thinkpad";
-        stateVersion = "25.11";
-      }
-      {
-        hostname = "server";
         stateVersion = "25.11";
       }
     ];
