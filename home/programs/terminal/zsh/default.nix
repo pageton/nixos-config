@@ -1,246 +1,323 @@
-{config, ...}: {
-  imports = [./aliases.nix];
+# Z-shell (Oh My Zsh) configuration.
+{
+  config,
+  pkgs,
+  ...
+}: {
+  imports = [
+    ./aliases.nix # Shell aliases
+  ];
+
+  # PATH extensions previously in initContent (go/bin, .deno/bin, etc. in language modules)
+  home.sessionPath = [
+    "${config.home.homeDirectory}/.cargo/bin"
+    "${config.home.homeDirectory}/.config/composer/vendor/bin"
+    "${config.home.homeDirectory}/.local/share/uv/tools"
+  ];
+
+  # Docker build settings (in sessionVariables so systemd services/cron can use them too)
+  home.sessionVariables = {
+    DOCKER_BUILDKIT = "1";
+    COMPOSE_DOCKER_CLI_BUILD = "1";
+  };
 
   programs.zsh = {
     enable = true;
-    enableCompletion = true;
+    enableCompletion = false; # Carapace handles completions
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
 
+    # Privacy-conscious history
     history = {
-      size = 50000; # Increased from 10k
-      save = 50000;
+      size = 10000;
+      save = 10000;
       path = "${config.xdg.dataHome}/zsh/history";
       ignoreDups = true;
       ignoreSpace = true;
-      expireDuplicatesFirst = true;
-      extended = true; # Save timestamps
+      ignorePatterns = [
+        "rm *"
+        "kill *"
+        "pkill *"
+        "*token*"
+        "*TOKEN*"
+        "*password*"
+        "*PASSWORD*"
+        "*secret*"
+        "*SECRET*"
+        "*API_KEY*"
+        "*api_key*"
+        "*ANTHROPIC*"
+        "export *KEY*"
+        "export *TOKEN*"
+        "export *SECRET*"
+        "export *PASSWORD*"
+        "curl *-H*Auth*"
+        "wget *--password*"
+        "*bearer*"
+        "*BEARER*"
+        "*jwt*"
+        "*JWT*"
+        "ssh *@*"
+        "scp *@*"
+        "*sops*"
+        "*SOPS*"
+        "*decrypt*"
+        "*DECRYPT*"
+      ];
+      expireDuplicatesFirst = true; # Remove duplicates first when trimming
+      extended = true; # Save timestamps and durations
     };
 
     oh-my-zsh = {
-      enable = true; # Enable Oh My Zsh framework
-      custom = builtins.path {
-        path = ./custom_omz_dir;
-        name = "oh-my-zsh-custom";
-      }; # Custom themes and plugins
-      theme = "oxide"; # Custom oxide theme
+      enable = true;
+      theme = ""; # Starship handles the prompt
 
       plugins = [
-        # Core functionality
-        "git"
-        "sudo"
-
-        # Development tools
-        "docker"
-        "docker-compose"
-        "rust"
-        "golang"
-        "node"
-        "npm"
-        "yarn"
-
-        # System utilities
-        "systemd"
-        "history-substring-search"
-
-        # Enhanced navigation
-        "extract" # Smart archive extraction
-        "colored-man-pages" # Colorized man pages
-
-        # Productivity
+        "sudo" # Double-ESC to prepend sudo
+        "extract" # Universal archive extraction
         "copypath" # Copy current path to clipboard
         "copyfile" # Copy file contents to clipboard
-        "web-search" # Quick web searches
+        "bgnotify" # Notify on long-running commands
       ];
     };
 
-    # Enhanced shell options
-    defaultKeymap = "viins"; # Vi mode by default
+    plugins = [
+      {
+        name = "fzf-tab";
+        src = "${pkgs.zsh-fzf-tab}/share/fzf-tab";
+      }
+    ];
 
-    # Additional shell options
+    defaultKeymap = "viins"; # Vi insert mode (hybrid vi/emacs)
+    setOptions = [
+      "GLOB_DOTS"
+      "EXTENDED_GLOB"
+      "AUTO_CD"
+      "AUTO_PUSHD"
+      "PUSHD_IGNORE_DUPS"
+      "PUSHD_SILENT"
+      "COMPLETE_IN_WORD"
+      "ALWAYS_TO_END"
+      "NO_BEEP"
+      "CORRECT"
+      "INTERACTIVE_COMMENTS"
+      "MAGIC_EQUAL_SUBST"
+      "NONOMATCH"
+      "NOTIFY"
+      "NUMERIC_GLOB_SORT"
+      "PROMPT_SUBST"
+      "HIST_BEEP"
+      "HIST_FIND_NO_DUPS"
+      "HIST_IGNORE_ALL_DUPS"
+      "HIST_SAVE_NO_DUPS"
+      "HIST_VERIFY"
+      "INC_APPEND_HISTORY"
+      "SHARE_HISTORY"
+    ];
+
     localVariables = {
-      # FZF (fuzzy finder) configuration for better file/directory search
-      FZF_DEFAULT_COMMAND = "fd --type f --hidden --follow --exclude .git"; # Default file search command
-      FZF_CTRL_T_COMMAND = "$FZF_DEFAULT_COMMAND"; # File search for Ctrl+T
-      FZF_ALT_C_COMMAND = "fd --type d --hidden --follow --exclude .git"; # Directory search for Alt+C
+      # FZF commands and previews
+      FZF_DEFAULT_COMMAND = "fd --type f --hidden --follow --exclude .git";
+      FZF_CTRL_T_COMMAND = "$FZF_DEFAULT_COMMAND";
+      FZF_ALT_C_COMMAND = "fd --type d --hidden --follow --exclude .git";
+      FZF_CTRL_T_OPTS = "--preview 'bat --color=always --style=numbers --line-range=:500 {}'";
+      FZF_ALT_C_OPTS = "--preview 'eza --tree --level=2 --color=always {}'";
 
-      # Fallback LS_COLORS if vivid is not available
-      LS_COLORS = "di=1;34:ln=1;36:so=1;35:pi=1;33:ex=1;32:bd=1;33:cd=1;33:su=1;31:sg=1;31:tw=1;34:ow=1;34";
+      LS_COLORS = "di=1;34:ln=1;36:so=1;35:pi=1;33:ex=1;32:bd=1;33:cd=1;33:su=1;31:sg=1;31:tw=1;34:ow=1;34"; # Fallback if vivid unavailable
 
-      # Default applications for development
-      EDITOR = "nvim"; # Default text editor
-      PAGER = "bat"; # Default pager with syntax highlighting
-      MANPAGER = "sh -c 'col -bx | bat -l man -p'"; # Enhanced man page viewer
+      VISUAL = "nvim";
+      PAGER = "bat";
+      MANPAGER = "sh -c 'col -bx | bat -l man -p'";
 
-      # Development environment variables
-      LESS = "-R"; # Enable raw ANSI color codes in less
-      LESSHISTFILE = "${config.xdg.cacheHome}/less/history"; # Less history file
-      LESSHISTSIZE = "1000"; # Maximum lines in less history
+      LESS = "-R";
+      LESSHISTFILE = "${config.xdg.cacheHome}/less/history";
+      LESSHISTSIZE = "1000";
 
-      # Git configuration
-      GIT_PAGER = "bat"; # Git pager with syntax highlighting
+      # --wait flag blocks until file is closed (required for interactive git operations)
+      GIT_EDITOR = "nvim --wait";
+      GIT_PAGER = "bat";
 
-      # Python configuration
-      PYTHONSTARTUP = "$HOME/.pythonrc"; # Python startup script
-      PIP_CACHE_DIR = "${config.xdg.cacheHome}/pip"; # Pip cache directory
-      UV_CACHE_DIR = "${config.xdg.cacheHome}/uv"; # uv cache directory
-      UV_PYTHON_INSTALL_DIR = "${config.xdg.dataHome}/uv/python"; # uv Python installations
+      PIP_CACHE_DIR = "${config.xdg.cacheHome}/pip";
+      NODE_REPL_HISTORY = "${config.xdg.dataHome}/node/node_repl_history";
+      NPM_CONFIG_CACHE = "${config.xdg.cacheHome}/npm";
+      YARN_CACHE_FOLDER = "${config.xdg.cacheHome}/yarn";
 
-      # Node.js configuration
-      NODE_REPL_HISTORY = "${config.xdg.dataHome}/node/node_repl_history"; # Node REPL history
-      NPM_CONFIG_CACHE = "${config.xdg.cacheHome}/npm"; # NPM cache directory
-      YARN_CACHE_FOLDER = "${config.xdg.cacheHome}/yarn"; # Yarn cache directory
+      CGO_ENABLED = "1";
 
-      # Go configuration
-      CGO_ENABLED = "1"; # Enable CGO for Go
+      # Tool homes (static values, no need for shell export)
+      CARGO_HOME = "$HOME/.cargo";
+      RUSTUP_HOME = "$HOME/.rustup";
+      PYENV_ROOT = "$HOME/.pyenv";
+      NVM_DIR = "$HOME/.nvm";
+      COMPOSER_HOME = "$HOME/.config/composer";
     };
 
     initContent = ''
-      # Enhanced Zsh shell options for better user experience
-      setopt AUTO_CD              # Auto-change to directory by typing its name
-      setopt CORRECT              # Enable command auto-correction
-      setopt INTERACTIVE_COMMENTS # Allow comments in interactive shell
-      setopt MAGIC_EQUAL_SUBST    # Enable filename expansion for = expressions
-      setopt NONOMATCH            # Hide "no match found" errors
-      setopt NOTIFY               # Immediate background job status reports
-      setopt NUMERIC_GLOB_SORT    # Sort filenames numerically when possible
-      setopt PROMPT_SUBST         # Enable command substitution in prompts
-
-      # Advanced history management options
-      setopt HIST_BEEP            # Beep when accessing nonexistent history
-      setopt HIST_EXPIRE_DUPS_FIRST # Remove duplicates first when trimming
-      setopt HIST_FIND_NO_DUPS    # Don't display previously found lines
-      setopt HIST_IGNORE_ALL_DUPS # Delete duplicate entries
-      setopt HIST_IGNORE_DUPS     # Don't record consecutive duplicates
-      setopt HIST_IGNORE_SPACE    # Don't record commands starting with space
-      setopt HIST_SAVE_NO_DUPS    # Don't write duplicates to history file
-      setopt HIST_VERIFY          # Show expanded command before execution
-      setopt INC_APPEND_HISTORY   # Append commands in execution order
-      setopt SHARE_HISTORY        # Share history across shell sessions
-
-      # Enable Wayland support for SDL
-      export SDL_VIDEODRIVER=wayland
-      export SDL_RENDER_DRIVER=opengles2
-
-      # Extend PATH with additional directories (early in PATH for priority)
-      export PATH="$HOME/.cache/.bun/bin:$HOME/.npm-global/bin:$HOME/.local/share/pnpm:$PATH"  # Bun, NPM, and pnpm global packages
-      export PATH="$HOME/.local/bin:$PATH"       # Local user binaries
-      export PATH="$HOME/.cargo/bin:$PATH"       # Rust/Cargo binaries
-      export PATH="$HOME/go/bin:$PATH"           # Go binaries
-      export PATH="$HOME/.local/share/pnpm:$PATH" # pnpm global packages
-      export PATH="$HOME/.deno/bin:$PATH"        # Deno binaries
-      export PATH="$HOME/.config/composer/vendor/bin:$PATH" # PHP Composer
-      export PATH="$HOME/.local/share/gem/ruby/3.1.0/bin:$PATH" # Ruby gems
-      export PATH="$HOME/.local/share/uv/tools:$PATH" # uv tools
-      export PATH="/usr/local/sbin:$PATH"        # System admin binaries
-      export PATH="/usr/local/bin:$PATH"         # Additional system binaries
-
-      # Development environment variables
-      export GOPATH="$HOME/go"                   # Go workspace path
-      export GOBIN="$HOME/go/bin"                # Go binary installation path
-      export CARGO_HOME="$HOME/.cargo"           # Rust/Cargo home directory
-      export RUSTUP_HOME="$HOME/.rustup"         # Rustup installation directory
-      export PYENV_ROOT="$HOME/.pyenv"           # Python version manager
-      export NVM_DIR="$HOME/.nvm"                # Node Version Manager
-      export PNPM_HOME="$HOME/.local/share/pnpm" # pnpm home directory
-      export BUN_INSTALL="$HOME/.bun"            # Bun installation directory
-      export COMPOSER_HOME="$HOME/.config/composer" # PHP Composer home
-
-      # XDG Base Directory specification
-      export XDG_CONFIG_HOME="$HOME/.config"     # User config directory
-      export XDG_CACHE_HOME="$HOME/.cache"       # User cache directory
-      export XDG_DATA_HOME="$HOME/.local/share"  # User data directory
-      export XDG_STATE_HOME="$HOME/.local/state" # User state directory
-
-      # Language and locale settings
-      export LANG="en_US.UTF-8"                  # Default language
-      export LC_ALL="en_US.UTF-8"                # All locale categories
-      export LC_CTYPE="en_US.UTF-8"              # Character classification
-
-      # Development tool configurations
-      export DOCKER_BUILDKIT=1                   # Enable BuildKit for Docker
-      export COMPOSE_DOCKER_CLI_BUILD=1          # Use BuildKit with Docker Compose
-      export DOTNET_CLI_TELEMETRY_OPTOUT=1       # Disable .NET telemetry
-      export NEXT_TELEMETRY_DISABLED=1           # Disable Next.js telemetry
-
-      # Enhanced color scheme using vivid (if available)
+      # Vivid LS_COLORS (cached)
       if command -v vivid >/dev/null 2>&1; then
-        export LS_COLORS="$(vivid generate gruvbox-dark-soft)"  # Generate Gruvbox colors
+        ls_colors_cache="$HOME/.cache/vivid-ls-colors"
+        if [[ ! -f "$ls_colors_cache" ]]; then
+          mkdir -p "$HOME/.cache"
+          vivid generate tokyonight-storm > "$ls_colors_cache"
+        fi
+        export LS_COLORS="$(cat "$ls_colors_cache")"
       fi
 
-      # Advanced completion system configuration
-      zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'       # Case-insensitive completion
-      zstyle ':completion:*' list-colors "''${(s.:.)LS_COLORS}"       # Colored completion lists
-      zstyle ':completion:*' rehash true                              # Auto-rehash for new executables
-      zstyle ':completion:*' menu select                              # Highlight menu selection
+      # Compare NixOS generations with nvd (defaults to last two)
+      nix-diff-gen() {
+        local gen1=''${1:-$(nixos-rebuild list-generations | tail -2 | head -1 | awk '{print $1}')}
+        local gen2=''${2:-$(nixos-rebuild list-generations | tail -1 | awk '{print $1}')}
+        nvd diff /nix/var/nix/profiles/system-$gen1-link /nix/var/nix/profiles/system-$gen2-link
+      }
 
-      # Performance optimizations for completion
-      zstyle ':completion:*' accept-exact '*(N)'                      # Accept exact matches
-      zstyle ':completion:*' use-cache on                             # Enable completion caching
-      zstyle ':completion:*' cache-path ~/.zsh/cache                  # Cache directory
+      nix-search() {
+        nix search nixpkgs "$@" --no-update-lock-file
+      }
 
-      # Custom utility functions for enhanced productivity
+      nix-repl-flake() {
+        nix repl --expr "builtins.getFlake \"$PWD\""
+      }
 
-      # Smart archive extraction function
-      extract() {
-        if [ -f $1 ] ; then
-          case $1 in
-            *.tar.bz2)   tar xjf $1     ;;  # Extract bzip2 tarball
-            *.tar.gz)    tar xzf $1     ;;  # Extract gzip tarball
-            *.bz2)       bunzip2 $1     ;;  # Extract bzip2 file
-            *.rar)       unrar e $1     ;;  # Extract RAR archive
-            *.gz)        gunzip $1      ;;  # Extract gzip file
-            *.tar)       tar xf $1      ;;  # Extract tarball
-            *.tbz2)      tar xjf $1     ;;  # Extract tbz2
-            *.tgz)       tar xzf $1     ;;  # Extract tgz
-            *.zip)       unzip $1       ;;  # Extract ZIP archive
-            *.Z)         uncompress $1  ;;  # Extract compressed file
-            *.7z)        7z x $1        ;;  # Extract 7z archive
-            *)     echo "'$1' cannot be extracted via extract()" ;;
-          esac
+      # Sops-enabled agent wrappers
+      _load_zai_key() {
+        local key_file=${config.sops.secrets.zai-api-key.path}
+        if [[ ! -f "$key_file" ]]; then
+          echo "Error: $key_file not found. Run 'just nixos' to decrypt secrets." >&2
+          return 1
+        fi
+        cat "$key_file"
+      }
+
+      claude_glm() {
+        local key; key="$(_load_zai_key)" || return 1
+        ANTHROPIC_AUTH_TOKEN="$key" \
+        ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic" \
+        API_TIMEOUT_MS="3000000" \
+        ANTHROPIC_DEFAULT_HAIKU_MODEL="glm-4.5-air" \
+        ANTHROPIC_DEFAULT_SONNET_MODEL="glm-5" \
+        ANTHROPIC_DEFAULT_OPUS_MODEL="glm-5" \
+        claude --dangerously-skip-permissions "$@"
+      }
+
+      oc-sops() {
+        local key; key="$(_load_zai_key)" || return 1
+        Z_AI_API_KEY="$key" opencode "$@"
+      }
+
+      opencode_glm() {
+        OPENCODE_CONFIG_DIR="$HOME/.config/opencode-glm" opencode "$@"
+      }
+
+      opencode_gemini() {
+        OPENCODE_CONFIG_DIR="$HOME/.config/opencode-gemini" opencode "$@"
+      }
+
+      opencode_sonnet() {
+        OPENCODE_CONFIG_DIR="$HOME/.config/opencode-sonnet" opencode "$@"
+      }
+
+      cl-sops() {
+        local key; key="$(_load_zai_key)" || return 1
+        Z_AI_API_KEY="$key" claude "$@"
+      }
+
+      # OpenCode with tmux visual multi-agent panes
+      oc-tmux() {
+        local base_name
+        base_name=$(basename "$(pwd)")
+        local path_hash
+        path_hash=$(echo "$(pwd)" | md5sum | cut -c1-4)
+        local session_name="''${base_name}-''${path_hash}"
+        local oc_port
+
+        for port in $(seq 4096 5096); do
+          if ! lsof -i ":$port" >/dev/null 2>&1; then
+            oc_port=$port
+            break
+          fi
+        done
+        oc_port=''${oc_port:-4096}
+
+        export OPENCODE_PORT=$oc_port
+
+        if [[ -n "$TMUX" ]]; then
+          opencode --port "$oc_port" "$@"
         else
-          echo "'$1' is not a valid file"
+          local oc_cmd="OPENCODE_PORT=$oc_port opencode --port $oc_port $*; exec zsh"
+          if tmux has-session -t "$session_name" 2>/dev/null; then
+            tmux new-window -t "$session_name" -c "$(pwd)" "$oc_cmd"
+            tmux attach-session -t "$session_name"
+          else
+            tmux new-session -s "$session_name" -c "$(pwd)" "$oc_cmd"
+          fi
         fi
       }
 
-      # Create directory and navigate to it
       mkcd() {
-        mkdir -p "$1" && builtin cd "$1"  # Create dir and cd into it
+        mkdir -p "$1" && cd "$1"
       }
 
-      # Quick project directory navigation
       proj() {
-        local project_dir="$HOME/Projects"  # Default projects directory
+        local project_dir="$HOME/Projects"
         if [ -z "$1" ]; then
-          builtin cd "$project_dir"         # Go to projects root
+          cd "$project_dir"
         else
-          builtin cd "$project_dir/$1"      # Go to specific project
+          cd "$project_dir/$1"
         fi
       }
 
-      # Git worktree management helper
       git-worktree-helper() {
         if [ -z "$1" ]; then
-          git worktree list                  # List existing worktrees
+          git worktree list
         else
-          git worktree add "../$(basename $(pwd))-$1" "$1"  # Create new worktree
+          git worktree add "../$(basename $(pwd))-$1" "$1"
         fi
       }
 
-      # Auto-start Zellij in graphical sessions (skip in TTY)
-      if [ -z "$ZELLIJ" ]; then
-        zellij
-      fi
+      # Pipe last command's error output to Claude for fixing
+      # Uses script(1) to capture output safely instead of re-executing via eval
+      fix() {
+        local last_cmd
+        last_cmd=$(fc -ln -1 | sed 's/^[[:space:]]*//')
+        echo "Re-running: $last_cmd"
+        local last_output
+        last_output=$(script -qc "$last_cmd" /dev/null 2>&1) || true
+        echo "$last_output" | claude "Fix this error. Be concise. The command was: $last_cmd"
+      }
 
-      # Source Home Manager environment variables
+      # Quick nix build error fix
+      nix-fix() {
+        just check 2>&1 | claude "Fix this Nix evaluation error. Show only the fix."
+      }
+
+      # Search NixOS packages with details
+      nix-pkg() {
+        nix search nixpkgs "$1" --json 2>/dev/null | jq -r \
+          'to_entries[] | "\(.key): \(.value.description // "no description")"' | head -20
+      }
+
+      # Quick question — use cheapest model
+      qq() {
+        ANTHROPIC_MODEL=claude-haiku-4-5 claude "$@"
+      }
+
+      # Deep thinking — use opus
+      deep() {
+        ANTHROPIC_MODEL=claude-opus-4-6 claude "$@"
+      }
+
+      export GPG_TTY=$(tty)
+
       if [ -f ~/.nix-profile/etc/profile.d/hm-session-vars.sh ]; then
         source ~/.nix-profile/etc/profile.d/hm-session-vars.sh
       fi
 
-      # Add Home Manager Python packages to PYTHONPATH
-      if [ -d ~/.nix-profile/lib/python3.13/site-packages ]; then
-        export PYTHONPATH="$HOME/.nix-profile/lib/python3.13/site-packages:$PYTHONPATH"
-      fi
+      for pydir in ~/.nix-profile/lib/python3.*/site-packages; do
+        if [ -d "$pydir" ]; then
+          export PYTHONPATH="$pydir:$PYTHONPATH"
+          break
+        fi
+      done
     '';
   };
 }

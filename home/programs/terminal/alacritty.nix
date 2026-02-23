@@ -1,15 +1,20 @@
-# Alacritty terminal emulator configuration.
-# This module configures Alacritty, a fast, cross-platform, OpenGL terminal emulator
-{lib, ...}: {
-  # Enable Alacritty terminal emulator
+# Alacritty terminal emulator — Kanagawa themed via Stylix base16.
+{
+  config,
+  lib,
+  ...
+}: let
+  inherit (config.lib.stylix) colors;
+  fontSize = config.stylix.fonts.sizes.terminal;
+in {
   programs.alacritty = {
     enable = true;
 
     settings = {
-      # Window configuration
+      # ── Window ───────────────────────────────────────────────────
       window = {
-        opacity = lib.mkForce 0.95; # Slight transparency for modern look
-        blur = true; # Enable background blur
+        opacity = lib.mkForce 0.95;
+        blur = true;
         padding = {
           x = 8;
           y = 8;
@@ -24,6 +29,7 @@
         };
       };
 
+      # ── Font ─────────────────────────────────────────────────────
       font = {
         builtin_box_drawing = true;
 
@@ -47,95 +53,96 @@
           style = "BoldItalic";
         };
 
-        size = lib.mkForce 12.5;
+        size = lib.mkForce (fontSize * 1.0);
 
         offset = {
           x = 0;
-          y = 1; # Slight vertical offset for better readability
+          y = 1;
         };
       };
 
+      # ── Colors (Kanagawa Wave) ───────────────────────────────────
       colors = lib.mkForce {
         primary = {
-          background = "#1e1e2e";
-          foreground = "#cdd6f4";
-          dim_foreground = "#7f849c";
-          bright_foreground = "#cdd6f4";
+          background = "#${colors.base00}"; # sumiInk1
+          foreground = "#${colors.base05}"; # fujiWhite
+          dim_foreground = "#${colors.base04}"; # oldWhite
+          bright_foreground = "#${colors.base05}"; # fujiWhite
         };
 
         cursor = {
-          text = "#1e1e2e";
-          cursor = "#f5e0dc";
+          text = "#${colors.base00}"; # sumiInk1
+          cursor = "#${colors.base0A}"; # boatYellow2
         };
 
         vi_mode_cursor = {
-          text = "#1e1e2e";
-          cursor = "#b4befe";
+          text = "#${colors.base00}"; # sumiInk1
+          cursor = "#${colors.base0D}"; # crystalBlue
         };
 
         search = {
           matches = {
-            foreground = "#1e1e2e";
-            background = "#d79921";
+            foreground = "#${colors.base00}"; # sumiInk1
+            background = "#${colors.base0A}"; # boatYellow2
           };
           focused_match = {
-            foreground = "#1e1e2e";
-            background = "#a6e3a1";
+            foreground = "#${colors.base00}"; # sumiInk1
+            background = "#${colors.base0B}"; # autumnGreen
           };
         };
 
         hints = {
           start = {
-            foreground = "#1e1e2e";
-            background = "#d79921";
+            foreground = "#${colors.base00}"; # sumiInk1
+            background = "#${colors.base0A}"; # boatYellow2
           };
           end = {
-            foreground = "#1e1e2e";
-            background = "#fe8019";
+            foreground = "#${colors.base00}"; # sumiInk1
+            background = "#${colors.base09}"; # surimiOrange
           };
         };
 
         selection = {
-          text = "#1e1e2e";
-          background = "#f5e0dc";
+          text = "#${colors.base05}"; # fujiWhite
+          background = "#${colors.base02}"; # winterBlue
         };
 
         normal = {
-          black = "#45475a";
-          red = "#f38ba8";
-          green = "#a6e3a1";
-          yellow = "#f9e2af";
-          blue = "#89b4fa";
-          magenta = "#f5c2e7";
-          cyan = "#94e2d5";
-          white = "#bac2de";
+          black = "#${colors.base01}"; # sumiInk0
+          red = "#${colors.base08}"; # autumnRed
+          green = "#${colors.base0B}"; # autumnGreen
+          yellow = "#${colors.base0A}"; # boatYellow2
+          blue = "#${colors.base0D}"; # crystalBlue
+          magenta = "#${colors.base0E}"; # oniViolet
+          cyan = "#${colors.base0C}"; # waveAqua1
+          white = "#${colors.base05}"; # fujiWhite
         };
 
         bright = {
-          black = "#585b70";
-          red = "#f38ba8";
-          green = "#a6e3a1";
-          yellow = "#f9e2af";
-          blue = "#89b4fa";
-          magenta = "#f5c2e7";
-          cyan = "#94e2d5";
-          white = "#a6adc8";
+          black = "#${colors.base03}"; # sumiInk6
+          red = "#${colors.base08}"; # autumnRed
+          green = "#${colors.base0B}"; # autumnGreen
+          yellow = "#${colors.base0A}"; # boatYellow2
+          blue = "#${colors.base0D}"; # crystalBlue
+          magenta = "#${colors.base0E}"; # oniViolet
+          cyan = "#${colors.base0C}"; # waveAqua1
+          white = "#${colors.base06}"; # oldWhite lighter
         };
       };
 
-      # Scrolling
+      # ── Scrolling ────────────────────────────────────────────────
       scrolling = {
-        history = 50000; # Increased from default 10k
-        multiplier = 3; # Scroll speed
+        history = 50000;
+        multiplier = 3;
       };
 
-      # Selection
+      # ── Selection ────────────────────────────────────────────────
       selection = {
         semantic_escape_chars = ",│`|:\"' ()[]{}<>\t";
         save_to_clipboard = true;
       };
 
-      # Cursor
+      # ── Cursor ───────────────────────────────────────────────────
       cursor = {
         style = {
           shape = "Block";
@@ -146,19 +153,17 @@
         thickness = 0.15;
       };
 
-      # Live config reload (updated syntax)
+      # ── General ──────────────────────────────────────────────────
       general.live_config_reload = true;
 
-      # Terminal shell configuration
       terminal.shell = {
         program = "zsh";
         args = ["-l"];
       };
 
-      # Working directory
       working_directory = "None";
 
-      # Mouse
+      # ── Mouse ────────────────────────────────────────────────────
       mouse = {
         hide_when_typing = true;
         bindings = [
@@ -169,7 +174,7 @@
         ];
       };
 
-      # Hints (URL/path detection) - simplified to avoid TOML escaping issues
+      # ── Hints (URL detection) ───────────────────────────────────
       hints = {
         enabled = [
           {
@@ -190,7 +195,7 @@
         ];
       };
 
-      # Debug
+      # ── Debug ────────────────────────────────────────────────────
       debug = {
         render_timer = false;
         persistent_logging = false;
