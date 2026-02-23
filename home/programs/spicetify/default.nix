@@ -35,6 +35,6 @@ in {
     SPOTIFY_MAX_CACHE_SIZE_MB = "1024";
 
     # Additional stability flags
-    SPOTIFY_SKIP_LINUX_NOTIFICATIONS = "1"; # Skip problematic notifications
+    SPOTIFY_SKIP_LINUX_NOTIFICATIONS = "1"; # Skip DBus notifications (Noctalia handles media via MPRIS)
   };
 }

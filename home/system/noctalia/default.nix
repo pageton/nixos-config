@@ -10,7 +10,7 @@
   noctalia-plugins = pkgs.fetchFromGitHub {
     owner = "noctalia-dev";
     repo = "noctalia-plugins";
-    rev = "main";
+    rev = "93b0a9a135f42612972415a2da35fdb195d95c6f";
     sha256 = "sha256-pjlfjfZAViv+7d9VVTvdXZGRkUGmb0HKjAXm7VnJLiE=";
   };
 in {
@@ -130,8 +130,8 @@ in {
     };
   };
 
-  # nm-connection-editor for advanced network config (Noctalia handles the applet)
-  # Plugin dependencies (cliphist and wl-clipboard already in hyprland.nix)
+  # nm-connection-editor for advanced network config
+  # (nm-applet service is enabled in home.nix; this provides the GUI editor)
   home.packages = [pkgs.networkmanagerapplet];
 
   # ── Noctalia Plugins ──────────────────────────────────────────
