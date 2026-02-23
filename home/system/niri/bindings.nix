@@ -3,7 +3,15 @@
   programs.niri.settings.binds = with config.lib.niri.actions;
     {
       # ── Applications ────────────────────────────────────────────
-      "Mod+Return".action = spawn "alacritty";
+      # "Mod+Return".action = spawn "alacritty";
+      "Mod+Return".action.spawn = [
+        "alacritty"
+        "-e"
+        "zellij"
+        "attach"
+        "--create"
+        "main"
+      ];
       "Mod+E".action = spawn "thunar";
       "Mod+B".action = spawn "brave";
 

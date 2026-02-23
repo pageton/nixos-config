@@ -2,6 +2,7 @@
 {
   config,
   hostname,
+  pkgs,
   ...
 }: let
   inherit
@@ -22,6 +23,14 @@ in {
     ./animations.nix
     ./bindings.nix
   ];
+
+
+  # MPRIS player priority daemon — routes media keys to the most recently
+  # active player and enables proper cross-player coordination.
+  services.playerctld.enable = true;
+
+  # XWayland compatibility layer (required by spawn-at-startup below)
+  home.packages = [pkgs.xwayland-satellite];
 
   programs.niri = {
     settings = {
@@ -68,16 +77,17 @@ in {
 
       # ── Environment ───────────────────────────────────────────
       environment = {
+        DISPLAY = ":0"; # XWayland display for X11 apps (set by xwayland-satellite)
+        _JAVA_AWT_WM_NONREPARENTING = "1"; # Fix Java Swing apps on non-reparenting WMs
         IN_NIX_SHELL = null; # Prevent nix-shell env from leaking into the session
         NIXOS_OZONE_WL = "1";
         MOZ_ENABLE_WAYLAND = "1";
-        QT_QPA_PLATFORM = "wayland";
+        QT_QPA_PLATFORM = "wayland;xcb"; # Wayland first, X11 fallback for compat
         QT_AUTO_SCREEN_SCALE_FACTOR = "1";
         QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
         ELECTRON_OZONE_PLATFORM_HINT = "auto";
         XDG_SESSION_TYPE = "wayland";
         XDG_CURRENT_DESKTOP = "niri";
-        SDL_VIDEODRIVER = "wayland";
         CLUTTER_BACKEND = "wayland";
         ANKI_WAYLAND = "1";
         XCURSOR_SIZE =
@@ -150,6 +160,7 @@ in {
         {command = ["xwayland-satellite"];}
         {command = ["wl-paste" "--type" "text" "--watch" "cliphist" "store"];}
         {command = ["wl-paste" "--type" "image" "--watch" "cliphist" "store"];}
+        # {command = ["ghostty" "-e" "zellij" "attach" "--create" "main"];}
       ];
 
       # ── Switch events ─────────────────────────────────────────
@@ -168,7 +179,13 @@ in {
 
       # ── Debug ────────────────────────────────────────────────
       # Allow Noctalia notification actions and window activation
-      debug.honor-xdg-activation-with-invalid-serial = {};
+      debug = {
+        honor-xdg-activation-with-invalid-serial = {};
+        # Fix NVIDIA rendering artifacts/flickering during scroll (niri#2477)
+        wait-for-frame-completion-before-queueing = {};
+        # Disable direct scanout — prevents NVIDIA buffer race causing black/white artifacts
+        disable-direct-scanout = {};
+      };
 
       # ── Window rules ──────────────────────────────────────────
       window-rules = [
