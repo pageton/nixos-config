@@ -1,11 +1,13 @@
 # Brave Browser configuration
-{
-  lib,
-  hostname,
-  ...
-}: {
-  programs.brave = lib.mkIf (hostname != "server") {
+{...}: {
+  programs.brave = {
     enable = true;
+    commandLineArgs = [
+      "--enable-features=UseOzonePlatform,WaylandWindowDecorations,VaapiVideoDecodeLinuxGL"
+      "--ozone-platform-hint=auto"
+      "--disable-gpu-shader-disk-cache" # Prevents shader cache corruption causing glitches
+      "--enable-zero-copy" # Reduces buffer copies for smoother scrolling
+    ];
     extensions = [
       "nngceckbapebfimnlniiiahkandclblb" # Bitwarden Password Manager
       "ielooaepfhfcnmihgnabkldnpddnnldl" # Multilanguage Translator

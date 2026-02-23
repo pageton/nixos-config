@@ -1,11 +1,9 @@
 {
-  lib,
   pkgs,
-  hostname,
   ...
 }: {
-  imports = lib.optional (hostname != "server") ./languages.nix;
-  programs.helix = lib.mkIf (hostname != "server") {
+  imports = [./languages.nix];
+  programs.helix = {
     enable = true;
     package = pkgs.helix;
     settings = {

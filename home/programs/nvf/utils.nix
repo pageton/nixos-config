@@ -108,14 +108,18 @@
             return
           end
 
-          local params = vim.lsp.util.make_range_params()
+          local clients = vim.lsp.get_clients({ bufnr = 0, name = "gopls" })
+          if #clients == 0 then return end
+
+          local client = clients[1]
+          local params = vim.lsp.util.make_range_params(0, client.offset_encoding)
           params.context = {only = {"source.organizeImports"}}
           local result = vim.lsp.buf_request_sync(0, "textDocument/codeAction", params, 1000)
           for cid, res in pairs(result or {}) do
             for _, r in pairs(res.result or {}) do
               if r.edit then
-                local enc = (vim.lsp.get_client_by_id(cid) or {}).offset_encoding or "utf-16"
-                vim.lsp.util.apply_workspace_edit(r.edit, enc)
+                local c = vim.lsp.get_client_by_id(cid)
+                vim.lsp.util.apply_workspace_edit(r.edit, c and c.offset_encoding or "utf-16")
               end
             end
           end
@@ -134,10 +138,33 @@
       })
     '';
 
+    # Fix keymap overlaps (runs after NVF sets up all keymaps)
+    luaConfigRC.keymap-fixes = ''
+      -- Fix 1: Remap gitsigns toggle_deleted from <leader>td to <leader>tD
+      -- to free <leader>td prefix for todo-comments (<leader>tdt, <leader>tdq)
+      vim.schedule(function()
+        pcall(vim.keymap.del, "n", "<leader>td")
+        vim.keymap.set("n", "<leader>tD", function()
+          package.loaded.gitsigns.toggle_deleted()
+        end, { desc = "Toggle deleted [Gitsigns]", silent = true })
+      end)
+
+      -- Fix 2: Remove Neovim 0.11 built-in LSP keymaps that conflict with user keymaps
+      -- gr (user) = Snacks picker references (nowait) — shadows grr/gra
+      -- User has better alternatives: lspsaga for rename, Snacks picker for references
+      vim.schedule(function()
+        pcall(vim.keymap.del, "n", "grr") -- LSP rename (use lspsaga instead)
+        pcall(vim.keymap.del, "n", "gra") -- LSP code action (use lspsaga instead)
+      end)
+    '';
+
     # snippets.luasnip.enable = true; # Disabled - luasnip is already loaded via cmp_luasnip dependency
 
     ui = {
-      noice.enable = true;
+      noice = {
+        enable = true;
+        setupOpts.lsp.signature.enabled = true;
+      };
       colorizer.enable = true;
     };
 

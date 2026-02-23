@@ -43,6 +43,10 @@
       highlight.enable = true;
       grammars = with pkgs.vimPlugins.nvim-treesitter.builtGrammars; [
         typescript # in language settings only tsx gets enabled, not typescript
+        latex # for snacks.image LaTeX rendering
+        typst # for snacks.image Typst rendering
+        scss # for snacks.image SCSS support
+        vue # for snacks.image Vue support
       ];
     };
     lsp = {
@@ -56,35 +60,42 @@
       servers.nixd.settings.nil.nix.autoArchive = true;
       servers.gopls = {
         settings = {
-          analyses = {
-            unusedparams = true;
-            shadow = true;
-            unusedwrite = true;
-            fillstruct = true;
-            nonewvars = true;
-            fieldalignment = false;  # Expensive for large files
+          gopls = {
+            analyses = {
+              unusedparams = true;
+              shadow = true;
+              unusedwrite = true;
+              unusedvariable = true;
+              ST1000 = false; # disable "package comment" requirement
+            };
+            staticcheck = true;
+            gofumpt = true;
+            codelenses = {
+              generate = true;
+              regenerate_cgo = true;
+              run_govulncheck = false;
+              test = true;
+              tidy = true;
+              upgrade_dependency = true;
+              vendor = true;
+            };
+            usePlaceholders = true;
+            completeFunctionCalls = true;
+            semanticTokens = true;
+            directoryFilters = [
+              "-**/vendor"
+              "-**/node_modules"
+            ];
+            hints = {
+              assignVariableTypes = true;
+              compositeLiteralFields = true;
+              compositeLiteralTypes = true;
+              constantValues = true;
+              functionTypeParameters = true;
+              parameterNames = true;
+              rangeVariableTypes = true;
+            };
           };
-          staticcheck = false;  # Disable for large files
-          gofumpt = true;
-          codelenses = {
-            gc_details = false;  # Disable for large files
-            generate = true;
-            regenerate_cgo = true;
-            run_govulncheck = true;
-            test = true;
-            tidy = true;
-            upgrade_dependency = true;
-            vendor = true;
-          };
-          usePlaceholders = true;
-          completeUnimported = true;
-          experimentalPostfixCompletions = true;
-          experimentalWorkspaceModule = true;
-          semanticTokens = true;
-          directoryFilters = [
-            "-vendor"
-            "-node_modules"
-          ];
         };
       };
       otter-nvim = {

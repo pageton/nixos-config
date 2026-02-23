@@ -1,27 +1,20 @@
-{
-  lib,
-  hostname,
-  ...
-}: {
-  imports =
-    [
-      ./languages
-      ./gpg
-      ./obs
-      ./glance
-      ./brave
-      ./helix
-      ./tailscale
-      ./shell
-    ]
-    ++ lib.optionals (hostname != "server") [
-      ./discord
-      ./spicetify
-      ./zen
-      ./terminal
-      ./thunar
-      ./nvf
-      ./zellij
-      ./isolation
-    ];
+{...}: {
+  imports = [
+    ./ai-agents
+    ./languages
+    ./gpg
+    ./obs
+    ./glance
+    ./brave
+    ./helix
+    ./tailscale
+    ./shell
+    ./discord
+    ./spicetify
+    ./terminal
+    ./thunar
+    ./nvf
+    ./isolation
+    ./nanoclaw
+  ];
 }

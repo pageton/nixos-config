@@ -20,6 +20,7 @@
       XDG_ICON_DIR = "${pkgs.whitesur-icon-theme}/share/icons/WhiteSur";
     };
 
+    file.".config/xarchiver/xarchiverrc".force = true;
     file.".config/xarchiver/xarchiverrc".text = ''
       [xarchiver]
       preferred_format=0
@@ -52,6 +53,7 @@
       remove_files=false
     '';
 
+    file.".config/xfce4/xfconf/xfce-perchannel-xml/thunar.xml".force = true;
     file.".config/xfce4/xfconf/xfce-perchannel-xml/thunar.xml".text = ''
       <?xml version="1.0" encoding="UTF-8"?>
 
@@ -110,6 +112,7 @@
     "file:///home/${user}/Projects Projects"
   ];
 
+  xdg.configFile."Thunar/uca.xml".force = true;
   xdg.configFile."Thunar/uca.xml".text = ''
     <?xml version="1.0" encoding="UTF-8"?>
     <actions>

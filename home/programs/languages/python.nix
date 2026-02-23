@@ -6,10 +6,8 @@
   lib,
   pkgs,
   pkgsStable,
-  hostname,
   ...
-}:
-lib.mkIf (hostname != "server") {
+}: {
   programs = {
     # Python development aliases
     zsh.shellAliases = {
@@ -284,6 +282,9 @@ lib.mkIf (hostname != "server") {
 
       # Linter
       ruff # Python linter
+
+      # Security / reverse engineering
+      python3Packages.frida-python # Frida dynamic instrumentation bindings
     ];
 
     # Environment variables for Python development

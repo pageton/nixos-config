@@ -5,7 +5,6 @@
   config,
   lib,
   pkgs,
-  hostname,
   ...
 }: {
   programs = {
@@ -15,8 +14,8 @@
 
       # Go environment configuration
       env = {
-        GOPATH = lib.mkIf (hostname != "server") "go"; # GOPATH relative to home directory
-        GOBIN = lib.mkIf (hostname != "server") "go/bin"; # GOBIN relative to home directory
+        GOPATH = "go";
+        GOBIN = "go/bin";
         # Private Go modules (for private repositories)
         GOPRIVATE = []; # Add private module patterns here
       };
@@ -103,9 +102,7 @@
     # Automatic workspace directory creation
     activation.createGoWorkspace = lib.hm.dag.entryAfter ["writeBoundary"] ''
       $DRY_RUN_CMD mkdir -p $HOME/go/{bin,pkg,src}       # Create Go workspace structure
-      ${lib.optionalString (hostname != "server") ''
-        $DRY_RUN_CMD mkdir -p $HOME/Projects/go          # Create projects directory
-      ''}
+      $DRY_RUN_CMD mkdir -p $HOME/Projects/go          # Create projects directory
     '';
   };
 }

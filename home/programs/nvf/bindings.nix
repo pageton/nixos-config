@@ -18,9 +18,10 @@
         desc = "Switch to Normal mode";
       }
       {
-        key = "<leader>w";
-        mode = "n";
-        action = ":write<CR>";
+        key = "<C-s>";
+        mode = ["n" "i"];
+        action = "<cmd>write<cr>";
+        silent = true;
         desc = "Write current file";
       }
       {
@@ -57,7 +58,7 @@
         desc = "Next Buffer";
       }
       {
-        key = "<C-w>";
+        key = "<leader>x";
         mode = "n";
         silent = true;
         action = "<cmd>bdelete<cr>";
@@ -97,9 +98,9 @@
         action = "<cmd>TmuxNavigateRight<cr>";
       }
       {
-        key = "<leader>d";
+        key = "<leader>e";
         mode = "n";
-        action = "<CMD>lua vim.diagnostic.open_float()<CR>";
+        action = "<cmd>lua vim.diagnostic.open_float()<cr>";
         silent = true;
         desc = "Show diagnostics";
       }

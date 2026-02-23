@@ -1,7 +1,6 @@
 {
   pkgsStable,
   lib,
-  hostname,
   pkgs,
   ...
 }: {
@@ -36,9 +35,6 @@
     enable = true;
     defaultCacheTtl = 86400;
     enableSshSupport = true;
-    pinentry.package =
-      if hostname == "server"
-      then pkgs.pinentry-curses # TUI in terminal on server
-      else pkgsStable.pinentry-qt; # GUI on desktop
+    pinentry.package = pkgsStable.pinentry-qt;
   };
 }

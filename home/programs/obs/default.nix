@@ -1,11 +1,8 @@
 # OBS Studio configuration with CUDA and essential plugins.
 {
-  lib,
-  hostname,
   pkgs,
   ...
-}:
-lib.mkIf (hostname != "server") {
+}: {
   programs.obs-studio = {
     enable = true;
 
