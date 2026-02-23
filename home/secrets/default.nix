@@ -33,6 +33,7 @@
       zai-api-key = {
         path = "/home/${user}/.config/zai";
       };
+      context7-api-key = { };
 
       wakatime-api-key = { };
     };
@@ -43,6 +44,4 @@
   home.packages = with pkgs; [
     age # Encryption tool
   ];
-
-  wayland.windowManager.hyprland.settings.exec-once = [ "systemctl --user start sops-nix" ];
 }
