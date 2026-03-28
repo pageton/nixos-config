@@ -1,0 +1,5 @@
+secrets/secrets-decrypted.yaml
+home/secrets/secrets-decrypted.yaml
+
+/tmp/lab_traffic.flows
+*.flows
