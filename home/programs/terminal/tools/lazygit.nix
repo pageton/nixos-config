@@ -1,23 +1,22 @@
 # Lazygit (Git TUI) configuration.
-# This module configures lazygit, a terminal UI for git commands
+
+{ constants, ... }:
+
 {
   programs.lazygit = {
-    enable = true; # Enable lazygit for terminal git operations
+    enable = true;
 
     settings = {
-      gui.showIcons = true; # Show icons in the interface
+      gui.showIcons = true;
 
       gui.theme = {
-        lightTheme = false; # Use dark theme
-
-        # Color scheme for UI elements
+        lightTheme = false;
         activeBorderColor = [
-          "green"
+          constants.color.green
           "bold"
-        ]; # Active border color with bold styling
-
-        inactiveBorderColor = ["grey"]; # Inactive border color
-        selectedLineBgColor = ["blue"]; # Selected line background
+        ];
+        inactiveBorderColor = [ constants.color.gray ];
+        selectedLineBgColor = [ constants.color.blue_dim ];
       };
     };
   };

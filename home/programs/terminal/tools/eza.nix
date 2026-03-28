@@ -1,3 +1,5 @@
+# Eza (ls replacement) configuration.
+
 {
   programs.eza = {
     enable = true;

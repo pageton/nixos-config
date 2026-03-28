@@ -1,18 +1,19 @@
 # Zathura PDF viewer configuration.
+
+{ constants, ... }:
+
 {
   programs.zathura = {
-    enable = true; # Enable zathura document viewer
+    enable = true;
 
-    # Custom key mappings for better navigation
     mappings = {
-      D = "toggle_page_mode"; # Toggle between single/multi-page view
-      d = "scroll half_down"; # Scroll down by half page
-      u = "scroll half_up"; # Scroll up by half page
+      D = "toggle_page_mode";
+      d = "scroll half_down";
+      u = "scroll half_up";
     };
 
-    # Viewer options and appearance
     options = {
-      font = "JetBrains Mono Bold 13"; # Font for UI elements
+      font = "${constants.font.mono} Bold ${toString constants.font.size}";
     };
   };
 }

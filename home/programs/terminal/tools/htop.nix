@@ -2,10 +2,10 @@
 
 {
   programs.htop = {
-    enable = true; # Enable htop for process monitoring
+    enable = true;
 
     settings = {
-      tree_view = 1; # Enable tree view to show process hierarchy
+      tree_view = 1;
     };
   };
 }

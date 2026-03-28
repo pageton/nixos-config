@@ -1,9 +1,10 @@
 # Zsh shell aliases.
-{
-  programs.zsh.shellAliases = let
-    editor = "nvim";
-    nixTemplates = "git+https://codeberg.org/yztr/nixos?ref=main&dir=dev-shells#";
-  in {
+{ lib, constants, ... }:
+
+let
+  inherit (constants) editor;
+  nixTemplates = "git+https://codeberg.org/yztr/nixos?ref=main&dir=dev-shells#";
+  shellAliases = {
     # Agent-safe defaults (agents expect standard stdout)
     cat = "cat";
     ls = "ls --color=auto";
@@ -16,6 +17,9 @@
     ctx = "eza --tree --level=2 --ignore-glob='.git|node_modules|.direnv|target|dist|.next'";
     rmap = "git ls-files";
 
+    cd = "z";
+    n = "nvim";
+
     # Navigation
     ".." = "cd ..";
     "..." = "cd ../..";
@@ -25,7 +29,6 @@
     dt = "cd ~/Desktop";
     docs = "cd ~/Documents";
     ci = "zi";
-    cd = "z";
 
     # Search and text
     less = "bat --style=auto --paging=always";
@@ -37,11 +40,10 @@
     fs = "fselect";
 
     # Editors
-    n = "${editor}";
     v = "${editor}";
     se = "sudoedit";
     open = "xdg-open";
-    ezshr = "${editor} ~/System/home/programs/terminal/zsh";
+    ezshr = "${editor} ~/System/home-manager/modules/terminal/zsh";
     enix = "${editor} ~/System";
 
     # System info
@@ -49,48 +51,13 @@
     mf = "microfetch";
     of = "onefetch";
 
-    # AI tools
-    cl = "claude"; # Launch Claude interactive session.
-    clg = "claude_glm"; # Claude via GLM-backed ZAI endpoint wrapper.
-    clc = "claude --continue"; # Continue most recent Claude session.
-    clr = "claude --resume"; # Open Claude resume picker/session restore.
-    clplan = "claude --permission-mode plan"; # Claude read-only planning mode.
-    clauto = "claude --permission-mode acceptEdits"; # Claude auto-approve edits.
-    clyolo = "claude --dangerously-skip-permissions"; # Claude no-permission prompts (risky).
-
-    g = "gemini"; # Launch Gemini interactive session.
-    gplan = "gemini --approval-mode plan"; # Gemini planning/read-only mode.
-    gauto = "gemini --approval-mode auto_edit"; # Gemini auto-approve edit tools.
-    gyolo = "gemini --yolo"; # Gemini auto-approve all tools (risky).
-
-    oc = "opencode"; # Launch OpenCode interactive session.
-    ocg = "opencode_glm"; # OpenCode using GLM profile config.
-    ocgem = "opencode_gemini"; # OpenCode using Gemini profile config.
-    ocs = "opencode_sonnet"; # OpenCode using Sonnet-only profile config.
-    occ = "opencode --continue"; # Continue last OpenCode session.
-    ocl = "opencode session list"; # List OpenCode sessions.
-    ocr = "opencode run --continue"; # Non-interactive OpenCode run on last session.
-    ocf = "opencode --continue --fork"; # Continue OpenCode session in a forked branch.
-    ocrun = "opencode run"; # Non-interactive OpenCode run.
-    occm = "opencode_sonnet --prompt 'Review all current git changes, propose a commit plan that splits work into minimal logical commits, then execute it commit-by-commit using signed commits (git commit -S). For each commit, stage only relevant hunks/files, run relevant checks for touched files, and use a clear conventional commit message. Show the plan before creating the first commit.'"; # OpenCode Sonnet commit-splitting + signed-commit workflow.
-
-    cx = "command codex --no-alt-screen"; # Launch Codex with zellij-friendly scrollback.
-    cxyolo = "command codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox"; # Codex fully unrestricted mode (risky).
-    cxl = "command codex resume --last --no-alt-screen"; # Resume latest Codex session.
-    cxr = "command codex review --uncommitted"; # Review current working tree with Codex.
-    cxb = "command codex review --base main"; # Review changes against main branch.
-    cxquick = "command codex --no-alt-screen -p quick"; # Start Codex quick profile.
-    cxdeep = "command codex --no-alt-screen -p deep"; # Start Codex deep profile.
-    cxsafe = "command codex --no-alt-screen -p safe"; # Start Codex safe profile (read-only/untrusted).
-    cxauto = "command codex --no-alt-screen --full-auto"; # Codex low-friction automation mode.
-    cxexec = "command codex exec"; # Codex one-shot non-interactive execution.
-
     # Nix
     ns = "nix-shell";
     nd = "nix develop --command zsh";
     nfu = "nix flake update";
     nfs = "nix flake show";
     nfi = "nix flake init";
+    ghg = "ghgrab --token \"$(gh auth token)\"";
 
     # Dev environment templates
     nfib = "nfi -t '${nixTemplates}bun'";
@@ -119,6 +86,7 @@
     killall = "pkill -f";
 
     # Network
+    ssh = "TERM=xterm-256color command ssh";
     ports = "lsof -i -P -n | grep LISTEN";
     myip = "curl -s https://am.i.mullvad.net/ip"; # Privacy-respecting IP check
     localip = "ip route get 1.1.1.1 | awk '{print $7}'";
@@ -140,11 +108,19 @@
     dex = "docker exec -it";
     dlogs = "docker logs -f";
 
+    gpu-fans = "nvidia-fans";
+
     # Safety nets
     rm = "rm -I";
     mv = "mv -i";
     cp = "cp -i";
 
     j = "just";
+  };
+in
+{
+  programs = {
+    zsh.shellAliases = lib.mkMerge [ shellAliases ];
+    bash.shellAliases = lib.mkMerge [ shellAliases ];
   };
 }

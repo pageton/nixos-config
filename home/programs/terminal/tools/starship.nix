@@ -1,21 +1,23 @@
-# Starship cross-shell prompt with Kanagawa theming.
+# Starship cross-shell prompt with Gruvbox theming.
+
 {
   programs.starship = {
     enable = true;
     enableZshIntegration = true;
 
     settings = {
+      scan_timeout = 200;
       format = "$directory$git_branch$git_status$nix_shell$python$nodejs$golang$rust$docker_context$cmd_duration$line_break$character";
       add_newline = false;
 
       character = {
-        success_symbol = "[λ](bold #76946A)"; # autumnGreen
-        error_symbol = "[λ](bold #C34043)"; # autumnRed
-        vimcmd_symbol = "[](bold #76946A)"; # autumnGreen
+        success_symbol = "[λ](bold green)";
+        error_symbol = "[λ](bold red)";
+        vimcmd_symbol = "[](bold green)";
       };
 
       directory = {
-        style = "bold #7E9CD8"; # crystalBlue
+        style = "bold blue";
         truncation_length = 3;
         truncate_to_repo = true;
         fish_style_pwd_dir_length = 1;
@@ -23,12 +25,12 @@
 
       git_branch = {
         symbol = " ";
-        style = "bold #6A9589"; # waveAqua1
+        style = "bold cyan";
         format = "[$symbol$branch]($style) ";
       };
 
       git_status = {
-        style = "bold #C0A36E"; # boatYellow2
+        style = "bold yellow";
         format = "[$all_status$ahead_behind]($style) ";
         conflicted = "=";
         ahead = "⇡\${count}";
@@ -44,45 +46,45 @@
 
       nix_shell = {
         symbol = " ";
-        style = "bold #7E9CD8"; # crystalBlue
+        style = "bold blue";
         format = "[$symbol$state]($style) ";
         heuristic = true;
       };
 
       python = {
         symbol = " ";
-        style = "bold #C0A36E"; # boatYellow2
+        style = "bold yellow";
         format = "[$symbol$version]($style) ";
       };
 
       nodejs = {
         symbol = " ";
-        style = "bold #76946A"; # autumnGreen
+        style = "bold green";
         format = "[$symbol$version]($style) ";
       };
 
       golang = {
         symbol = " ";
-        style = "bold #6A9589"; # waveAqua1
+        style = "bold cyan";
         format = "[$symbol$version]($style) ";
       };
 
       rust = {
         symbol = " ";
-        style = "bold #C34043"; # autumnRed
+        style = "bold red";
         format = "[$symbol$version]($style) ";
       };
 
       docker_context = {
         symbol = " ";
-        style = "bold #7E9CD8"; # crystalBlue
+        style = "bold blue";
         format = "[$symbol$context]($style) ";
         only_with_files = true;
       };
 
       cmd_duration = {
         min_time = 2000;
-        style = "bold #FFA066"; # surimiOrange
+        style = "bold yellow";
         format = "[$duration]($style) ";
       };
 
@@ -90,6 +92,8 @@
       gcloud.disabled = true;
       azure.disabled = true;
       package.disabled = true;
+      username.disabled = true;
+      hostname.disabled = true;
     };
   };
 }
