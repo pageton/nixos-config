@@ -3,9 +3,7 @@
   lib,
   pkgsStable,
   ...
-}:
-
-{
+}: {
   services = {
     fstrim = {
       enable = true;
@@ -33,6 +31,9 @@
         gcr
       ];
     };
+
+    # Ensure Secret Service daemon is available and started correctly.
+    gnome.gnome-keyring.enable = true;
   };
 
   boot.kernel.sysctl = {

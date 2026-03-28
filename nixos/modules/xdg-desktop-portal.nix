@@ -1,10 +1,8 @@
 # XDG Desktop Portal Configuration
 # This module provides proper configuration for xdg-desktop-portal services
 # optimized for niri Wayland compositor (uses GNOME portal for ScreenCast)
+{ pkgs, ... }:
 {
-  pkgs,
-  ...
-}: {
   # Install xdg-desktop-portal and related packages
   environment.systemPackages = with pkgs; [
     xdg-desktop-portal
@@ -32,14 +30,22 @@
     ];
     config = {
       common = {
+        # Prefer GNOME portal as primary backend for niri Wayland sessions.
+        # Keep GTK only for FileChooser to avoid early-session GTK backend churn.
         default = [
-          "gtk"
           "gnome"
         ];
-        "org.freedesktop.impl.portal.FileChooser" = ["gtk"];
-        "org.freedesktop.impl.portal.Screenshot" = ["gnome"];
-        "org.freedesktop.impl.portal.ScreenCast" = ["gnome"];
+        "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+        "org.freedesktop.impl.portal.Screenshot" = [ "gnome" ];
+        "org.freedesktop.impl.portal.ScreenCast" = [ "gnome" ];
       };
+    };
+  };
+
+  systemd.user.services = {
+    xdg-desktop-portal-gtk.serviceConfig = {
+      Restart = "on-failure";
+      RestartSec = "1s";
     };
   };
 }

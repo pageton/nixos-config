@@ -3,9 +3,7 @@
   config,
   lib,
   ...
-}:
-
-{
+}: {
   options.mySystem.loki = {
     enable = lib.mkEnableOption "Loki log aggregation";
   };
@@ -35,7 +33,7 @@
             instance_addr = "127.0.0.1";
             kvstore.store = "inmemory";
           };
-          instance_interface_names = [ ]; # Skip interface detection (fails on NixOS)
+          instance_interface_names = []; # Skip interface detection (fails on NixOS)
           instance_addr = "127.0.0.1";
         };
 
@@ -100,15 +98,15 @@
             };
             relabel_configs = [
               {
-                source_labels = [ "__journal__systemd_unit" ];
+                source_labels = ["__journal__systemd_unit"];
                 target_label = "unit";
               }
               {
-                source_labels = [ "__journal__hostname" ];
+                source_labels = ["__journal__hostname"];
                 target_label = "hostname";
               }
               {
-                source_labels = [ "__journal_priority_keyword" ];
+                source_labels = ["__journal_priority_keyword"];
                 target_label = "level";
               }
             ];
@@ -117,7 +115,7 @@
       };
     };
 
-    users.users.promtail.extraGroups = [ "systemd-journal" ];
+    users.users.promtail.extraGroups = ["systemd-journal"];
 
     # SECURITY: Systemd hardening directives + resource limits
     systemd = {
@@ -132,7 +130,7 @@
           ProtectKernelTunables = lib.mkForce true;
           ProtectControlGroups = lib.mkForce true;
           RestrictSUIDSGID = lib.mkForce true;
-          ReadWritePaths = [ "/var/lib/loki" ];
+          ReadWritePaths = ["/var/lib/loki"];
         };
 
         promtail.serviceConfig = {
@@ -145,7 +143,7 @@
           ProtectKernelTunables = lib.mkForce true;
           ProtectControlGroups = lib.mkForce true;
           RestrictSUIDSGID = lib.mkForce true;
-          ReadWritePaths = [ "/var/lib/promtail" ];
+          ReadWritePaths = ["/var/lib/promtail"];
         };
       };
 

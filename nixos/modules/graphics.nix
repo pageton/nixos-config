@@ -1,123 +1,117 @@
 # Graphics and NVIDIA driver configuration.
-# This module configures NVIDIA graphics drivers with optimized settings
-# for gaming, Wayland compositors, and hardware acceleration.
 {
   config,
-  lib,
   pkgs,
   ...
-}: let
-  # Using stable driver to match kernel module version
+}:
+let
   nvidiaDriverChannel = config.boot.kernelPackages.nvidiaPackages.stable;
-in {
+in
+{
   config = {
-    # Video drivers configuration for Xorg and Wayland
-    services.xserver.videoDrivers = ["nvidia"]; # Use NVIDIA proprietary driver
+    # Use proprietary NVIDIA userspace + kernel stack.
+    services.xserver.videoDrivers = [ "nvidia" ];
 
-    # Kernel parameters for Wayland compositor integration
-    boot.kernelParams = [
-      "nvidia-drm.modeset=1" # Enable DRM kernel mode setting for Wayland
-      "nvidia-drm.fbdev=1" # Use NVIDIA framebuffer device — fixes rendering glitches
-      "nvidia.NVreg_PreserveVideoMemoryAllocations=1" # Preserve GPU memory on suspend/resume
-    ];
+    boot = {
+      kernelParams = [
+        # Required for stable Wayland compositors on NVIDIA.
+        "nvidia-drm.modeset=1"
+        # Preserve VRAM across suspend/resume transitions.
+        "nvidia.NVreg_PreserveVideoMemoryAllocations=1"
+      ];
+      # Prevent nouveau from racing/loading before proprietary modules.
+      blacklistedKernelModules = [ "nouveau" ];
+    };
 
-    # Blacklist nouveau to avoid conflicts with proprietary driver
-    boot.blacklistedKernelModules = ["nouveau"];
-
-    # Environment variables for better compatibility and performance
-    # Note: WLR_* vars belong in Hyprland config (wlroots-specific, not needed by Niri).
-    # GBM_BACKEND removed — modern NVIDIA drivers (580+) handle GBM natively.
-    # __GL_GSYNC_ALLOWED/__GL_VRR_ALLOWED removed — let the compositor manage VRR.
+    # Session/runtime compatibility for Wayland + VA-API + GLX selection.
     environment.variables = {
-      LIBVA_DRIVER_NAME = "nvidia"; # Use NVIDIA for hardware video acceleration
-      XDG_SESSION_TYPE = "wayland"; # Force Wayland session
-      __GLX_VENDOR_LIBRARY_NAME = "nvidia"; # Force NVIDIA GLX driver
-      ELECTRON_OZONE_PLATFORM_HINT = "auto"; # Auto-detect Electron platform
-      NVD_BACKEND = "direct"; # Direct backend for new NVIDIA driver
-      MOZ_ENABLE_WAYLAND = "1"; # Enable Wayland support in Firefox
+      LIBVA_DRIVER_NAME = "nvidia";
+      XDG_SESSION_TYPE = "wayland";
+      GBM_BACKEND = "nvidia-drm";
+      __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+      NVD_BACKEND = "direct";
+      MOZ_ENABLE_WAYLAND = "1";
     };
 
-    # Configuration for proprietary packages
     nixpkgs.config = {
-      nvidia.acceptLicense = true;
+      # NVIDIA driver package is unfree; must be explicitly allowed at eval time.
       allowUnfree = true;
+      nvidia.acceptLicense = true;
     };
 
-    # Hardware configuration for NVIDIA graphics
     hardware = {
       nvidia = {
-        open = false; # Use proprietary driver (not open source)
-        nvidiaSettings = true; # Enable nvidia-settings utility
-        modesetting.enable = true; # Required for Wayland compositors
-        package = nvidiaDriverChannel; # Use beta driver package
+        open = false;
+        nvidiaSettings = true;
+        # Needed for DRM/KMS path used by modern Wayland compositors.
+        modesetting.enable = true;
+        package = nvidiaDriverChannel;
 
         powerManagement = {
-          enable = true; # Enable power management for better battery life
-          finegrained = false; # Disable fine-grained power management
+          enable = true;
+          finegrained = false;
         };
       };
 
-      # Enhanced graphics support with hardware acceleration
       graphics = {
-        enable = true; # Enable graphics support
-        package = nvidiaDriverChannel; # Use same driver for consistency
-        enable32Bit = true; # Enable 32-bit support for legacy applications
-
-        # Additional graphics packages for full hardware acceleration
+        enable = true;
+        package = nvidiaDriverChannel;
+        # Steam/Proton and legacy 32-bit apps.
+        enable32Bit = true;
+        # Runtime codec/GL/Vulkan userspace helpers.
         extraPackages = with pkgs; [
-          nvidia-vaapi-driver # NVIDIA VA-API driver for video acceleration
-          libva-vdpau-driver # VDPAU backend for VA-API
-          libvdpau-va-gl # OpenGL backend for VDPAU
-          mesa # Mesa Vulkan drivers
-          egl-wayland # EGL platform for Wayland
-          vulkan-loader # Vulkan API loader
-          vulkan-validation-layers # Vulkan validation and debugging
-          libva # Video Acceleration API
+          nvidia-vaapi-driver
+          libva-vdpau-driver
+          libvdpau-va-gl
+          mesa
+          egl-wayland
+          vulkan-loader
+          libva
         ];
       };
     };
 
-    # Nix binary cache for CUDA packages
     nix.settings = {
-      substituters = ["https://cuda-maintainers.cachix.org"]; # CUDA package cache
+      # Speeds up NVIDIA/CUDA-related binary fetches.
+      substituters = [ "https://cuda-maintainers.cachix.org" ];
 
       trusted-public-keys = [
         "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E="
       ];
     };
 
-    # Additional graphics debugging and utility packages
     environment.systemPackages = with pkgs; [
-      vulkan-tools # Vulkan debugging and information tools
-      mesa-demos # OpenGL and GLX information utility
-      libva-utils # VA-API debugging and testing utilities
-      cudaPackages.cudatoolkit # CUDA development tools
+      vulkan-tools
+      mesa-demos
+      libva-utils
     ];
 
     # NVIDIA application profile for Niri — fixes VRAM leak causing progressive
     # rendering degradation. See: https://github.com/YaLTeR/niri/wiki/Nvidia
-    environment.etc."nvidia/nvidia-application-profiles-rc.d/50-niri-vram-fix.json".text = builtins.toJSON {
-      rules = [
+    environment.etc."nvidia/nvidia-application-profiles-rc.d/50-niri-vram-fix.json".text =
+      builtins.toJSON
         {
-          pattern = {
-            feature = "procname";
-            matches = "niri";
-          };
-          profile = "Limit Free Buffer Pool On Wayland Compositors";
-        }
-      ];
-      profiles = [
-        {
-          name = "Limit Free Buffer Pool On Wayland Compositors";
-          settings = [
+          rules = [
             {
-              key = "GLVidHeapReuseRatio";
-              value = 0;
+              pattern = {
+                feature = "procname";
+                matches = "niri";
+              };
+              profile = "Limit Free Buffer Pool On Wayland Compositors";
             }
           ];
-        }
-      ];
-    };
+          profiles = [
+            {
+              name = "Limit Free Buffer Pool On Wayland Compositors";
+              settings = [
+                {
+                  key = "GLVidHeapReuseRatio";
+                  value = 0;
+                }
+              ];
+            }
+          ];
+        };
 
     # Udev rules for NVIDIA device access
     services.udev.extraRules = ''

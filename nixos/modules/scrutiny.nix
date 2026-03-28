@@ -5,7 +5,6 @@
   pkgs,
   ...
 }:
-
 {
   options.mySystem.scrutiny = {
     enable = lib.mkEnableOption "Scrutiny SMART disk health monitoring dashboard";
@@ -66,6 +65,14 @@
             serviceConfig = {
               Type = "oneshot";
               ExecStart = "${pkgs.findutils}/bin/find /var/lib/influxdb2 -type f -name '*.tsm' -mtime +365 -delete";
+              NoNewPrivileges = true;
+              PrivateTmp = true;
+              ProtectSystem = "strict";
+              ProtectHome = true;
+              ProtectKernelTunables = true;
+              ProtectControlGroups = true;
+              RestrictSUIDSGID = true;
+              ReadWritePaths = [ "/var/lib/influxdb2" ];
             };
           };
 

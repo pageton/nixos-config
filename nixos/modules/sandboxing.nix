@@ -1,18 +1,14 @@
 # Application sandboxing with Firejail and bubblewrap.
-
 {
   config,
   lib,
   pkgs,
   pkgsStable,
   ...
-}:
-
-let
+}: let
   mesaEglVendorFile = "/run/opengl-driver/share/glvnd/egl_vendor.d/50_mesa.json";
   mesaEglFirejailArg = "--env=__EGL_VENDOR_LIBRARY_FILENAMES=${mesaEglVendorFile}";
-in
-{
+in {
   options.mySystem.sandboxing = {
     enable = lib.mkEnableOption "application sandboxing with Firejail and bubblewrap";
 
@@ -35,7 +31,6 @@ in
     programs.firejail = {
       enable = true;
       wrappedBinaries = lib.mkIf config.mySystem.sandboxing.enableWrappedBinaries {
-
         # =====================================================================
         # HIGH RISK — Internet-facing apps with large attack surfaces
         # (rendering engines, media codecs, JavaScript execution)
@@ -47,7 +42,7 @@ in
         brave = {
           executable = "${pkgs.lib.getBin pkgs.brave}/bin/brave";
           profile = "${pkgs.firejail}/etc/firejail/brave.profile";
-          extraArgs = [ mesaEglFirejailArg ];
+          extraArgs = [mesaEglFirejailArg];
         };
 
         # LibreWolf upstream profile works on NixOS (seccomp !chroot handles it)
@@ -56,17 +51,22 @@ in
         librewolf = {
           executable = "${pkgs.lib.getBin pkgsStable.librewolf}/bin/librewolf";
           profile = "${pkgs.firejail}/etc/firejail/librewolf.profile";
-          extraArgs = [ mesaEglFirejailArg ];
+          extraArgs = [mesaEglFirejailArg];
         };
 
         # Messaging — use upstream profiles
         signal-desktop = {
-          executable = "${pkgs.lib.getBin pkgs.signal-desktop-bin}/bin/signal-desktop";
+          executable = "${pkgs.lib.getBin pkgs.signal-desktop}/bin/signal-desktop";
           profile = "${pkgs.firejail}/etc/firejail/signal-desktop.profile";
         };
 
         telegram-desktop = {
           executable = "${pkgs.lib.getBin pkgs.telegram-desktop}/bin/Telegram";
+          profile = "${pkgs.firejail}/etc/firejail/telegram-desktop.profile";
+        };
+
+        ayugram-desktop = {
+          executable = "${pkgs.lib.getBin pkgs.ayugram-desktop}/bin/AyuGram";
           profile = "${pkgs.firejail}/etc/firejail/telegram-desktop.profile";
         };
 
@@ -141,7 +141,6 @@ in
           executable = "${pkgs.lib.getBin pkgsStable.sqlitebrowser}/bin/sqlitebrowser";
           profile = "${pkgs.firejail}/etc/firejail/sqlitebrowser.profile";
         };
-
       };
     };
 
@@ -171,6 +170,23 @@ in
 
         # Telegram drag-and-drop support for files outside ~/Downloads.
         "firejail/telegram.local".text = ''
+          # AyuGram persistence (it uses Telegram-compatible profile but stores
+          # state under AyuGram-specific directories).
+          noblacklist ''${HOME}/.AyuGramDesktop
+          noblacklist ''${HOME}/.local/share/AyuGramDesktop
+          noblacklist ''${HOME}/.local/share/ayugram-desktop
+          noblacklist ''${HOME}/.config/AyuGramDesktop
+
+          mkdir ''${HOME}/.AyuGramDesktop
+          mkdir ''${HOME}/.local/share/AyuGramDesktop
+          mkdir ''${HOME}/.local/share/ayugram-desktop
+          mkdir ''${HOME}/.config/AyuGramDesktop
+
+          whitelist ''${HOME}/.AyuGramDesktop
+          whitelist ''${HOME}/.local/share/AyuGramDesktop
+          whitelist ''${HOME}/.local/share/ayugram-desktop
+          whitelist ''${HOME}/.config/AyuGramDesktop
+
           noblacklist ''${HOME}/Documents
           noblacklist ''${HOME}/Pictures
           noblacklist ''${HOME}/Videos

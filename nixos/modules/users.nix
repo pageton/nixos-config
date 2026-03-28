@@ -1,9 +1,10 @@
 # User and authentication configuration.
 # This module configures user accounts, default shells, and system group memberships
-
-{ pkgs, user, ... }:
-
 {
+  pkgs,
+  user,
+  ...
+}: {
   # Enable Zsh as the system-wide default shell
   programs.zsh.enable = true;
 

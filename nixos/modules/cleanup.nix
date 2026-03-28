@@ -1,13 +1,19 @@
 # File cleanup services configuration.
-# This module provides automated cleanup services for various directories
-# to prevent disk space issues from accumulating temporary files.
+# Opt-in only: broad automatic deletion can look like data loss.
 {
+  config,
+  lib,
   pkgs,
   user,
   ...
-}: {
-  config = {
-    # Telegram downloads cleanup service
+}: let
+  cfg = config.mySystem.cleanup;
+in {
+  options.mySystem.cleanup = {
+    enable = lib.mkEnableOption "automatic cleanup timers for downloads/cache";
+  };
+
+  config = lib.mkIf cfg.enable {
     systemd = {
       services = {
         "cleanup-telegram-downloads" = {
@@ -16,7 +22,6 @@
             Type = "oneshot";
             User = user;
             ExecStart = "${pkgs.bash}/bin/bash -c \"${pkgs.findutils}/bin/find '/home/${user}/Downloads/Telegram Desktop' -type f -mtime +14 -delete 2>/dev/null || true\"";
-            # Clean empty directories after removing files
             ExecStartPost = "${pkgs.bash}/bin/bash -c \"${pkgs.findutils}/bin/find '/home/${user}/Downloads/Telegram Desktop' -type d -empty -delete 2>/dev/null || true\"";
           };
         };
@@ -75,7 +80,6 @@
       };
     };
 
-    # Ensure user directory exists
     system.activationScripts = {
       createUserDirs = {
         text = ''

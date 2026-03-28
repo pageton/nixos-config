@@ -1,10 +1,7 @@
 # Nix-ld configuration for running non-Nix binaries.
 # This module enables nix-ld, which allows running dynamically linked
 # executables that were not built for NixOS by providing common shared libraries.
-{
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   programs.nix-ld = {
     enable = true;
 
@@ -131,3 +128,4 @@
     ];
   };
 }
+

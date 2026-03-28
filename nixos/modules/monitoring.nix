@@ -1,10 +1,7 @@
 # System monitoring configuration.
 # This module enables hardware sensor monitoring and provides tools for
 # monitoring system resources, temperatures, and performance metrics.
-
-{ pkgsStable, ... }:
-
-{
+{pkgsStable, ...}: {
   # Intel thermal daemon - CRITICAL for ThinkPad thermal management
   services.thermald.enable = true;
 

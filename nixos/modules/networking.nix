@@ -1,11 +1,16 @@
 # Networking configuration module.
 # NOTE: Firewall rules live in security.nix to keep all hardening in one place.
+{ lib, pkgs, ... }:
 {
-  lib,
-  ...
-}: {
   # NetworkManager for GUI networking
   networking.networkmanager.enable = lib.mkDefault true;
+
+  # Reduce boot blocking from wait-online while keeping deterministic network startup.
+  # nm-online default timeout is high; this caps startup stall on slow links.
+  systemd.services.NetworkManager-wait-online.serviceConfig = {
+    ExecStart = lib.mkForce "${pkgs.networkmanager}/bin/nm-online -q --timeout=15";
+    TimeoutStartSec = lib.mkForce "20s";
+  };
 
   # SSH server — key-only auth, password disabled
   # Access control: firewall (security.nix) + Tailscale ACLs

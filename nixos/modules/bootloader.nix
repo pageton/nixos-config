@@ -1,9 +1,5 @@
 # Bootloader configuration (GRUB - no theme).
-{
-  lib,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   boot.kernelPackages = pkgs.linuxPackages_6_18;
 
   boot.loader = {
@@ -17,4 +13,3 @@
     efi.canTouchEfiVariables = true;
   };
 }
-

@@ -1,8 +1,7 @@
-# X server configuration.
-
+# X11 is intentionally disabled (Wayland-only niri stack).
 {
   services.xserver = {
-    enable = true;
+    enable = false;
 
     xkb = {
       layout = "us";

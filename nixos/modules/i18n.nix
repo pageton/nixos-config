@@ -1,5 +1,4 @@
 # Internationalization (i18n) settings.
-
 {
   i18n.defaultLocale = "en_US.UTF-8";
 

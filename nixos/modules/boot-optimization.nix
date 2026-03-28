@@ -12,7 +12,8 @@ let
   # These are monitoring/observability services that compete for I/O during boot
   # but don't block the login prompt. Deferring them reduces boot contention.
   deferredServices =
-    lib.optionals cfg.loki.enable [
+    lib.optionals cfg.netdata.enable [ "netdata" ]
+    ++ lib.optionals cfg.loki.enable [
       "loki"
       "promtail"
     ]
@@ -25,7 +26,15 @@ let
   serviceOverrides = builtins.listToAttrs (
     map (name: {
       inherit name;
-      value.wantedBy = lib.mkForce [ ];
+      value = {
+        wantedBy = lib.mkForce [ ];
+        serviceConfig = {
+          Nice = lib.mkForce 10;
+          IOSchedulingClass = lib.mkForce "idle";
+          CPUWeight = lib.mkForce 20;
+          IOWeight = lib.mkForce 20;
+        };
+      };
     }) deferredServices
   );
 
@@ -38,6 +47,8 @@ let
         wantedBy = [ "timers.target" ];
         timerConfig = {
           OnBootSec = "90s";
+          RandomizedDelaySec = "20s";
+          AccuracySec = "10s";
           Unit = "${name}.service";
         };
       };

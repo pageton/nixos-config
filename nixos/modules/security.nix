@@ -5,9 +5,7 @@
   pkgs,
   user,
   ...
-}:
-
-let
+}: let
   aideConf = pkgs.writeText "aide.conf" ''
     database_in=file:/var/lib/aide/aide.db
     database_out=file:/var/lib/aide/aide.db.new
@@ -39,8 +37,7 @@ let
     !/run
     !/tmp
   '';
-in
-{
+in {
   # graphene-hardened removed — crashes glycin/bwrap image loaders (Loupe, Nautilus
   # thumbnails) because the allocator is preloaded system-wide via ld-nix.so.preload
   # and glycin-image-rs sandbox children die with coredump signals.
@@ -211,7 +208,7 @@ in
     timesyncd.enable = lib.mkForce false;
     chrony = {
       enable = true;
-      servers = [ ]; # NTS sources below instead of plain NTP
+      servers = []; # NTS sources below instead of plain NTP
       extraConfig = ''
         server time.cloudflare.com iburst nts
         server virginia.time.system.gov iburst nts
@@ -227,7 +224,7 @@ in
   systemd = {
     timers.security-audit = {
       description = "Weekly security audit";
-      wantedBy = [ "timers.target" ];
+      wantedBy = ["timers.target"];
       timerConfig = {
         OnCalendar = "weekly";
         Persistent = true;
@@ -243,7 +240,7 @@ in
         PrivateTmp = true;
         ProtectHome = true;
         ProtectSystem = "strict";
-        ReadWritePaths = [ "/tmp" ];
+        ReadWritePaths = ["/tmp"];
         ExecStart = pkgs.writeShellScript "security-audit.sh" ''
           #!${pkgs.bash}/bin/bash
           echo 'Running Lynis audit...'
@@ -256,7 +253,7 @@ in
     # === AIDE File Integrity Monitoring ===
     timers.aide-check = {
       description = "Weekly AIDE file integrity check";
-      wantedBy = [ "timers.target" ];
+      wantedBy = ["timers.target"];
       timerConfig = {
         OnCalendar = "weekly";
         Persistent = true;

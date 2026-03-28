@@ -1,3 +1,2 @@
 # Timezone configuration.
-
-{ time.timeZone = "Asia/Baghdad"; }
+{time.timeZone = "Asia/Baghdad";}

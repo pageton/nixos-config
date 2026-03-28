@@ -1,6 +1,9 @@
 # Cross-module conflict assertions and dependency validation.
-{ config, lib, ... }:
-
+{
+  config,
+  lib,
+  ...
+}:
 {
   assertions = [
     # === Power Management Daemon Conflicts ===
@@ -71,6 +74,11 @@
     {
       assertion = !(config.services.displayManager.gdm.enable && config.services.greetd.enable);
       message = "GDM and greetd cannot be enabled simultaneously. Choose one display manager.";
+    }
+
+    {
+      assertion = !(config.services.displayManager.sddm.enable && config.services.greetd.enable);
+      message = "SDDM and greetd cannot be enabled simultaneously. Choose one display manager.";
     }
 
     # === Hardening Validation ===

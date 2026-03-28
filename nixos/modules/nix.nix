@@ -1,8 +1,7 @@
 # Nix package manager configuration (flakes, GC, etc.).
 # This module configures the Nix package manager with optimized settings
 # for performance, storage management, and development workflow.
-{ inputs, ... }:
-{
+{inputs, ...}: {
   nix = {
     # Define channels for legacy nix commands
     nixPath = [

@@ -2,12 +2,15 @@
 {
   config,
   lib,
+  pkgs,
   pkgsStable,
   user,
   ...
-}: let
+}:
+let
   cfg = config.mySystem.virtualisation;
-in {
+in
+{
   options.mySystem.virtualisation = {
     enable = lib.mkEnableOption "Docker, VirtualBox, libvirt virtualisation";
   };
@@ -34,7 +37,11 @@ in {
       virtualbox.host.enableExtensionPack = true; # Enable USB and PXE boot support
 
       # Libvirt virtualization API
-      libvirtd.enable = true;
+      libvirtd = {
+        enable = true;
+        onShutdown = "shutdown";
+        onBoot = "ignore";
+      };
 
       # QEMU/KVM configuration for libvirt
       libvirtd.qemu = {
@@ -106,5 +113,18 @@ in {
 
     # Enable virt-manager desktop integration if needed
     programs.virt-manager.enable = true;
+
+    # Socket-activate libvirtd so it does not hold boot/shutdown paths.
+    systemd.services.libvirtd.wantedBy = lib.mkForce [ ];
+    systemd.sockets.libvirtd.wantedBy = [ "sockets.target" ];
+
+    # libvirt-guests can block poweroff while waiting for guest handling.
+    # With onBoot="ignore", keep it disabled for faster, cleaner shutdown.
+    systemd.services.libvirt-guests.enable = false;
+
+    # libvirt secret init unit currently ships an invalid /usr/bin/sh path on NixOS.
+    # Force a valid shell path so activation does not fail.
+    systemd.services.virt-secret-init-encryption.serviceConfig.ExecStart =
+      lib.mkForce "${pkgs.runtimeShell} -c 'umask 0077 && (dd if=/dev/random status=none bs=32 count=1 | ${pkgs.systemd}/bin/systemd-creds encrypt --name=secrets-encryption-key - /var/lib/libvirt/secrets/secrets-encryption-key)'";
   };
 }
