@@ -1,10 +1,10 @@
-{...}: {
+{ ... }:
+{
   imports = [
     ./ai-agents
     ./languages
     ./gpg
     ./obs
-    ./glance
     ./brave
     ./helix
     ./tailscale
@@ -16,5 +16,7 @@
     ./nvf
     ./isolation
     ./nanoclaw
+    ./t3code
+    ./zoom
   ];
 }

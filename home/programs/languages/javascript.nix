@@ -1,28 +1,33 @@
 # JavaScript/TypeScript development environment (Node, Bun, Deno, LSP, etc).
+
 {
   config,
   lib,
   pkgs,
   ...
-}: let
+}:
+
+let
   globalNpmPackages = [
     "@anthropic-ai/claude-code"
     "@google/gemini-cli"
     "@openai/codex"
     "opencode-ai"
+    "btca"
     "skills"
     # MCP servers (globally installed for fast startup, avoids npx cold starts)
     "@upstash/context7-mcp"
     "@modelcontextprotocol/server-filesystem"
     "@modelcontextprotocol/server-memory"
     "@modelcontextprotocol/server-sequential-thinking"
-    "@playwright/mcp"
+    "@playwright/cli"
     "@magicuidesign/mcp"
     "@modelcontextprotocol/server-github"
     "agent-browser"
     "@z_ai/mcp-server"
   ];
-in {
+in
+{
   programs = {
     zsh.shellAliases = {
       tscl = "tsc --noEmit";
@@ -88,6 +93,19 @@ in {
   };
 
   home = {
+    # Wrapper sets system Chromium path before every playwright-cli invocation.
+    # ~/.local/bin (pos 3 in PATH) takes priority over ~/.bun/bin (pos 6),
+    # so this intercepts all calls regardless of env var inheritance.
+    file.".local/bin/playwright-cli" = {
+      executable = true;
+      text = ''
+        #!/usr/bin/env bash
+        export PLAYWRIGHT_MCP_BROWSER=chromium
+        export PLAYWRIGHT_MCP_EXECUTABLE_PATH=/run/current-system/sw/bin/chromium
+        exec "$HOME/.bun/bin/playwright-cli" "$@"
+      '';
+    };
+
     packages = with pkgs; [
       nodejs
       bun
@@ -135,7 +153,7 @@ in {
       "${config.home.homeDirectory}/.deno/bin"
     ];
 
-    activation.createJSWorkspace = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    activation.createJSWorkspace = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       $DRY_RUN_CMD mkdir -p $HOME/Projects/{javascript,typescript,react,node}
       $DRY_RUN_CMD mkdir -p $HOME/.npm-global
 

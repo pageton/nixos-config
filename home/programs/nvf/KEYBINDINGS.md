@@ -10,6 +10,7 @@
 |-----|------|-------------|
 | `jk` | i | Switch to Normal mode |
 | `Ctrl-s` | n, i | Write current file |
+| `Leader w` | n | Write current file |
 | `Leader q` | n | Quit |
 | `Leader nh` | n | Clear search highlight |
 | `s` | n | Flash jump |
@@ -264,8 +265,7 @@ Not bound to keys by default. Use command mode:
 
 | Key | Mode | Description |
 |-----|------|-------------|
-| `Ctrl-k` | i | Select previous item |
-| `Ctrl-j` | i | Select next item |
+| `Shift-Tab` | i | Select previous item |
 | `Tab` | i | Select next item |
 | `Ctrl-b` | i | Scroll docs up |
 | `Ctrl-f` | i | Scroll docs down |

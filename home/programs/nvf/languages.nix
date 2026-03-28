@@ -2,7 +2,8 @@
   lib,
   pkgs,
   ...
-}: {
+}:
+{
   programs.nvf.settings.vim = {
     diagnostics = {
       enable = true;
@@ -18,17 +19,12 @@
         underline = true;
         update_in_insert = true;
         virtual_text = {
-          format =
-            lib.generators.mkLuaInline
-            /*
-            lua
-            */
-            ''
-              function(diagnostic)
-                return string.format("%s", diagnostic.message)
-                --return string.format("%s (%s)", diagnostic.message, diagnostic.source)
-              end
-            '';
+          format = lib.generators.mkLuaInline /* lua */ ''
+            function(diagnostic)
+              return string.format("%s", diagnostic.message)
+              --return string.format("%s (%s)", diagnostic.message, diagnostic.source)
+            end
+          '';
         };
       };
       nvim-lint = {
@@ -57,13 +53,14 @@
       formatOnSave = true;
       inlayHints.enable = true;
       null-ls.enable = true;
-      servers.nixd.settings.nil.nix.autoArchive = true;
+      servers.nil.settings.nil.nix.autoArchive = true;
       servers.gopls = {
+        single_file_support = false;
         settings = {
           gopls = {
             analyses = {
               unusedparams = true;
-              shadow = true;
+              shadow = false;
               unusedwrite = true;
               unusedvariable = true;
               ST1000 = false; # disable "package comment" requirement
@@ -86,15 +83,6 @@
               "-**/vendor"
               "-**/node_modules"
             ];
-            hints = {
-              assignVariableTypes = true;
-              compositeLiteralFields = true;
-              compositeLiteralTypes = true;
-              constantValues = true;
-              functionTypeParameters = true;
-              parameterNames = true;
-              rangeVariableTypes = true;
-            };
           };
         };
       };
@@ -131,7 +119,10 @@
       enableFormat = true;
       enableTreesitter = true;
       rust.enable = true;
-      go.enable = true;
+      go = {
+        enable = true;
+        extraDiagnostics.enable = false;
+      };
       clang.enable = true;
       python.enable = true;
       markdown = {

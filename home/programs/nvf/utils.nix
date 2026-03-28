@@ -2,7 +2,8 @@
   pkgs,
   lib,
   ...
-}: {
+}:
+{
   programs.nvf.settings.vim = {
     undoFile.enable = true;
     utility = {
@@ -40,9 +41,8 @@
         };
         mapping = lib.generators.mkLuaInline ''
           require("cmp").mapping.preset.insert({
-            ["<C-k>"] = require("cmp").mapping.select_prev_item(),
-            ["<C-j>"] = require("cmp").mapping.select_next_item(),
             ["<Tab>"] = require("cmp").mapping.select_next_item(),
+            ["<S-Tab>"] = require("cmp").mapping.select_prev_item(),
             ["<C-b>"] = require("cmp").mapping.scroll_docs(-4),
             ["<C-f>"] = require("cmp").mapping.scroll_docs(4),
             ["<C-e>"] = require("cmp").mapping.abort(),
@@ -128,7 +128,7 @@
 
       -- Auto organize imports on save for TypeScript/JavaScript
       vim.api.nvim_create_autocmd("BufWritePre", {
-        pattern = "*.{ts,tsx,js,jsx}",
+        pattern = { "*.ts", "*.tsx", "*.js", "*.jsx" },
         callback = function()
           vim.lsp.buf.code_action({
             context = {only = {"source.organizeImports"}},

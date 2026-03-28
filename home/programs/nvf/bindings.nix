@@ -5,7 +5,7 @@
       whichKey = {
         enable = true;
         # TODO: registers
-        register = {};
+        register = { };
       };
     };
     keymaps = [
@@ -19,7 +19,17 @@
       }
       {
         key = "<C-s>";
-        mode = ["n" "i"];
+        mode = [
+          "n"
+          "i"
+        ];
+        action = "<cmd>write<cr>";
+        silent = true;
+        desc = "Write current file";
+      }
+      {
+        key = "<leader>w";
+        mode = "n";
         action = "<cmd>write<cr>";
         silent = true;
         desc = "Write current file";
@@ -59,6 +69,13 @@
       }
       {
         key = "<leader>x";
+        mode = "n";
+        silent = true;
+        action = "<cmd>bdelete<cr>";
+        desc = "Delete Buffer";
+      }
+      {
+        key = "<C-w>";
         mode = "n";
         silent = true;
         action = "<cmd>bdelete<cr>";
@@ -200,7 +217,7 @@
         mode = "n";
         silent = true;
         action = "<cmd>set spell!<cr>";
-        desc = "Toggle spellLazyGitcheck";
+        desc = "Toggle spellcheck";
       }
       {
         key = "<leader>uc";

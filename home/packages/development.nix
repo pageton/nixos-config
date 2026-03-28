@@ -8,6 +8,7 @@ with pkgs;
 with pkgsStable; [
   # === Integrated Development Environments ===
   vscode # Visual Studio Code editor
+  code-cursor-fhs # Cursor IDE (FHS wrapper)
   zed-editor # Zed editor
   sqlitebrowser # SQLite database browser GUI
   redisinsight # Redis GUI
@@ -37,6 +38,7 @@ with pkgsStable; [
   just # Modern command runner
 
   # === Version Control ===
+  cursor-cli # Cursor command-line interface
   git-lfs # Git Large File Storage
 
   # === Container and Orchestration ===

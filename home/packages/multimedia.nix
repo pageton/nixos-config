@@ -1,10 +1,8 @@
 # Multimedia and media processing packages for media playback,
 # image viewing, video processing, and media information analysis.
-{pkgsStable, ...}:
-with pkgsStable; [
-  # === Media Players ===
-  mpv # Advanced video player with extensive features
-
+{ pkgsStable, ... }:
+with pkgsStable;
+[
   # === Image Viewers ===
   imv # Minimalist image viewer for Wayland
   feh # Lightweight image viewer for X11

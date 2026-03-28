@@ -1,5 +1,6 @@
 # Brave Browser configuration
-{...}: {
+{ ... }:
+{
   programs.brave = {
     enable = true;
     commandLineArgs = [

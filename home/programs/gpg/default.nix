@@ -34,7 +34,13 @@
   services.gpg-agent = lib.mkIf (!pkgsStable.stdenv.isDarwin) {
     enable = true;
     defaultCacheTtl = 86400;
-    enableSshSupport = true;
-    pinentry.package = pkgsStable.pinentry-qt;
+    # Avoid gpg-agent hijacking SSH auth; OpenSSH should use ~/.ssh/id_ed25519 directly.
+    enableSshSupport = false;
+    pinentry.package = pkgsStable.pinentry-curses;
+    # Allow loopback mode for non-interactive environments (e.g., CI, scripts without TTY)
+    extraConfig = ''
+      allow-loopback-pinentry
+      allow-preset-passphrase
+    '';
   };
 }

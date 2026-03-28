@@ -1,12 +1,15 @@
 # Networking and network analysis tools for network analysis, monitoring,
 # debugging, security testing, and connectivity management.
-{pkgsStable, ...}:
-with pkgsStable; [
+{ pkgsStable, ... }:
+with pkgsStable;
+[
   # === Core Networking and Security ===
   openssl # OpenSSL cryptographic library
   openssl.dev # OpenSSL development headers
   openssh # OpenSSH connectivity tools
-  networkmanager # Network connection manager
+  # Do not install user-level networkmanager here.
+  # Keep nmcli coupled to the system NetworkManager service version to avoid
+  # client/service version mismatch warnings.
 
   # === HTTP Clients and Download Tools ===
   wget # File downloader
