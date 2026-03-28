@@ -11,9 +11,38 @@ let
   mcpTransforms = import ./_mcp-transforms.nix { inherit config lib pkgs; };
   inherit (mcpTransforms) opencodeMcpServers geminiMcpServers;
   sonnetModel = "anthropic/claude-sonnet-4-6";
-  gptMainModel = "openai/gpt-5.3-codex";
-  gptStandardModel = "openai/gpt-5.3";
+  gptModel = "openai/gpt-5.4";
+  gptMainModel = gptModel;
+  gptStandardModel = gptModel;
   gptFastModel = "opencode/gpt-5-nano";
+  openrouterModel = "openrouter/openrouter/hunter-alpha";
+  zenMainModel = "opencode/minimax-m2.5-free";
+  zenFastModel = "opencode/mimo-v2-flash-free";
+  antigravityProModel = "google/antigravity-gemini-3.1-pro";
+  antigravityFlashModel = "google/antigravity-gemini-3-flash";
+  mkCategorySettings =
+    categoryModels: categoryVariants:
+    lib.mapAttrs (
+      category: model:
+      {
+        inherit model;
+      }
+      // lib.optionalAttrs (categoryVariants ? ${category}) {
+        variant = categoryVariants.${category};
+      }
+    ) categoryModels;
+  mkAgentOverrides =
+    baseAgents: agentModels: agentVariants:
+    lib.mapAttrs (
+      name: agentCfg:
+      agentCfg
+      // lib.optionalAttrs (agentModels ? name) {
+        model = agentModels.${name};
+      }
+      // lib.optionalAttrs (agentVariants ? name) {
+        variant = agentVariants.${name};
+      }
+    ) baseAgents;
 
   replaceOpusWithSonnet =
     value:
@@ -44,6 +73,20 @@ let
     mcp = opencodeMcpServers;
     plugin = cfg.opencode.plugins;
     provider = cfg.opencode.providers;
+    # Disable snapshot system to prevent tmp_pack_* file leaks and disk bloat (#14811)
+    snapshot = false;
+    watcher.ignore = [
+      "node_modules/**"
+      "dist/**"
+      ".git/**"
+      ".venv/**"
+      "target/**"
+      "build/**"
+      "coverage/**"
+      "__pycache__/**"
+      ".next/**"
+      "result/**"
+    ];
   }
   // (lib.optionalAttrs (cfg.globalInstructions != "") { instructions = [ cfg.globalInstructions ]; })
   // (lib.optionalAttrs (cfg.opencode.extraSettings != { }) cfg.opencode.extraSettings);
@@ -59,26 +102,17 @@ let
 
   ohMyOpencodeSettings = {
     "$schema" =
-      "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json";
-    google_auth = cfg.opencode.ohMyOpencode.googleAuth;
+      "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json";
+    google_auth = false;
     agents = lib.mapAttrs (
       _: agent:
       {
         inherit (agent) model;
       }
-      // (lib.optionalAttrs (agent.variant != null) { inherit (agent) variant; })
-      // (lib.optionalAttrs (agent.prompt != null) { inherit (agent) prompt; })
-      // (lib.optionalAttrs (agent.prompt_append != null) { inherit (agent) prompt_append; })
-      // (lib.optionalAttrs (agent.skills != null) { inherit (agent) skills; })
-      // (lib.optionalAttrs (agent.temperature != null) { inherit (agent) temperature; })
-      // (lib.optionalAttrs (agent.top_p != null) { inherit (agent) top_p; })
-      // (lib.optionalAttrs (agent.tools != null) { inherit (agent) tools; })
-      // (lib.optionalAttrs (agent.description != null) { inherit (agent) description; })
-      // (lib.optionalAttrs (agent.mode != null) { inherit (agent) mode; })
-      // (lib.optionalAttrs (agent.color != null) { inherit (agent) color; })
-      // (lib.optionalAttrs (agent.permission != null) {
+      // lib.filterAttrs (k: v: k != "model" && k != "permission" && v != null) agent
+      // lib.optionalAttrs (agent.permission or null != null) {
         permission = lib.filterAttrs (_: v: v != null) agent.permission;
-      })
+      }
     ) cfg.opencode.ohMyOpencode.agents;
   }
   // (lib.optionalAttrs (
@@ -98,18 +132,29 @@ let
     atlas = "zai-coding-plan/glm-4.7";
   };
 
-  # Gemini profile: Google Antigravity models for Gemini-native coding sessions.
+  glmCategoryModels = {
+    "visual-engineering" = "zai-coding-plan/glm-5";
+    ultrabrain = "zai-coding-plan/glm-5";
+    deep = "zai-coding-plan/glm-5";
+    artistry = "zai-coding-plan/glm-5";
+    quick = "zai-coding-plan/glm-4.7-flash";
+    "unspecified-low" = "zai-coding-plan/glm-4.7";
+    "unspecified-high" = "zai-coding-plan/glm-5";
+    writing = "zai-coding-plan/glm-4.7";
+  };
+
+  # Gemini profile: Google Gemini models for Gemini-native coding sessions.
   geminiAgentModels = {
-    sisyphus = "google/antigravity-gemini-3.1-pro";
-    oracle = "google/antigravity-gemini-3.1-pro";
-    librarian = "google/antigravity-gemini-3-flash";
-    explore = "google/antigravity-gemini-3-flash";
-    # multimodal-looker keeps its original vision-capable model
-    prometheus = "google/antigravity-gemini-3.1-pro";
-    metis = "google/antigravity-gemini-3.1-pro";
-    momus = "google/antigravity-gemini-3.1-pro";
-    atlas = "google/antigravity-gemini-3-flash";
-    hephaestus = "google/antigravity-gemini-3.1-pro";
+    sisyphus = antigravityProModel;
+    oracle = antigravityProModel;
+    librarian = antigravityFlashModel;
+    explore = antigravityFlashModel;
+    multimodal-looker = antigravityFlashModel;
+    prometheus = antigravityProModel;
+    metis = antigravityProModel;
+    momus = antigravityProModel;
+    atlas = antigravityFlashModel;
+    hephaestus = antigravityProModel;
   };
 
   # Variant overrides for Gemini agents (thinking levels per role).
@@ -119,6 +164,26 @@ let
     librarian = "medium"; # Reference search — moderate
     atlas = "medium"; # Coordination — moderate
     explore = "minimal"; # Fast grep — speed over depth
+  };
+
+  geminiCategoryModels = {
+    "visual-engineering" = antigravityProModel;
+    ultrabrain = antigravityProModel;
+    deep = antigravityProModel;
+    artistry = antigravityProModel;
+    quick = antigravityFlashModel;
+    "unspecified-low" = antigravityFlashModel;
+    "unspecified-high" = antigravityProModel;
+    writing = antigravityFlashModel;
+  };
+
+  geminiCategoryVariants = {
+    ultrabrain = "high";
+    deep = "high";
+    quick = "minimal";
+    "unspecified-low" = "medium";
+    "unspecified-high" = "high";
+    writing = "medium";
   };
 
   # GPT profile: OpenAI GPT models for GPT-first coding sessions.
@@ -135,156 +200,123 @@ let
     hephaestus = gptMainModel;
   };
 
-  glmOpencodeSettings = opencodeSettings // {
-    model = "zai-coding-plan/glm-5";
+  gptCategoryModels = {
+    "visual-engineering" = gptMainModel;
+    ultrabrain = gptMainModel;
+    deep = gptMainModel;
+    artistry = gptMainModel;
+    quick = gptFastModel;
+    "unspecified-low" = gptStandardModel;
+    "unspecified-high" = gptMainModel;
+    writing = gptStandardModel;
   };
 
-  glmOhMyOpencodeSettings = ohMyOpencodeSettings // {
-    agents =
-      lib.mapAttrs (
-        name: agentCfg:
-        agentCfg
-        // (lib.optionalAttrs (builtins.hasAttr name glmAgentModels) {
-          model = glmAgentModels.${name};
-        })
-      ) ohMyOpencodeSettings.agents
-      // {
-        # Autonomous deep worker agent (defaults to openai/gpt-5.3-codex)
+  # Zen profile: OpenCode free-tier models for low-cost coding sessions.
+  zenAgentModels = {
+    sisyphus = zenMainModel;
+    oracle = zenMainModel;
+    librarian = zenMainModel;
+    explore = zenFastModel;
+    # multimodal-looker keeps its original vision-capable model
+    prometheus = zenMainModel;
+    metis = zenMainModel;
+    momus = zenMainModel;
+    atlas = zenMainModel;
+    hephaestus = zenMainModel;
+  };
+
+  zenCategoryModels = {
+    "visual-engineering" = zenMainModel;
+    ultrabrain = zenMainModel;
+    deep = zenMainModel;
+    artistry = zenMainModel;
+    quick = zenFastModel;
+    "unspecified-low" = zenFastModel;
+    "unspecified-high" = zenMainModel;
+    writing = zenMainModel;
+  };
+
+  mkProfileSettings =
+    {
+      model,
+      agentModels ? { },
+      categoryModels ? { },
+      agentVariants ? { },
+      categoryVariants ? { },
+      extraAgentOverrides ? { },
+    }:
+    {
+      opencode = opencodeSettings // {
+        inherit model;
+      };
+      ohMyOpencode = ohMyOpencodeSettings // {
+        agents =
+          mkAgentOverrides ohMyOpencodeSettings.agents agentModels agentVariants // extraAgentOverrides;
+        categories = mkCategorySettings categoryModels categoryVariants;
+      };
+    };
+
+  # Standard profiles — all follow the same pattern.
+  profiles = {
+    glm = mkProfileSettings {
+      model = "zai-coding-plan/glm-5";
+      agentModels = glmAgentModels;
+      categoryModels = glmCategoryModels;
+      extraAgentOverrides = {
         hephaestus = {
           model = "zai-coding-plan/glm-5";
         };
       };
+    };
 
-    # Override category models to use GLM instead of default providers
-    categories = {
-      "visual-engineering" = {
-        model = "zai-coding-plan/glm-5";
-      };
-      ultrabrain = {
-        model = "zai-coding-plan/glm-5";
-      };
-      deep = {
-        model = "zai-coding-plan/glm-5";
-      };
-      artistry = {
-        model = "zai-coding-plan/glm-5";
-      };
-      quick = {
-        model = "zai-coding-plan/glm-4.7-flash";
-      };
-      "unspecified-low" = {
-        model = "zai-coding-plan/glm-4.7";
-      };
-      "unspecified-high" = {
-        model = "zai-coding-plan/glm-5";
-      };
-      writing = {
-        model = "zai-coding-plan/glm-4.7";
-      };
+    gemini = mkProfileSettings {
+      model = antigravityProModel;
+      agentModels = geminiAgentModels;
+      categoryModels = geminiCategoryModels;
+      agentVariants = geminiAgentVariants;
+      categoryVariants = geminiCategoryVariants;
+    };
+
+    gpt = mkProfileSettings {
+      model = gptMainModel;
+      agentModels = gptAgentModels;
+      categoryModels = gptCategoryModels;
+    };
+
+    zen = mkProfileSettings {
+      model = zenMainModel;
+      agentModels = zenAgentModels;
+      categoryModels = zenCategoryModels;
     };
   };
 
-  # Gemini profile: Google Antigravity models for Gemini-native coding sessions.
-  geminiOpencodeSettings = opencodeSettings // {
-    model = "google/antigravity-gemini-3.1-pro";
+  # Special profiles (non-standard transforms)
+  openrouterProfile = mkProfileSettings {
+    model = openrouterModel;
+    agentModels = lib.mapAttrs (_: _: openrouterModel) ohMyOpencodeSettings.agents;
+    categoryModels = lib.mapAttrs (_: _: openrouterModel) (ohMyOpencodeSettings.categories or { });
   };
 
-  geminiOhMyOpencodeSettings = ohMyOpencodeSettings // {
-    agents = lib.mapAttrs (
-      name: agentCfg:
-      agentCfg
-      // (lib.optionalAttrs (builtins.hasAttr name geminiAgentModels) {
-        model = geminiAgentModels.${name};
-      })
-      // (lib.optionalAttrs (builtins.hasAttr name geminiAgentVariants) {
-        variant = geminiAgentVariants.${name};
-      })
-    ) ohMyOpencodeSettings.agents;
-
-    # Override category models to use Gemini Antigravity instead of default providers
-    categories = {
-      "visual-engineering" = {
-        model = "google/antigravity-gemini-3.1-pro";
-      };
-      ultrabrain = {
-        model = "google/antigravity-gemini-3.1-pro";
-        variant = "high";
-      };
-      deep = {
-        model = "google/antigravity-gemini-3.1-pro";
-        variant = "high";
-      };
-      artistry = {
-        model = "google/antigravity-gemini-3.1-pro";
-      };
-      quick = {
-        model = "google/antigravity-gemini-3-flash";
-        variant = "minimal";
-      };
-      "unspecified-low" = {
-        model = "google/antigravity-gemini-3-flash";
-        variant = "medium";
-      };
-      "unspecified-high" = {
-        model = "google/antigravity-gemini-3.1-pro";
-        variant = "high";
-      };
-      writing = {
-        model = "google/antigravity-gemini-3-flash";
-        variant = "medium";
-      };
+  sonnetProfile = {
+    opencode = opencodeSettings // {
+      model = sonnetModel;
     };
+    ohMyOpencode = replaceOpusWithSonnet ohMyOpencodeSettings;
   };
 
-  # GPT profile: OpenAI GPT models for GPT-first coding sessions.
-  gptOpencodeSettings = opencodeSettings // {
-    model = gptMainModel;
-  };
-
-  gptOhMyOpencodeSettings = ohMyOpencodeSettings // {
-    agents = lib.mapAttrs (
-      name: agentCfg:
-      agentCfg
-      // (lib.optionalAttrs (builtins.hasAttr name gptAgentModels) {
-        model = gptAgentModels.${name};
-      })
-    ) ohMyOpencodeSettings.agents;
-
-    # Override category models to use GPT defaults instead of mixed providers
-    categories = {
-      "visual-engineering" = {
-        model = gptMainModel;
-      };
-      ultrabrain = {
-        model = gptMainModel;
-      };
-      deep = {
-        model = gptMainModel;
-      };
-      artistry = {
-        model = gptMainModel;
-      };
-      quick = {
-        model = gptFastModel;
-      };
-      "unspecified-low" = {
-        model = gptStandardModel;
-      };
-      "unspecified-high" = {
-        model = gptMainModel;
-      };
-      writing = {
-        model = gptStandardModel;
-      };
-    };
-  };
-
-  # Sonnet profile: Default OpenCode config with Opus replaced by Sonnet for lower cost.
-  sonnetOpencodeSettings = opencodeSettings // {
-    model = sonnetModel;
-  };
-
-  sonnetOhMyOpencodeSettings = replaceOpusWithSonnet ohMyOpencodeSettings;
+  # Derived profile settings (each XOpencodeSettings / XOhMyOpencodeSettings)
+  glmOpencodeSettings = profiles.glm.opencode;
+  glmOhMyOpencodeSettings = profiles.glm.ohMyOpencode;
+  geminiOpencodeSettings = profiles.gemini.opencode;
+  geminiOhMyOpencodeSettings = profiles.gemini.ohMyOpencode;
+  gptOpencodeSettings = profiles.gpt.opencode;
+  gptOhMyOpencodeSettings = profiles.gpt.ohMyOpencode;
+  openrouterOpencodeSettings = openrouterProfile.opencode;
+  openrouterOhMyOpencodeSettings = openrouterProfile.ohMyOpencode;
+  sonnetOpencodeSettings = sonnetProfile.opencode;
+  sonnetOhMyOpencodeSettings = sonnetProfile.ohMyOpencode;
+  zenOpencodeSettings = profiles.zen.opencode;
+  zenOhMyOpencodeSettings = profiles.zen.ohMyOpencode;
 in
 {
   inherit
@@ -298,7 +330,11 @@ in
     geminiOhMyOpencodeSettings
     gptOpencodeSettings
     gptOhMyOpencodeSettings
+    openrouterOpencodeSettings
+    openrouterOhMyOpencodeSettings
     sonnetOpencodeSettings
     sonnetOhMyOpencodeSettings
+    zenOpencodeSettings
+    zenOhMyOpencodeSettings
     ;
 }

@@ -1,48 +1,66 @@
 # Model selections, provider registries, and per-agent tool configurations (OpenCode, Codex, Gemini).
-{ config, constants, ... }:
-
+{
+  config,
+  constants,
+  ...
+}:
+let
+  mkModelAlias = model: generateContentConfig: {
+    modelConfig = {
+      inherit model generateContentConfig;
+    };
+  };
+  mkThinkingAlias =
+    model: thinkingLevel: extraConfig:
+    mkModelAlias model (
+      {
+        thinkingConfig = {
+          inherit thinkingLevel;
+        };
+      }
+      // extraConfig
+    );
+in
 {
   programs.aiAgents = {
+    agencyAgents.enable = true;
+    impeccable.enable = true;
+
+    # === OpenCode Configuration ===
     opencode = {
       enable = true;
       model = "anthropic/claude-opus-4-6";
 
       plugins = [
-        "oh-my-opencode"
-        "opencode-antigravity-auth"
-        "opencode-anthropic-auth"
+        "opencode-antigravity-auth@latest"
       ];
 
+      ohMyOpencode.enable = false;
+
       extraSettings = {
-        tui = {
-          theme = "gruvbox";
-          show_tokens = true;
-          show_cost = true;
-        };
+        share = "disabled";
+        autoupdate = true;
         small_model = "anthropic/claude-haiku-4-5"; # Cheap model for titles, summaries
         compaction = {
           auto = true;
           prune = true; # Remove old tool outputs during compaction
           reserved = 10000; # Reserved tokens after compaction
         };
-        command = {
-          test = {
-            template = "Run the project test suite. If a justfile exists, use 'just check'. Otherwise find and run the appropriate test command.";
-            description = "Run project tests";
-          };
-          deploy = {
-            template = "Run the NixOS deployment pipeline: just modules && just lint && just format && just check && just home. Only run 'just nixos' if I explicitly confirm.";
-            description = "Deploy NixOS configuration";
-          };
-          review = {
-            template = "Review the staged git changes (git diff --staged). Check for: correctness, edge cases, security issues, performance problems, maintainability. Rate issues as CRITICAL/WARNING/SUGGESTION.";
-            description = "Review staged changes";
-          };
-        };
+        # Custom slash commands are disabled by default.
+        # To add one, uncomment and adapt this block:
+        # command = {
+        #   mycmd = {
+        #     template = "Describe what /mycmd should do.";
+        #     description = "Short help text shown in command list";
+        #     agent = "build";
+        #     subtask = true;
+        #   };
+        # };
       };
 
       providers = {
         google = {
+          npm = "@ai-sdk/google";
           models = {
             "antigravity-gemini-3.1-pro" = {
               name = "Gemini 3.1 Pro (Antigravity)";
@@ -96,57 +114,21 @@
                 };
               };
             };
-            "antigravity-claude-sonnet-4-6" = {
-              name = "Claude Sonnet 4.6 (Antigravity)";
-              limit = {
-                context = 200000;
-                output = 64000;
-              };
-              modalities = {
-                input = [
-                  "text"
-                  "image"
-                  "pdf"
-                ];
-                output = [ "text" ];
-              };
-            };
-            "antigravity-claude-opus-4-6-thinking" = {
-              name = "Claude Opus 4.6 Thinking (Antigravity)";
-              limit = {
-                context = 200000;
-                output = 64000;
-              };
-              modalities = {
-                input = [
-                  "text"
-                  "image"
-                  "pdf"
-                ];
-                output = [ "text" ];
-              };
-              variants = {
-                low = {
-                  thinkingConfig = {
-                    thinkingBudget = 8192;
-                  };
-                };
-                max = {
-                  thinkingConfig = {
-                    thinkingBudget = 32768;
-                  };
-                };
-              };
-            };
+          };
+        };
+        openrouter = {
+          options = {
+            apiKey = "__OPENROUTER_API_KEY_PLACEHOLDER__";
           };
         };
       };
     };
 
+    # === Codex Configuration ===
     codex = {
       enable = true;
       useWrapper = true;
-      model = "gpt-5.3-codex";
+      model = "gpt-5.4";
       personality = "pragmatic";
       reasoningEffort = "medium";
       approvalPolicy = "on-request";
@@ -154,11 +136,20 @@
         "${config.home.homeDirectory}/System"
       ];
       extraToml = ''
+        [agents]
+        max_threads = 4
+
+        [agents.explorer]
+        description = "Read-only style codebase exploration, file tracing, and evidence gathering."
+
+        [agents.worker]
+        description = "Targeted implementation and fixes after the task is understood."
+
+        [agents.monitor]
+        description = "Long-running command, build, and polling monitor with concise status updates."
+
         [features]
-        request_rule = true
-        collaboration_modes = true
-        personality = true
-        model_reasoning_summary = true
+        multi_agent = true
         child_agents_md = true
 
         [profiles.nix]
@@ -179,14 +170,17 @@
       '';
     };
 
+    # === Gemini Configuration ===
     gemini = {
       enable = true;
       theme = "Gruvbox";
       sandboxMode = "cautious";
 
       extraSettings = {
+        # --- Core Features ---
         codeExecution = true;
         searchGrounding = true;
+        # --- Security ---
         security = {
           auth = {
             selectedType = "gemini-api-key";
@@ -195,26 +189,19 @@
             enabled = true;
           };
         };
+        # --- MCP Server Access ---
         mcp = {
           allowed = [
             "context7"
-            "better-context"
-            "zai-mcp-server"
-            "filesystem"
-            "memory"
-            "sequential-thinking"
-            "playwright"
-            "cloudflare-docs"
             "github"
+            "web-search-prime"
+            "web-reader"
+            "zread"
           ];
           excluded = [
-            "git"
-            "web-search-prime"
-            "cloudflare-workers-builds"
-            "cloudflare-workers-bindings"
-            "cloudflare-observability"
           ];
         };
+        # --- Context Settings ---
         context = {
           fileName = [
             "GEMINI.md"
@@ -227,6 +214,7 @@
             enableRecursiveFileSearch = true;
           };
         };
+        # --- General Settings ---
         general = {
           vimMode = true;
           enableAutoUpdate = true;
@@ -237,9 +225,11 @@
             maxAge = "30d";
           };
         };
+        # --- Privacy ---
         privacy = {
           usageStatisticsEnabled = false;
         };
+        # --- UI and Theming ---
         ui = {
           hideTips = true;
           hideBanner = true;
@@ -265,49 +255,32 @@
           };
           theme = "Gruvbox";
         };
+        # --- Experimental Features ---
         experimental = {
           enableAgents = true;
         };
+        # --- Model Aliases ---
         modelConfigs = {
           customAliases = {
-            fast = {
-              modelConfig = {
-                model = "gemini-2.5-flash-lite";
-                generateContentConfig = {
-                  temperature = 0;
-                  maxOutputTokens = 8192;
-                };
-              };
+            fast = mkModelAlias "gemini-2.5-flash-lite" {
+              temperature = 0;
+              maxOutputTokens = 8192;
             };
-            deep = {
-              modelConfig = {
-                model = "gemini-3.1-pro-preview";
-                generateContentConfig = {
-                  thinkingConfig = {
-                    thinkingLevel = "HIGH";
-                  };
-                };
-              };
-            };
-            code = {
-              modelConfig = {
-                model = "gemini-2.5-pro";
-                generateContentConfig = {
-                  thinkingConfig = {
-                    thinkingLevel = "HIGH";
-                  };
-                  maxOutputTokens = 65536;
-                };
-              };
+            deep = mkThinkingAlias "gemini-3-pro-preview" "HIGH" { };
+            code = mkThinkingAlias "gemini-2.5-pro" "HIGH" {
+              maxOutputTokens = 65536;
             };
           };
         };
+        # --- Tool Settings ---
         tools = {
           approvalMode = "auto_edit";
         };
+        # --- Model Compression ---
         model = {
           compressionThreshold = 0.75; # Wait until 75% full before compressing (was 0.5)
         };
+        # --- Hooks ---
         hooks = {
           AfterTool = [
             {
@@ -322,11 +295,12 @@
                     "if [ -n \"$FILE_PATH\" ]; then"
                     "case \"$FILE_PATH\" in"
                     "*.nix) command -v nixfmt >/dev/null 2>&1 && nixfmt \"$FILE_PATH\" 2>/dev/null ;;"
-                    "*.ts|*.tsx|*.js|*.jsx|*.json) command -v biome >/dev/null 2>&1 && biome check --write \"$FILE_PATH\" 2>/dev/null ;;"
+                    "*.ts|*.tsx|*.js|*.jsx|*.mjs|*.cjs|*.json|*.jsonc|*.css|*.scss|*.less|*.graphql|*.gql) command -v biome >/dev/null 2>&1 && biome check --write \"$FILE_PATH\" 2>/dev/null ;;"
                     "*.rs) command -v rustfmt >/dev/null 2>&1 && rustfmt \"$FILE_PATH\" 2>/dev/null ;;"
                     "*.go) command -v gofmt >/dev/null 2>&1 && gofmt -w \"$FILE_PATH\" 2>/dev/null ;;"
-                    "*.py) command -v ruff >/dev/null 2>&1 && ruff format \"$FILE_PATH\" 2>/dev/null ;;"
-                    "*.zig) command -v zig >/dev/null 2>&1 && zig fmt \"$FILE_PATH\" 2>/dev/null ;;"
+                    "*.py|*.pyi) command -v ruff >/dev/null 2>&1 && ruff format \"$FILE_PATH\" 2>/dev/null ;;"
+                    "*.zig|*.zon) command -v zig >/dev/null 2>&1 && zig fmt \"$FILE_PATH\" 2>/dev/null ;;"
+                    "*.md|*.mdx|*.yaml|*.yml|*.html|*.vue|*.svelte|*.astro) command -v prettier >/dev/null 2>&1 && prettier --write \"$FILE_PATH\" 2>/dev/null ;;"
                     "esac;"
                     "fi;"
                     "echo \"$INPUT\""

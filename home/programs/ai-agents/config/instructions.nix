@@ -1,6 +1,9 @@
 # Global instructions and skill installations for all AI agents.
-{ config, constants, ... }:
+_:
 
+let
+  skillDefs = import ./_skills.nix;
+in
 {
   programs.aiAgents = {
     enable = true;
@@ -70,66 +73,15 @@
         - Prefer `nix develop`, `nix-shell -p`, or `nix run nixpkgs#<pkg>`.
         - Respect split apply flows where present (for example user-level before system-level).
       - If not in Nix contexts, use the repository's native tooling and package manager.
+
+      ## Android reverse engineering workflow
+
+      - For Android dynamic analysis tasks, prefer a split workflow: `adb` for device control, `frida`/`objection` for runtime hooks, `mitmproxy` for HTTP(S) capture, and `apktool`/`jadx` for unpacking and patching.
+      - Prefer explicit proxy setup plus QUIC blocking over transparent proxying when you need reliable `mitmproxy` capture on Android emulators.
+      - Treat missing traffic as a triage problem: first verify proxy/cert/root, then test for certificate pinning, then check for native TLS, Cronet, or QUIC fallback.
+      - Keep ADB shell root syntax consistent on Magisk-based emulators: prefer `su 0 <cmd>` unless the target environment proves otherwise.
     '';
 
-    skills = [
-      # Repo-level installs (all skills from repo)
-      "obra/superpowers"
-      "anthropics/skills"
-      "affaan-m/everything-claude-code"
-      "alirezarezvani/claude-skills"
-      "microsoft/playwright-cli"
-
-      # Individual skills (--skill flag)
-      {
-        repo = "vercel-labs/skills";
-        skill = "find-skills";
-      }
-
-      {
-        repo = "vercel-labs/agent-skills";
-        skill = "vercel-react-best-practices";
-      }
-      {
-        repo = "vercel-labs/agent-skills";
-        skill = "backend-patterns";
-      }
-      {
-        repo = "vercel-labs/agent-skills";
-        skill = "security-review";
-      }
-      {
-        repo = "vercel-labs/agent-skills";
-        skill = "systematic-debugging";
-      }
-      {
-        repo = "vercel-labs/agent-skills";
-        skill = "verification-before-completion";
-      }
-      {
-        repo = "vercel-labs/agent-skills";
-        skill = "writing-plans";
-      }
-      {
-        repo = "vercel-labs/agent-skills";
-        skill = "webapp-testing";
-      }
-      {
-        repo = "vercel-labs/agent-skills";
-        skill = "web-design-guidelines";
-      }
-      {
-        repo = "remotion-dev/skills";
-        skill = "remotion-best-practices";
-      }
-      {
-        repo = "anthropics/skills";
-        skill = "frontend-design";
-      }
-      {
-        repo = "vercel-labs/agent-browser";
-        skill = "agent-browser";
-      }
-    ];
+    inherit (skillDefs) skills omitSkills;
   };
 }

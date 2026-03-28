@@ -10,79 +10,72 @@ let
   cfg = config.programs.aiAgents;
   sharedMcpServers = cfg.mcpServers;
 
-  claudeMcpServers = lib.mapAttrs (
-    _: server:
-    let
-      isLocal = (server.type or "local") == "local";
-    in
-    if isLocal then
-      {
-        inherit (server) command;
-        args = server.args or [ ];
-        env = server.env or { };
-      }
-    else
+  mkMcpTransform =
+    {
+      localAttrs,
+      remoteAttrs,
+      envKey ? "env",
+    }:
+    lib.mapAttrs (
+      _: server:
+      let
+        isLocal = (server.type or "local") == "local";
+        base = if isLocal then localAttrs server else remoteAttrs server;
+        envAttrs = lib.optionalAttrs (server.env or { } != { }) {
+          ${envKey} = server.env;
+        };
+      in
+      base // envAttrs
+    ) (lib.filterAttrs (_: s: s.enable) sharedMcpServers);
+
+  claudeMcpServers = mkMcpTransform {
+    localAttrs = server: {
+      inherit (server) command;
+      args = server.args or [ ];
+    };
+    remoteAttrs =
+      server:
       {
         type = "http";
         inherit (server) url;
       }
-      // (lib.optionalAttrs (server.headers or null != null) { inherit (server) headers; })
-  ) (lib.filterAttrs (_: s: s.enable) sharedMcpServers);
+      // (lib.optionalAttrs (server.headers or null != null) { inherit (server) headers; });
+  };
 
-  opencodeMcpServers = lib.mapAttrs (
-    _: server:
-    let
-      isLocal = (server.type or "local") == "local";
-      base = {
-        type = server.type or "local";
-      };
-      localAttrs = if isLocal then { command = [ server.command ] ++ (server.args or [ ]); } else { };
-      remoteAttrs =
-        if !isLocal then
-          {
-            inherit (server) url;
-          }
-          // (lib.optionalAttrs (server.headers or null != null) { inherit (server) headers; })
-        else
-          { };
-      envAttrs = lib.optionalAttrs (server.env or { } != { }) { environment = server.env; };
-    in
-    base // localAttrs // remoteAttrs // envAttrs
-  ) (lib.filterAttrs (_: s: s.enable) sharedMcpServers);
+  opencodeMcpServers = mkMcpTransform {
+    localAttrs = server: {
+      type = "local";
+      command = [ server.command ] ++ (server.args or [ ]);
+    };
+    remoteAttrs =
+      server:
+      {
+        type = "remote";
+        inherit (server) url;
+      }
+      // (lib.optionalAttrs (server.headers or null != null) { inherit (server) headers; });
+    envKey = "environment";
+  };
 
-  geminiMcpServers = lib.mapAttrs (_: server: {
-    inherit (server) command;
-    args = server.args or [ ];
-    env = server.env or { };
-  }) (lib.filterAttrs (_: s: s.enable) sharedMcpServers);
+  geminiMcpServers = mkMcpTransform {
+    localAttrs = server: {
+      inherit (server) command;
+      args = server.args or [ ];
+    };
+    remoteAttrs =
+      server:
+      {
+        httpUrl = server.url;
+      }
+      // (lib.optionalAttrs (server.headers or null != null) { inherit (server) headers; });
+  };
 
   agentLogWrapper = pkgs.writeShellScriptBin "ai-agent-log-wrapper" ''
-    #!/usr/bin/env bash
-
-    AGENT_NAME="$1"
-    shift
-
-    LOG_DIR="${cfg.logging.directory}"
-    LOG_FILE="$LOG_DIR/$AGENT_NAME-$(date +%Y-%m-%d).log"
-    ERROR_LOG="$LOG_DIR/$AGENT_NAME-errors-$(date +%Y-%m-%d).log"
-
-    mkdir -p "$LOG_DIR"
-
-    echo "[$(date -Iseconds)] Starting $AGENT_NAME: $*" >> "$LOG_FILE"
-
-    "$@" 2> >(tee -a "$ERROR_LOG" >&2) | tee -a "$LOG_FILE"
-    EXIT_CODE=$?
-
-    echo "[$(date -Iseconds)] $AGENT_NAME exited with code $EXIT_CODE" >> "$LOG_FILE"
-
-    ${lib.optionalString cfg.logging.notifyOnError ''
-      if [ $EXIT_CODE -ne 0 ]; then
-        notify-send -u critical "AI Agent Error" "$AGENT_NAME failed with exit code $EXIT_CODE"
-      fi
-    ''}
-
-    exit $EXIT_CODE
+    AI_AGENT_LOG_DIR=${lib.escapeShellArg cfg.logging.directory} \
+      AI_AGENT_NOTIFY_ON_ERROR=${if cfg.logging.notifyOnError then "true" else "false"} \
+      exec ${config.home.homeDirectory}/System/scripts/ai/agent-log-wrapper.sh "$@"
   '';
+
 in
 {
   inherit

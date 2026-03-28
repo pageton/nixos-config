@@ -7,9 +7,11 @@ let
     "opencode-glm"
     "opencode-gemini"
     "opencode-gpt"
+    "opencode-openrouter"
     "opencode-sonnet"
+    "opencode-zen"
   ];
-  configPath = name: "${config.home.homeDirectory}/.config/${name}/opencode.json";
+  configPath = name: "${config.xdg.configHome}/${name}/opencode.json";
 in
 {
   inherit names configPath;

@@ -1,58 +1,57 @@
 # MCP server definitions and logging configuration.
-{ config, pkgs, ... }:
+{ config, ... }:
 
+let
+  mkZaiRemoteMcp = path: {
+    enable = true;
+    type = "remote";
+    url = "https://api.z.ai/api/mcp/${path}/mcp";
+    headers = {
+      Authorization = "Bearer {env:ZAI_API_KEY}";
+    };
+  };
+in
 {
   programs.aiAgents = {
     mcpServers = {
       context7 = {
         enable = true;
-        command = "${config.home.homeDirectory}/.bun/bin/context7-mcp";
+        command = "bunx";
+        args = [
+          "@upstash/context7-mcp@2.1.2"
+        ];
       };
 
-      zai-mcp-server = {
-        enable = true;
-        command = "${pkgs.bun}/bin/bunx";
-        args = [ "@z_ai/mcp-server" ];
-        env = {
-          Z_AI_MODE = "ZAI";
-        };
-      };
-
-      web-search-prime = {
-        enable = true;
-        type = "remote";
-        url = "https://api.z.ai/api/mcp/web_search_prime/mcp";
-      };
-
-      filesystem = {
-        enable = true;
-        command = "${config.home.homeDirectory}/.bun/bin/mcp-server-filesystem";
-        args = [ config.home.homeDirectory ];
-      };
-
-      sequential-thinking = {
-        enable = true;
-        command = "${config.home.homeDirectory}/.bun/bin/mcp-server-sequential-thinking";
-      };
-
-      cloudflare-docs = {
-        enable = true;
-        type = "remote";
-        url = "https://docs.mcp.cloudflare.com/mcp";
-      };
+      web-search-prime = mkZaiRemoteMcp "web_search_prime";
+      web-reader = mkZaiRemoteMcp "web_reader";
+      zread = mkZaiRemoteMcp "zread";
 
       github = {
         enable = true;
-        command = "${config.home.homeDirectory}/.bun/bin/mcp-server-github";
+        command = "bunx";
+        args = [
+          "@modelcontextprotocol/server-github@2025.4.8"
+        ];
         env = {
           GITHUB_PERSONAL_ACCESS_TOKEN = "__GITHUB_TOKEN_PLACEHOLDER__"; # patched at activation via gh auth token
         };
       };
+
+      chrome-devtools = {
+        enable = true;
+        command = "npx";
+        args = [
+          "-y"
+          "chrome-devtools-mcp@latest"
+          "--autoConnect"
+        ];
+      };
+
     };
 
     logging = {
       enable = true;
-      directory = "${config.home.homeDirectory}/.local/share/ai-agents/logs";
+      directory = "${config.xdg.dataHome}/ai-agents/logs";
       notifyOnError = true;
       retentionDays = 30;
 
