@@ -25,11 +25,9 @@
       url = "github:FlameFlag/nixcord";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    niri = {
-      url = "github:sodiboo/niri-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.nixpkgs-stable.follows = "nixpkgs-stable";
-    };
+
+    niri.url = "github:sodiboo/niri-flake"; # Do NOT follow nixpkgs — mesa compatibility
+
     noctalia = {
       url = "github:noctalia-dev/noctalia-shell";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -42,115 +40,133 @@
       url = "github:lunik1/nix-wallpaper";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    ghgrab = {
+      url = "github:abhixdd/ghgrab/main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = {
-    # self,
-    nixpkgs,
-    nixpkgs-stable,
-    home-manager,
-    ...
-  } @ inputs: let
-    system = "x86_64-linux";
-    homeStateVersion = "25.11";
-    user = "sadiq";
-    constants = import ./shared/constants.nix;
-    gitConfig = {
-      name = "Sadiq";
-      email = "pageton@proton.me";
-      signingKey = "5684AD6E4045F283";
-    };
-    pkgs = import nixpkgs {
-      inherit system;
-      config = {
-        allowUnfree = true; # Allow proprietary packages
-        allowBroken = false; # Don't allow broken packages
-        allowInsecure = false; # Don't allow insecure packages
-        allowUnsupportedSystem = false; # Don't allow unsupported systems
+  outputs =
+    {
+      # self,
+      nixpkgs,
+      nixpkgs-stable,
+      home-manager,
+      ...
+    }@inputs:
+    let
+      system = "x86_64-linux";
+      homeStateVersion = "25.11";
+      user = "sadiq";
+      constants = import ./shared/constants.nix;
+      gitConfig = {
+        name = "Sadiq";
+        email = "pageton@proton.me";
+        signingKey = "5684AD6E4045F283";
       };
-      overlays = [
-        inputs.niri.overlays.niri
-      ];
-    };
-
-    pkgsStable = import nixpkgs-stable {
-      inherit system;
-      config = {
-        allowUnfree = true;
-        allowBroken = false;
-        allowInsecure = false;
-        allowUnsupportedSystem = false;
-      };
-    };
-
-    makeSystem = {
-      hostname,
-      stateVersion,
-    }:
-      nixpkgs.lib.nixosSystem {
+      pkgs = import nixpkgs {
         inherit system;
-        specialArgs = {
-          inherit
-            inputs
-            stateVersion
-            hostname
-            user
-            pkgsStable
-            gitConfig
-            ;
+        config = {
+          allowUnfree = true; # Allow proprietary packages
+          allowBroken = false; # Don't allow broken packages
+          allowInsecure = false; # Don't allow insecure packages
+          allowUnsupportedSystem = false; # Don't allow unsupported systems
         };
-        modules = [
-          ./hosts/${hostname}/configuration.nix
-          inputs.stylix.nixosModules.stylix
-          inputs.niri.nixosModules.niri
+        overlays = [
+          inputs.niri.overlays.niri
+          (final: prev: {
+            python3Packages = prev.python3Packages.overrideScope (
+              pyFinal: pyPrev: {
+                picosvg = pyPrev.picosvg.overridePythonAttrs (_: {
+                  doCheck = false;
+                });
+                nanoemoji = pyPrev.nanoemoji.overridePythonAttrs (_: {
+                  doCheck = false;
+                });
+                gftools = pyPrev.gftools.overridePythonAttrs (_: {
+                  doCheck = false;
+                });
+              }
+            );
+          })
         ];
       };
 
-    makeHome = {hostname}:
-      home-manager.lib.homeManagerConfiguration {
-        inherit pkgs;
-        extraSpecialArgs = {
-          inherit
-            inputs
-            homeStateVersion
-            user
-            pkgsStable
-            system
-            hostname
-            gitConfig
-            constants
-            ;
+      pkgsStable = import nixpkgs-stable {
+        inherit system;
+        config = {
+          allowUnfree = true;
+          allowBroken = false;
+          allowInsecure = false;
+          allowUnsupportedSystem = false;
         };
-        modules = [
-          ./home/home.nix
-          inputs.stylix.homeModules.stylix
-          inputs.niri.homeModules.config
-          inputs.noctalia.homeModules.default
-        ];
       };
 
-    hosts = [
-      {
-        hostname = "desktop";
-        stateVersion = "25.11";
-      }
-      {
-        hostname = "thinkpad";
-        stateVersion = "25.11";
-      }
-    ];
-  in {
-    nixosConfigurations =
-      nixpkgs.lib.foldl' (
+      makeSystem =
+        {
+          hostname,
+          stateVersion,
+        }:
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = {
+            inherit
+              inputs
+              stateVersion
+              hostname
+              user
+              pkgsStable
+              gitConfig
+              ;
+          };
+          modules = [
+            ./hosts/${hostname}/configuration.nix
+          ];
+        };
+
+      makeHome =
+        { hostname }:
+        home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
+          extraSpecialArgs = {
+            inherit
+              inputs
+              homeStateVersion
+              user
+              pkgsStable
+              system
+              hostname
+              gitConfig
+              constants
+              ;
+          };
+          modules = [
+            ./home/home.nix
+            inputs.stylix.homeModules.stylix
+            inputs.niri.homeModules.config
+            inputs.noctalia.homeModules.default
+          ];
+        };
+
+      hosts = [
+        {
+          hostname = "desktop";
+          stateVersion = "25.11";
+        }
+        {
+          hostname = "thinkpad";
+          stateVersion = "25.11";
+        }
+      ];
+    in
+    {
+      nixosConfigurations = nixpkgs.lib.foldl' (
         configs: host:
-          configs // {"${host.hostname}" = makeSystem {inherit (host) hostname stateVersion;};}
-      ) {}
-      hosts;
+        configs // { "${host.hostname}" = makeSystem { inherit (host) hostname stateVersion; }; }
+      ) { } hosts;
 
-    homeConfigurations =
-      nixpkgs.lib.foldl' (
-        configs: host: configs // {"${user}@${host.hostname}" = makeHome {inherit (host) hostname;};}
-      ) {}
-      hosts;
-  };
+      homeConfigurations = nixpkgs.lib.foldl' (
+        configs: host: configs // { "${user}@${host.hostname}" = makeHome { inherit (host) hostname; }; }
+      ) { } hosts;
+    };
 }
