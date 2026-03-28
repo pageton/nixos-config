@@ -1,7 +1,7 @@
 # NixOS System Configuration
 
 [![NixOS](https://img.shields.io/badge/NixOS-5277C3?style=for-the-badge&logo=nixos&logoColor=white)](https://nixos.org)
-[![Hyprland](https://img.shields.io/badge/Hyprland-58A6FF?style=for-the-badge&logo=hyprland&logoColor=white)](https://hyprland.org)
+[![Niri](https://img.shields.io/badge/Niri-Wayland-58A6FF?style=for-the-badge)](https://github.com/YaLTeR/niri)
 [![Flakes](https://img.shields.io/badge/Flakes-Enabled-5277C3?style=for-the-badge)](https://nixos.wiki/wiki/Flakes)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
@@ -27,7 +27,7 @@ This repository contains a declarative NixOS configuration using flakes with the
 
 - **Multi-host support**: `desktop` and `thinkpad` (laptop)
 - **Modular architecture**: Reusable NixOS and Home-Manager modules
-- **Desktop environment**: Hyprland (Wayland) with Catppuccin theming
+- **Desktop environment**: Niri (Wayland) with Noctalia shell and Stylix theming
 - **Security**: SOPS encrypted secrets, Mullvad VPN, Tor support
 - **Development**: NVF (Neovim), Helix, language tooling (Go, Python)
 - **Automation**: `just` commands for common tasks
@@ -117,6 +117,10 @@ System/
 ├── flake.nix                    # Main flake definition
 ├── justfile                     # Task automation commands
 ├── .sops.yaml                   # SOPS encryption config
+├── scripts/                     # Repository-level audit and lab scripts
+│   ├── build/                   # modules/security/performance audit scripts
+│   ├── android-lab/             # Android reverse-engineering lab helpers
+│   └── lib/                     # Shared shell helpers (logging)
 │
 ├── hosts/                       # Host-specific configurations
 │   ├── desktop/                 # Desktop PC configuration
@@ -136,13 +140,14 @@ System/
 │   ├── bootloader.nix           # System boot loader
 │   ├── gaming.nix               # Gaming optimizations
 │   ├── graphics.nix             # Graphics drivers
-│   ├── hyprland.nix             # Hyprland WM
+│   ├── niri.nix                 # Niri compositor
 │   ├── networking.nix           # Network configuration
 │   ├── security.nix             # Security settings
 │   └── ...                      # Other system modules
 │
 └── home/                        # Home-Manager user configuration
     ├── home.nix                 # Main Home-Manager entry point
+    ├── modules/                 # Home base split (core/session/ui/activation)
     │
     ├── packages/                # User package definitions
     │   ├── cli.nix              # Command-line tools
@@ -159,18 +164,14 @@ System/
     │   └── ...
     │
     ├── system/                  # Desktop environment configs
-    │   ├── hyprland/            # Hyprland settings
-    │   ├── hyprlock/            # Screen locker
-    │   ├── hyprpanel/           # Panel widget
-    │   ├── wofi/                # App launcher
+    │   ├── niri/                # Niri session config
+    │   ├── noctalia/            # Noctalia shell/bar/launcher
+    │   ├── qt/                  # Qt Wayland integration
+    │   ├── mime/                # MIME defaults
     │   └── ...
     │
     ├── themes/                  # Theme configurations
-    │   └── catppucin.nix        # Catppuccin + Stylix
-    │
-    ├── secrets/                 # Encrypted secrets
-    │   ├── default.nix
-    │   └── secrets.yaml
+    │   └── kanagawa.nix         # Kanagawa + Stylix
     │
     └── scripts/                 # User scripts
         ├── ai/                  # AI helper scripts
@@ -192,11 +193,11 @@ This configuration uses the following flakes:
 | **sops-nix** | Secret management with age encryption |
 | **stylix** | System theming (Catppuccin theme) |
 | **spicetify-nix** | Spotify customization |
-| **hyprpanel** | Hyprland panel widget |
-| **zen-browser** | Privacy-focused web browser |
+| **niri** | Niri compositor module/overlay |
+| **noctalia** | Noctalia shell integration |
 | **nixcord** | Discord theming |
-| **vicinae** | IPC utility for Hyprland |
 | **nvf** | Neovim configuration framework |
+| **ghgrab** | GitHub release downloader utility |
 
 
 ---
@@ -212,12 +213,22 @@ This repository uses [`just`](https://github.com/casey/just) as a command runner
 | Command | Description |
 |---------|-------------|
 | `just` | List all available commands |
-| `just all` | **Run full pipeline**: modules check, lint, format, nh os switch, home-manager switch |
-| `just nixos` | Rebuild and switch NixOS configuration using **nh** (modern Nix Helper) |
-| `just home` | Apply Home-Manager configuration using **nh** (safe, user-level only) |
+| `just all` | **Run full pipeline**: modules, lint, format, security, flake check, nixos, home |
+| `just nixos` | Rebuild and switch current host (`--hostname $(hostname)`) with faster nh flags |
+| `just nixos <host>` | Rebuild and switch a specific host profile (e.g. `just nixos desktop`) |
+| `just nixos-fast` | Faster switch path (`NH_NO_VALIDATE=1`, no NOM) for iterative changes |
+| `just home` | Apply Home-Manager configuration using nh with lockfile-write disabled |
 | `just format` | Format all `.nix` files with `nixfmt` |
 | `just lint` | Lint all `.nix` files with `statix` + bash shellcheck |
 | `just modules` | Check for missing module imports (**critical before commits**) |
+| `just security` | Scan for risky security patterns and plaintext secret leaks |
+| `just perf` | Print boot/session performance diagnostics |
+| `just hardening` | Run `systemd-analyze security` report on core services |
+| `just check` | Evaluate full flake outputs with `nix flake check` |
+| `just eval-audit` | Measure eval time for all host nixos/home outputs |
+| `just eval-current` | Measure eval time for current host outputs only |
+| `just qa` | Full local QA (modules + security + check + eval-audit) |
+| `just qa-fast` | Fast local QA (modules + security + eval-current) |
 | `just update` | Update all flake inputs |
 | `just update-pkgs` | Update nixpkgs only |
 | `just update-pkgs-stable` | Update stable nixpkgs |
@@ -275,9 +286,8 @@ just secrets-add github_token ghp_your_token_here
 ### Structure
 
 ```
-home/secrets/
-├── default.nix      # SOPS module configuration
-└── secrets.yaml     # Encrypted secrets file
+nixos/modules/sops.nix
+secrets/secrets.yaml
 ```
 
 ### Security Notes
@@ -412,12 +422,11 @@ config = lib.mkIf (hostname == "desktop") {
 
 ### Desktop Environment
 
-- **Window Manager**: Hyprland (Wayland)
-- **Panel**: Hyprpanel with system monitoring
-- **Launcher**: Wofi
-- **Theme**: Catppuccin (system-wide via Stylix)
-- **Screen Locker**: Hyprlock
-- **Notification**: Dunst
+- **Compositor**: Niri (Wayland)
+- **Shell**: Noctalia (bar, launcher, control center, notifications)
+- **Theme**: Kanagawa via Stylix
+- **Screen Locker**: swaylock + Noctalia lock integration
+- **Clipboard stack**: wl-paste + cliphist + wl-clip-persist
 
 ### Development
 
@@ -516,7 +525,7 @@ home-manager expire-generations "-7 days"
 - [NixOS Manual](https://nixos.org/manual/nixos/stable/)
 - [Home-Manager Manual](https://nix-community.github.io/home-manager/)
 - [NixOS & Flakes Book](https://nixos-and-flakes.thiscute.world/)
-- [Hyprland Wiki](https://wiki.hyprland.org/)
+- [Niri Documentation](https://github.com/YaLTeR/niri/wiki)
 - [SOPS-Nix](https://github.com/Mic92/sops-nix)
 
 ---
