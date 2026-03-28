@@ -4,7 +4,8 @@
   stateVersion,
   hostname,
   ...
-}: {
+}:
+{
   imports = [
     ./hardware-configuration.nix
     ./local-packages.nix
@@ -14,7 +15,7 @@
 
   networking.hostName = hostname;
 
-  system = {inherit stateVersion;};
+  system = { inherit stateVersion; };
 
   mySystem = {
     virtualisation.enable = false;
@@ -43,10 +44,25 @@
     dnscryptProxy = {
       enable = true;
     };
+    netdata = {
+      enable = true;
+    };
+    scrutiny = {
+      enable = true;
+    };
+    kdeconnect = {
+      enable = true;
+    };
+    syncthing = {
+      enable = true;
+    };
+    glance = {
+      enable = true;
+    };
     macchanger = {
       enable = true;
     };
   };
 
-  environment.systemPackages = with pkgs; [home-manager];
+  environment.systemPackages = with pkgs; [ home-manager ];
 }

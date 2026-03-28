@@ -7,7 +7,7 @@
 #
 # Usage (in Home Manager modules):
 #   { constants, ... }:
-#   { config.programs.ghostty.settings.font-family = constants.font.mono; }
+#   { config.programs.alacritty.settings.font.normal.family = constants.font.mono; }
 
 {
   # User Identity (Git, GitHub, Contact)
@@ -15,16 +15,17 @@
     handle = "Sadiq";
     name = "Sadiq";
     email = "pageton@proton.me";
+    githubEmail = "pageton@proton.me";
     signingKey = "5684AD6E4045F283";
   };
 
   # Terminal emulator
-  terminal = "ghostty";
-  terminalAppId = "com.mitchellh.ghostty";
+  terminal = "alacritty";
+  terminalAppId = "Alacritty";
 
   # Default text editor
-  editor = "code";
-  editorAppId = "code|Code|code-url-handler";
+  editor = "nvim";
+  editorAppId = "nvim|Nvim|neovide|org\.neovide\.Neovide";
 
   # Fonts
   font = {
@@ -32,50 +33,49 @@
     size = 13;
   };
 
-  # Theme (Catppuccin Mocha)
-  theme = "catppuccin-mocha";
+  # Theme (Kanagawa Wave)
+  theme = "kanagawa-wave";
 
-  # Catppuccin Mocha color palette
-  # Mapped to the same structure as the original for compatibility with ai-agents and other modules.
-  # Base backgrounds use the user's custom darker variant from kanagawa.nix.
+  # Kanagawa Wave color palette
+  # Mapped to the same semantic structure for compatibility with ai-agents and other modules.
+  # Palette reference: https://github.com/rebelot/kanagawa.nvim
   color = {
-    # Hard/Background shades (user's custom darker Mocha bases)
-    bg_hard = "#0F0F15"; # base00 — darkest background
-    bg = "#15151A"; # base01 — main background
-    bg_soft = "#1e1e2e"; # Mocha Base — slightly lighter
-    bg0 = "#313244"; # Surface0
-    bg1 = "#45475a"; # Surface1
-
+    # Background shades (Kanagawa Wave ink colors)
+    bg_hard = "#16161D"; # sumiInk0 — darkest background
+    bg = "#1F1F28"; # sumiInk1 — main background
+    bg_soft = "#2A2A37"; # sumiInk2 — slightly lighter
+    bg0 = "#363646"; # sumiInk3 — surface
+    bg1 = "#54546D"; # sumiInk4 — elevated surface
     # Foreground shades
-    fg0 = "#cdd6f4"; # Text (primary foreground)
-    fg_dark = "#45475a"; # Surface1
-    fg = "#585b70"; # Surface2
-    fg_light = "#6c7086"; # Overlay0
+    fg0 = "#DCD7BA"; # fujiWhite — primary foreground
+    fg_dark = "#54546D"; # sumiInk4
+    fg = "#727169"; # fujiGray
+    fg_light = "#C8C093"; # oldWhite
 
-    # Accent colors (Catppuccin Mocha palette)
-    red = "#f38ba8"; # Red
-    red_dim = "#eba0ac"; # Maroon
+    # Accent colors (Kanagawa Wave palette)
+    red = "#C34043"; # autumnRed
+    red_dim = "#E46876"; # waveRed
 
-    green = "#a6e3a1"; # Green
-    green_dim = "#94e2d5"; # Teal (closest muted green)
+    green = "#76946A"; # autumnGreen
+    green_dim = "#98BB6C"; # springGreen
 
-    yellow = "#f9e2af"; # Yellow
-    yellow_dim = "#f9e2af"; # Yellow (no dim variant in Catppuccin)
+    yellow = "#C0A36E"; # boatYellow2
+    yellow_dim = "#E6C384"; # carpYellow
 
-    blue = "#89b4fa"; # Blue
-    blue_dim = "#74c7ec"; # Sapphire
+    blue = "#7E9CD8"; # crystalBlue
+    blue_dim = "#7FB4CA"; # springBlue
 
-    purple = "#cba6f7"; # Mauve
-    purple_dim = "#b4befe"; # Lavender
+    purple = "#957FB8"; # oniViolet
+    purple_dim = "#938AA9"; # springViolet1
 
-    aqua = "#94e2d5"; # Teal
-    aqua_dim = "#89dceb"; # Sky
+    aqua = "#6A9589"; # waveAqua1
+    aqua_dim = "#7AA89F"; # waveAqua2
 
-    orange = "#fab387"; # Peach
-    orange_dim = "#fab387"; # Peach (no dim variant)
+    orange = "#FFA066"; # surimiOrange
+    orange_dim = "#DCA561"; # autumnYellow
 
-    gray = "#9399b2"; # Overlay2
-    gray_dim = "#7f849c"; # Overlay1
+    gray = "#727169"; # fujiGray
+    gray_dim = "#54546D"; # sumiInk4
   };
 
   # Keyboard layout (XKB)

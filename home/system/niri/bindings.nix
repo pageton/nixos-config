@@ -1,6 +1,30 @@
 # Keybinding configuration for niri.
-{config, ...}: {
-  programs.niri.settings.binds = with config.lib.niri.actions;
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  noctalia =
+    cmd:
+    [
+      "${pkgs.bash}/bin/sh"
+      "-c"
+      ''
+        if ! ${pkgs.noctalia-shell}/bin/noctalia-shell ipc call "$@" >/dev/null 2>&1; then
+          ${pkgs.coreutils}/bin/nohup ${pkgs.noctalia-shell}/bin/noctalia-shell >/dev/null 2>&1 &
+          ${pkgs.coreutils}/bin/sleep 0.35
+          ${pkgs.noctalia-shell}/bin/noctalia-shell ipc call "$@" >/dev/null 2>&1 || true
+        fi
+      ''
+      "sh"
+    ]
+    ++ (lib.splitString " " cmd);
+in
+{
+  programs.niri.settings.binds =
+    with config.lib.niri.actions;
     {
       # ── Applications ────────────────────────────────────────────
       # "Mod+Return".action = spawn "alacritty";
@@ -70,9 +94,9 @@
       };
 
       # ── Screenshots (no Print key — use Mod+P family) ──────────
-      "Mod+P".action.screenshot = {};
-      "Mod+Ctrl+P".action.screenshot-screen = {};
-      "Mod+Alt+P".action.screenshot-window = {};
+      "Mod+P".action.screenshot = { };
+      "Mod+Ctrl+P".action.screenshot-screen = { };
+      "Mod+Alt+P".action.screenshot-window = { };
 
       # ── Overview ────────────────────────────────────────────────
       "Mod+D" = {
@@ -81,17 +105,17 @@
       };
 
       # ── Noctalia shell controls (Quickshell IPC) ─────────────────
-      "Mod+Space".action.spawn = ["noctalia-shell" "ipc" "call" "launcher" "toggle"];
-      "Mod+N".action.spawn = ["noctalia-shell" "ipc" "call" "notifications" "toggleHistory"];
-      "Mod+Comma".action.spawn = ["noctalia-shell" "ipc" "call" "settings" "toggle"];
-      "Mod+S".action.spawn = ["noctalia-shell" "ipc" "call" "controlCenter" "toggle"];
-      "Mod+X".action.spawn = ["noctalia-shell" "ipc" "call" "sessionMenu" "toggle"];
-      "Mod+V".action.spawn = ["noctalia-shell" "ipc" "call" "launcher" "clipboard"];
-      "Mod+M".action.spawn = ["noctalia-shell" "ipc" "call" "systemMonitor" "toggle"];
-      "Mod+Alt+N".action.spawn = ["noctalia-shell" "ipc" "call" "darkMode" "toggle"];
+      "Mod+Space".action.spawn = noctalia "launcher toggle";
+      "Mod+N".action.spawn = noctalia "notifications toggleHistory";
+      "Mod+Comma".action.spawn = noctalia "settings toggle";
+      "Mod+S".action.spawn = noctalia "controlCenter toggle";
+      "Mod+X".action.spawn = noctalia "sessionMenu toggle";
+      "Mod+V".action.spawn = noctalia "launcher clipboard";
+      "Mod+M".action.spawn = noctalia "systemMonitor toggle";
+      "Mod+Alt+N".action.spawn = noctalia "darkMode toggle";
 
       # ── Lock screen (Noctalia) ──────────────────────────────────
-      "Super+Alt+L".action.spawn = ["noctalia-shell" "ipc" "call" "lockScreen" "lock"];
+      "Super+Alt+L".action.spawn = noctalia "lockScreen lock";
 
       # ── System ──────────────────────────────────────────────────
       "Mod+Shift+E".action = quit;
@@ -104,51 +128,53 @@
       # ── Volume (Noctalia OSD, allow when locked) ────────────────
       "XF86AudioRaiseVolume" = {
         allow-when-locked = true;
-        action.spawn = ["noctalia-shell" "ipc" "call" "volume" "increase"];
+        action.spawn = noctalia "volume increase";
       };
       "XF86AudioLowerVolume" = {
         allow-when-locked = true;
-        action.spawn = ["noctalia-shell" "ipc" "call" "volume" "decrease"];
+        action.spawn = noctalia "volume decrease";
       };
       "XF86AudioMute" = {
         allow-when-locked = true;
-        action.spawn = ["noctalia-shell" "ipc" "call" "volume" "muteOutput"];
+        action.spawn = noctalia "volume muteOutput";
       };
       "XF86AudioMicMute" = {
         allow-when-locked = true;
-        action.spawn = ["noctalia-shell" "ipc" "call" "volume" "muteInput"];
+        action.spawn = noctalia "volume muteInput";
       };
 
       # ── Brightness (Noctalia OSD, allow when locked) ───────────
       "XF86MonBrightnessUp" = {
         allow-when-locked = true;
-        action.spawn = ["noctalia-shell" "ipc" "call" "brightness" "increase"];
+        action.spawn = noctalia "brightness increase";
       };
       "XF86MonBrightnessDown" = {
         allow-when-locked = true;
-        action.spawn = ["noctalia-shell" "ipc" "call" "brightness" "decrease"];
+        action.spawn = noctalia "brightness decrease";
       };
 
       # ── Media (Noctalia, allow when locked) ────────────────────
       "XF86AudioPlay" = {
         allow-when-locked = true;
-        action.spawn = ["noctalia-shell" "ipc" "call" "media" "playPause"];
+        action.spawn = noctalia "media playPause";
       };
       "XF86AudioNext" = {
         allow-when-locked = true;
-        action.spawn = ["noctalia-shell" "ipc" "call" "media" "next"];
+        action.spawn = noctalia "media next";
       };
       "XF86AudioPrev" = {
         allow-when-locked = true;
-        action.spawn = ["noctalia-shell" "ipc" "call" "media" "previous"];
+        action.spawn = noctalia "media previous";
       };
     }
     // builtins.listToAttrs (
       builtins.concatLists (
         builtins.genList (
-          i: let
+          i:
+          let
             ws = i + 1;
-          in [
+          in
+          [
             {
               name = "Mod+${toString ws}";
               value.action = focus-workspace ws;
@@ -158,8 +184,7 @@
               value.action.move-column-to-workspace = ws;
             }
           ]
-        )
-        9
+        ) 9
       )
     );
 }
