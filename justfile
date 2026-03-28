@@ -3,6 +3,7 @@ set quiet
 
 JUST := "just -u -f " + justfile()
 header := "Available tasks:\n"
+host := `hostname`
 
 _default:
     @{{JUST}} --list-heading "{{header}}" --list
@@ -25,17 +26,67 @@ lint:
 # Check all missing imports
 modules:
     @echo -e "\n➤ Checking modules"
-    @nix run nixpkgs#time -- -f "⏱ Completed in %E" modules-check
+    @nix run nixpkgs#time -- -f "⏱ Completed in %E" ./scripts/build/modules-check.sh
+
+# Security-focused repository checks
+security:
+    @echo -e "\n➤ Running security audit"
+    @nix run nixpkgs#time -- -f "⏱ Completed in %E" ./scripts/build/security-audit.sh
+
+# Performance diagnostics (boot/session/report)
+perf top="15":
+    @echo -e "\n➤ Running performance audit"
+    @nix run nixpkgs#time -- -f "⏱ Completed in %E" ./scripts/build/performance-audit.sh {{top}}
+
+# Systemd service hardening exposure report
+hardening:
+    @echo -e "\n➤ Running systemd hardening audit"
+    @nix run nixpkgs#time -- -f "⏱ Completed in %E" ./scripts/build/systemd-hardening-audit.sh
+
+# Evaluate flake outputs without switching
+check:
+    @echo -e "\n➤ Evaluating flake"
+    @nix run nixpkgs#time -- -f "⏱ Completed in %E" nix flake check "path:$PWD"
+
+# Measure evaluation time for core flake outputs
+eval-audit target="all":
+    @echo -e "\n➤ Running evaluation audit"
+    @nix run nixpkgs#time -- -f "⏱ Completed in %E" ./scripts/build/eval-audit.sh {{target}}
+
+# Fast eval timing for the current host only
+eval-current:
+    @echo -e "\n➤ Running current-host evaluation audit"
+    @nix run nixpkgs#time -- -f "⏱ Completed in %E" ./scripts/build/eval-audit.sh {{host}}
 
 # Switch Home-Manager generation
 home:
     @echo -e "\n➤ Switching Home-Manager…"
-    nh home switch '.?submodules=1'
+    nh home switch '.?submodules=1' --diff never --no-update-lock-file --no-write-lock-file
 
 # Switch NixOS generation
-nixos:
+nixos target=host:
     @echo -e "\n➤ Rebuilding NixOS…"
-    nh os switch .
+    nh os switch . --hostname {{target}} --diff never --no-update-lock-file --no-write-lock-file
+
+# Fast path: skip pre-activation validation checks
+nixos-fast target=host:
+    @echo -e "\n➤ Rebuilding NixOS (fast mode)…"
+    NH_NO_VALIDATE=1 nh os switch . --hostname {{target}} --diff never --no-update-lock-file --no-write-lock-file --no-nom
+
+# Fast local quality gate (no switch)
+qa:
+    @echo -e "\n➤ Running local QA (no switch)…"
+    {{JUST}} modules
+    {{JUST}} security
+    {{JUST}} check
+    {{JUST}} eval-audit
+
+# Fast local QA for iterative work (current host only)
+qa-fast:
+    @echo -e "\n➤ Running fast local QA (current host, no switch)…"
+    {{JUST}} modules
+    {{JUST}} security
+    {{JUST}} eval-current
 
 # All of the above, in order
 all:
@@ -43,6 +94,8 @@ all:
     {{JUST}} modules
     {{JUST}} lint
     {{JUST}} format
+    {{JUST}} security
+    {{JUST}} check
     {{JUST}} nixos
     {{JUST}} home
     @echo -e "✔ All done!"
