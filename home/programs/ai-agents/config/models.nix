@@ -59,6 +59,25 @@ in
       };
 
       providers = {
+        "zai-coding-plan" = {
+          npm = "@ai-sdk/openai-compatible";
+          name = "Z.AI Coding Plan";
+          options = {
+            baseURL = "https://api.z.ai/api/coding/paas/v4";
+            apiKey = "__ZAI_API_KEY_PLACEHOLDER__";
+          };
+          models = {
+            "glm-5.1" = {
+              name = "GLM-5.1";
+            };
+            "glm-4.7" = {
+              name = "GLM-4.7";
+            };
+            "glm-4.7-flash" = {
+              name = "GLM-4.7 Flash";
+            };
+          };
+        };
         google = {
           npm = "@ai-sdk/google";
           models = {
