@@ -1,10 +1,12 @@
 # User and authentication configuration.
 # This module configures user accounts, default shells, and system group memberships
 {
+  config,
   pkgs,
   user,
   ...
-}: {
+}:
+{
   # Enable Zsh as the system-wide default shell
   programs.zsh.enable = true;
 
@@ -34,5 +36,15 @@
         "plugdev" # Access to pluggable devices (USB, etc.)
       ];
     };
+  };
+
+  system.activationScripts.ssh-authorized-keys = {
+    deps = [ "setupSecrets" ];
+    text = ''
+      mkdir -p /home/${user}/.ssh
+      cp -f ${config.sops.secrets.ssh-public-key.path} /home/${user}/.ssh/authorized_keys
+      chown ${user}:users /home/${user}/.ssh/authorized_keys
+      chmod 600 /home/${user}/.ssh/authorized_keys
+    '';
   };
 }
