@@ -52,7 +52,7 @@
     }
 
     opencode_glm() {
-      OPENCODE_CONFIG_DIR="$HOME/.config/opencode-glm" opencode "$@"
+      OPENCODE_CONFIG_DIR="$HOME/.config/opencode-glm" opencode --model zai-coding-plan/glm-5.1 "$@"
     }
 
     opencode_gemini() {
