@@ -21,6 +21,7 @@ let
   opencodeConfigPaths = map opencodeProfiles.configPath opencodeProfiles.names;
   opencodeConfigPathList = lib.concatMapStringsSep " " lib.escapeShellArg opencodeConfigPaths;
   opencodeZaiFilter = ''
+    walk(if type == "string" then gsub("__ZAI_API_KEY_PLACEHOLDER__"; $key) else . end) |
     (if .mcp["zai-mcp-server"] != null then .mcp["zai-mcp-server"].environment.Z_AI_API_KEY = $key else . end) |
     .mcp["web-search-prime"] = {
       type: "remote",
