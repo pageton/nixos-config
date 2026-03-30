@@ -28,6 +28,7 @@
       ssh-private-key = {
         owner = user;
         path = "/home/${user}/.ssh/id_ed25519";
+        neededForUsers = true;
       };
       ssh-public-key = {
         owner = user;
