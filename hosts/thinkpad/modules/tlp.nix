@@ -1,70 +1,89 @@
-# TLP (Linux Advanced Power Management) configuration for ThinkPad.
-# This module configures TLP, a power management daemon that optimizes
-# power consumption and performance on laptops, with settings tuned for ThinkPad hardware.
-
+# TLP power management for laptop.
 {
-  services = {
-    tlp = {
-      enable = true; # Enable TLP power management daemon
+  config,
+  lib,
+  ...
+}: let
+  mkAcBatPair = key: acValue: batValue: {
+    "${key}_ON_AC" = acValue;
+    "${key}_ON_BAT" = batValue;
+  };
+in {
+  options.mySystem.laptop = {
+    battery = {
+      startChargeThreshold = lib.mkOption {
+        type = lib.types.ints.between 1 100;
+        default = 75;
+        example = 75;
+        description = "Start charging battery when percentage falls below this value (1-100). 75-80% optimal for lithium-ion longevity.";
+      };
 
-      settings = {
-        # CPU Performance - CRITICAL for battery life
-        CPU_SCALING_GOVERNOR_ON_AC = "performance"; # Full performance on AC
-        CPU_SCALING_GOVERNOR_ON_BAT = "powersave"; # Power saving on battery
+      stopChargeThreshold = lib.mkOption {
+        type = lib.types.ints.between 1 100;
+        default = 80;
+        example = 80;
+        description = "Stop charging battery when percentage reaches this value (1-100). Keep 10-20% below start threshold for battery health.";
+      };
+    };
+  };
 
-        CPU_ENERGY_PERF_POLICY_ON_AC = "performance"; # Full performance on AC
-        CPU_ENERGY_PERF_POLICY_ON_BAT = "power"; # Aggressive power saving on battery
+  config = {
+    services = {
+      tlp = {
+        enable = true;
 
-        CPU_MIN_PERF_ON_AC = 0;
-        CPU_MAX_PERF_ON_AC = 100;
-        CPU_MIN_PERF_ON_BAT = 0;
-        CPU_MAX_PERF_ON_BAT = 50; # Limit to 50% on battery (20-30% savings)
+        settings =
+          {
+            # CPU Performance - CRITICAL for battery life
+          }
+          // (mkAcBatPair "CPU_SCALING_GOVERNOR" "performance" "powersave")
+          // (mkAcBatPair "CPU_ENERGY_PERF_POLICY" "performance" "power")
+          // {
+            CPU_MIN_PERF_ON_AC = 0;
+            CPU_MAX_PERF_ON_AC = 100;
+            CPU_MIN_PERF_ON_BAT = 0;
+            CPU_MAX_PERF_ON_BAT = 50;
 
-        CPU_BOOST_ON_AC = 1; # Enable turbo boost on AC
-        CPU_BOOST_ON_BAT = 0; # Disable turbo boost on battery (20-30% savings)
+            # Platform power profile settings
 
-        # Platform power profile settings
-        PLATFORM_PROFILE_ON_AC = "performance"; # Full performance on AC
-        PLATFORM_PROFILE_ON_BAT = "low-power"; # Low power on battery
+            # CRITICAL for ThinkPad battery longevity (75-80% optimal range)
+            START_CHARGE_THRESH_BAT0 = config.mySystem.laptop.battery.startChargeThreshold;
+            STOP_CHARGE_THRESH_BAT0 = config.mySystem.laptop.battery.stopChargeThreshold;
 
-        # CRITICAL for ThinkPad battery longevity (75-80% optimal range)
-        START_CHARGE_THRESH_BAT0 = 75; # Start charging at 75%
-        STOP_CHARGE_THRESH_BAT0 = 80; # Stop at 80% (doubles battery lifespan)
+            # Wireless power management
+            # Runtime power management for devices
+            # Disk power management
+            # USB autosuspend (saves power)
+            USB_AUTOSUSPEND = 1;
+            USB_BLACKLIST_PHONE = 1;
+            USB_EXCLUDE_BTUSB = 1;
 
-        # Wireless power management
-        WIFI_PWR_ON_AC = "off"; # Full power on AC
-        WIFI_PWR_ON_BAT = "on"; # Power saving on battery
+            # Disk I/O scheduler settings for SSDs
+            DISK_IOSCHED = ["none"];
 
-        # Runtime power management for devices
-        RUNTIME_PM_ON_AC = "on"; # Enable on AC
-        RUNTIME_PM_ON_BAT = "auto"; # Auto-manage on battery
+            # Additional power saving features
+            RESTORE_DEVICE_STATE_ON_STARTUP = 1;
+            DEVICES_TO_DISABLE_ON_STARTUP = "bluetooth wwan";
 
-        # Disk power management
-        DISK_IDLE_SECS_ON_AC = 0; # No idle timeout on AC
-        DISK_IDLE_SECS_ON_BAT = 2; # Spin down after 2 seconds on battery
+            # PCIe Active State Power Management on battery
+            PCIE_ASPM_ON_BAT = "powersupersave";
 
-        # USB autosuspend (saves power)
-        USB_AUTOSUSPEND = 1; # Enable USB autosuspend
-        USB_BLACKLIST_PHONE = 1; # Don't suspend phones
-        USB_EXCLUDE_BTUSB = 1; # Exclude Bluetooth USB devices
+            # HDA Intel audio codec power saving on battery
+            SOUND_POWER_SAVE_ON_BAT = 1; # 1-second timeout
+            SOUND_POWER_SAVE_CONTROLLER = "Y"; # Also power down HDA controller
 
-        # AMD Radeon graphics power management (if applicable)
-        RADEON_DPM_PERF_LEVEL_ON_AC = "auto";
-        RADEON_DPM_PERF_LEVEL_ON_BAT = "low"; # Low power on battery
+            # Disable NMI watchdog on battery (saves ~0.5W, not needed for non-debug)
+            NMI_WATCHDOG = 0;
 
-        # Disk I/O scheduler settings for SSDs
-        DISK_IOSCHED = [ "none" ]; # Use none scheduler for SSDs
-
-        # Additional power saving features
-        RESTORE_DEVICE_STATE_ON_STARTUP = 1; # Restore device states
-        DEVICES_TO_DISABLE_ON_STARTUP = "bluetooth wifi wwan"; # Disable on startup
-        DEVICES_TO_ENABLE_ON_STARTUP = "wifi"; # Re-enable wifi if needed
-
-        # Intel graphics power (if applicable)
-        INTEL_GPU_MIN_FREQ_ON_AC = 300;
-        INTEL_GPU_MIN_FREQ_ON_BAT = 300;
-        INTEL_GPU_MAX_FREQ_ON_AC = 1200;
-        INTEL_GPU_MAX_FREQ_ON_BAT = 600; # Limit GPU frequency on battery
+            # Intel graphics power (if applicable)
+          }
+          // (mkAcBatPair "CPU_BOOST" 1 0)
+          // (mkAcBatPair "PLATFORM_PROFILE" "performance" "low-power")
+          // (mkAcBatPair "WIFI_PWR" "off" "on")
+          // (mkAcBatPair "RUNTIME_PM" "on" "auto")
+          // (mkAcBatPair "DISK_IDLE_SECS" 0 2)
+          // (mkAcBatPair "INTEL_GPU_MIN_FREQ" 300 300)
+          // (mkAcBatPair "INTEL_GPU_MAX_FREQ" 1200 600);
       };
     };
   };
