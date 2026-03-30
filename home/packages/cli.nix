@@ -2,10 +2,8 @@
 # text processing, system monitoring, and development workflows.
 # NOTE: fzf and carapace are managed by programs.* modules.
 #       yt-dlp is firejail-wrapped at system level.
-
-{ pkgsStable, ... }:
-with pkgsStable;
-[
+{pkgsStable, ...}:
+with pkgsStable; [
   # === Backup and Storage ===
   borgbackup # Deduplicating backup program
   restic # Modern backup program
@@ -92,4 +90,9 @@ with pkgsStable;
   hcloud # Hetzner Cloud CLI
   lazydocker # Terminal UI for Docker management
   serie # Git log TUI viewer
+
+  apktool
+  jadx
+  android-tools
+  sdkmanager
 ]
