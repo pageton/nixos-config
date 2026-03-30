@@ -1,9 +1,7 @@
-# Boot configuration
-
-{
+# Laptop kernel params for backlight and NVIDIA framebuffer.
+_: {
   boot.kernelParams = [
-    # Force use of the thinkpad_acpi driver for backlight control.
-    # This allows the backlight save/load systemd service to work.
-    "acpi_backlight=native"
+    "acpi_backlight=native" # Required for thinkpad_acpi backlight save/load
+    "nvidia_drm.fbdev=1" # Framebuffer device emulation (better console resolution, VT switching)
   ];
 }
