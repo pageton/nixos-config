@@ -1,6 +1,7 @@
 # Niri scrollable-tiling Wayland compositor — Home Manager configuration.
 {
   config,
+  constants,
   hostname,
   pkgs,
   ...
@@ -43,10 +44,7 @@ in
       # ── Input ─────────────────────────────────────────────────
       input = {
         keyboard = {
-          xkb = {
-            layout = "us,ara";
-            options = "grp:caps_toggle";
-          };
+          xkb = { inherit (constants.keyboard) layout options; };
           repeat-delay = 300;
           repeat-rate = 30;
         };
@@ -172,16 +170,8 @@ in
             "XDG_RUNTIME_DIR"
           ];
         }
-        {
-          command = [
-            "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
-          ];
-        }
-        {
-          command = [
-            "${pkgs.noctalia-shell}/bin/noctalia-shell"
-          ];
-        }
+        { command = [ "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1" ]; }
+        { command = [ "${pkgs.noctalia-shell}/bin/noctalia-shell" ]; }
         { command = [ "xwayland-satellite" ]; }
         {
           command = [

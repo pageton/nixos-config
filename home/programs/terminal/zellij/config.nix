@@ -1,5 +1,6 @@
 # Zellij settings and keybinds.
-{pkgs, ...}: {
+{ config, pkgs, ... }:
+{
   programs.zellij = {
     enable = true;
     # HM's zellij attach -c breaks with multiple sessions; auto-start is in zsh initContent
@@ -9,6 +10,7 @@
       theme = "default"; # Stylix generates ~/.config/zellij/themes/stylix.kdl defining "default"
       default_shell = "${pkgs.zsh}/bin/zsh";
       default_layout = "default";
+      default_cwd = config.home.homeDirectory;
 
       pane_frames = false;
       simplified_ui = false;
@@ -20,7 +22,7 @@
       copy_on_select = true;
 
       scroll_buffer_size = 50000;
-      scrollback_editor = "${pkgs.neovim}/bin/nvim";
+      scrollback_editor = "nvim";
 
       session_serialization = true;
       pane_viewport_serialization = true;
@@ -118,7 +120,7 @@
           bind "Alt w" { ToggleFloatingPanes; SwitchToMode "Normal"; }
           bind "Alt f" { TogglePaneEmbedOrFloating; SwitchToMode "Normal"; }
 
-          bind "Alt Enter" { NewTab; SwitchToMode "Normal"; }
+          bind "Alt Enter" { NewTab cwd="${config.home.homeDirectory}"; SwitchToMode "Normal"; }
           bind "Alt q" { CloseTab; SwitchToMode "Normal"; }
           bind "Alt 0" { ToggleTab; }
           bind "Alt ." { MoveTab "Right"; }
