@@ -1,4 +1,5 @@
-# Claude plugin installation — oh-my-claudecode and everything-claude-code.
+# Plugin installation — impeccable and agency-agents.
+
 {
   cfg,
   config,
@@ -7,7 +8,7 @@
 }:
 
 let
-  opencodeProfiles = import ./_opencode-profiles.nix { inherit config; };
+  opencodeProfiles = import ../helpers/_opencode-profiles.nix { inherit config; };
 
   mkGitClone =
     {
@@ -135,62 +136,35 @@ in
     ''
   );
 
-  installOhMyClaudeCode = lib.mkIf cfg.claude.enable (
-    lib.hm.dag.entryAfter [ "setupClaudeConfig" ] ''
-      if command -v claude &> /dev/null; then
-        if ! claude plugin marketplace list 2>/dev/null | grep -q "omc"; then
-          echo "📦 Adding oh-my-claudecode marketplace..."
-          claude plugin marketplace add https://github.com/Yeachan-Heo/oh-my-claudecode 2>/dev/null || true
-        fi
+  cleanupDisabledAgencyAgents = lib.mkIf (!cfg.agencyAgents.enable) (
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      AGENCY_DIR="$HOME/.local/share/agency-agents"
+      CLAUDE_AGENTS_DIR="$HOME/.claude/agents"
 
-        if ! claude plugin list 2>/dev/null | grep -q "oh-my-claudecode"; then
-          echo "📦 Installing oh-my-claudecode plugin..."
-          claude plugin install oh-my-claudecode@omc 2>/dev/null || true
-        fi
-        echo "✓ oh-my-claudecode ready"
+      if [[ -d "$AGENCY_DIR" && -d "$CLAUDE_AGENTS_DIR" ]]; then
+        while IFS= read -r agency_agent; do
+          [[ -n "$agency_agent" ]] || continue
+          rm -f "$CLAUDE_AGENTS_DIR/$agency_agent"
+        done < <(find "$AGENCY_DIR" -mindepth 2 -maxdepth 2 -type f -name '*.md' -printf '%f\n' 2>/dev/null | sort -u)
+        echo "✓ Removed disabled agency-agents from Claude Code"
       fi
-    ''
-  );
 
-  installEverythingClaudeCode = lib.mkIf cfg.claude.enable (
-    lib.hm.dag.entryAfter [ "setupClaudeConfig" ] ''
-      ECC_DIR="$HOME/.local/share/everything-claude-code"
+      if [[ -d "$CLAUDE_AGENTS_DIR" ]]; then
+        for agent_file in "$CLAUDE_AGENTS_DIR"/*.md; do
+          [[ -e "$agent_file" ]] || continue
+          case "$(basename "$agent_file")" in
+            implementation-engineer.md|protocol-triage.md|security-reviewer.md|static-recon.md|nix-evaluator.md|lint-fixer.md|release-notes.md)
+              ;;
+            *)
+              rm -f "$agent_file"
+              ;;
+          esac
+        done
+        echo "✓ Curated Claude Code agents for coding and RE"
+      fi
 
-      if command -v claude &> /dev/null; then
-        ${mkGitClone {
-          name = "everything-claude-code";
-          url = "https://github.com/affaan-m/everything-claude-code.git";
-          dir = "$ECC_DIR";
-        }}
-
-        if ! claude plugin marketplace list 2>/dev/null | grep -q "everything-claude-code"; then
-          echo "📦 Adding everything-claude-code marketplace..."
-          claude plugin marketplace add affaan-m/everything-claude-code 2>/dev/null || true
-        fi
-
-        if ! claude plugin list 2>/dev/null | grep -q "everything-claude-code"; then
-          echo "📦 Installing everything-claude-code plugin..."
-          claude plugin install everything-claude-code@everything-claude-code 2>/dev/null || true
-        fi
-
-        if [[ -d "$ECC_DIR/rules" ]]; then
-          mkdir -p "$HOME/.claude/rules"
-          if [[ -d "$ECC_DIR/rules/common" ]]; then
-            cp -r "$ECC_DIR/rules/common/"* "$HOME/.claude/rules/" 2>/dev/null || true
-          fi
-          if [[ -d "$ECC_DIR/rules/typescript" ]]; then
-            cp -r "$ECC_DIR/rules/typescript/"* "$HOME/.claude/rules/" 2>/dev/null || true
-          fi
-          if [[ -d "$ECC_DIR/rules/python" ]]; then
-            cp -r "$ECC_DIR/rules/python/"* "$HOME/.claude/rules/" 2>/dev/null || true
-          fi
-          if [[ -d "$ECC_DIR/rules/golang" ]]; then
-            cp -r "$ECC_DIR/rules/golang/"* "$HOME/.claude/rules/" 2>/dev/null || true
-          fi
-          echo "✓ Installed ECC rules (common + typescript + python + golang)"
-        fi
-
-        echo "✓ everything-claude-code ready"
+      if [[ -d "$HOME/.config/opencode/agents" ]]; then
+        rm -f "$HOME/.config/opencode/agents/"*.md 2>/dev/null || true
       fi
     ''
   );

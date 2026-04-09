@@ -1,4 +1,5 @@
 # Claude configuration activation — generates ~/.claude/settings.json and ~/.mcp.json.
+
 {
   cfg,
   pkgs,
@@ -13,6 +14,7 @@ lib.mkIf cfg.claude.enable (
     claudeMcpFile = pkgs.writeText "claude-mcp.json" (toJSON {
       mcpServers = claudeMcpServers;
     });
+    claudeInstructionsFile = pkgs.writeText "CLAUDE.md" cfg.globalInstructions;
   in
   lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     mkdir -p "$HOME/.claude"
@@ -42,12 +44,9 @@ lib.mkIf cfg.claude.enable (
     echo "✓ Claude .mcp.json configured"
 
     ${lib.optionalString (cfg.globalInstructions != "") ''
-        CLAUDE_MD="$HOME/.claude/CLAUDE.md"
-        cat > "$CLAUDE_MD" << 'CLAUDE_INSTRUCTIONS_EOF'
-      ${cfg.globalInstructions}
-      CLAUDE_INSTRUCTIONS_EOF
-        ${pkgs.gnused}/bin/sed -i 's/^          //' "$CLAUDE_MD"
-        echo "✓ Claude CLAUDE.md configured"
+      CLAUDE_MD="$HOME/.claude/CLAUDE.md"
+      cp "${claudeInstructionsFile}" "$CLAUDE_MD"
+      echo "✓ Claude CLAUDE.md configured"
     ''}
   ''
 )

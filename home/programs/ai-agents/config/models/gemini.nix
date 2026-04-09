@@ -1,0 +1,209 @@
+# Gemini CLI configuration: settings, theming, model aliases, and auto-format hooks.
+
+{
+  config,
+  constants,
+  ...
+}:
+
+let
+  mkModelAlias = model: generateContentConfig: {
+    modelConfig = {
+      inherit model generateContentConfig;
+    };
+  };
+  mkThinkingAlias =
+    model: thinkingLevel: extraConfig:
+    mkModelAlias model (
+      {
+        thinkingConfig = {
+          inherit thinkingLevel;
+        };
+      }
+      // extraConfig
+    );
+  geminiSandboxEnabled = config.programs.aiAgents.gemini.sandboxMode != "none";
+in
+{
+  programs.aiAgents.gemini = {
+    enable = true;
+    theme = "Gruvbox";
+    sandboxMode = "none";
+
+    extraSettings = {
+      policyPaths = [ "$HOME/.gemini/policies" ];
+      # --- Core Features ---
+      codeExecution = true;
+      searchGrounding = true;
+      # --- Security ---
+      security = {
+        auth = {
+          selectedType = "gemini-api-key";
+        };
+        folderTrust = {
+          enabled = true;
+        };
+      };
+      # --- MCP Server Access ---
+      mcp = {
+        allowed = [
+          "context7"
+          "github"
+        ];
+        excluded = [
+          "chrome-devtools"
+          "web-search-prime"
+          "web-reader"
+          "zread"
+        ];
+      };
+      # --- Context Settings ---
+      context = {
+        fileName = [
+          "GEMINI.md"
+          "AGENTS.md"
+        ];
+        importFormat = "markdown";
+        discoveryMaxDirs = 300;
+        loadMemoryFromIncludeDirectories = true;
+        fileFiltering = {
+          respectGitIgnore = true;
+          respectGeminiIgnore = true;
+          enableRecursiveFileSearch = true;
+          enableFuzzySearch = true;
+        };
+      };
+      # --- General Settings ---
+      general = {
+        vimMode = true;
+        defaultApprovalMode = "auto_edit";
+        enableAutoUpdate = true;
+        enableAutoUpdateNotification = true;
+        checkpointing.enabled = false; # NixOS: simple-git .env() strips PATH → git ENOENT (upstream bug)
+        plan.modelRouting = true;
+        sessionRetention = {
+          enabled = true;
+          maxAge = "30d";
+        };
+      };
+      # --- Privacy ---
+      privacy = {
+        usageStatisticsEnabled = false;
+      };
+      # --- UI and Theming ---
+      ui = {
+        hideTips = true;
+        hideBanner = true;
+        showLineNumbers = true;
+        customThemes = {
+          Gruvbox = {
+            name = "Gruvbox";
+            type = "custom";
+            background = {
+              primary = constants.color.bg_soft;
+              diff = {
+                added = constants.color.bg0;
+                removed = constants.color.bg1;
+              };
+            };
+            text = {
+              primary = constants.color.fg0;
+              secondary = constants.color.gray;
+              link = constants.color.blue;
+              accent = constants.color.purple_dim;
+            };
+            border = {
+              default = constants.color.fg_dark;
+              focused = constants.color.blue;
+            };
+            status = {
+              success = constants.color.green;
+              warning = constants.color.yellow;
+              error = constants.color.red;
+            };
+            ui = {
+              comment = constants.color.gray;
+              symbol = constants.color.aqua;
+              gradient = [
+                constants.color.red
+                constants.color.orange
+                constants.color.yellow
+              ];
+            };
+          };
+        };
+        inherit (config.programs.aiAgents.gemini) theme;
+      };
+      # --- Experimental Features ---
+      experimental = {
+        enableAgents = true;
+        worktrees = true;
+      };
+      skills.enabled = true;
+      agents = {
+        overrides = {
+          codebase_investigator = {
+            enabled = true;
+            modelConfig.model = "gemini-3-pro-preview";
+            runConfig.maxTurns = 50;
+          };
+        };
+      };
+      # --- Model Aliases ---
+      modelConfigs = {
+        customAliases = {
+          auto = mkModelAlias "auto" { };
+          fast = mkModelAlias "gemini-2.5-flash-lite" {
+            temperature = 0;
+            maxOutputTokens = 8192;
+          };
+          flash = mkModelAlias "gemini-2.5-flash" {
+            temperature = 0;
+            maxOutputTokens = 16384;
+          };
+          deep = mkThinkingAlias "gemini-3-pro-preview" "HIGH" { };
+          code = mkThinkingAlias "gemini-3-pro-preview" "HIGH" {
+            maxOutputTokens = 65536;
+          };
+        };
+      };
+      # --- Tool Settings ---
+      tools = {
+        sandbox = geminiSandboxEnabled;
+        sandboxNetworkAccess = false;
+        shell.showColor = true;
+        useRipgrep = true;
+      };
+      # --- Model Defaults And Compression ---
+      model = {
+        name = "gemini-3-pro-preview";
+        compressionThreshold = 0.75; # Wait until 75% full before compressing (was 0.5)
+      };
+      # --- Hooks ---
+      hooks = {
+        AfterTool = [
+          {
+            matcher = "write_file|replace";
+            hooks = [
+              {
+                name = "auto-format";
+                type = "command";
+                command = builtins.concatStringsSep " " [
+                  "INPUT=$(cat);"
+                  "FILE_PATH=$(echo \"$INPUT\" | jq -r '.arguments.path // \"\"');"
+                  "if [ -n \"$FILE_PATH\" ]; then"
+                  "case \"$FILE_PATH\" in"
+                  (import ../_formatters.nix).geminiCaseBranches
+                  "esac;"
+                  "fi;"
+                  "echo \"$INPUT\""
+                ];
+                timeout = 10000;
+              }
+            ];
+          }
+        ];
+      };
+    };
+  };
+}

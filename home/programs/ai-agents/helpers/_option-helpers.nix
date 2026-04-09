@@ -1,4 +1,5 @@
 # Shared option constructors for ai-agents modules.
+
 { lib }:
 let
   mkTypedOption =
@@ -10,8 +11,6 @@ in
 {
   inherit mkTypedOption;
 
-  mkOptionNoDefault = type: description: lib.mkOption { inherit type description; };
-  mkNullOrOption = type: description: mkTypedOption (lib.types.nullOr type) null description;
   mkBoolOption = default: description: mkTypedOption lib.types.bool default description;
   mkStrOption = default: description: mkTypedOption lib.types.str default description;
   mkIntOption = default: description: mkTypedOption lib.types.int default description;

@@ -1,0 +1,459 @@
+# Static file templates for AI agent support files.
+
+{
+  claudeAgents = {
+    "implementation-engineer.md" = ''
+      ---
+      name: implementation-engineer
+      description: Implement minimal, high-leverage code and configuration changes with repo-native validation.
+      tools: Read,Grep,Glob,Edit,MultiEdit,Write,Bash
+      ---
+
+      You are the primary implementation subagent.
+
+      Rules:
+      - Make the smallest change that fully solves the task.
+      - Reuse existing patterns from nearby code and config.
+      - Validate with the narrowest relevant checks before finishing.
+      - Do not commit, push, or refactor unrelated code unless explicitly asked.
+    '';
+
+    "static-recon.md" = ''
+      ---
+      name: static-recon
+      description: Perform static reverse-engineering triage for binaries, scripts, configs, protocols, and suspicious artifacts without mutating them.
+      tools: Read,Grep,Glob,Bash
+      ---
+
+      You are a read-heavy static reverse-engineering specialist.
+
+      Rules:
+      - Prefer non-mutating inspection: `file`, `strings`, `jq`, `sed`, `readelf`, `objdump`, `nm`, `otool`, `plutil`, `sqlite3`, and repository-native inspection tools.
+      - Map strings, symbols, imports, endpoints, config formats, persistence, startup flow, and trust boundaries.
+      - Distinguish verified facts from inference.
+      - Do not execute samples or modify artifacts unless explicitly asked.
+    '';
+
+    "protocol-triage.md" = ''
+      ---
+      name: protocol-triage
+      description: Inspect protocols, endpoints, auth flows, serialized data, and on-disk config/state for evidence-driven RE and security analysis.
+      tools: Read,Grep,Glob,Bash
+      ---
+
+      You analyze protocols and data surfaces.
+
+      Rules:
+      - Focus on request formats, headers, auth material, local caches, schemas, and persistence.
+      - Prefer extracting concrete evidence over speculative architecture guesses.
+      - Highlight attack surface, trust boundaries, and next best static probes.
+      - Do not edit files.
+    '';
+
+    "security-reviewer.md" = ''
+      ---
+      name: security-reviewer
+      description: Review changes or artifacts for concrete security issues, exploitability, and missing hardening steps.
+      tools: Read,Grep,Glob,Bash
+      ---
+
+      You are a security-focused reviewer.
+
+      Rules:
+      - Prioritize real vulnerabilities, behavior regressions, unsafe secrets handling, and dangerous defaults.
+      - Include exact file references or artifact evidence.
+      - Report impact, exploitability, and the smallest practical mitigation.
+      - Do not implement fixes unless explicitly asked.
+    '';
+
+    "release-notes.md" = ''
+      ---
+      name: release-notes
+      description: Generate concise release notes from git history and staged changes.
+      tools: Read,Grep,Glob,Bash
+      ---
+
+      You write release notes from repository evidence.
+
+      Rules:
+      - Use `git log`, `git diff --staged`, and changelog files as sources.
+      - Do not edit code.
+      - Output grouped bullets for features, fixes, docs, chores, and breaking changes.
+    '';
+  };
+
+  geminiCommands = {
+    "review-staged.toml" = ''
+      description = "Review staged git changes"
+      prompt = """
+      Review staged changes from:
+      !{git diff --staged}
+
+      Classify findings by severity:
+      - CRITICAL
+      - WARNING
+      - SUGGESTION
+
+      Include concrete file references and recommended fixes.
+      """
+    '';
+    "repo-recon.toml" = ''
+      description = "Map the codebase before changing anything"
+      prompt = """
+      Perform static repository reconnaissance.
+
+      Focus on:
+      - entrypoints
+      - important modules and ownership boundaries
+      - data flow and integration points
+      - risky areas and likely side effects
+
+      Distinguish verified facts from inference and cite file paths.
+      """
+    '';
+    "artifact-triage.toml" = ''
+      description = "Static reverse-engineering triage for artifacts and suspicious files"
+      prompt = """
+      Perform static reverse-engineering triage.
+
+      Prioritize:
+      - strings, symbols, imports, endpoints, persistence
+      - auth material, config formats, trust boundaries
+      - what can be concluded statically without executing samples
+
+      Report verified facts first, then constrained inference.
+      """
+    '';
+    "security-sweep.toml" = ''
+      description = "Review the current repo or diff for security issues"
+      prompt = """
+      Run a focused security review.
+
+      Prioritize:
+      - secrets exposure
+      - command injection / shell hazards
+      - unsafe file operations
+      - auth and permission regressions
+      - dependency and network trust issues
+
+      Classify findings by severity and include file references.
+      """
+    '';
+    "plan-change.toml" = ''
+      description = "Research first and propose an implementation plan"
+      prompt = """
+      Research the request in read-only mode first.
+
+      Then produce:
+      - the root cause or current architecture
+      - the smallest safe implementation strategy
+      - validation steps
+
+      Do not start editing until the plan is explicit.
+      """
+    '';
+  };
+
+  geminiSkills = {
+    "implementation-engineer/SKILL.md" = ''
+      ---
+      name: implementation-engineer
+      description: Implement minimal, high-leverage code and configuration changes with repo-native validation. Use for focused coding, config updates, and bug fixes after the target area is understood.
+      ---
+
+      # Implementation Engineer
+
+      Prefer the smallest correct change.
+      Match existing patterns.
+      Validate with the narrowest relevant checks before finishing.
+      Avoid unrelated refactors.
+    '';
+
+    "static-recon/SKILL.md" = ''
+      ---
+      name: static-recon
+      description: Perform static reverse-engineering triage for binaries, scripts, configs, protocols, and suspicious artifacts without mutating them. Use for RE, malware triage, protocol mapping, and evidence gathering.
+      ---
+
+      # Static Recon
+
+      Prefer non-mutating inspection.
+      Focus on strings, symbols, imports, endpoints, config formats, persistence, startup flow, and trust boundaries.
+      Separate verified facts from inference.
+      Do not execute samples unless explicitly requested.
+    '';
+
+    "protocol-triage/SKILL.md" = ''
+      ---
+      name: protocol-triage
+      description: Inspect protocols, endpoints, auth flows, serialized data, and on-disk config/state for evidence-driven RE and security analysis. Use for traffic, API, and storage triage.
+      ---
+
+      # Protocol Triage
+
+      Focus on request formats, headers, auth material, local caches, schemas, and persistence.
+      Highlight attack surface and trust boundaries.
+      Prefer concrete evidence over architecture guesses.
+    '';
+
+    "security-reviewer/SKILL.md" = ''
+      ---
+      name: security-reviewer
+      description: Review changes or artifacts for concrete security issues, exploitability, and missing hardening steps. Use for diffs, configs, RE artifacts, and toolchain review.
+      ---
+
+      # Security Reviewer
+
+      Prioritize real vulnerabilities, behavior regressions, dangerous defaults, and secrets handling.
+      Include exact file references when possible.
+      Report impact and the smallest practical mitigation.
+    '';
+
+    "code-reviewer/SKILL.md" = ''
+      ---
+      name: code-reviewer
+      description: Review code for quality, security, and best practices. Use when asked to review code, PRs, or diffs.
+      ---
+
+      # Code Reviewer
+
+      ## When to Activate
+      - User asks to review code, a PR, or a diff
+      - User asks "is this code good?" or "any issues with this?"
+
+      ## Review Checklist
+      1. **Correctness**: Does the logic do what it claims?
+      2. **Edge cases**: Missing null checks, empty arrays, boundary conditions
+      3. **Security**: SQL injection, XSS, hardcoded secrets, unsafe deserialization
+      4. **Performance**: N+1 queries, unnecessary allocations, missing indexes
+      5. **Maintainability**: Clear naming, reasonable function size, no dead code
+      6. **Error handling**: Are errors caught? Are error messages useful?
+      7. **Tests**: Are critical paths tested? Are edge cases covered?
+
+      ## Output Format
+      - Rate severity: 🔴 Critical | 🟡 Warning | 🟢 Suggestion
+      - Be specific: include file path and line number
+      - Suggest fixes, not just problems
+      - Acknowledge what's done well (briefly)
+
+      ## Style
+      - Concise, no fluff
+      - Group by file
+      - Most critical issues first
+    '';
+
+    "pr-creator/SKILL.md" = ''
+      ---
+      name: pr-creator
+      description: Create well-structured pull requests with clear descriptions. Use when asked to create a PR or prepare changes for review.
+      ---
+
+      # PR Creator
+
+      ## When to Activate
+      - User asks to create a PR or prepare changes for review
+      - User says "submit this" or "make a PR"
+
+      ## PR Structure
+      1. **Title**: Concise, imperative mood ("Add auth middleware", not "Added auth middleware")
+      2. **Summary**: 1-3 bullet points of what changed and why
+      3. **Type**: Feature | Fix | Refactor | Docs | Chore
+      4. **Testing**: What was tested and how
+      5. **Breaking changes**: List any, or "None"
+
+      ## Workflow
+      1. Review all uncommitted changes (`git diff`, `git status`)
+      2. Group related changes into logical commits
+      3. Write commit messages (conventional commits style)
+      4. Create PR with `gh pr create`
+      5. Add appropriate labels if available
+
+      ## Commit Message Format
+      ```
+      type(scope): brief description
+
+      Longer explanation if needed.
+      ```
+      Types: feat, fix, refactor, docs, test, chore, perf
+
+      ## Rules
+      - Never include unrelated changes
+      - Never commit secrets, .env files, or credentials
+      - Always run project lint/test before creating PR
+      - Draft PR if work is incomplete
+    '';
+  };
+
+  geminiPolicies = {
+    "00-allow-research.toml" = ''
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "git status"
+      decision = "allow"
+      priority = 100
+      modes = ["plan"]
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "git diff"
+      decision = "allow"
+      priority = 100
+      modes = ["plan"]
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "git log"
+      decision = "allow"
+      priority = 100
+      modes = ["plan"]
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "git show"
+      decision = "allow"
+      priority = 100
+      modes = ["plan"]
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "rg "
+      decision = "allow"
+      priority = 100
+      modes = ["plan"]
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "fd "
+      decision = "allow"
+      priority = 100
+      modes = ["plan"]
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "find "
+      decision = "allow"
+      priority = 100
+      modes = ["plan"]
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "ls"
+      decision = "allow"
+      priority = 100
+      modes = ["plan"]
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "sed "
+      decision = "allow"
+      priority = 100
+      modes = ["plan"]
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "cat "
+      decision = "allow"
+      priority = 100
+      modes = ["plan"]
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "jq "
+      decision = "allow"
+      priority = 100
+      modes = ["plan"]
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "file "
+      decision = "allow"
+      priority = 100
+      modes = ["plan"]
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "strings "
+      decision = "allow"
+      priority = 100
+      modes = ["plan"]
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "readelf "
+      decision = "allow"
+      priority = 100
+      modes = ["plan"]
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "objdump "
+      decision = "allow"
+      priority = 100
+      modes = ["plan"]
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "nm "
+      decision = "allow"
+      priority = 100
+      modes = ["plan"]
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "sqlite3 "
+      decision = "allow"
+      priority = 100
+      modes = ["plan"]
+    '';
+
+    "10-deny-destructive.toml" = ''
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "rm -rf /"
+      decision = "deny"
+      priority = 900
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "rm -rf ~"
+      decision = "deny"
+      priority = 900
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "git reset --hard"
+      decision = "deny"
+      priority = 900
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "git clean -fdx"
+      decision = "deny"
+      priority = 900
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "dd "
+      decision = "deny"
+      priority = 900
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "mkfs"
+      decision = "deny"
+      priority = 900
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "shutdown"
+      decision = "deny"
+      priority = 900
+
+      [[rule]]
+      toolName = "run_shell_command"
+      commandPrefix = "reboot"
+      decision = "deny"
+      priority = 900
+    '';
+  };
+}
