@@ -4,6 +4,10 @@
 {
   # NetworkManager for GUI networking
   networking.networkmanager.enable = lib.mkDefault true;
+  networking.networkmanager.dns = lib.mkDefault "systemd-resolved";
+
+  # Let NetworkManager and VPN software manage DNS through resolved.
+  services.resolved.enable = lib.mkDefault true;
 
   # Reduce boot blocking from wait-online while keeping deterministic network startup.
   # nm-online default timeout is high; this caps startup stall on slow links.

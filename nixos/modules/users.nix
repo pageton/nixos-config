@@ -27,7 +27,6 @@
         "render" # Access to GPU rendering (NVIDIA, AMD, Intel)
         "audio" # Access to audio devices
         "i2c" # Access to I2C devices (some hardware sensors)
-        "disk" # Access to disk devices
         "optical" # Access to optical drives
         "scanner" # Access to scanners
         "lp" # Access to printers
@@ -42,9 +41,11 @@
     deps = [ "setupSecrets" ];
     text = ''
       mkdir -p /home/${user}/.ssh
-      cp -f ${config.sops.secrets.ssh-public-key.path} /home/${user}/.ssh/authorized_keys
-      chown ${user}:users /home/${user}/.ssh/authorized_keys
-      chmod 600 /home/${user}/.ssh/authorized_keys
+      chmod 700 /home/${user}/.ssh
+      cp -f ${config.sops.secrets.ssh-public-key.path} /home/${user}/.ssh/authorized_keys.tmp
+      chmod 600 /home/${user}/.ssh/authorized_keys.tmp
+      chown ${user}:users /home/${user}/.ssh/authorized_keys.tmp
+      mv -f /home/${user}/.ssh/authorized_keys.tmp /home/${user}/.ssh/authorized_keys
     '';
   };
 }

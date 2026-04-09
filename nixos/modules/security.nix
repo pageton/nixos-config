@@ -180,12 +180,13 @@ in
     rejectPackets = false; # Drop instead of reject for stealth
     allowedTCPPorts = [ 22 ]; # SSH (ListenAddress-restricted in networking.nix)
     allowedUDPPorts = [ ];
-    allowedTCPPortRanges = [
+    allowedTCPPortRanges = [ ];
+    interfaces."lo".allowedTCPPortRanges = [
       {
         from = 1024;
         to = 65535;
       }
-    ]; # All unprivileged ports (dev servers)
+    ]; # Dev servers on loopback only
     allowedUDPPortRanges = [ ];
   };
 

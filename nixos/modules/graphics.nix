@@ -4,12 +4,14 @@
   pkgs,
   lib,
   ...
-}: let
+}:
+let
   nvidiaDriverChannel = config.boot.kernelPackages.nvidiaPackages.stable;
-in {
+in
+{
   config = {
     # Use proprietary NVIDIA userspace + kernel stack.
-    services.xserver.videoDrivers = ["nvidia"];
+    services.xserver.videoDrivers = [ "nvidia" ];
 
     boot = {
       kernelParams = [
@@ -19,7 +21,7 @@ in {
         "nvidia.NVreg_PreserveVideoMemoryAllocations=1"
       ];
       # Prevent nouveau from racing/loading before proprietary modules.
-      blacklistedKernelModules = ["nouveau"];
+      blacklistedKernelModules = [ "nouveau" ];
     };
 
     # Session/runtime compatibility for Wayland + VA-API + GLX selection.
@@ -30,7 +32,14 @@ in {
       __GLX_VENDOR_LIBRARY_NAME = "nvidia";
       NVD_BACKEND = "direct";
       MOZ_ENABLE_WAYLAND = "1";
+      CUDA_PATH = "/run/opengl-driver";
     };
+
+    # Expose NVIDIA userspace driver libraries to shells/venvs that load foreign
+    # CUDA binaries from pip wheels (for example PyTorch + bitsandbytes).
+    environment.shellInit = ''
+      export LD_LIBRARY_PATH="/run/opengl-driver/lib''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    '';
 
     nixpkgs.config = {
       # NVIDIA driver package is unfree; must be explicitly allowed at eval time.
@@ -72,7 +81,7 @@ in {
 
     nix.settings = {
       # Speeds up NVIDIA/CUDA-related binary fetches.
-      substituters = ["https://cuda-maintainers.cachix.org"];
+      substituters = [ "https://cuda-maintainers.cachix.org" ];
 
       trusted-public-keys = [
         "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E="
@@ -89,28 +98,28 @@ in {
     # rendering degradation. See: https://github.com/YaLTeR/niri/wiki/Nvidia
     environment.etc."nvidia/nvidia-application-profiles-rc.d/50-niri-vram-fix.json".text =
       builtins.toJSON
-      {
-        rules = [
-          {
-            pattern = {
-              feature = "procname";
-              matches = "niri";
-            };
-            profile = "Limit Free Buffer Pool On Wayland Compositors";
-          }
-        ];
-        profiles = [
-          {
-            name = "Limit Free Buffer Pool On Wayland Compositors";
-            settings = [
-              {
-                key = "GLVidHeapReuseRatio";
-                value = 0;
-              }
-            ];
-          }
-        ];
-      };
+        {
+          rules = [
+            {
+              pattern = {
+                feature = "procname";
+                matches = "niri";
+              };
+              profile = "Limit Free Buffer Pool On Wayland Compositors";
+            }
+          ];
+          profiles = [
+            {
+              name = "Limit Free Buffer Pool On Wayland Compositors";
+              settings = [
+                {
+                  key = "GLVidHeapReuseRatio";
+                  value = 0;
+                }
+              ];
+            }
+          ];
+        };
 
     # Udev rules for NVIDIA device access
     services.udev.extraRules = ''

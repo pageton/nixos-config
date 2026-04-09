@@ -26,7 +26,7 @@
   services.tailscale = {
     enable = true;
     package = pkgsStable.tailscale;
-    openFirewall = true;
+    openFirewall = false;
   };
 
   # Avoid pulling full network-online critical path into boot.

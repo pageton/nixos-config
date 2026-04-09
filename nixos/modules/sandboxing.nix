@@ -5,10 +5,12 @@
   pkgs,
   pkgsStable,
   ...
-}: let
+}:
+let
   mesaEglVendorFile = "/run/opengl-driver/share/glvnd/egl_vendor.d/50_mesa.json";
   mesaEglFirejailArg = "--env=__EGL_VENDOR_LIBRARY_FILENAMES=${mesaEglVendorFile}";
-in {
+in
+{
   options.mySystem.sandboxing = {
     enable = lib.mkEnableOption "application sandboxing with Firejail and bubblewrap";
 
@@ -31,10 +33,10 @@ in {
     programs.firejail = {
       enable = true;
       wrappedBinaries = lib.mkIf config.mySystem.sandboxing.enableWrappedBinaries {
-        # =====================================================================
-        # HIGH RISK — Internet-facing apps with large attack surfaces
+        # ── HIGH RISK ──────────────────────────────────────────────────────
+        # Internet-facing apps with large attack surfaces
         # (rendering engines, media codecs, JavaScript execution)
-        # =====================================================================
+        # ──────────────────────────────────────────────────────────────────
 
         # Browsers — use upstream profiles (handle NixOS properly via seccomp)
         # Force Mesa EGL inside sandbox — firejail strips session env vars,
@@ -42,7 +44,7 @@ in {
         brave = {
           executable = "${pkgs.lib.getBin pkgs.brave}/bin/brave";
           profile = "${pkgs.firejail}/etc/firejail/brave.profile";
-          extraArgs = [mesaEglFirejailArg];
+          extraArgs = [ mesaEglFirejailArg ];
         };
 
         # LibreWolf upstream profile works on NixOS (seccomp !chroot handles it)
@@ -51,7 +53,7 @@ in {
         librewolf = {
           executable = "${pkgs.lib.getBin pkgsStable.librewolf}/bin/librewolf";
           profile = "${pkgs.firejail}/etc/firejail/librewolf.profile";
-          extraArgs = [mesaEglFirejailArg];
+          extraArgs = [ mesaEglFirejailArg ];
         };
 
         # Messaging — use upstream profiles
@@ -98,9 +100,9 @@ in {
           profile = "${pkgs.firejail}/etc/firejail/qbittorrent.profile";
         };
 
-        # =====================================================================
-        # MEDIUM RISK — Network-facing or semi-trusted input, smaller surfaces
-        # =====================================================================
+        # ── MEDIUM RISK ────────────────────────────────────────────────────
+        # Network-facing or semi-trusted input, smaller surfaces
+        # ──────────────────────────────────────────────────────────────────
 
         # KeePassXC excluded from firejail — needs SSH agent socket at
         # $XDG_RUNTIME_DIR, D-Bus for Secret Service, and native messaging

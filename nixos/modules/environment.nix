@@ -1,11 +1,12 @@
 # Environment variables and session settings.
-{user, ...}: {
+{ user, constants, ... }:
+{
   environment.sessionVariables = rec {
     # Default terminal emulator for applications that need one
-    TERMINAL = "alacritty";
+    TERMINAL = constants.terminal;
 
     # Default text editor for applications that need one
-    EDITOR = "nvim";
+    EDITOR = constants.editor;
 
     # Fix Java Swing/AWT applications (e.g. BurpSuite) on Wayland
     _JAVA_AWT_WM_NONREPARENTING = "1";
@@ -22,6 +23,6 @@
     ];
 
     # System PATH with additional directories
-    PATH = ["${XDG_BIN_HOME}"];
+    PATH = [ "${XDG_BIN_HOME}" ];
   };
 }

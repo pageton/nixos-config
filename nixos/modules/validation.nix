@@ -1,9 +1,5 @@
 # Cross-module conflict assertions and dependency validation.
-{
-  config,
-  lib,
-  ...
-}:
+{ config, lib, ... }:
 {
   assertions = [
     # === Power Management Daemon Conflicts ===
@@ -44,6 +40,11 @@
     {
       assertion = !config.mySystem.mullvadVpn.enable || config.networking.networkmanager.enable;
       message = "Mullvad VPN requires NetworkManager (networking.networkmanager.enable = true).";
+    }
+
+    {
+      assertion = !(config.mySystem.mullvadVpn.enable && config.mySystem.dnscryptProxy.enable);
+      message = "Mullvad VPN and DNSCrypt-Proxy cannot be enabled together. Mullvad manages DNS while connected.";
     }
 
     # === Security Configuration Validation ===
