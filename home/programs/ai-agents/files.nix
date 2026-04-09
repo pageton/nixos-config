@@ -1,4 +1,5 @@
 # Home file and XDG config file declarations for AI agents.
+
 {
   config,
   lib,
@@ -11,27 +12,20 @@ let
 
   inherit (builtins) toJSON;
 
-  fileTemplates = import ./_file-templates.nix;
-  settingsBuilders = import ./_settings-builders.nix { inherit config lib pkgs; };
+  fileTemplates = import ./helpers/_file-templates.nix;
+  settingsBuilders = import ./helpers/_settings-builders.nix { inherit config lib pkgs; };
   inherit (settingsBuilders)
     opencodeSettings
     geminiSettings
-    ohMyOpencodeSettings
     glmOpencodeSettings
-    glmOhMyOpencodeSettings
     geminiOpencodeSettings
-    geminiOhMyOpencodeSettings
     gptOpencodeSettings
-    gptOhMyOpencodeSettings
     openrouterOpencodeSettings
-    openrouterOhMyOpencodeSettings
     sonnetOpencodeSettings
-    sonnetOhMyOpencodeSettings
     zenOpencodeSettings
-    zenOhMyOpencodeSettings
     ;
 
-  opencodeProfiles = import ./_opencode-profiles.nix { inherit config; };
+  opencodeProfiles = import ./helpers/_opencode-profiles.nix { inherit config; };
   opencodeProfileNames = opencodeProfiles.names;
 
   opencodeSettingsByProfile = {
@@ -138,16 +132,6 @@ let
     If no target is provided, apply it to the most relevant current UI surface.
   '';
 
-  ohMyOpencodeSettingsByProfile = {
-    opencode = ohMyOpencodeSettings;
-    "opencode-glm" = glmOhMyOpencodeSettings;
-    "opencode-gemini" = geminiOhMyOpencodeSettings;
-    "opencode-gpt" = gptOhMyOpencodeSettings;
-    "opencode-openrouter" = openrouterOhMyOpencodeSettings;
-    "opencode-sonnet" = sonnetOhMyOpencodeSettings;
-    "opencode-zen" = zenOhMyOpencodeSettings;
-  };
-
   opencodeConfigFiles = lib.foldl' (
     acc: name:
     acc
@@ -165,12 +149,6 @@ let
         force = true;
       };
     }
-    // (lib.optionalAttrs cfg.opencode.ohMyOpencode.enable {
-      "${name}/oh-my-opencode.json" = {
-        text = toJSON ohMyOpencodeSettingsByProfile.${name};
-        force = true;
-      };
-    })
   ) { } opencodeProfileNames;
 
   opencodeImpeccableCommandFiles =
@@ -236,6 +214,7 @@ in
         }
         // (mkTextFiles ".gemini/commands" fileTemplates.geminiCommands)
         // (mkTextFiles ".gemini/skills" fileTemplates.geminiSkills)
+        // (mkTextFiles ".gemini/policies" fileTemplates.geminiPolicies)
       ))
     ];
 
