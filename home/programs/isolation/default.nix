@@ -95,7 +95,7 @@
         // Disable safe browsing (privacy leak)
         user_pref("browser.safebrowsing.downloads.enabled", false);
         user_pref("browser.safebrowsing.malware.enabled", false);
-        user_pref("extensions.blocklist.enabled", false);
+        user_pref("extensions.blocklist.enabled", true);
         EOF
 
         exec librewolf --profile "$PROFILE_DIR" --new-instance 2>/dev/null
@@ -170,7 +170,7 @@
         // Disable safe browsing (privacy leak)
         user_pref("browser.safebrowsing.downloads.enabled", false);
         user_pref("browser.safebrowsing.malware.enabled", false);
-        user_pref("extensions.blocklist.enabled", false);
+        user_pref("extensions.blocklist.enabled", true);
         EOF
 
         exec librewolf --profile "$PROFILE_DIR" --new-instance 2>/dev/null
