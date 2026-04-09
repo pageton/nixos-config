@@ -15,7 +15,6 @@
     ./thunar
     ./nvf
     ./isolation
-    ./nanoclaw
     ./t3code
     ./zoom
   ];
