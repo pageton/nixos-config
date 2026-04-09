@@ -1,5 +1,6 @@
 # Bootloader configuration (GRUB - no theme).
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   boot.kernelPackages = pkgs.linuxPackages_6_18;
 
   boot.loader = {

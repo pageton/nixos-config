@@ -1,10 +1,6 @@
 # Zsh local variables: editor, pager, FZF, XDG tool caches, language tool homes.
 
-{
-  config,
-  constants,
-  ...
-}:
+{ config, constants, ... }:
 
 {
   programs.zsh.localVariables = {

@@ -1,10 +1,6 @@
 # Nix Helper (nh) - Simple configuration module.
 # Installs nh and sets up basic environment for better NixOS management.
-{
-  pkgs,
-  user,
-  ...
-}:
+{ pkgs, user, ... }:
 let
   nixValidate = pkgs.writeShellApplication {
     name = "nix-validate";

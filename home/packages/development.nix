@@ -1,11 +1,9 @@
 # Development tools and programming languages for software development,
 # debugging, database management, and reverse engineering.
-{
-  pkgs,
-  pkgsStable,
-}:
+{ pkgs, pkgsStable }:
 with pkgs;
-with pkgsStable; [
+with pkgsStable;
+[
   # === Integrated Development Environments ===
   vscode # Visual Studio Code editor
   code-cursor-fhs # Cursor IDE (FHS wrapper)

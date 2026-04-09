@@ -1,11 +1,9 @@
 # General desktop applications including browsers, communication tools,
 # productivity software, and theming packages.
-{
-  pkgs,
-  pkgsStable,
-}:
+{ pkgs, pkgsStable }:
 with pkgs;
-with pkgsStable; [
+with pkgsStable;
+[
   # === Web Browsers ===
   firefox # Mozilla Firefox web browser
 
@@ -22,7 +20,7 @@ with pkgsStable; [
   antigravity-fhs # AI-powered agentic IDE
 
   # === Gaming and Compatibility ===
-  (bottles.override {removeWarningPopup = true;}) # Run Windows applications on Linux
+  (bottles.override { removeWarningPopup = true; }) # Run Windows applications on Linux
 
   # === Music and Media ===
   youtube-music # YouTube Music desktop client

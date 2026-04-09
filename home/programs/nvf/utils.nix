@@ -1,8 +1,4 @@
-{
-  pkgs,
-  lib,
-  ...
-}:
+{ pkgs, lib, ... }:
 {
   programs.nvf.settings.vim = {
     undoFile.enable = true;

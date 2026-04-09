@@ -1,30 +1,35 @@
 # Theme-driven animation configuration for niri.
-{config, ...}: let
+{ config, ... }:
+let
   animationSpeed = config.theme.animation-speed;
 
   # Spring stiffness scales with animation speed
   springStiffness =
-    if animationSpeed == "fast"
-    then 1200
-    else if animationSpeed == "medium"
-    then 800
-    else 400;
+    if animationSpeed == "fast" then
+      1200
+    else if animationSpeed == "medium" then
+      800
+    else
+      400;
 
   # Easing durations in ms
   openDuration =
-    if animationSpeed == "fast"
-    then 100
-    else if animationSpeed == "medium"
-    then 200
-    else 300;
+    if animationSpeed == "fast" then
+      100
+    else if animationSpeed == "medium" then
+      200
+    else
+      300;
 
   closeDuration =
-    if animationSpeed == "fast"
-    then 80
-    else if animationSpeed == "medium"
-    then 150
-    else 250;
-in {
+    if animationSpeed == "fast" then
+      80
+    else if animationSpeed == "medium" then
+      150
+    else
+      250;
+in
+{
   programs.niri.settings.animations = {
     workspace-switch.kind.spring = {
       damping-ratio = 1.0;

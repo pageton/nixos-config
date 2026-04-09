@@ -1,7 +1,8 @@
 # Language Server Protocol (LSP) servers for code intelligence,
 # completion, diagnostics, and navigation in various editors.
-{pkgs, ...}:
-with pkgs; [
+{ pkgs, ... }:
+with pkgs;
+[
   # === Markup and Data Formats ===
   yaml-language-server # YAML schema validation and completion
   vscode-langservers-extracted # JSON, HTML, CSS, ESLint language servers

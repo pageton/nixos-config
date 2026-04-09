@@ -1,5 +1,1 @@
-{
-  imports = [
-    ../boot-optimization.nix
-  ];
-}
+{ imports = [ ../boot-optimization.nix ]; }

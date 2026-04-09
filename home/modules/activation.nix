@@ -1,8 +1,4 @@
-{
-  config,
-  lib,
-  ...
-}:
+{ config, lib, ... }:
 {
   home.activation.installPackages = lib.mkForce (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''

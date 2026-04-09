@@ -4,7 +4,8 @@
   lib,
   pkgsStable,
   ...
-}: {
+}:
+{
   # Custom module options for Bluetooth configuration
   options.mySystem.bluetooth = {
     enable = lib.mkEnableOption "Bluetooth support with Blueman manager";
@@ -27,6 +28,6 @@
     services.blueman.enable = true;
 
     # Install Bluetooth management utilities
-    environment.systemPackages = with pkgsStable; [blueman];
+    environment.systemPackages = with pkgsStable; [ blueman ];
   };
 }

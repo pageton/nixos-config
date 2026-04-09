@@ -1,9 +1,6 @@
 # Git settings, aliases, conditional includes, and global ignores.
 
-{
-  constants,
-  ...
-}:
+{ constants, ... }:
 
 {
   programs = {
@@ -23,9 +20,7 @@
       };
 
       settings = {
-        user = {
-          inherit (constants.user) name email;
-        };
+        user = { inherit (constants.user) name email; };
 
         # === Pull / Push ===
         pull.rebase = true; # clean history by default

@@ -13,7 +13,7 @@
   config = lib.mkIf config.mySystem.syncthing.enable {
     services.syncthing = {
       enable = true;
-      user = user;
+      inherit user;
       dataDir = "/home/${user}/Sync";
       configDir = "/home/${user}/.config/syncthing";
       openDefaultPorts = true;

@@ -1,5 +1,6 @@
 # Udiskie is a simple daemon that uses udisks to automatically mount removable storage devices.
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   services.udiskie = {
     enable = true;
     notify = true;

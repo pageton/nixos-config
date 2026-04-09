@@ -1,10 +1,6 @@
 # Zsh core options, history, Oh My Zsh, plugins, keymap, and setOptions.
 
-{
-  config,
-  pkgs,
-  ...
-}:
+{ config, pkgs, ... }:
 
 {
   programs.zsh = {

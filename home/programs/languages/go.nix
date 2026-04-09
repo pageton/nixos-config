@@ -1,10 +1,6 @@
 # Go development environment (gopls, delve, golangci-lint, etc).
 
-{
-  config,
-  pkgs,
-  ...
-}:
+{ config, pkgs, ... }:
 
 {
   programs = {
@@ -71,9 +67,7 @@
       GOSUMDB = "sum.golang.org";
     };
 
-    sessionPath = [
-      "${config.home.homeDirectory}/go/bin"
-    ];
+    sessionPath = [ "${config.home.homeDirectory}/go/bin" ];
 
     # Go creates ~/go/{bin,pkg,src} on demand — no activation needed
   };

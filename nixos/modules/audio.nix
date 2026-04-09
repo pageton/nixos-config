@@ -1,7 +1,9 @@
 # PipeWire audio stack (ALSA, PulseAudio compat, JACK, RNNoise).
-{pkgs, ...}: let
+{ pkgs, ... }:
+let
   rnnoise = pkgs.rnnoise-plugin;
-in {
+in
+{
   security.rtkit.enable = true;
 
   services = {
@@ -61,5 +63,5 @@ in {
     };
   };
 
-  environment.systemPackages = [pkgs.rnnoise-plugin];
+  environment.systemPackages = [ pkgs.rnnoise-plugin ];
 }

@@ -1,16 +1,15 @@
 # NVIDIA Optimus (hybrid graphics) for ThinkPad.
-{
-  config,
-  lib,
-  ...
-}: let
-  mkBusIdOption = description: default:
+{ config, lib, ... }:
+let
+  mkBusIdOption =
+    description: default:
     lib.mkOption {
       type = lib.types.str;
       inherit default description;
       example = "PCI:0:2:0:0";
     };
-in {
+in
+{
   options.mySystem.nvidia = {
     intelBusId = mkBusIdOption "Intel GPU PCI bus ID (format: PCI:bus:device:function)." "PCI:0:2:0:0";
 

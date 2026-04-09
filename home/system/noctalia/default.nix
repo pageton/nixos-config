@@ -75,9 +75,7 @@ in
             { id = "Volume"; }
             { id = "Microphone"; }
           ]
-          ++ lib.optionals isThinkpad [
-            { id = "Brightness"; }
-          ]
+          ++ lib.optionals isThinkpad [ { id = "Brightness"; } ]
           ++ [
             {
               id = "ControlCenter";

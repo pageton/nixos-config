@@ -32,9 +32,7 @@
       common = {
         # Prefer GNOME portal as primary backend for niri Wayland sessions.
         # Keep GTK only for FileChooser to avoid early-session GTK backend churn.
-        default = [
-          "gnome"
-        ];
+        default = [ "gnome" ];
         "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
         "org.freedesktop.impl.portal.Screenshot" = [ "gnome" ];
         "org.freedesktop.impl.portal.ScreenCast" = [ "gnome" ];

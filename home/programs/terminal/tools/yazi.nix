@@ -1,10 +1,6 @@
 # Yazi terminal file manager with image preview and Lua plugins.
 
-{
-  constants,
-  pkgs,
-  ...
-}:
+{ constants, pkgs, ... }:
 
 {
   # file package provided by home.packages (utilities.nix)
@@ -13,9 +9,7 @@
     enableZshIntegration = true;
     shellWrapperName = "y";
 
-    plugins = {
-      inherit (pkgs.yaziPlugins) git diff full-border;
-    };
+    plugins = { inherit (pkgs.yaziPlugins) git diff full-border; };
 
     initLua = ''
       require("full-border"):setup()

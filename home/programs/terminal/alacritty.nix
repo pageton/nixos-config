@@ -1,12 +1,10 @@
 # Alacritty terminal emulator — Kanagawa themed via Stylix base16.
-{
-  config,
-  lib,
-  ...
-}: let
+{ config, lib, ... }:
+let
   inherit (config.lib.stylix) colors;
   fontSize = config.stylix.fonts.sizes.terminal;
-in {
+in
+{
   programs.alacritty = {
     enable = true;
 
@@ -158,7 +156,7 @@ in {
 
       terminal.shell = {
         program = "zsh";
-        args = ["-l"];
+        args = [ "-l" ];
       };
 
       working_directory = "None";

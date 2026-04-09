@@ -1,6 +1,6 @@
 # Helper for wrapping GUI binaries with Mesa EGL vendor override.
 # Required on NVIDIA systems to force Mesa EGL in sandboxed/wrapped apps.
-{pkgs}:
+{ pkgs }:
 
 let
   mesaEglVendorFile = "/run/opengl-driver/share/glvnd/egl_vendor.d/50_mesa.json";
@@ -12,8 +12,8 @@ in
     name: pkg:
     pkgs.symlinkJoin {
       inherit name;
-      paths = [pkg];
-      buildInputs = [pkgs.makeWrapper];
+      paths = [ pkg ];
+      buildInputs = [ pkgs.makeWrapper ];
       postBuild = ''
         wrapProgram $out/bin/${name} \
           --set __EGL_VENDOR_LIBRARY_FILENAMES ${mesaEglVendorFile}

@@ -15,7 +15,7 @@
   programs.nvf = {
     enable = true;
     settings.vim = {
-      luaPackages = ["jsregexp"]; # Required by luasnip for variable/placeholder transformations
+      luaPackages = [ "jsregexp" ]; # Required by luasnip for variable/placeholder transformations
       startPlugins = [
         pkgs.vimPlugins.vim-tmux-navigator
         pkgs.vimPlugins.vim-wakatime

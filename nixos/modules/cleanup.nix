@@ -6,9 +6,11 @@
   pkgs,
   user,
   ...
-}: let
+}:
+let
   cfg = config.mySystem.cleanup;
-in {
+in
+{
   options.mySystem.cleanup = {
     enable = lib.mkEnableOption "automatic cleanup timers for downloads/cache";
   };
@@ -50,7 +52,7 @@ in {
       timers = {
         "cleanup-telegram-downloads" = {
           description = "Timer for Telegram downloads cleanup";
-          wantedBy = ["timers.target"];
+          wantedBy = [ "timers.target" ];
           timerConfig = {
             OnCalendar = "daily";
             Persistent = true;
@@ -60,7 +62,7 @@ in {
 
         "cleanup-downloads" = {
           description = "Timer for general downloads cleanup";
-          wantedBy = ["timers.target"];
+          wantedBy = [ "timers.target" ];
           timerConfig = {
             OnCalendar = "weekly";
             Persistent = true;
@@ -70,7 +72,7 @@ in {
 
         "cleanup-cache" = {
           description = "Timer for cache cleanup";
-          wantedBy = ["timers.target"];
+          wantedBy = [ "timers.target" ];
           timerConfig = {
             OnCalendar = "monthly";
             Persistent = true;
@@ -86,7 +88,7 @@ in {
           mkdir -p /home/${user}/Downloads/Telegram\ Desktop
           chown ${user}:users /home/${user}/Downloads/Telegram\ Desktop
         '';
-        deps = [];
+        deps = [ ];
       };
     };
   };

@@ -4,11 +4,12 @@
   pkgs,
   inputs,
   ...
-}: {
-  imports = [inputs.niri.nixosModules.niri];
+}:
+{
+  imports = [ inputs.niri.nixosModules.niri ];
 
   # Add niri overlay for mesa compatibility
-  nixpkgs.overlays = [inputs.niri.overlays.niri];
+  nixpkgs.overlays = [ inputs.niri.overlays.niri ];
 
   programs.niri = {
     enable = true;
@@ -16,7 +17,7 @@
   };
 
   # XWayland compatibility via xwayland-satellite
-  environment.systemPackages = [pkgs.xwayland-satellite-stable];
+  environment.systemPackages = [ pkgs.xwayland-satellite-stable ];
 
   # Security services for compositor
   security.polkit.enable = true;

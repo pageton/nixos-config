@@ -1,9 +1,5 @@
 # Defer non-critical services from blocking boot (reduces I/O contention by ~10-15s).
-{
-  config,
-  lib,
-  ...
-}:
+{ config, lib, ... }:
 
 let
   cfg = config.mySystem;

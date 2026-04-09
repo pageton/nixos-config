@@ -1,9 +1,6 @@
 # System stability, resource limits, and high-performance networking tuning.
+{ lib, pkgsStable, ... }:
 {
-  lib,
-  pkgsStable,
-  ...
-}: {
   services = {
     fstrim = {
       enable = true;

@@ -7,11 +7,8 @@
 # 3. Run: nix store prefetch-file --json --hash-type sha256 \
 #    "https://github.com/pingdotgg/t3code/releases/download/v<VERSION>/T3-Code-<VERSION>-x86_64.AppImage"
 # 4. Update the `hash` variable with the output
-{
-  lib,
-  pkgs,
-  ...
-}: let
+{ lib, pkgs, ... }:
+let
   version = "0.0.10";
   hash = "sha256-zcPsaj4JyI8Ul7VZ4wsYvNH91GgKQZBgRADhgVu/zH8=";
 
@@ -23,14 +20,12 @@
     inherit hash;
   };
 
-  extracted = pkgs.appimageTools.extractType2 {
-    inherit pname version src;
-  };
+  extracted = pkgs.appimageTools.extractType2 { inherit pname version src; };
 
   t3code-appimage = pkgs.appimageTools.wrapType2 {
     inherit pname version src;
-    extraPkgs = pkgs:
-      with pkgs; [
+    extraPkgs =
+      pkgs: with pkgs; [
         libsecret
         libnotify
       ];
@@ -52,6 +47,7 @@
       fi
     '';
   };
-in {
-  home.packages = [t3code-appimage];
+in
+{
+  home.packages = [ t3code-appimage ];
 }

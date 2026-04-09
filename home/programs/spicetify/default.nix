@@ -1,14 +1,12 @@
 # Spicetify (Spotify client customizer) configuration.
-{
-  pkgs,
-  inputs,
-  ...
-}: let
+{ pkgs, inputs, ... }:
+let
   # Spicetify package set from the flake input
   spicePkgs = inputs.spicetify-nix.legacyPackages.${pkgs.stdenv.hostPlatform.system};
-in {
+in
+{
   # Import the Spicetify home-manager module
-  imports = [inputs.spicetify-nix.homeManagerModules.default];
+  imports = [ inputs.spicetify-nix.homeManagerModules.default ];
 
   # Disable Stylix integration for manual theme control
   stylix.targets.spicetify.enable = false;

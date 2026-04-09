@@ -35,13 +35,11 @@
     language = [
       {
         name = "go";
-        language-servers = [
-          "gopls"
-        ];
+        language-servers = [ "gopls" ];
         auto-format = true;
         formatter = {
           command = "gofumpt";
-          args = [];
+          args = [ ];
         };
         comment-token = "//";
       }

@@ -1,9 +1,6 @@
 # Tor service configuration for privacy and anonymity.
+{ config, lib, ... }:
 {
-  config,
-  lib,
-  ...
-}: {
   # Custom module options for Tor configuration
   options.mySystem.tor = {
     enable = lib.mkEnableOption "Tor service for privacy and anonymity";

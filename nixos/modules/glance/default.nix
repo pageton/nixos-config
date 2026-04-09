@@ -1,9 +1,5 @@
 # Glance self-hosted dashboard (localhost:8082).
-{
-  config,
-  lib,
-  ...
-}:
+{ config, lib, ... }:
 {
   options.mySystem.glance = {
     enable = lib.mkEnableOption "Glance dashboard";

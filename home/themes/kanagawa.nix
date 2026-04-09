@@ -7,7 +7,8 @@
   inputs,
   system,
   ...
-}: let
+}:
+let
   # Kanagawa Wave base16 palette — single source of truth.
   # Referenced by both Stylix and the wallpaper generator.
   palette = {
@@ -28,7 +29,8 @@
     base0E = "957FB8"; # Keywords, Diff Changed (oniViolet)
     base0F = "D27E99"; # Deprecated (sakuraPink)
   };
-in {
+in
+{
   # === Theme Options (typed submodule) ===
   options.theme = lib.mkOption {
     type = lib.types.submodule {
@@ -69,12 +71,21 @@ in {
           description = "Window border width in pixels.";
         };
         animation-speed = lib.mkOption {
-          type = lib.types.enum ["fast" "medium" "slow"];
+          type = lib.types.enum [
+            "fast"
+            "medium"
+            "slow"
+          ];
           default = "medium";
           description = "Animation speed preset.";
         };
         fetch = lib.mkOption {
-          type = lib.types.enum ["nerdfetch" "neofetch" "pfetch" "none"];
+          type = lib.types.enum [
+            "nerdfetch"
+            "neofetch"
+            "pfetch"
+            "none"
+          ];
           default = "none";
           description = "System fetch tool to display in terminal.";
         };
@@ -87,7 +98,10 @@ in {
           type = lib.types.submodule {
             options = {
               position = lib.mkOption {
-                type = lib.types.enum ["top" "bottom"];
+                type = lib.types.enum [
+                  "top"
+                  "bottom"
+                ];
                 default = "top";
                 description = "Bar position on screen.";
               };
@@ -108,12 +122,12 @@ in {
               };
             };
           };
-          default = {};
+          default = { };
           description = "Bar (Hyprpanel) configuration.";
         };
       };
     };
-    default = {};
+    default = { };
     description = "Theme configuration options.";
   };
 
@@ -151,7 +165,7 @@ in {
         nixcord.enable = false;
         zen-browser = {
           enable = true;
-          profileNames = ["default"];
+          profileNames = [ "default" ];
         };
       };
 

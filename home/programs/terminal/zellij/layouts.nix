@@ -7,7 +7,6 @@
   pkgs,
   ...
 }:
-
 let
   zjstatusConfig = ''
     pane size=1 borderless=true {
@@ -45,7 +44,8 @@ let
         tab_sync_indicator      " "
 
         datetime          " {format} "
-        datetime_format   "%H:%M  %d %b"
+        datetime_timezone "Etc/GMT-3"
+        datetime_format   "%I:%M %p  %d %b"
       }
     }
   '';

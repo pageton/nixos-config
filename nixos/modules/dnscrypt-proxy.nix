@@ -1,10 +1,7 @@
 # DNSCrypt-Proxy configuration for encrypted DNS.
 # Provides DNS over HTTPS/TLS to prevent DNS leaks and improve privacy.
+{ config, lib, ... }:
 {
-  config,
-  lib,
-  ...
-}: {
   # Custom module options for DNSCrypt-Proxy configuration
   options.mySystem.dnscryptProxy = {
     enable = lib.mkEnableOption "DNSCrypt-Proxy for encrypted DNS and DNS leak prevention";
@@ -18,7 +15,7 @@
 
       settings = {
         # Listen on localhost for DNS queries
-        listen_addresses = ["127.0.0.1:53"];
+        listen_addresses = [ "127.0.0.1:53" ];
 
         # Server names to use
         server_names = [

@@ -4,7 +4,8 @@
   lib,
   pkgs,
   ...
-}: {
+}:
+{
   # Custom module options for gaming configuration
   options.mySystem.gaming = {
     enable = lib.mkEnableOption "gaming support with Steam and related tools";

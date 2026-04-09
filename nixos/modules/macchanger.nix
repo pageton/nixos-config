@@ -5,7 +5,8 @@
   lib,
   pkgs,
   ...
-}: {
+}:
+{
   # Custom module options for MAC changer configuration
   options.mySystem.macchanger = {
     enable = lib.mkEnableOption "MAC address randomization on network interfaces at startup";
@@ -14,12 +15,12 @@
   # Configuration applied when MAC changer is enabled
   config = lib.mkIf config.mySystem.macchanger.enable {
     # Install macchanger package
-    environment.systemPackages = with pkgs; [macchanger];
+    environment.systemPackages = with pkgs; [ macchanger ];
 
     # Systemd service to randomize MAC on boot
     systemd.services.macchanger = {
       description = "Randomize MAC addresses on network interfaces";
-      wantedBy = ["network-pre.target"];
+      wantedBy = [ "network-pre.target" ];
       before = [
         "NetworkManager.service"
         "network.target"

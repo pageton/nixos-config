@@ -1,7 +1,8 @@
 # Nix package manager configuration (flakes, GC, etc.).
 # This module configures the Nix package manager with optimized settings
 # for performance, storage management, and development workflow.
-{inputs, ...}: {
+{ inputs, ... }:
+{
   nix = {
     # Define channels for legacy nix commands
     nixPath = [
@@ -30,7 +31,7 @@
       keep-outputs = true; # Keep build outputs for faster rebuilds
       keep-derivations = true; # Keep derivations for development
       sandbox = true; # Enable build sandboxing for security
-      trusted-users = ["sadiq"];
+      trusted-users = [ "sadiq" ];
       sandbox-fallback = false; # Don't fallback to non-sandboxed builds
 
       # Limit resource usage to prevent system overload

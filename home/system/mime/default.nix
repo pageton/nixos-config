@@ -1,22 +1,23 @@
 # Mime type associations for the system.
-{lib, ...}:
-with lib; let
+{ lib, ... }:
+with lib;
+let
   defaultApps = {
     # check desktop files here: `ls $(echo $XDG_DATA_DIRS| sed "s/:/ /g")`
-    browser = ["brave-browser.desktop"];
-    text = ["code.desktop"]; # Using VSCode as text editor
-    image = ["imv-dir.desktop"];
-    audio = ["mpv.desktop"];
-    video = ["mpv.desktop"];
-    directory = ["thunar.desktop"]; # Using Thunar as file manager
-    pdf = ["zathura.desktop"]; # Using Zathura as PDF viewer
-    terminal = ["Alacritty.desktop"]; # Using Alacritty as terminal
-    discord = ["discord.desktop"]; # Using Discord for Discord
-    archive = ["ark.desktop"]; # Using KDE Ark as archive manager
+    browser = [ "brave-browser.desktop" ];
+    text = [ "code.desktop" ]; # Using VSCode as text editor
+    image = [ "imv-dir.desktop" ];
+    audio = [ "mpv.desktop" ];
+    video = [ "mpv.desktop" ];
+    directory = [ "thunar.desktop" ]; # Using Thunar as file manager
+    pdf = [ "zathura.desktop" ]; # Using Zathura as PDF viewer
+    terminal = [ "Alacritty.desktop" ]; # Using Alacritty as terminal
+    discord = [ "discord.desktop" ]; # Using Discord for Discord
+    archive = [ "ark.desktop" ]; # Using KDE Ark as archive manager
   };
 
   mimeMap = {
-    text = ["text/plain"];
+    text = [ "text/plain" ];
     image = [
       "image/bmp"
       "image/gif"
@@ -47,7 +48,7 @@ with lib; let
       "video/x-matroska"
       "video/x-msvideo"
     ];
-    directory = ["inode/directory"];
+    directory = [ "inode/directory" ];
     browser = [
       "text/html"
       "x-scheme-handler/about"
@@ -67,8 +68,8 @@ with lib; let
     #   "application/vnd.ms-powerpoint"
     #   "application/rtf"
     # ];
-    pdf = ["application/pdf"];
-    terminal = ["terminal"];
+    pdf = [ "application/pdf" ];
+    terminal = [ "terminal" ];
     archive = [
       "application/zip"
       "application/x-rar"
@@ -77,14 +78,16 @@ with lib; let
       "application/gzip"
       "application/x-bzip2"
     ];
-    discord = ["x-scheme-handler/discord"];
+    discord = [ "x-scheme-handler/discord" ];
   };
 
-  associations = with lists;
-    listToAttrs (flatten (mapAttrsToList
-      (key: map (type: attrsets.nameValuePair type defaultApps."${key}"))
-      mimeMap));
-in {
+  associations =
+    with lists;
+    listToAttrs (
+      flatten (mapAttrsToList (key: map (type: attrsets.nameValuePair type defaultApps."${key}")) mimeMap)
+    );
+in
+{
   xdg = {
     configFile."mimeapps.list".force = true;
     mimeApps = {

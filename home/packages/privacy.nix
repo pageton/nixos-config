@@ -1,14 +1,12 @@
 # Privacy and opsec tools for anonymous browsing, secure communication,
 # metadata removal, and network privacy.
-{
-  pkgs,
-  pkgsStable,
-}:
+{ pkgs, pkgsStable }:
 let
-  eglWrap = import ./_egl-wrap.nix {inherit pkgs;};
+  eglWrap = import ./_egl-wrap.nix { inherit pkgs; };
   inherit (eglWrap) wrapWithMesaEgl;
 in
-with pkgsStable; [
+with pkgsStable;
+[
   # === Privacy-Focused Browsers (Mesa EGL wrapped for NVIDIA) ===
   (wrapWithMesaEgl "librewolf" librewolf)
   pkgs.tor # Tor client and service
