@@ -36,14 +36,11 @@
     flatpak = {
       enable = true;
     };
-    mullvadVpn = {
-      enable = false;
-    };
     tor = {
       enable = true;
     };
     dnscryptProxy = {
-      enable = true;
+      enable = false;
     };
     netdata = {
       enable = true;
