@@ -1,7 +1,5 @@
 # Zsh initContent: shell functions, environment setup, and sops-enabled agent wrappers.
-
 { constants, ... }:
-
 {
   programs.zsh.initContent = ''
     # === LS_COLORS ===
@@ -22,49 +20,60 @@
     fi
 
     # Sops-enabled agent wrappers
-    _load_zai_key() {
-      local key_file="/run/secrets/zai_api_key"
-      if [[ -f "$key_file" ]]; then
-        cat "$key_file"
-        return 0
+    _load_secret() {
+      local key_file="/run/secrets/$1"
+      if [[ ! -f "$key_file" ]]; then
+        echo "Error: $key_file not found. Run 'just nixos' to decrypt secrets." >&2
+        return 1
       fi
-
-      key_file="$HOME/.config/sops-nix/secrets/zai_api_key"
-      if [[ -f "$key_file" ]]; then
-        cat "$key_file"
-        return 0
-      fi
-
-      echo "Error: zai_api_key not found in /run/secrets or ~/.config/sops-nix/secrets. Run 'just nixos'." >&2
-      return 1
+      cat "$key_file"
     }
+
+    _load_zai_key() { _load_secret zai_api_key; }
+    _load_openrouter_key() { _load_secret openrouter_api_key; }
 
     # === AI agent wrappers ===
     claude_glm() {
       local key; key="$(_load_zai_key)" || return 1
       ANTHROPIC_AUTH_TOKEN="$key" \
-      ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic" \
+      ANTHROPIC_BASE_URL="${constants.services.zai.apiRoot}/anthropic" \
       API_TIMEOUT_MS="3000000" \
-      ANTHROPIC_DEFAULT_HAIKU_MODEL="glm-4.5-air" \
-      ANTHROPIC_DEFAULT_SONNET_MODEL="glm-5" \
-      ANTHROPIC_DEFAULT_OPUS_MODEL="glm-5" \
+      ANTHROPIC_DEFAULT_HAIKU_MODEL="glm-5-turbo" \
+      ANTHROPIC_DEFAULT_SONNET_MODEL="glm-5.1" \
+      ANTHROPIC_DEFAULT_OPUS_MODEL="glm-5.1" \
+      CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1 \
       claude --dangerously-skip-permissions "$@"
     }
 
+    _opencode_profile() {
+      local profile="$1"
+      shift
+      OPENCODE_CONFIG_DIR="$HOME/.config/opencode-$profile" opencode "$@"
+    }
+
     opencode_glm() {
-      OPENCODE_CONFIG_DIR="$HOME/.config/opencode-glm" opencode --model zai-coding-plan/glm-5.1 "$@"
+      _opencode_profile "glm" "$@"
     }
 
     opencode_gemini() {
-      OPENCODE_CONFIG_DIR="$HOME/.config/opencode-gemini" opencode "$@"
+      _opencode_profile "gemini" "$@"
     }
 
     opencode_gpt() {
-      OPENCODE_CONFIG_DIR="$HOME/.config/opencode-gpt" opencode "$@"
+      _opencode_profile "gpt" "$@"
+    }
+
+    opencode_openrouter() {
+      local key; key="$(_load_openrouter_key)" || return 1
+      OPENROUTER_API_KEY="$key" _opencode_profile "openrouter" "$@"
     }
 
     opencode_sonnet() {
-      OPENCODE_CONFIG_DIR="$HOME/.config/opencode-sonnet" opencode "$@"
+      _opencode_profile "sonnet" "$@"
+    }
+
+    opencode_zen() {
+      _opencode_profile "zen" "$@"
     }
 
     # === AI multi-pane launcher ===
@@ -120,7 +129,7 @@
           # Build command with prompt injection per agent family
           if [[ -n "$prompt" ]]; then
             case "$agent" in
-              oc|ocglm|ocgem|ocgpt|ocs|ocf|ocrun|occm|ocrf|ocsa|ocmd|opencode*)
+              oc|ocglm|ocgem|ocgpt|ocor|ocs|oczen|ocf|ocrun|occm|ocrf|ocsa|ocmd|opencode*)
                 cmd="$agent --prompt '$kdl_prompt'" ;;
               *)
                 cmd="$agent '$kdl_prompt'" ;;
