@@ -59,11 +59,6 @@
       homeStateVersion = "25.11";
       user = "sadiq";
       constants = import ./shared/constants.nix;
-      gitConfig = {
-        name = "Sadiq";
-        email = "pageton@proton.me";
-        signingKey = "5684AD6E4045F283";
-      };
       pkgs = import nixpkgs {
         inherit system;
         config = {
@@ -103,10 +98,7 @@
       };
 
       makeSystem =
-        {
-          hostname,
-          stateVersion,
-        }:
+        { hostname, stateVersion }:
         nixpkgs.lib.nixosSystem {
           inherit system;
           specialArgs = {
@@ -116,12 +108,10 @@
               hostname
               user
               pkgsStable
-              gitConfig
+              constants
               ;
           };
-          modules = [
-            ./hosts/${hostname}/configuration.nix
-          ];
+          modules = [ ./hosts/${hostname}/configuration.nix ];
         };
 
       makeHome =
@@ -136,7 +126,6 @@
               pkgsStable
               system
               hostname
-              gitConfig
               constants
               ;
           };

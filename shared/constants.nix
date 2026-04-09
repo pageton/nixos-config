@@ -8,7 +8,6 @@
 # Usage (in Home Manager modules):
 #   { constants, ... }:
 #   { config.programs.alacritty.settings.font.normal.family = constants.font.mono; }
-
 {
   # User Identity (Git, GitHub, Contact)
   user = {
@@ -83,5 +82,12 @@
     layout = "us,ara";
     variant = ",qwerty";
     options = "grp:caps_toggle,grp_led:caps";
+  };
+
+  # External service API endpoints.
+  services = {
+    zai = {
+      apiRoot = "https://api.z.ai/api"; # Z.AI API root (Anthropic-compatible + MCP)
+    };
   };
 }

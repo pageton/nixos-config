@@ -1,5 +1,19 @@
 secrets/secrets-decrypted.yaml
 home/secrets/secrets-decrypted.yaml
+*-decrypted.*
 
 /tmp/lab_traffic.flows
 *.flows
+.claude
+.claude/
+.mcp.json
+.omc/
+
+# Secret file patterns
+*.key
+*.pem
+*.p12
+.env
+.env.*
+id_rsa
+id_ed25519
