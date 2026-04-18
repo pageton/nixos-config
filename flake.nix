@@ -44,11 +44,20 @@
       url = "github:abhixdd/ghgrab/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    zellij-tui = {
+      url = "github:pageton/zellij-tui";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
     {
-      # self,
+      # self omitted — not currently needed. Add back as a parameter to access:
+      #   self.lastModifiedDate — for version strings
+      #   self.outPath          — for embedding repo path
+      #   self.rev              — for git revision in prompts
+      # Pattern: add `self` to the destructured inputs, then pass
+      # `inherit (self) outPath lastModifiedDate;` via specialArgs.
       nixpkgs,
       nixpkgs-stable,
       home-manager,
@@ -59,17 +68,27 @@
       homeStateVersion = "25.11";
       user = "sadiq";
       constants = import ./shared/constants.nix;
+      nixpkgsConfig = {
+        allowUnfree = true; # Allow proprietary packages
+        allowBroken = false; # Don't allow broken packages
+        allowInsecure = false; # Don't allow insecure packages
+        allowUnsupportedSystem = false; # Don't allow unsupported systems
+      };
       pkgs = import nixpkgs {
         inherit system;
-        config = {
-          allowUnfree = true; # Allow proprietary packages
-          allowBroken = false; # Don't allow broken packages
-          allowInsecure = false; # Don't allow insecure packages
-          allowUnsupportedSystem = false; # Don't allow unsupported systems
-        };
+        config = nixpkgsConfig;
         overlays = [
           inputs.niri.overlays.niri
           (final: prev: {
+            # Disable tests for font-related Python packages that fail on NixOS.
+            # These packages have network-based or font-rendering tests that don't
+            # work in the Nix build sandbox. The packages themselves are fine.
+            #
+            # TODO: Track upstream fixes and remove overrides when tests pass.
+            #   - picosvg: https://github.com/google/picosvg/issues
+            #   - nanoemoji: https://github.com/googlefonts/nanoemoji/issues
+            #   - gftools: https://github.com/googlefonts/gftools/issues
+            # Review periodically (e.g. on each nixpkgs update).
             python3Packages = prev.python3Packages.overrideScope (
               pyFinal: pyPrev: {
                 picosvg = pyPrev.picosvg.overridePythonAttrs (_: {
@@ -89,12 +108,7 @@
 
       pkgsStable = import nixpkgs-stable {
         inherit system;
-        config = {
-          allowUnfree = true;
-          allowBroken = false;
-          allowInsecure = false;
-          allowUnsupportedSystem = false;
-        };
+        config = nixpkgsConfig;
       };
 
       makeSystem =
@@ -137,16 +151,8 @@
           ];
         };
 
-      hosts = [
-        {
-          hostname = "desktop";
-          stateVersion = "25.11";
-        }
-        {
-          hostname = "thinkpad";
-          stateVersion = "25.11";
-        }
-      ];
+      # Single source of truth — edit hosts/_inventory.nix to add/remove hosts.
+      hosts = import ./hosts/_inventory.nix;
     in
     {
       nixosConfigurations = nixpkgs.lib.foldl' (
