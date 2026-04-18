@@ -7,7 +7,7 @@
 #
 # Usage (in Home Manager modules):
 #   { constants, ... }:
-#   { config.programs.alacritty.settings.font.normal.family = constants.font.mono; }
+#   { config.programs.alacritty.settings.font.normal.family = constants.font.monoNerd; }
 {
   # User Identity (Git, GitHub, Contact)
   user = {
@@ -20,7 +20,7 @@
 
   # Terminal emulator
   terminal = "alacritty";
-  terminalAppId = "Alacritty";
+  terminalAppId = "org.alacritty.Alacritty"; # Wayland app-id — used in window rules and dock
 
   # Default text editor
   editor = "nvim";
@@ -28,53 +28,57 @@
 
   # Fonts
   font = {
-    mono = "JetBrains Mono Nerd Font";
+    mono = "JetBrains Mono";
+    monoNerd = "JetBrainsMono Nerd Font";
     size = 13;
+    sizeApplications = 11;
   };
 
-  # Theme (Kanagawa Wave)
-  theme = "kanagawa-wave";
+  # Theme identifiers (used for reference/fetch tools).
+  # Stylix theming and custom modules all use Catppuccin Mocha.
+  theme = "catppuccin-mocha";
+  palette = "catppuccin-mocha";
 
-  # Kanagawa Wave color palette
+  # Catppuccin Mocha color palette
   # Mapped to the same semantic structure for compatibility with ai-agents and other modules.
-  # Palette reference: https://github.com/rebelot/kanagawa.nvim
+  # Palette reference: https://github.com/catppuccin/catppuccin
   color = {
-    # Background shades (Kanagawa Wave ink colors)
-    bg_hard = "#16161D"; # sumiInk0 — darkest background
-    bg = "#1F1F28"; # sumiInk1 — main background
-    bg_soft = "#2A2A37"; # sumiInk2 — slightly lighter
-    bg0 = "#363646"; # sumiInk3 — surface
-    bg1 = "#54546D"; # sumiInk4 — elevated surface
+    # Background shades
+    bg_hard = "#11111B"; # crust — darkest background
+    bg = "#1E1E2E"; # base — main background
+    bg_soft = "#313244"; # surface0 — slightly lighter
+    bg0 = "#45475A"; # surface1 — surface
+    bg1 = "#585B70"; # surface2 — elevated surface
     # Foreground shades
-    fg0 = "#DCD7BA"; # fujiWhite — primary foreground
-    fg_dark = "#54546D"; # sumiInk4
-    fg = "#727169"; # fujiGray
-    fg_light = "#C8C093"; # oldWhite
+    fg0 = "#CDD6F4"; # text — primary foreground
+    fg_dark = "#585B70"; # surface2
+    fg = "#A6ADC8"; # overlay0
+    fg_light = "#BAC2DE"; # subtext1
 
-    # Accent colors (Kanagawa Wave palette)
-    red = "#C34043"; # autumnRed
-    red_dim = "#E46876"; # waveRed
+    # Accent colors (Catppuccin Mocha palette)
+    red = "#F38BA8"; # red
+    red_dim = "#EBA0AC"; # maroon
 
-    green = "#76946A"; # autumnGreen
-    green_dim = "#98BB6C"; # springGreen
+    green = "#A6E3A1"; # green
+    green_dim = "#94E2D5"; # teal
 
-    yellow = "#C0A36E"; # boatYellow2
-    yellow_dim = "#E6C384"; # carpYellow
+    yellow = "#F9E2AF"; # yellow
+    yellow_dim = "#F5C2E7"; # pink
 
-    blue = "#7E9CD8"; # crystalBlue
-    blue_dim = "#7FB4CA"; # springBlue
+    blue = "#89B4FA"; # blue
+    blue_dim = "#74C7EC"; # sky
 
-    purple = "#957FB8"; # oniViolet
-    purple_dim = "#938AA9"; # springViolet1
+    purple = "#CBA6F7"; # mauve
+    purple_dim = "#F5C2E7"; # pink
 
-    aqua = "#6A9589"; # waveAqua1
-    aqua_dim = "#7AA89F"; # waveAqua2
+    aqua = "#94E2D5"; # teal
+    aqua_dim = "#89DCEB"; # sapphire
 
-    orange = "#FFA066"; # surimiOrange
-    orange_dim = "#DCA561"; # autumnYellow
+    orange = "#FAB387"; # peach
+    orange_dim = "#EBA0AC"; # maroon
 
-    gray = "#727169"; # fujiGray
-    gray_dim = "#54546D"; # sumiInk4
+    gray = "#A6ADC8"; # overlay0
+    gray_dim = "#585B70"; # surface2
   };
 
   # Keyboard layout (XKB)
@@ -84,10 +88,36 @@
     options = "grp:caps_toggle,grp_led:caps";
   };
 
+  # Mullvad SOCKS5 proxy endpoints for browser profiles.
+  # Never mix proxies - each profile gets a dedicated exit.
+  proxies = {
+    brave = {
+      personal = "fi-hel-wg-socks5-001.relays.mullvad.net"; # Finland
+    };
+  };
+
+  # Service ports — single source of truth for localhost services.
+  ports = {
+    activitywatch = 5600;
+    vnc = 5900;
+    vnc-web = 6080;
+  };
+
+  # Paths relative to HOME for repo-local resources.
+  paths = {
+    scripts = "System/scripts";
+  };
+
   # External service API endpoints.
   services = {
     zai = {
       apiRoot = "https://api.z.ai/api"; # Z.AI API root (Anthropic-compatible + MCP)
+      timeout = 3000000; # API timeout in ms
+      models = {
+        haiku = "glm-5-turbo";
+        sonnet = "glm-5.1";
+        opus = "glm-5.1";
+      };
     };
   };
 }
