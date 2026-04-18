@@ -1,4 +1,4 @@
-# Main NixOS configuration for the 'pc' host.
+# Main NixOS configuration for the 'desktop' host.
 {
   pkgs,
   stateVersion,
@@ -58,6 +58,9 @@
       enable = true;
     };
     macchanger = {
+      enable = true;
+    };
+    mullvadVpn = {
       enable = true;
     };
   };

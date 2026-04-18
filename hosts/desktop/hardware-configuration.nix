@@ -11,41 +11,45 @@
 {
   imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
-  boot.initrd.availableKernelModules = [
-    "nvme"
-    "xhci_pci"
-    "ahci"
-    "usbhid"
-    "usb_storage"
-    "sd_mod"
-  ];
-  boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ "kvm-amd" ];
-  boot.extraModulePackages = [ ];
-
-  fileSystems."/" = {
-    device = "/dev/disk/by-uuid/ce662159-cd70-41b0-99f8-0e2249ae9002";
-    fsType = "ext4";
+  boot = {
+    initrd.availableKernelModules = [
+      "nvme"
+      "xhci_pci"
+      "ahci"
+      "usbhid"
+      "usb_storage"
+      "sd_mod"
+    ];
+    initrd.kernelModules = [ ];
+    kernelModules = [ "kvm-amd" ];
+    extraModulePackages = [ ];
   };
 
-  fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/4533-F0A9";
-    fsType = "vfat";
-    options = [
-      "fmask=0077"
-      "dmask=0077"
-    ];
-  };
+  fileSystems = {
+    "/" = {
+      device = "/dev/disk/by-uuid/ce662159-cd70-41b0-99f8-0e2249ae9002";
+      fsType = "ext4";
+    };
 
-  fileSystems."/mnt/data" = {
-    device = "/dev/disk/by-uuid/E6CE3D4CCE3D15F1";
-    fsType = "ntfs-3g";
-    options = [
-      "defaults"
-      "uid=1000"
-      "gid=1000"
-      "umask=077"
-    ];
+    "/boot" = {
+      device = "/dev/disk/by-uuid/4533-F0A9";
+      fsType = "vfat";
+      options = [
+        "fmask=0077"
+        "dmask=0077"
+      ];
+    };
+
+    "/mnt/data" = {
+      device = "/dev/disk/by-uuid/E6CE3D4CCE3D15F1";
+      fsType = "ntfs-3g";
+      options = [
+        "defaults"
+        "uid=1000"
+        "gid=1000"
+        "umask=077"
+      ];
+    };
   };
 
   swapDevices = [ ];

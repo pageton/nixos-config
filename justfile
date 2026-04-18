@@ -26,22 +26,22 @@ lint:
 # Check all missing imports
 modules:
     @echo -e "\n➤ Checking modules"
-    @nix run nixpkgs#time -- -f "⏱ Completed in %E" ./scripts/build/modules-check.sh
+    @nix run nixpkgs#time -- -f "⏱ Completed in %E" bash ./scripts/build/modules-check.sh
 
 # Security-focused repository checks
 security:
     @echo -e "\n➤ Running security audit"
-    @nix run nixpkgs#time -- -f "⏱ Completed in %E" ./scripts/build/security-audit.sh
+    @nix run nixpkgs#time -- -f "⏱ Completed in %E" bash ./scripts/build/security-audit.sh
 
 # Performance diagnostics (boot/session/report)
 perf top="15":
     @echo -e "\n➤ Running performance audit"
-    @nix run nixpkgs#time -- -f "⏱ Completed in %E" ./scripts/build/performance-audit.sh {{top}}
+    @nix run nixpkgs#time -- -f "⏱ Completed in %E" bash ./scripts/build/performance-audit.sh {{top}}
 
 # Systemd service hardening exposure report
 hardening:
     @echo -e "\n➤ Running systemd hardening audit"
-    @nix run nixpkgs#time -- -f "⏱ Completed in %E" ./scripts/build/systemd-hardening-audit.sh
+    @nix run nixpkgs#time -- -f "⏱ Completed in %E" bash ./scripts/build/systemd-hardening-audit.sh
 
 # Evaluate flake outputs without switching
 check:
@@ -51,12 +51,12 @@ check:
 # Measure evaluation time for core flake outputs
 eval-audit target="all":
     @echo -e "\n➤ Running evaluation audit"
-    @nix run nixpkgs#time -- -f "⏱ Completed in %E" ./scripts/build/eval-audit.sh {{target}}
+    @nix run nixpkgs#time -- -f "⏱ Completed in %E" bash ./scripts/build/eval-audit.sh {{target}}
 
 # Fast eval timing for the current host only
 eval-current:
     @echo -e "\n➤ Running current-host evaluation audit"
-    @nix run nixpkgs#time -- -f "⏱ Completed in %E" ./scripts/build/eval-audit.sh {{host}}
+    @nix run nixpkgs#time -- -f "⏱ Completed in %E" bash ./scripts/build/eval-audit.sh {{host}}
 
 # Switch Home-Manager generation
 home:
@@ -85,8 +85,21 @@ qa:
 qa-fast:
     @echo -e "\n➤ Running fast local QA (current host, no switch)…"
     {{JUST}} modules
-    {{JUST}} security
-    {{JUST}} eval-current
+    @tmp_dir="$(mktemp -d)"; \
+    trap 'rm -rf "${tmp_dir}"' EXIT; \
+    {{JUST}} security >"${tmp_dir}/security.log" 2>&1 & \
+    security_pid=$!; \
+    {{JUST}} eval-current >"${tmp_dir}/eval-current.log" 2>&1 & \
+    eval_pid=$!; \
+    security_status=0; \
+    eval_status=0; \
+    wait "${security_pid}" || security_status=$?; \
+    wait "${eval_pid}" || eval_status=$?; \
+    cat "${tmp_dir}/security.log"; \
+    cat "${tmp_dir}/eval-current.log"; \
+    if [ "${security_status}" -ne 0 ] || [ "${eval_status}" -ne 0 ]; then \
+      exit 1; \
+    fi
 
 # All of the above, in order
 all:
@@ -125,40 +138,49 @@ clean:
 	@echo -e "✔ Cleanup completed!"
 
 # Edit secrets with SOPS
+# Decrypted file is written to XDG_RUNTIME_DIR (tmpfs) so plaintext never touches disk.
+# If interrupted, the OS reclaims tmpfs automatically — no cleanup needed.
 sops-edit:
     @echo -e "\n➤ Editing secrets with SOPS…"
-    @echo "Decrypting secrets..."
-    @sops --decrypt secrets/secrets.yaml > secrets/secrets-decrypted.yaml
-    @echo "Opening VS Code (close the tab/window when done editing)..."
-    @code --wait secrets/secrets-decrypted.yaml
-    @echo "Encrypting secrets back..."
-    @sops --encrypt secrets/secrets-decrypted.yaml > secrets/secrets.yaml
-    @rm secrets/secrets-decrypted.yaml
-    @echo "✔ Encrypted and cleaned up!"
+    @DEC_FILE="$${XDG_RUNTIME_DIR:-/tmp}/secrets-decrypted-$$(date +%s).yaml"; \
+    sops --decrypt secrets/secrets.yaml > "$$DEC_FILE"; \
+    echo "Opening editor (close when done)..."; \
+    code --wait "$$DEC_FILE"; \
+    sops --encrypt "$$DEC_FILE" > secrets/secrets.yaml; \
+    rm -f "$$DEC_FILE"; \
+    echo "✔ Encrypted and cleaned up!"
 
 # View decrypted secrets (read-only)
 sops-view:
-	@echo -e "\n➤ Viewing decrypted secrets…"
-	sops --decrypt secrets/secrets.yaml
+    @echo -e "\n➤ Viewing decrypted secrets…"
+    sops --decrypt secrets/secrets.yaml
 
-# Decrypt secrets to file for manual editing
+# Decrypt secrets to tmpfs for manual editing
+# Decrypted file lives in XDG_RUNTIME_DIR (tmpfs) — never written to persistent disk.
 sops-decrypt:
-	@echo -e "\n➤ Decrypting secrets to secrets/secrets-decrypted.yaml…"
-	sops --decrypt secrets/secrets.yaml > secrets/secrets-decrypted.yaml
-	@echo "Edit secrets/secrets-decrypted.yaml then run: just sops-encrypt"
+    @echo -e "\n➤ Decrypting secrets to tmpfs…"
+    @DEC_FILE="$${XDG_RUNTIME_DIR:-/tmp}/secrets-decrypted.yaml"; \
+    sops --decrypt secrets/secrets.yaml > "$$DEC_FILE"; \
+    echo "Decrypted to $$DEC_FILE"; \
+    echo "Edit the file then run: just sops-encrypt"
 
 # Encrypt file back to secrets
 sops-encrypt:
-	@echo -e "\n➤ Encrypting secrets/secrets-decrypted.yaml to secrets/secrets.yaml…"
-	sops --encrypt secrets/secrets-decrypted.yaml > secrets/secrets.yaml
-	@rm secrets/secrets-decrypted.yaml
-	@echo "✔ Encrypted and cleaned up!"
+    @echo -e "\n➤ Encrypting decrypted secrets back…"
+    @DEC_FILE="$${XDG_RUNTIME_DIR:-/tmp}/secrets-decrypted.yaml"; \
+    if [ ! -f "$$DEC_FILE" ]; then echo "Error: $$DEC_FILE not found. Run 'just sops-decrypt' first."; exit 1; fi; \
+    sops --encrypt "$$DEC_FILE" > secrets/secrets.yaml; \
+    rm -f "$$DEC_FILE"; \
+    echo "✔ Encrypted and cleaned up!"
 
-# Add a single secret
-secrets-add key value:
-	@echo -e "\n➤ Adding secret: {{key}} = {{value}}"
-	sops --set '["{{key}}"] "{{value}}"' secrets/secrets.yaml
-	@echo "✔ Secret added!"
+# Add a single secret (value read from stdin — never leaks to shell history)
+# Usage: echo "my_secret_value" | just secrets-add my_key
+#    OR: just secrets-add my_key  (then type value, press Enter)
+secrets-add key:
+    @echo -e "\n➤ Adding secret: {{key}}"
+    @echo -n "Enter value (hidden): "; read -rs value; echo; \
+    sops --set '["{{key}}"] "'"$$value"'"' secrets/secrets.yaml
+    @echo "✔ Secret added!"
 
 # Setup SOPS age key
 sops-setup:

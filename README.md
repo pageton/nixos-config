@@ -73,29 +73,29 @@ cp -r desktop myhost  # or thinkpad/server as template
 cp /etc/nixos/hardware-configuration.nix hosts/myhost/
 ```
 
-4. **Add the new host to `flake.nix`:**
-Open `flake.nix` and add your new host to the `hosts` list:
+4. **Update personal settings in `shared/constants.nix`:**
+Edit `shared/constants.nix` to set your identity (name, email, GitHub handle, GPG signing key) and preferences (terminal, editor, fonts, keyboard layout, theme colors).
+
+5. **Add the new host to `hosts/_inventory.nix`:**
+Open `hosts/_inventory.nix` and append your new host:
 ```nix
-hosts = [
-  # ... existing hosts ...
-  {
-    hostname = "myhost";
-    stateVersion = "25.11";
-  }
-];
+{
+  hostname = "myhost";
+  stateVersion = "25.11";
+}
 ```
 
-5. **Set your hostname:**
+6. **Set your hostname:**
 ```bash
 sudo hostnamectl set-hostname myhost
 ```
 
-6. **Setup SOPS encryption key** (if not already done):
+7. **Setup SOPS encryption key** (if not already done):
 ```bash
 just sops-setup
 ```
 
-7. **Deploy the system:**
+8. **Deploy the system:**
 ```bash
 # For the new host (using nh)
 nh os switch --flake ~/System#myhost
@@ -117,12 +117,21 @@ System/
 ├── flake.nix                    # Main flake definition
 ├── justfile                     # Task automation commands
 ├── .sops.yaml                   # SOPS encryption config
+├── shared/                      # Cross-boundary shared Nix helpers
+│   ├── constants.nix            # Single source of truth (user, fonts, colors, keyboard, ports)
+│   ├── _option-helpers.nix      # Typed option constructors (mkBoolOption, mkStrOption, etc.)
+│   ├── _alias-helpers.nix       # Shared shell alias injection for zsh/bash
+│   └── _secret-loader.nix       # Shell function to load SOPS secrets from /run/secrets/
 ├── scripts/                     # Repository-level audit and lab scripts
 │   ├── build/                   # modules/security/performance audit scripts
-│   ├── android-lab/             # Android reverse-engineering lab helpers
-│   └── lib/                     # Shared shell helpers (logging)
+│   ├── ai/                      # AI agent launchers, inventory, and log analysis
+│   ├── apps/                    # Desktop app wrappers (browser-select, youtube-mpv, etc.)
+│   ├── system/                  # System health report collectors
+│   ├── sops/                    # SOPS editing helpers
+│   └── lib/                     # Shared shell helpers (logging, testing, AWK)
 │
 ├── hosts/                       # Host-specific configurations
+│   ├── _inventory.nix           # Host list (currently unused — see file header)
 │   ├── desktop/                 # Desktop PC configuration
 │   │   ├── configuration.nix
 │   │   ├── hardware-configuration.nix
@@ -133,16 +142,22 @@ System/
 │   │   ├── hardware-configuration.nix
 │   │   ├── local-packages.nix
 │
-├── nixos/modules/               # Shared NixOS system modules
-│   ├── default.nix              # Module loader
-│   ├── audio.nix                # PipeWire audio
-│   ├── bluetooth.nix            # Bluetooth support
-│   ├── bootloader.nix           # System boot loader
-│   ├── gaming.nix               # Gaming optimizations
-│   ├── graphics.nix             # Graphics drivers
-│   ├── niri.nix                 # Niri compositor
-│   ├── networking.nix           # Network configuration
-│   ├── security.nix             # Security settings
+├── nixos/modules/               # Shared NixOS system modules (two-level pattern)
+│   ├── default.nix              # Root loader — imports category directories
+│   ├── core/                    # Boot, Nix daemon, users, SOPS, timezone, locale, stability
+│   │   └── default.nix          #   Imports flat .nix files from parent dir
+│   ├── hardware/                # Audio, Bluetooth, GPU, input, power, thermal
+│   ├── desktop/                 # Niri, SDDM, X11 disabled, XDG portals
+│   ├── network/                 # NetworkManager, DNSCrypt, Mullvad, Tailscale, Tor
+│   ├── security-stack/          # Kernel hardening, Firejail, OpenSnitch, MAC randomization
+│   ├── apps/                    # Browser deps, Flatpak, Gaming, KDE Connect, Syncthing
+│   ├── virtualization/          # Docker, VirtualBox, libvirt, Waydroid, nix-ld
+│   ├── observability/           # Monitoring, Netdata, Scrutiny, Glance, Loki
+│   ├── performance/             # Boot optimization
+│   ├── maintenance/             # Cleanup timers, Restic backup, nh
+│   │
+│   ├── bootloader.nix           # (flat files imported by category default.nix)
+│   ├── security.nix             # Kernel/sysctl hardening, firewall, AIDE, Chrony, AppArmor
 │   └── ...                      # Other system modules
 │
 └── home/                        # Home-Manager user configuration
@@ -171,7 +186,7 @@ System/
     │   └── ...
     │
     ├── themes/                  # Theme configurations
-    │   └── kanagawa.nix         # Kanagawa + Stylix
+    │   └── catppuccin.nix     # Catppuccin Mocha + Stylix theming
     │
     └── scripts/                 # User scripts
         ├── ai/                  # AI helper scripts
@@ -191,9 +206,9 @@ This configuration uses the following flakes:
 | **nixpkgs-stable** | NixOS 25.11 stable packages |
 | **home-manager** | User environment management |
 | **sops-nix** | Secret management with age encryption |
-| **stylix** | System theming (Catppuccin theme) |
+| **stylix** | System theming (Catppuccin Mocha theme) |
 | **spicetify-nix** | Spotify customization |
-| **niri** | Niri compositor module/overlay |
+| **niri** | Niri compositor module/overlay (does NOT follow nixpkgs — pinned mesa version required for compatibility) |
 | **noctalia** | Noctalia shell integration |
 | **nixcord** | Discord theming |
 | **nvf** | Neovim configuration framework |
@@ -207,6 +222,18 @@ This configuration uses the following flakes:
 This repository uses [`just`](https://github.com/casey/just) as a command runner to simplify common tasks.
 
 ### Daily Workflow
+
+### Git Hooks
+
+The repository includes pre-commit and pre-push hooks for automated quality checks:
+
+```bash
+# Install pre-commit hook (runs modules-check + lint + format before each commit)
+ln -sf ../../scripts/build/pre-commit-hook.sh .git/hooks/pre-commit
+
+# Install pre-push hook (enforces GPG-signed commits)
+ln -sf ../../scripts/build/pre-push-hook.sh .git/hooks/pre-push
+```
 
 ### Essential Commands
 
@@ -265,8 +292,12 @@ just sops-view
 
 # Edit secrets
 just sops-edit
+# NOTE: If interrupted, a decrypted file may remain on disk.
+# The .gitignore pattern *-decrypted.* prevents accidental commits.
 
 # Add single secret
+# WARNING: The value will be stored in shell history.
+# For sensitive values, use `just sops-edit` instead.
 just secrets-add github_token ghp_your_token_here
 ```
 
@@ -340,35 +371,48 @@ mkdir -p hosts/myhost/modules
 sudo nixos-generate-config --root /mnt --show-hardware-config > hosts/myhost/hardware-configuration.nix
 ```
 
-4. Add to `flake.nix` hosts list:
+4. Add to `hosts/_inventory.nix`:
 ```nix
-hosts = [
-  # ... existing hosts ...
-  {
-    hostname = "myhost";
-    stateVersion = "25.11";
-  }
-];
+{
+  hostname = "myhost";
+  stateVersion = "25.11";
+}
 ```
 
 ### Adding NixOS Modules
 
-1. Create module file in `nixos/modules/`:
+1. Create module file in `nixos/modules/` (flat file alongside existing ones):
 ```nix
 # nixos/modules/my-module.nix
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 {
-  # Your configuration here
+  # Define options under mySystem.* for per-host opt-in
+  options.mySystem.myModule = {
+    enable = lib.mkEnableOption "my custom module";
+  };
+
+  config = lib.mkIf config.mySystem.myModule.enable {
+    # Your configuration here
+  };
 }
 ```
 
-2. Import in `nixos/modules/default.nix`:
+2. Import it from the appropriate category `default.nix` (e.g., `nixos/modules/core/default.nix`):
 ```nix
-[
-  # ... existing modules ...
-  ./my-module.nix
-]
+{
+  imports = [
+    # ... existing modules ...
+    ../my-module.nix
+  ];
+}
 ```
+
+3. Enable it in the host configuration (e.g., `hosts/desktop/configuration.nix`):
+```nix
+mySystem.myModule.enable = true;
+```
+
+4. Run `just modules` to verify the import is detected.
 
 ### Adding Home-Manager Programs
 
@@ -424,7 +468,7 @@ config = lib.mkIf (hostname == "desktop") {
 
 - **Compositor**: Niri (Wayland)
 - **Shell**: Noctalia (bar, launcher, control center, notifications)
-- **Theme**: Kanagawa via Stylix
+- **Theme**: Catppuccin Mocha via Stylix
 - **Screen Locker**: swaylock + Noctalia lock integration
 - **Clipboard stack**: wl-paste + cliphist + wl-clip-persist
 
