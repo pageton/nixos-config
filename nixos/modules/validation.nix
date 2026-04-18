@@ -54,10 +54,8 @@
     }
 
     {
-      assertion =
-        !config.mySystem.sandboxing.enable
-        || config.boot.kernel.sysctl."kernel.unprivileged_userns_clone" == 1;
-      message = "Sandboxing requires unprivileged user namespaces (boot.kernel.sysctl.'kernel.unprivileged_userns_clone' = 1).";
+      assertion = !config.mySystem.sandboxing.enable || config.mySystem.sandboxing.enableUserNamespaces;
+      message = "Sandboxing requires enableUserNamespaces = true when sandboxing is enabled.";
     }
 
     # === Network Service Security ===

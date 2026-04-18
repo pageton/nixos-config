@@ -66,7 +66,7 @@
                 {
                   type = "markets";
                   hide-header = true;
-                  markets = markets;
+                  inherit markets;
                 }
               ];
 

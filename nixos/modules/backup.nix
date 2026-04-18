@@ -27,8 +27,7 @@
   config = lib.mkIf config.mySystem.backup.enable {
     services.restic.backups.home = {
       initialize = true;
-      passwordFile = config.mySystem.backup.passwordFile;
-      inherit (config.mySystem.backup) repository;
+      inherit (config.mySystem.backup) passwordFile repository;
 
       user = "root";
 

@@ -24,6 +24,6 @@
 
   # niri-flake's user service runs outside the compositor session on this host,
   # causing polkit-gnome to loop with "No session for pid". Start the agent
-  # from Niri startup (home/system/niri/default.nix) instead.
+  # from Niri startup (home/desktop/niri/default.nix) instead.
   systemd.user.services.niri-flake-polkit.enable = lib.mkForce false;
 }

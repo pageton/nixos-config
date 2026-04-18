@@ -49,6 +49,10 @@
         owner = user;
         mode = "0400";
       };
+      mimi_api_key = {
+        owner = user;
+        mode = "0400";
+      };
     };
   };
 }

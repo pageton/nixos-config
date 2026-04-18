@@ -33,7 +33,14 @@
     gnome.gnome-keyring.enable = true;
   };
 
+  # TCP BBR congestion control module — 10-30% throughput improvement on VPN connections
+  boot.kernelModules = [ "tcp_bbr" ];
+
   boot.kernel.sysctl = {
+    # Inotify limits for development (VS Code, webpack, rust-analyzer file watchers)
+    "fs.inotify.max_user_watches" = 524288;
+    "fs.inotify.max_user_instances" = 1024;
+
     "fs.file-max" = 1000000;
     "net.core.somaxconn" = 65536;
     "net.core.netdev_max_backlog" = 250000;
@@ -50,22 +57,39 @@
 
     # Memory management
     "vm.swappiness" = 10;
-    "vm.dirty_ratio" = 15;
-    "vm.dirty_background_ratio" = 5;
+    # Dirty ratios tuned for DRAM-less SSD + LUKS — flush writes sooner in smaller
+    # bursts to avoid saturating the device when the SLC cache fills.
+    "vm.dirty_ratio" = 5;
+    "vm.dirty_background_ratio" = 1;
+    "vm.dirty_writeback_centisecs" = 300; # Flush every 3s (default 500 = 5s)
+    "vm.dirty_expire_centisecs" = 1500; # Expire dirty pages after 15s (default 3000)
     "vm.vfs_cache_pressure" = 50; # Keep dentries/inodes longer (good for dev work with large codebases)
 
     # TCP optimizations
     "net.ipv4.tcp_fastopen" = 3; # Client+server TFO (saves 1 RTT on HTTPS connections)
     "net.ipv4.tcp_mtu_probing" = 1; # Discover path MTU (helps on VPN tunnels like Mullvad)
+
+    # TCP BBR
+    "net.core.default_qdisc" = "fq";
+    "net.ipv4.tcp_congestion_control" = "bbr";
   };
 
   systemd.settings.Manager = {
     DefaultTimeoutStopSec = "30s";
-    DefaultTimeoutStartSec = "30s";
+    DefaultTimeoutStartSec = "180s"; # Long enough for heavy user-manager startup on cold boot
     DefaultDeviceTimeoutSec = "30s";
     DefaultLimitNOFILE = 200000;
     DefaultLimitNPROC = 65536;
+    # Disable hardware watchdog — prevents "watchdog did not stop!" and 10-min fallback timer
+    RuntimeWatchdogSec = "0";
+    RebootWatchdogSec = "0";
+    KExecWatchdogSec = "0";
   };
+
+  # Keep user-session app scopes from delaying reboot for the default 90s.
+  systemd.user.extraConfig = ''
+    DefaultTimeoutStopSec=30s
+  '';
 
   # Real-time kit for multimedia tasks (workstations only)
   security.rtkit.enable = true;
@@ -94,7 +118,7 @@
       domain = "*";
       type = "-";
       item = "stack";
-      value = "65536"; # 64 MB
+      value = 65536; # 64 MB
     }
   ];
 }

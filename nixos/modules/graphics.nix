@@ -24,22 +24,28 @@ in
       blacklistedKernelModules = [ "nouveau" ];
     };
 
-    # Session/runtime compatibility for Wayland + VA-API + GLX selection.
-    environment.variables = {
-      LIBVA_DRIVER_NAME = "nvidia";
-      XDG_SESSION_TYPE = "wayland";
-      GBM_BACKEND = "nvidia-drm";
-      __GLX_VENDOR_LIBRARY_NAME = "nvidia";
-      NVD_BACKEND = "direct";
-      MOZ_ENABLE_WAYLAND = "1";
-      CUDA_PATH = "/run/opengl-driver";
-    };
+    environment = {
+      # Session/runtime compatibility for Wayland + VA-API + GLX selection.
+      variables = {
+        LIBVA_DRIVER_NAME = "nvidia";
+        XDG_SESSION_TYPE = "wayland";
+        GBM_BACKEND = "nvidia-drm";
+        __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+        NVD_BACKEND = "direct";
+        MOZ_ENABLE_WAYLAND = "1";
+        CUDA_PATH = "/run/opengl-driver";
+        # Prevent frame-presentation tearing/vibration on Wayland compositors.
+        __GL_THREADED_OPTIMIZATION = "1";
+        # Let the compositor control vsync instead of the driver.
+        __GL_SYNC_TO_VBLANK = "0";
+      };
 
-    # Expose NVIDIA userspace driver libraries to shells/venvs that load foreign
-    # CUDA binaries from pip wheels (for example PyTorch + bitsandbytes).
-    environment.shellInit = ''
-      export LD_LIBRARY_PATH="/run/opengl-driver/lib''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-    '';
+      # Expose NVIDIA userspace driver libraries to shells/venvs that load foreign
+      # CUDA binaries from pip wheels (for example PyTorch + bitsandbytes).
+      shellInit = ''
+        export LD_LIBRARY_PATH="/run/opengl-driver/lib''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+      '';
+    };
 
     nixpkgs.config = {
       # NVIDIA driver package is unfree; must be explicitly allowed at eval time.
