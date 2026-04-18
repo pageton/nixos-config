@@ -108,6 +108,7 @@
           breadcrumbs.enable = false;
         };
       };
+      presets.tailwindcss-language-server.enable = true;
     };
     languages = {
       enableDAP = true;
@@ -141,7 +142,6 @@
       bash.enable = true;
       nix.enable = true;
       lua.enable = true;
-      tailwind.enable = true;
     };
     formatter = {
       conform-nvim = {

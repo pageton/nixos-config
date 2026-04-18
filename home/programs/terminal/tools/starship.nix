@@ -1,4 +1,4 @@
-# Starship cross-shell prompt with Gruvbox theming.
+# Starship cross-shell prompt with Catppuccin Mocha theming.
 
 {
   programs.starship = {
@@ -11,8 +11,8 @@
       add_newline = false;
 
       character = {
-        success_symbol = "[λ](bold green)";
-        error_symbol = "[λ](bold red)";
+        success_symbol = "[❯](bold green)";
+        error_symbol = "[❯](bold red)";
         vimcmd_symbol = "[](bold green)";
       };
 

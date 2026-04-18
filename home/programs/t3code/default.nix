@@ -9,8 +9,8 @@
 # 4. Update the `hash` variable with the output
 { lib, pkgs, ... }:
 let
-  version = "0.0.10";
-  hash = "sha256-zcPsaj4JyI8Ul7VZ4wsYvNH91GgKQZBgRADhgVu/zH8=";
+  version = "0.0.17";
+  hash = "sha256-uS+o1nRA3R7hn9BaomrdsGVC8UcpPFFRG3a1qGVrs8w=";
 
   pname = "t3-code";
 

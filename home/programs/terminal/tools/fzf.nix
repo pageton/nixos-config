@@ -1,6 +1,6 @@
 # Fzf configuration using Stylix theme colors.
 
-{ ... }:
+_:
 
 {
   programs.fzf = {

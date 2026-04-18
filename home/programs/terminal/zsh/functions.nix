@@ -2,6 +2,9 @@
 { constants, ... }:
 {
   programs.zsh.initContent = ''
+    # === Completion ===
+    autoload -Uz compinit && compinit
+
     # === LS_COLORS ===
     # Vivid LS_COLORS (cached)
     if command -v vivid >/dev/null 2>&1; then
@@ -14,9 +17,15 @@
     fi
 
     # === Sops secret loading ===
-    # Load Gemini API key from sops (needed by gemini CLI)
+    # Load API keys from sops (needed by gemini CLI)
     if [[ -f /run/secrets/gemini_api_key ]]; then
       export GEMINI_API_KEY="$(cat /run/secrets/gemini_api_key)"
+    fi
+    if [[ -f /run/secrets/mimi_api_key ]]; then
+      export MIMI_API_KEY="$(cat /run/secrets/mimi_api_key)"
+    fi
+    if [[ -f /run/secrets/zai_api_key ]]; then
+      export ZAI_API_KEY="$(cat /run/secrets/zai_api_key)"
     fi
 
     # Sops-enabled agent wrappers
@@ -31,6 +40,23 @@
 
     _load_zai_key() { _load_secret zai_api_key; }
     _load_openrouter_key() { _load_secret openrouter_api_key; }
+    _load_mimi_key() { _load_secret mimi_api_key; }
+
+    _zellij_rename_tab() {
+      local tab_name="$1"
+      [[ -n "$tab_name" && -n "${"ZELLIJ:-"}" ]] || return 0
+      command zellij action rename-tab "$tab_name" >/dev/null 2>&1 || true
+    }
+
+    _ai_agent_exec() {
+      local tab_name="$1"
+      shift
+      if [[ "$1" == "--" ]]; then
+        shift
+      fi
+      _zellij_rename_tab "$tab_name"
+      "$@"
+    }
 
     # === AI agent wrappers ===
     claude_glm() {
@@ -174,5 +200,8 @@
         break
       fi
     done
+
+    # === Zoxide (must be last) ===
+    eval "$(zoxide init zsh)"
   '';
 }

@@ -1,5 +1,5 @@
 # mpv media player with Vim keybindings and hardware acceleration.
-{ ... }:
+_:
 
 {
   programs.mpv = {

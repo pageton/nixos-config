@@ -4,8 +4,6 @@
     viAlias = false;
     vimAlias = true;
     withNodeJs = true;
-    autopairs.nvim-autopairs.enable = true;
-    #   syntaxHighlighting = true;
     options = {
       autoindent = true;
       smartindent = true;

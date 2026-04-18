@@ -1,5 +1,5 @@
 # Skill installations and omissions for all AI agents.
-# Imported by config/instructions.nix.
+# Imported by config/defaults.nix.
 
 {
   skills = [
@@ -53,6 +53,10 @@
     {
       repo = "vercel-labs/agent-browser";
       skill = "agent-browser";
+    }
+    {
+      repo = "callstackincubator/agent-device";
+      skill = "agent-device";
     }
   ];
 

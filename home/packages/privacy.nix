@@ -2,8 +2,18 @@
 # metadata removal, and network privacy.
 { pkgs, pkgsStable }:
 let
-  eglWrap = import ./_egl-wrap.nix { inherit pkgs; };
-  inherit (eglWrap) wrapWithMesaEgl;
+  mesaEglVendorFile = "/run/opengl-driver/share/glvnd/egl_vendor.d/50_mesa.json";
+  wrapWithMesaEgl =
+    name: pkg:
+    pkgs.symlinkJoin {
+      inherit name;
+      paths = [ pkg ];
+      buildInputs = [ pkgs.makeWrapper ];
+      postBuild = ''
+        wrapProgram $out/bin/${name} \
+          --set __EGL_VENDOR_LIBRARY_FILENAMES ${mesaEglVendorFile}
+      '';
+    };
 in
 with pkgsStable;
 [

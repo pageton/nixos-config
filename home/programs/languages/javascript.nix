@@ -25,6 +25,7 @@ let
     "@modelcontextprotocol/server-github"
     "agent-browser"
     "@z_ai/mcp-server"
+    "@mariozechner/pi-coding-agent"
   ];
 in
 {

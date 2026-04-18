@@ -1,5 +1,4 @@
-{ ... }:
-{
+_: {
   xdg.autostart.entries.remmina-applet = {
     enable = false;
   };

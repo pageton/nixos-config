@@ -25,7 +25,7 @@ let
         mode_normal        ""
         mode_locked        "#[bg=${constants.color.yellow_dim},fg=${constants.color.bg_hard},bold]  LOCKED #[bg=${constants.color.bg_soft},fg=${constants.color.yellow_dim}]"
         mode_resize        "#[bg=${constants.color.orange},fg=${constants.color.bg_hard},bold] 󰩨 RESIZE #[bg=${constants.color.bg_soft},fg=${constants.color.orange}]"
-        mode_pane          "#[bg=${constants.color.green},fg=${constants.color.bg_hard},bold]  PANE #[bg=${constants.color.bg_soft},fg=${constants.color.green}]"
+        mode_pane          "#[bg=${constants.color.blue_dim},fg=${constants.color.bg_hard},bold]  PANE #[bg=${constants.color.bg_soft},fg=${constants.color.blue_dim}]"
         mode_tab           "#[bg=${constants.color.blue},fg=${constants.color.bg_hard},bold]  TAB #[bg=${constants.color.bg_soft},fg=${constants.color.blue}]"
         mode_scroll        "#[bg=${constants.color.aqua},fg=${constants.color.bg_hard},bold]  SCROLL #[bg=${constants.color.bg_soft},fg=${constants.color.aqua}]"
         mode_enter_search  "#[bg=${constants.color.purple},fg=${constants.color.bg_hard},bold]  SEARCH #[bg=${constants.color.bg_soft},fg=${constants.color.purple}]"
@@ -70,7 +70,7 @@ in
 
         tab name="code" focus=true {
           pane split_direction="vertical" {
-            pane size="75%" command="${pkgs.neovim}/bin/nvim" focus=true
+            pane size="75%" command="nvim" focus=true
             pane split_direction="horizontal" size="25%" {
               pane name="shell"
               pane name="git" command="${pkgs.lazygit}/bin/lazygit"
@@ -93,7 +93,7 @@ in
 
         tab name="agent" focus=true {
           pane split_direction="vertical" {
-            pane size="60%" name="claude" command="${config.home.homeDirectory}/.bun/bin/claude"
+            pane size="60%" name="claude" command="claude"
             pane split_direction="horizontal" {
               pane size="50%" name="logs" command="${pkgs.bash}/bin/bash" {
                 args "-c" "tail -f ~/.local/share/opencode/log/*.log ~/.codex/log/*.log 2>/dev/null || echo 'No agent logs yet. Waiting...'; sleep infinity"

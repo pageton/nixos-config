@@ -13,28 +13,31 @@ let
       Authorization = "Bearer {env:ZAI_API_KEY}";
     };
   };
+
+  # Derive Z.AI MCP server entries from the services registry — single source of truth.
+  zaiMcpServers = builtins.listToAttrs (
+    map (svc: {
+      name = svc.mcpKey;
+      value = mkZaiRemoteMcp svc.name;
+    }) zai.services
+  );
 in
 {
   programs.aiAgents = {
-    mcpServers = {
+    mcpServers = zaiMcpServers // {
       context7 = {
         enable = true;
         command = "bunx";
-        args = [
-          "@upstash/context7-mcp@2.1.2"
-        ];
+        args = [ "@upstash/context7-mcp@2.1.2" ];
+        env = {
+          CONTEXT7_API_KEY = "__CONTEXT7_API_KEY_PLACEHOLDER__"; # patched at activation from sops secret
+        };
       };
-
-      web-search-prime = mkZaiRemoteMcp "web_search_prime";
-      web-reader = mkZaiRemoteMcp "web_reader";
-      zread = mkZaiRemoteMcp "zread";
 
       github = {
         enable = true;
         command = "bunx";
-        args = [
-          "@modelcontextprotocol/server-github@2025.4.8"
-        ];
+        args = [ "@modelcontextprotocol/server-github@2025.4.8" ];
         env = {
           GITHUB_PERSONAL_ACCESS_TOKEN = "__GITHUB_TOKEN_PLACEHOLDER__"; # patched at activation via gh auth token
         };

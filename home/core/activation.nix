@@ -1,3 +1,7 @@
+# Custom Home-Manager activation script for nix profile management.
+# Overrides the default hm-dag activation to handle nix profile replacement
+# correctly. This is based on Home Manager's internal implementation —
+# test after major HM version bumps.
 { config, lib, ... }:
 {
   home.activation.installPackages = lib.mkForce (

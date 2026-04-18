@@ -154,8 +154,6 @@
       end)
     '';
 
-    # snippets.luasnip.enable = true; # Disabled - luasnip is already loaded via cmp_luasnip dependency
-
     ui = {
       noice = {
         enable = true;
@@ -180,13 +178,6 @@
     visuals = {
       rainbow-delimiters.enable = true;
       nvim-scrollbar.enable = false;
-    };
-
-    comments.comment-nvim = {
-      enable = true;
-      mappings = {
-        toggleCurrentLine = "<C-/>";
-      };
     };
   };
 }

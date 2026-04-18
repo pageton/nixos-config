@@ -1,13 +1,8 @@
 # MCP server transformation functions.
 
-{
-  config,
-  lib,
-  ...
-}:
+{ cfg, lib }:
 
 let
-  cfg = config.programs.aiAgents;
   sharedMcpServers = cfg.mcpServers;
 
   mkMcpTransform =
@@ -21,9 +16,7 @@ let
       let
         isLocal = (server.type or "local") == "local";
         base = if isLocal then localAttrs server else remoteAttrs server;
-        envAttrs = lib.optionalAttrs (server.env or { } != { }) {
-          ${envKey} = server.env;
-        };
+        envAttrs = lib.optionalAttrs (server.env or { } != { }) { ${envKey} = server.env; };
       in
       base // envAttrs
     ) (lib.filterAttrs (_: s: s.enable) sharedMcpServers);

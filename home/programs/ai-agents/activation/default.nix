@@ -13,10 +13,10 @@ let
 
   inherit (builtins) toJSON;
 
-  mcpTransforms = import ../helpers/_mcp-transforms.nix { inherit config lib; };
+  mcpTransforms = import ../helpers/_mcp-transforms.nix { inherit cfg lib; };
   inherit (mcpTransforms) sharedMcpServers claudeMcpServers;
 
-  settingsBuilders = import ../helpers/_settings-builders.nix { inherit config lib pkgs; };
+  settingsBuilders = import ../helpers/_settings-builders.nix { inherit cfg lib; };
   inherit (settingsBuilders) claudeSettings;
 
   opencodeProfiles = import ../helpers/_opencode-profiles.nix { inherit config; };
@@ -30,6 +30,9 @@ let
   '';
   openrouterPlaceholderFilter = ''
     walk(if type == "string" then gsub("__OPENROUTER_API_KEY_PLACEHOLDER__"; $key) else . end)
+  '';
+  context7PlaceholderFilter = ''
+    walk(if type == "string" then gsub("__CONTEXT7_API_KEY_PLACEHOLDER__"; $key) else . end)
   '';
 
   # Import helper modules
@@ -45,6 +48,7 @@ let
       geminiZaiFilter
       githubPlaceholderFilter
       openrouterPlaceholderFilter
+      context7PlaceholderFilter
       ;
   };
   codexConfig = import ./codex-setup.nix {
@@ -113,7 +117,9 @@ in
       inherit (pluginInstalls)
         installImpeccable
         installAgencyAgents
+        installEverythingClaudeCode
         cleanupDisabledAgencyAgents
+        cleanupDisabledEverythingClaudeCode
         ;
     };
   };

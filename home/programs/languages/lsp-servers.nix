@@ -1,25 +1,34 @@
 # Language servers for editor integration.
+# CLI-only linting/formatting tools live in packages/linting.nix.
 
 { pkgs, ... }:
 {
   home.packages = with pkgs; [
-    # High Priority (Python packages handled in python.nix)
-    nil # Nix language server
-    bash-language-server # Bash scripts (scripts/ directory)
-    nodePackages.yaml-language-server # YAML configs
-    nodePackages.svelte-language-server # Svelte framework
+    # === Nix ===
+    nil # Nix language server with completion and diagnostics
+    nixd # Nix language server with nixpkgs integration
+
+    # === Scripting Languages ===
+    bash-language-server # Bash/Shell script language server
+    lua-language-server # Lua language server (sumneko)
     pyright # Python type-checking LSP (completions + diagnostics)
-    clang-tools # C/C++ LSP (clangd) + formatter (clang-format)
+    svelte-language-server # Svelte framework
 
-    # Medium Priority
-    rust-analyzer # Rust support
-    lua-language-server # Lua configs
-    marksman # Markdown docs
-    markdownlint-cli # Markdown linting (used by nvim-lint)
+    # === Markup and Data Formats ===
+    yaml-language-server # YAML schema validation and completion
+    vscode-langservers-extracted # JSON, HTML, CSS, ESLint language servers
+    taplo # TOML language server with formatting
+    marksman # Markdown language server with wiki-links support
 
-    # Specialized
+    # === Configuration and DevOps ===
+    dockerfile-language-server # Dockerfile language support
     docker-compose-language-service # docker-compose.yml support
+
+    # === Systems Languages ===
+    clang-tools # C/C++ LSP (clangd) + formatter (clang-format)
+    rust-analyzer # Rust support
+
+    # === Data ===
     sqls # SQL language server (Postgres, MySQL, SQLite)
-    taplo # TOML files (Cargo.toml, pyproject.toml, justfile)
   ];
 }

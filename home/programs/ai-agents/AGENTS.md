@@ -28,15 +28,15 @@ Profiles switch the primary model across all OpenCode config directories. Each p
 
 Seven OpenCode profiles are defined in `helpers/_opencode-profiles.nix`:
 
-| Profile Directory    | Provider/Model                       |
-| -------------------- | ------------------------------------ |
-| `opencode`           | Default (from `programs.aiAgents.opencode.model`) |
-| `opencode-glm`       | Z.AI GLM-5.1                         |
-| `opencode-gemini`    | Google Gemini 3.1 Pro                |
-| `opencode-gpt`       | OpenAI GPT-5.4                       |
-| `opencode-openrouter`| OpenRouter Hunter Alpha              |
-| `opencode-sonnet`    | Anthropic Claude Sonnet 4.6          |
-| `opencode-zen`       | MiniMax M2.5 Free                    |
+| Profile Directory     | Provider/Model                                    |
+| --------------------- | ------------------------------------------------- |
+| `opencode`            | Default (from `programs.aiAgents.opencode.model`) |
+| `opencode-glm`        | Z.AI GLM-5.1                                      |
+| `opencode-gemini`     | Google Gemini 3 Pro Preview                       |
+| `opencode-gpt`        | OpenAI GPT-5.4                                    |
+| `opencode-openrouter` | OpenRouter Hunter Alpha                           |
+| `opencode-sonnet`     | Anthropic Claude Sonnet 4.6                       |
+| `opencode-zen`        | MiniMax M2.5 Free                                 |
 
 ---
 
@@ -52,34 +52,62 @@ ai-agents/
 ├── helpers/                 # Shared logic (not modules, imported by others)
 │   ├── _settings-builders.nix   # Per-agent settings + profile variant overrides
 │   ├── _mcp-transforms.nix      # Unified MCP abstraction (shared → agent-specific schemas)
-│   ├── _option-helpers.nix      # Shared option constructors
 │   ├── _opencode-profiles.nix   # OpenCode profile names and config paths
 │   ├── _aliases.nix             # Zsh alias generation for agent launchers/workflows
+│   ├── _destructive-rules.nix   # Destructive action allow/deny rules per agent
 │   ├── _file-templates.nix      # Config file templates
+│   ├── _gemini-policies.nix     # Gemini CLI safety policy definitions
 │   ├── _workflow-prompts.nix    # Workflow prompt definitions
 │   ├── _zai-services.nix        # Z.AI MCP service registry
-│   └── _zai-filters.nix         # Z.AI MCP jq filter generation
+│   ├── _zai-filters.nix         # Z.AI MCP jq filter generation
+│   ├── _android-re-launchers.nix         # Android RE emulator/script launchers
+│   ├── _mk-cli-autoupdate-script.nix     # CLI autoupdate script builder
+│   ├── _services-shell-aliases.nix       # Shell alias definitions for agent services
+│   ├── _services-systemd.nix             # Systemd user service/timer definitions
+│   ├── _formatters.nix                   # Formatter registry (shared by claude hooks + gemini config)
+│   ├── _impeccable-commands.nix          # Impeccable skill command definitions and text renderer
+│   ├── _models.nix                       # Shared model/provider constants (names, aliases)
+│   └── _git-clone-update.nix             # Git clone/update helper for plugin repos
 ├── activation/              # Home Manager activation scripts
 │   ├── default.nix          # Aggregation: wires all activation steps
 │   ├── secrets.nix          # Secret patching (placeholder → real key injection)
 │   ├── claude-setup.nix     # Claude Code config file writes
 │   ├── codex-setup.nix      # Codex CLI config file writes
-│   └── plugins.nix          # Plugin/skill install scripts (impeccable, agency-agents)
+│   ├── plugins.nix          # Plugin aggregation (impeccable, agency-agents, ECC)
+│   ├── _plugin-impeccable.nix # Impeccable skill install
+│   ├── _plugin-agency-agents.nix # Agency agents install
+│   ├── _plugin-everything-claude-code.nix # ECC skill install
+│   ├── _cleanup-agency-agents.nix # Agency agents cleanup on disable
+│   ├── _cleanup-everything-claude-code.nix # ECC cleanup on disable
+│   └── skills.nix           # Skill installations and omissions
+├── android-re/              # Android RE workflow prompts and config
+│   ├── _prompt.nix          # Prompt templates (not a module, imported by services)
+│   └── prompts/             # RE session prompts and operator guides
+│       ├── AGENTS.md        # Quick rules for RE sessions
+│       ├── README.md        # Operator guide and workflow map
+│       ├── WORKFLOW.md      # End-to-end RE workflow
+│       ├── TOOLS.md         # Installed tools and recommendations
+│       └── TROUBLESHOOTING.md # Known issues and recovery
 └── config/                  # Split configuration values
     ├── default.nix          # Import hub
-    ├── instructions.nix     # Global instructions (imports _skills.nix)
+    ├── defaults.nix         # Default values for agent options
+    ├── global-instructions.md # Global instructions text (not a module)
     ├── _skills.nix          # Skill installations and omissions
-    ├── _formatters.nix      # Formatter registry for auto-formatting hooks (shared by claude + gemini)
     ├── mcp-servers.nix      # MCP server definitions + logging
     ├── claude/              # Claude Code configuration
     │   ├── default.nix      # Import hub (permissions, hooks, settings)
-    │   ├── _hooks.nix       # Claude Code lifecycle hooks (imports ../_formatters.nix)
+    │   ├── _hooks.nix       # Lifecycle hooks aggregation (imports helpers + per-stage modules)
+    │   ├── _hooks-helpers.nix # Shared hook constructors (mkFormatterHook, mkBashHook, etc.)
+    │   ├── _hooks-pre-tool-use.nix  # Pre-tool-use safety hooks
+    │   ├── _hooks-post-tool-use.nix # Post-tool-use auto-format hooks
+    │   ├── _hooks-session.nix      # Session lifecycle hooks
     │   └── _permission-rules.nix # Claude allow/deny rules
     └── models/              # Model/provider registries
         ├── default.nix      # Import hub + shared toggles (agencyAgents, impeccable)
         ├── codex.nix        # Codex CLI configuration
-        ├── gemini.nix       # Gemini CLI configuration (imports ../_formatters.nix)
-        └── opencode.nix      # OpenCode configuration (agents, LSP, providers)
+        ├── gemini.nix       # Gemini CLI configuration (imports ../../helpers/_formatters.nix)
+        ├── opencode.nix      # OpenCode configuration (agents, LSP, providers)
+        └── _opencode-lsp.nix # OpenCode LSP tool configuration
 ```
 
 ---
@@ -106,7 +134,7 @@ All `helpers/_*.nix` files are plain Nix expressions (not modules). They are imp
 
 ### Activation File Rules
 
-The `activation/` directory is a submodule with its own `default.nix`. Individual files (`secrets.nix`, `claude-setup.nix`, `codex-setup.nix`, `plugins.nix`) are helpers imported by `activation/default.nix` — not listed in the top-level `ai-agents/default.nix` import hub.
+The `activation/` directory is a submodule with its own `default.nix`. Individual files (`secrets.nix`, `claude-setup.nix`, `codex-setup.nix`, `plugins.nix`, `skills.nix`) are helpers imported by `activation/default.nix` — not listed in the top-level `ai-agents/default.nix` import hub.
 
 ### Complexity Hotspots (WARNING)
 

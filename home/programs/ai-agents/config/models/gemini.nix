@@ -1,33 +1,19 @@
 # Gemini CLI configuration: settings, theming, model aliases, and auto-format hooks.
 
-{
-  config,
-  constants,
-  ...
-}:
+{ config, constants, ... }:
 
 let
   mkModelAlias = model: generateContentConfig: {
-    modelConfig = {
-      inherit model generateContentConfig;
-    };
+    modelConfig = { inherit model generateContentConfig; };
   };
   mkThinkingAlias =
     model: thinkingLevel: extraConfig:
-    mkModelAlias model (
-      {
-        thinkingConfig = {
-          inherit thinkingLevel;
-        };
-      }
-      // extraConfig
-    );
-  geminiSandboxEnabled = config.programs.aiAgents.gemini.sandboxMode != "none";
+    mkModelAlias model ({ thinkingConfig = { inherit thinkingLevel; }; } // extraConfig);
 in
 {
   programs.aiAgents.gemini = {
     enable = true;
-    theme = "Gruvbox";
+    theme = "Catppuccin";
     sandboxMode = "none";
 
     extraSettings = {
@@ -49,8 +35,6 @@ in
         allowed = [
           "context7"
           "github"
-        ];
-        excluded = [
           "chrome-devtools"
           "web-search-prime"
           "web-reader"
@@ -96,8 +80,8 @@ in
         hideBanner = true;
         showLineNumbers = true;
         customThemes = {
-          Gruvbox = {
-            name = "Gruvbox";
+          Catppuccin = {
+            name = "Catppuccin";
             type = "custom";
             background = {
               primary = constants.color.bg_soft;
@@ -162,14 +146,12 @@ in
             maxOutputTokens = 16384;
           };
           deep = mkThinkingAlias "gemini-3-pro-preview" "HIGH" { };
-          code = mkThinkingAlias "gemini-3-pro-preview" "HIGH" {
-            maxOutputTokens = 65536;
-          };
+          code = mkThinkingAlias "gemini-3-pro-preview" "HIGH" { maxOutputTokens = 65536; };
         };
       };
       # --- Tool Settings ---
       tools = {
-        sandbox = geminiSandboxEnabled;
+        sandbox = false;
         sandboxNetworkAccess = false;
         shell.showColor = true;
         useRipgrep = true;
@@ -193,7 +175,7 @@ in
                   "FILE_PATH=$(echo \"$INPUT\" | jq -r '.arguments.path // \"\"');"
                   "if [ -n \"$FILE_PATH\" ]; then"
                   "case \"$FILE_PATH\" in"
-                  (import ../_formatters.nix).geminiCaseBranches
+                  (import ../../helpers/_formatters.nix).geminiCaseBranches
                   "esac;"
                   "fi;"
                   "echo \"$INPUT\""

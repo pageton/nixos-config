@@ -1,14 +1,13 @@
-# Brave Browser configuration
-{ ... }:
+# Brave browser with Wayland wrapper and declarative extensions.
+
+{ pkgs, ... }:
+let
+  inherit (import ../isolation/_mk-wayland-browser-wrapper.nix) mkWaylandBrowserWrapper;
+in
 {
   programs.brave = {
     enable = true;
-    commandLineArgs = [
-      "--enable-features=UseOzonePlatform,WaylandWindowDecorations,VaapiVideoDecodeLinuxGL"
-      "--ozone-platform-hint=auto"
-      "--disable-gpu-shader-disk-cache" # Prevents shader cache corruption causing glitches
-      "--enable-zero-copy" # Reduces buffer copies for smoother scrolling
-    ];
+    package = pkgs.brave;
     extensions = [
       "nngceckbapebfimnlniiiahkandclblb" # Bitwarden Password Manager
       "ielooaepfhfcnmihgnabkldnpddnnldl" # Multilanguage Translator
@@ -22,4 +21,6 @@
       "eifflpmocdbdmepbjaopkkhbfmdgijcc" # JSON Viewer Pro
     ];
   };
+
+  home.file.".local/bin/brave" = mkWaylandBrowserWrapper { bin = "${pkgs.brave}/bin/brave"; };
 }

@@ -1,15 +1,14 @@
 # Codex CLI configuration: model, profiles, custom agents, and developer instructions.
 
-{
-  config,
-  ...
-}:
+{ config, ... }:
 
+let
+  models = import ../../helpers/_models.nix;
+in
 {
   programs.aiAgents.codex = {
     enable = true;
-    useWrapper = true;
-    model = "gpt-5.4";
+    model = models.gpt-default;
     sandboxMode = "workspace-write";
     enableSearch = false;
     personality = "pragmatic";
@@ -24,9 +23,7 @@
       tool_suggest = true;
       unified_exec = true;
     };
-    trustedProjects = [
-      "${config.home.homeDirectory}/System"
-    ];
+    trustedProjects = [ "${config.home.homeDirectory}/System" ];
     profiles = {
       quick = {
         reasoningEffort = "low";

@@ -11,7 +11,7 @@ with pkgsStable;
 
   # === Desktop Integration ===
   libnotify # Desktop notification library
-  # playerctl is provided by services.playerctld (home/system/niri/default.nix)
+  # playerctl is provided by services.playerctld (home/desktop/niri/default.nix)
 
   # === Screenshot and Capture ===
   grim # Wayland screenshot tool (used by swappy pipeline)

@@ -1,10 +1,12 @@
+# Home-Manager entry point — imports all sub-modules.
+# Actual packages are set by core.nix via home.packages.
 { ... }:
 {
   imports = [
-    ./modules
+    ./core
     ./programs
     ./scripts
-    ./system
-    ./themes/kanagawa.nix
+    ./desktop
+    ./themes
   ];
 }

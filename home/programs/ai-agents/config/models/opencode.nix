@@ -1,13 +1,14 @@
 # OpenCode model selections, provider registries, agent definitions, and per-agent tool configurations.
 
-{
-  config,
-  constants,
-  ...
-}:
+{ config, lib, ... }:
 
 let
-  workflowPrompts = import ../../helpers/_workflow-prompts.nix;
+  models = import ../../helpers/_models.nix;
+  workflowPrompts = import ../../helpers/_workflow-prompts.nix { };
+  androidRePrompt = import ../../android-re/_prompt.nix {
+    inherit lib;
+    homeDir = config.home.homeDirectory;
+  };
   mkAllowPatterns =
     patterns:
     builtins.listToAttrs (
@@ -65,13 +66,11 @@ in
 {
   programs.aiAgents.opencode = {
     enable = true;
-    model = "anthropic/claude-opus-4-6";
+    model = models.claude-opus;
     defaultAgent = "build";
     permission = yoloPermission;
 
-    plugins = [
-      "opencode-antigravity-auth@latest"
-    ];
+    plugins = [ "opencode-gemini-auth@latest" ];
 
     command = {
       "commit-split" = {
@@ -98,6 +97,12 @@ in
         subtask = true;
         template = workflowPrompts.buildPerformance;
       };
+      "runtime-perf" = {
+        description = "Measure and improve runtime/code bottlenecks";
+        agent = "optimize";
+        subtask = true;
+        template = workflowPrompts.runtimePerformance;
+      };
       "markdown-sync" = {
         description = "Sync docs with current repository behavior";
         agent = "patch";
@@ -108,7 +113,7 @@ in
 
     agent = {
       plan = {
-        model = "anthropic/claude-sonnet-4-6";
+        model = models.claude-sonnet;
         description = "Primary planning agent for specs, decomposition, and research-backed execution plans.";
         mode = "primary";
         steps = 8;
@@ -120,7 +125,7 @@ in
         '';
       };
       build = {
-        model = "anthropic/claude-opus-4-6";
+        model = models.claude-opus;
         description = "Primary implementation agent for coding work with repo-native validation.";
         mode = "primary";
         steps = 20;
@@ -132,7 +137,7 @@ in
         '';
       };
       review = {
-        model = "anthropic/claude-sonnet-4-6";
+        model = models.claude-sonnet;
         description = "Subagent for bugs, regressions, security issues, and test gaps.";
         mode = "subagent";
         color = "warning";
@@ -145,7 +150,7 @@ in
         '';
       };
       recon = {
-        model = "openai/gpt-5.4";
+        model = models.gpt-default;
         description = "Subagent for reverse-engineering triage, static inspection, and evidence gathering.";
         mode = "subagent";
         color = "info";
@@ -158,7 +163,7 @@ in
         '';
       };
       patch = {
-        model = "anthropic/claude-sonnet-4-6";
+        model = models.claude-sonnet;
         description = "Subagent for bounded edits, validation passes, and commit shaping.";
         mode = "subagent";
         color = "accent";
@@ -170,88 +175,67 @@ in
           After edits, run the narrowest relevant validation and summarize residual risk.
         '';
       };
+      optimize = {
+        model = models.claude-opus;
+        description = "Subagent for performance profiling, bottleneck analysis, and low-risk speedups across codebases.";
+        mode = "subagent";
+        color = "accent";
+        steps = 14;
+        permission = yoloPermission;
+        prompt = ''
+          Optimize runtime performance with evidence, not guesses.
+          Measure the real hot path first, prefer the highest-impact low-risk change, and preserve correctness plus repository conventions.
+          Report before-and-after performance evidence, correctness validation, and any tradeoffs left in place.
+        '';
+      };
+      "android-re" = {
+        model = models.claude-opus;
+        description = "Primary Android reverse-engineering agent for rooted emulator workflows, Frida instrumentation, proxy triage, and static APK inspection.";
+        mode = "primary";
+        steps = 24;
+        permission = yoloPermission;
+        prompt = ''
+          You are the dedicated Android reverse-engineering operator for this machine.
+          Use the repository's Android RE workspace as your system prompt and source of truth.
+
+          ## Editable prompt files (update these to improve future sessions)
+          ${androidRePrompt.promptSourceDir}/AGENTS.md
+          ${androidRePrompt.promptSourceDir}/README.md
+          ${androidRePrompt.promptSourceDir}/TOOLS.md
+          ${androidRePrompt.promptSourceDir}/WORKFLOW.md
+          ${androidRePrompt.promptSourceDir}/TROUBLESHOOTING.md
+
+          ## Bash scripts (all run from repo root /home/yz/System)
+          scripts/ai/android-re/re-avd.sh          — emulator, root, Frida, proxy, cert, spoofing
+          scripts/ai/android-re/re-static.sh       — static APK analysis
+          scripts/ai/android-re/opencode-android-re.sh — OpenCode launcher (used by oc*are aliases)
+          scripts/ai/android-re/_helpers.sh        — shared logging helpers
+          scripts/ai/android-re/_spoof-table.sh    — declarative spoofing data (Pixel 7 profile)
+
+          ## Skill to load before device UI interaction
+          You MUST load the `agent-device` skill before any `agent-device` commands.
+          Use the skill tool to load it at the start of any session that needs device interaction.
+
+          Operating defaults:
+          - Prefer static triage before dynamic instrumentation.
+          - Use the rooted `re-pixel7-api34` AVD as the baseline target unless evidence requires otherwise.
+          - Use `su 0 ...` syntax for rooted ADB shell commands on this emulator.
+          - Prefer the system Frida `17.5.1` toolchain (matching server + client) for attach and hook work on this host.
+          - Use `agent-device` for all UI interaction on the emulator — load the `agent-device` skill first.
+          - Device identity is spoofed automatically to look like a real Pixel 7 via `re-avd.sh start`.
+          - Prefer explicit proxy configuration plus QUIC blocking when using `mitmproxy`.
+          - Treat proxy failures as a triage problem: root/cert/proxy first, then pinning, Cronet, native TLS, or QUIC fallback.
+          - Use the repo workflow scripts under `scripts/ai/android-re/` instead of ad-hoc command piles.
+          - Keep findings evidence-based and separate verified facts from inference.
+
+          Current Android RE prompt bundle:
+
+          ${androidRePrompt.promptText}
+        '';
+      };
     };
 
-    lsp = {
-      bash = {
-        command = [
-          "bash-language-server"
-          "start"
-        ];
-        extensions = [
-          "sh"
-          "bash"
-          "zsh"
-        ];
-      };
-      go = {
-        command = [ "gopls" ];
-        extensions = [ "go" ];
-      };
-      nix = {
-        command = [ "nixd" ];
-        extensions = [ "nix" ];
-      };
-      python = {
-        command = [
-          "pyright-langserver"
-          "--stdio"
-        ];
-        extensions = [
-          "py"
-          "pyi"
-        ];
-      };
-      typescript = {
-        command = [
-          "typescript-language-server"
-          "--stdio"
-        ];
-        extensions = [
-          "js"
-          "jsx"
-          "ts"
-          "tsx"
-          "mjs"
-          "cjs"
-        ];
-      };
-      json = {
-        command = [
-          "vscode-json-language-server"
-          "--stdio"
-        ];
-        extensions = [
-          "json"
-          "jsonc"
-        ];
-      };
-      yaml = {
-        command = [
-          "yaml-language-server"
-          "--stdio"
-        ];
-        extensions = [
-          "yaml"
-          "yml"
-        ];
-      };
-      clang = {
-        command = [ "clangd" ];
-        extensions = [
-          "c"
-          "cc"
-          "cpp"
-          "cxx"
-          "h"
-          "hpp"
-        ];
-      };
-      rust = {
-        command = [ "rust-analyzer" ];
-        extensions = [ "rs" ];
-      };
-    };
+    lsp = import ./_opencode-lsp.nix;
 
     experimental = {
       batch_tool = true;
@@ -263,7 +247,7 @@ in
     extraSettings = {
       share = "disabled";
       autoupdate = true;
-      small_model = "anthropic/claude-haiku-4-5"; # Cheap model for titles, summaries
+      small_model = models.claude-haiku; # Cheap model for titles, summaries
       compaction = {
         auto = true;
         prune = true; # Remove old tool outputs during compaction
@@ -272,63 +256,6 @@ in
     };
 
     providers = {
-      google = {
-        npm = "@ai-sdk/google";
-        models = {
-          "antigravity-gemini-3.1-pro" = {
-            name = "Gemini 3.1 Pro (Antigravity)";
-            limit = {
-              context = 1048576;
-              output = 65535;
-            };
-            modalities = {
-              input = [
-                "text"
-                "image"
-                "pdf"
-              ];
-              output = [ "text" ];
-            };
-            variants = {
-              low = {
-                thinkingLevel = "low";
-              };
-              high = {
-                thinkingLevel = "high";
-              };
-            };
-          };
-          "antigravity-gemini-3-flash" = {
-            name = "Gemini 3 Flash (Antigravity)";
-            limit = {
-              context = 1048576;
-              output = 65536;
-            };
-            modalities = {
-              input = [
-                "text"
-                "image"
-                "pdf"
-              ];
-              output = [ "text" ];
-            };
-            variants = {
-              minimal = {
-                thinkingLevel = "minimal";
-              };
-              low = {
-                thinkingLevel = "low";
-              };
-              medium = {
-                thinkingLevel = "medium";
-              };
-              high = {
-                thinkingLevel = "high";
-              };
-            };
-          };
-        };
-      };
       openrouter = {
         options = {
           apiKey = "__OPENROUTER_API_KEY_PLACEHOLDER__";

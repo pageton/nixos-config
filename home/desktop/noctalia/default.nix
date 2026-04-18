@@ -68,6 +68,10 @@ in
           ];
           right = [
             { id = "Tray"; }
+            {
+              id = "KeyboardLayout";
+              showIcon = false;
+            }
             { id = "Network"; }
             { id = "NotificationHistory"; }
             { id = "plugin:tailscale"; } # Tailscale status
@@ -101,7 +105,7 @@ in
 
       colorSchemes = {
         darkMode = true;
-        predefinedScheme = "Kanagawa";
+        predefinedScheme = "Catppuccin";
         useWallpaperColors = false;
       };
 

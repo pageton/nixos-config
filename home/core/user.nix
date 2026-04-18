@@ -19,7 +19,11 @@
     let
       Pkgs = import ../packages { inherit pkgs pkgsStable; };
     in
-    Pkgs ++ [ inputs.ghgrab.packages.${pkgs.stdenv.hostPlatform.system}.default ];
+    Pkgs
+    ++ [
+      inputs.ghgrab.packages.${pkgs.stdenv.hostPlatform.system}.default
+      inputs.zellij-tui.packages.${pkgs.stdenv.hostPlatform.system}.default
+    ];
 
   home.file.".face" = {
     source = ../profile_picture.png;

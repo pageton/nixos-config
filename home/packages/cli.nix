@@ -65,10 +65,6 @@ with pkgsStable;
   procs # Modern process viewer (ps replacement)
   tokei # Code statistics and analysis
 
-  # === Terminal Effects ===
-  cmatrix # Matrix rain terminal effect
-  peaclock # Terminal clock
-
   # === Terminal Theming ===
   vivid # LS_COLORS theme generator
 
@@ -92,6 +88,10 @@ with pkgsStable;
   lazydocker # Terminal UI for Docker management
   serie # Git log TUI viewer
 
+  # === Terminal Multiplexer ===
+  tmux # Terminal multiplexer for session management
+
+  # === Android RE ===
   apktool
   jadx
   android-tools

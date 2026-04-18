@@ -13,7 +13,7 @@
         autosens = 1;
       };
 
-      # Kanagawa palette (Stylix doesn't support cava)
+      # Catppuccin Mocha palette (Stylix doesn't support cava)
       color = {
         gradient = 1;
         gradient_color_1 = "'${constants.color.fg0}'";

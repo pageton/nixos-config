@@ -4,10 +4,8 @@
   lib,
   pkgs,
   ...
-}:
-let
-  noctalia =
-    cmd:
+}: let
+  noctalia = cmd:
     [
       "${pkgs.bash}/bin/sh"
       "-c"
@@ -21,20 +19,15 @@ let
       "sh"
     ]
     ++ (lib.splitString " " cmd);
-in
-{
-  programs.niri.settings.binds =
-    with config.lib.niri.actions;
+in {
+  programs.niri.settings.binds = with config.lib.niri.actions;
     {
       # ── Applications ────────────────────────────────────────────
       # "Mod+Return".action = spawn "alacritty";
       "Mod+Return".action.spawn = [
         "alacritty"
         "-e"
-        "zellij"
-        "attach"
-        "--create"
-        "main"
+        "zellij-tui"
       ];
       "Mod+E".action = spawn "thunar";
       "Mod+B".action = spawn "brave";
@@ -94,9 +87,9 @@ in
       };
 
       # ── Screenshots (no Print key — use Mod+P family) ──────────
-      "Mod+P".action.screenshot = { };
-      "Mod+Ctrl+P".action.screenshot-screen = { };
-      "Mod+Alt+P".action.screenshot-window = { };
+      "Mod+P".action.screenshot = {};
+      "Mod+Ctrl+P".action.screenshot-screen = {};
+      "Mod+Alt+P".action.screenshot-window = {};
 
       # ── Overview ────────────────────────────────────────────────
       "Mod+D" = {
@@ -170,11 +163,9 @@ in
     // builtins.listToAttrs (
       builtins.concatLists (
         builtins.genList (
-          i:
-          let
+          i: let
             ws = i + 1;
-          in
-          [
+          in [
             {
               name = "Mod+${toString ws}";
               value.action = focus-workspace ws;
@@ -184,7 +175,8 @@ in
               value.action.move-column-to-workspace = ws;
             }
           ]
-        ) 9
+        )
+        9
       )
     );
 }

@@ -18,7 +18,6 @@ in
     # Enabled Spicetify extensions for enhanced functionality
     enabledExtensions = with spicePkgs.extensions; [
       playlistIcons # Add icons to playlists
-      lastfm # Last.fm integration
       historyShortcut # Keyboard shortcuts for history
       hidePodcasts # Hide podcasts from interface
       adblock # Block ads in Spotify

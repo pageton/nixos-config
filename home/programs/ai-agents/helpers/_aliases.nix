@@ -2,26 +2,30 @@
 
 {
   config,
+  constants,
   lib,
   pkgs,
   ...
 }:
 
 let
-  cfg = config.programs.aiAgents;
-  workflowPrompts = import ./_workflow-prompts.nix;
+  scriptsDir = "${config.home.homeDirectory}/${constants.paths.scripts}";
+  models = import ./_models.nix;
+  workflowPrompts = import ./_workflow-prompts.nix { };
   commitSplitPrompt = workflowPrompts.commitSplit;
   refactorMaintainabilityPrompt = workflowPrompts.refactorMaintainability;
   securityAuditPrompt = workflowPrompts.securityAudit;
+  bugfixRootCausePrompt = workflowPrompts.bugfixRootCause;
+  dependencyUpgradePrompt = workflowPrompts.dependencyUpgrade;
   buildPerformancePrompt = workflowPrompts.buildPerformance;
+  runtimePerformancePrompt = workflowPrompts.runtimePerformance;
   markdownSyncPrompt = workflowPrompts.markdownSync;
 
   codexBase = "command codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox";
 
-  gptLowModel = "openai/gpt-5.4-spark";
-  gptMedModel = "openai/gpt-5.4";
-  gptHighModel = "openai/gpt-5.4";
-  gptXHighModel = "openai/gpt-5.1-codex-max";
+  gptLowModel = models.gpt-low;
+  gptMedModel = models.gpt-default;
+  gptXHighModel = models.gpt-xhigh;
 
   mkAliasAttrs =
     aliasSpecs:
@@ -60,36 +64,11 @@ let
     }
     {
       alias = "gem";
-      command = "gemini";
-      workflowPromptMode = "positional";
-    }
-    {
-      alias = "gemu";
       command = "gemini --approval-mode=yolo";
-      workflowPromptMode = "positional";
-    }
-    {
-      alias = "gemy";
-      command = "gemini --approval-mode=yolo";
-      workflowPromptMode = "positional";
-    }
-    {
-      alias = "gemp";
-      command = "gemini --approval-mode=plan";
-      workflowPromptMode = "positional";
-    }
-    {
-      alias = "gemw";
-      command = "gemini --worktree";
       workflowPromptMode = "positional";
     }
     {
       alias = "cx";
-      command = codexBase;
-      workflowPromptMode = "positional";
-    }
-    {
-      alias = "cxu";
       command = codexBase;
       workflowPromptMode = "positional";
     }
@@ -149,11 +128,6 @@ let
       workflowPromptMode = "flag";
     }
     {
-      alias = "hocgpt";
-      command = "opencode_gpt --model ${gptHighModel}";
-      workflowPromptMode = "flag";
-    }
-    {
       alias = "xocgpt";
       command = "opencode_gpt --model ${gptXHighModel}";
       workflowPromptMode = "flag";
@@ -180,12 +154,24 @@ let
       prompt = refactorMaintainabilityPrompt;
     }
     {
+      suffix = "fx";
+      prompt = bugfixRootCausePrompt;
+    }
+    {
       suffix = "sa";
       prompt = securityAuditPrompt;
     }
     {
+      suffix = "du";
+      prompt = dependencyUpgradePrompt;
+    }
+    {
       suffix = "bp";
       prompt = buildPerformancePrompt;
+    }
+    {
+      suffix = "rp";
+      prompt = runtimePerformancePrompt;
     }
     {
       suffix = "md";
@@ -202,9 +188,9 @@ let
         alias = "${agent.alias}${workflow.suffix}";
         command =
           if agent.workflowPromptMode == "flag" then
-            "${agent.command} --prompt '${workflow.prompt}'"
+            "_ai_agent_exec ${agent.alias}${workflow.suffix} -- ${agent.command} --prompt ${lib.escapeShellArg workflow.prompt}"
           else
-            "${agent.command} '${workflow.prompt}'";
+            "_ai_agent_exec ${agent.alias}${workflow.suffix} -- ${agent.command} ${lib.escapeShellArg workflow.prompt}";
       }) workflowAgentSpecs
     ) workflowPromptSpecs
   );
@@ -218,20 +204,39 @@ let
       + "&& echo 'Copied ${workflow.suffix} prompt to clipboard'";
   }) workflowPromptSpecs;
 
-  aiAliases = mkAliasAttrs (aiAgentAliasSpecs ++ aiWorkflowAliasSpecs ++ workflowClipboardAliasSpecs);
+  aiAliases = mkAliasAttrs (
+    (map (
+      spec: spec // { command = "_ai_agent_exec ${spec.alias} -- ${spec.command}"; }
+    ) aiAgentAliasSpecs)
+    ++ aiWorkflowAliasSpecs
+    ++ workflowClipboardAliasSpecs
+  );
 
-  aiAgentLauncher = pkgs.writeShellScriptBin "ai-agent-launcher" ''
+  # Shared env var passthrough for workflow prompts (used by launcher and iter wrappers).
+  mkWorkflowEnvVars = targetScript: ''
     COMMIT_SPLIT_PROMPT=${lib.escapeShellArg commitSplitPrompt} \
-      REFACTOR_MAINTAINABILITY_PROMPT=${lib.escapeShellArg refactorMaintainabilityPrompt} \
-      SECURITY_AUDIT_PROMPT=${lib.escapeShellArg securityAuditPrompt} \
-      BUILD_PERFORMANCE_PROMPT=${lib.escapeShellArg buildPerformancePrompt} \
-      MARKDOWN_SYNC_PROMPT=${lib.escapeShellArg markdownSyncPrompt} \
-      exec ${config.home.homeDirectory}/System/scripts/ai/agent-launcher.sh "$@"
+    REFACTOR_MAINTAINABILITY_PROMPT=${lib.escapeShellArg refactorMaintainabilityPrompt} \
+    BUGFIX_ROOT_CAUSE_PROMPT=${lib.escapeShellArg bugfixRootCausePrompt} \
+    SECURITY_AUDIT_PROMPT=${lib.escapeShellArg securityAuditPrompt} \
+    DEPENDENCY_UPGRADE_PROMPT=${lib.escapeShellArg dependencyUpgradePrompt} \
+    BUILD_PERFORMANCE_PROMPT=${lib.escapeShellArg buildPerformancePrompt} \
+    RUNTIME_PERFORMANCE_PROMPT=${lib.escapeShellArg runtimePerformancePrompt} \
+    MARKDOWN_SYNC_PROMPT=${lib.escapeShellArg markdownSyncPrompt} \
+    exec ${targetScript} "$@"
   '';
+
+  aiAgentLauncher = pkgs.writeShellScriptBin "ai-agent-launcher" (
+    mkWorkflowEnvVars "${scriptsDir}/ai/agent-launcher.sh"
+  );
 in
 {
-  inherit aiAliases aiAgentLauncher;
+  inherit
+    aiAliases
+    aiAgentLauncher
+    workflowPrompts
+    mkWorkflowEnvVars
+    ;
   aiAgentInventory = pkgs.writeShellScriptBin "ai-agent-inventory" ''
-    exec ${config.home.homeDirectory}/System/scripts/ai/agent-inventory.sh "$@"
+    exec ${scriptsDir}/ai/agent-inventory.sh "$@"
   '';
 }

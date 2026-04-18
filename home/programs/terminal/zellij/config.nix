@@ -1,5 +1,10 @@
 # Zellij settings and keybinds.
-{ config, pkgs, ... }:
+{
+  config,
+  constants,
+  pkgs,
+  ...
+}:
 {
   programs.zellij = {
     enable = true;
@@ -7,7 +12,7 @@
     enableZshIntegration = false;
 
     settings = {
-      theme = "default"; # Stylix generates ~/.config/zellij/themes/stylix.kdl defining "default"
+      theme = "catppuccin-mocha-custom";
       default_shell = "${pkgs.zsh}/bin/zsh";
       default_layout = "default";
       default_cwd = config.home.homeDirectory;
@@ -27,12 +32,31 @@
       session_serialization = true;
       pane_viewport_serialization = true;
 
-      on_force_close = "quit";
+      # "detach" keeps the session server alive when the terminal is closed (Mod+Q, SIGHUP).
+      # This is required for zellij-tui: sessions created via the TUI must survive terminal closure.
+      # "quit" would kill the session server on force-close, destroying the session.
+      on_force_close = "detach";
       show_startup_tips = false;
       show_release_notes = false;
     };
 
     extraConfig = ''
+      themes {
+        catppuccin-mocha-custom {
+          fg "${config.lib.stylix.colors.base05}"
+          bg "${config.lib.stylix.colors.base01}"
+          black "${config.lib.stylix.colors.base03}"
+          red "${config.lib.stylix.colors.base08}"
+          green "${constants.color.blue_dim}"
+          yellow "${config.lib.stylix.colors.base0A}"
+          blue "${config.lib.stylix.colors.base0D}"
+          magenta "${config.lib.stylix.colors.base0E}"
+          cyan "${config.lib.stylix.colors.base0C}"
+          white "${config.lib.stylix.colors.base07}"
+          orange "${config.lib.stylix.colors.base09}"
+        }
+      }
+
       ui {
         pane_frames {
           rounded_corners true
@@ -97,10 +121,10 @@
         }
 
         shared_except "locked" "renametab" "renamepane" "entersearch" {
-          bind "Alt h" { MoveFocusOrTab "Left"; }
-          bind "Alt j" { MoveFocus "Down"; }
-          bind "Alt k" { MoveFocus "Up"; }
-          bind "Alt l" { MoveFocusOrTab "Right"; }
+          bind "Alt h" "Alt Left" { MoveFocus "Left"; }
+          bind "Alt j" "Alt Down" { MoveFocus "Down"; }
+          bind "Alt k" "Alt Up" { MoveFocus "Up"; }
+          bind "Alt l" "Alt Right" { MoveFocus "Right"; }
 
           bind "Alt 1" { GoToTab 1; SwitchToMode "Normal"; }
           bind "Alt 2" { GoToTab 2; SwitchToMode "Normal"; }
