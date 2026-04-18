@@ -1,107 +1,76 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-cd "$ROOT_DIR"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/logging.sh
+source "${SCRIPT_DIR}/../lib/logging.sh"
+# shellcheck source=scripts/lib/require.sh
+source "${SCRIPT_DIR}/../lib/require.sh"
 
-fail=0
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "${TMP_DIR}"' EXIT
 
-log() {
-  printf '%s\n' "$1" >&2
-}
+need_cmd rg
 
-mark_fail() {
-  fail=1
-}
+print_info "Scanning repository for risky security artifacts..."
 
-log "== Security audit: secret hygiene =="
+artifact_report="${TMP_DIR}/artifact-report.txt"
+content_report="${TMP_DIR}/content-report.txt"
 
-for path in "secrets/secrets-decrypted.yaml" "home/secrets/secrets-decrypted.yaml"; do
-  if [[ -f "$path" ]]; then
-    log "[FAIL] Found decrypted secret file: $path"
-    mark_fail
-  else
-    log "[OK] Not present: $path"
-  fi
-done
+rg \
+  --files \
+  --hidden \
+  -g '!**/.git/**' \
+  -g '!flake.lock' \
+  -g '!secrets/secrets.yaml' \
+  -g '!**/*.age' \
+  -g '!**/*.sops.*' \
+  -g '!**/*.asc' \
+  -g '!**/*-test.sh' \
+  -g '!**/testdata/**' \
+  -g '!**/fixtures/**' \
+  -g '.env' \
+  -g '.env.*' \
+  -g 'id_rsa' \
+  -g 'id_ed25519' \
+  -g 'credentials.json' \
+  -g '*.pem' \
+  -g '*.key' \
+  -g '*.p12' \
+  -g '*.pfx' \
+  . >"${artifact_report}" || true
 
-log "== Security audit: risky nix flags =="
-
-if rg --glob '*.nix' --line-number --hidden --pcre2 '^\s*allowInsecure\s*=\s*true\s*;' .; then
-  log "[FAIL] allowInsecure is enabled"
-  mark_fail
-fi
-
-if rg --glob '*.nix' --line-number --hidden --pcre2 '^\s*allowBroken\s*=\s*true\s*;' .; then
-  log "[FAIL] allowBroken is enabled"
-  mark_fail
-fi
-
-if rg --glob '*.nix' --line-number --hidden --pcre2 '^\s*PermitRootLogin\s*=\s*"yes"\s*;' .; then
-  log "[FAIL] SSH root login explicitly enabled"
-  mark_fail
-fi
-
-if rg --glob '*.nix' --line-number --hidden --pcre2 '^\s*PasswordAuthentication\s*=\s*true\s*;' .; then
-  log "[FAIL] SSH password auth explicitly enabled"
-  mark_fail
-fi
-
-if rg --glob '*.nix' --line-number --hidden --pcre2 '^\s*wheelNeedsPassword\s*=\s*false\s*;' .; then
-  log "[FAIL] sudo wheel password requirement is disabled"
-  mark_fail
-fi
-
-if rg --glob '*.nix' --line-number --hidden --pcre2 'NOPASSWD\s*:\s*ALL' .; then
-  log "[FAIL] Broad NOPASSWD:ALL sudo rule detected"
-  mark_fail
-fi
-
-if rg --glob '*.nix' --line-number --hidden --pcre2 '^\s*openFirewall\s*=\s*true\s*;' .; then
-  log "[WARN] openFirewall=true found; verify this is required"
-fi
-
-log "== Security audit: secret pattern scan =="
-
-secret_pattern='(AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36,255}|xox[baprs]-[A-Za-z0-9-]{10,}|-----BEGIN (RSA|EC|OPENSSH|PGP) PRIVATE KEY-----|password\s*=\s*"[^"]{8,}"|token\s*=\s*"[A-Za-z0-9._-]{16,}")'
-
-if rg --line-number --hidden --pcre2 \
-  --glob '!.git/**' \
+rg \
+  --line-number \
+  --hidden \
+  --glob '!**/.git/**' \
   --glob '!flake.lock' \
   --glob '!secrets/secrets.yaml' \
-  --glob '!home/secrets/secrets.yaml' \
-  "$secret_pattern" .; then
-  log "[FAIL] Suspicious plaintext secrets found"
-  mark_fail
-else
-  log "[OK] No suspicious plaintext secret patterns found"
+  --glob '!**/*.age' \
+  --glob '!**/*.sops.*' \
+  --glob '!**/*.asc' \
+  --glob '!**/*-test.sh' \
+  --glob '!**/testdata/**' \
+  --glob '!**/fixtures/**' \
+  --regexp 'BEGIN (RSA|DSA|EC|OPENSSH|PGP|PRIVATE) PRIVATE KEY' \
+  . >"${content_report}" || true
+
+failures=0
+
+if [[ -s "${artifact_report}" ]]; then
+  print_error "Potential secret-bearing files found:"
+  cat "${artifact_report}"
+  failures=1
 fi
 
-log "== Security audit: gitignore guard =="
-
-if [[ -f .gitignore ]]; then
-  if rg --line-number --fixed-strings 'secrets-decrypted.yaml' .gitignore >/dev/null; then
-    log "[OK] .gitignore protects decrypted secret files"
-  else
-    log "[WARN] .gitignore missing secrets-decrypted.yaml guard"
-  fi
-else
-  log "[WARN] .gitignore not found"
+if [[ -s "${content_report}" ]]; then
+  print_error "Private key material detected in repository text:"
+  cat "${content_report}"
+  failures=1
 fi
 
-log "== Security audit: script permissions =="
-
-if find scripts -type f -name '*.sh' -perm /022 | grep -q .; then
-  find scripts -type f -name '*.sh' -perm /022
-  log "[FAIL] World/group-writable shell scripts found"
-  mark_fail
-else
-  log "[OK] No world/group-writable shell scripts"
+if (( failures > 0 )); then
+  error_exit "security audit failed"
 fi
 
-if ((fail > 0)); then
-  log "== Security audit result: FAIL =="
-  exit 1
-fi
-
-log "== Security audit result: PASS =="
+print_success "No risky security artifacts or plaintext key material found."

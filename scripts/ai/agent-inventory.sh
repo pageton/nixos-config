@@ -4,31 +4,14 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/lib/logging.sh
 source "${SCRIPT_DIR}/../lib/logging.sh"
+# shellcheck source=scripts/lib/require.sh
+source "${SCRIPT_DIR}/../lib/require.sh"
+# shellcheck source=scripts/lib/fzf-theme.sh
+source "${SCRIPT_DIR}/../lib/fzf-theme.sh"
 
-# Ensure fzf inherits Home Manager theme when launched outside interactive shells.
-if [[ -z "${FZF_DEFAULT_OPTS:-}" ]] && [[ -f "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]]; then
-	# shellcheck disable=SC1091
-	source "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
-fi
-
-if [[ -z "${FZF_DEFAULT_OPTS:-}" ]]; then
-	export FZF_DEFAULT_OPTS="--color=fg:#ebdbb2,bg:#32302f,hl:#fabd2f,fg+:#ebdbb2,bg+:#3c3836,hl+:#fabd2f,info:#8ec07c,prompt:#83a598,pointer:#fe8019,marker:#b8bb26,spinner:#d3869b,header:#928374,border:#504945,gutter:#282828"
-fi
-
-if ! command -v fzf >/dev/null 2>&1; then
-	print_error "fzf is required"
-	exit 1
-fi
-
-if ! command -v jq >/dev/null 2>&1; then
-	print_error "jq is required"
-	exit 1
-fi
-
-if ! command -v python3 >/dev/null 2>&1; then
-	print_error "python3 is required"
-	exit 1
-fi
+need_cmd fzf
+need_cmd jq
+need_cmd python3
 
 usage() {
 	cat <<'EOF'
@@ -62,11 +45,19 @@ sanitize() {
 		-e 's/(sk-[A-Za-z0-9_-]+)/[REDACTED]/g' \
 		-e 's/(Bearer )[A-Za-z0-9._-]+/\1[REDACTED]/g'
 }
+export -f sanitize
 
 json_keys() {
 	local file="$1"
 	local expr="$2"
 	jq -r "$expr" "$file" 2>/dev/null || true
+}
+
+# Infer MCP server type: explicit type field, else "http" if url present, else "local".
+mcp_type_for() {
+	local file="$1"
+	local key="$2"
+	jq -r --arg k "$key" '.mcpServers[$k].type // (if .mcpServers[$k].url then "http" else "local" end)' "$file" 2>/dev/null || echo "local"
 }
 
 list_hook_rows_with_unconfigured() {
@@ -316,7 +307,7 @@ collect_claude() {
 		while IFS= read -r server; do
 			[[ -n "$server" ]] || continue
 			local mcp_type
-			mcp_type="$(jq -r --arg k "$server" '.mcpServers[$k].type // (if .mcpServers[$k].url then "http" else "local" end)' "$mcp_cfg" 2>/dev/null || echo "local")"
+			mcp_type="$(mcp_type_for "$mcp_cfg" "$server")"
 			row "claude" "mcp" "$server" "$mcp_type" "$mcp_cfg"
 		done < <(json_keys "$mcp_cfg" '.mcpServers // {} | keys[]')
 	fi
@@ -411,7 +402,7 @@ collect_gemini() {
 		while IFS= read -r mcp; do
 			[[ -n "$mcp" ]] || continue
 			local mcp_type
-			mcp_type="$(jq -r --arg k "$mcp" '.mcpServers[$k].type // (if .mcpServers[$k].url then "http" else "local" end)' "$cfg" 2>/dev/null || echo "local")"
+			mcp_type="$(mcp_type_for "$cfg" "$mcp")"
 			row "gemini" "mcp" "$mcp" "$mcp_type" "$cfg"
 		done < <(json_keys "$cfg" '.mcpServers // {} | keys[]')
 	fi
@@ -433,12 +424,6 @@ collect_rows_for_tool() {
 		collect_codex
 		;;
 	gemini)
-		collect_gemini
-		;;
-	all)
-		collect_opencode
-		collect_claude
-		collect_codex
 		collect_gemini
 		;;
 	*)
@@ -543,13 +528,18 @@ while true; do
 		continue
 	fi
 
+	if [[ "$section_locked" == "true" ]]; then
+		sanitize <"$tmp_filtered"
+		exit 0
+	fi
+
 	selected="$({
 		fzf --height=90% \
 			--reverse \
 			--header="${tool}/${section}: filter entries (ENTER opens source file, ESC back)" \
 			--delimiter=$'\t' \
 			--with-nth=1,2,3,4 \
-			--preview 'printf "Tool: %s\nKind: %s\nName: %s\nDetail: %s\nSource: %s\n" {1} {2} {3} {4} {5} | sed -E "s/(gho_[A-Za-z0-9_]+)/[REDACTED]/g; s/(sk-[A-Za-z0-9_-]+)/[REDACTED]/g; s/(Bearer )[A-Za-z0-9._-]+/\1[REDACTED]/g"' \
+			--preview 'printf "Tool: %s\nKind: %s\nName: %s\nDetail: %s\nSource: %s\n" {1} {2} {3} {4} {5} | sanitize' \
 			<"$tmp_filtered"
 	} || true)"
 

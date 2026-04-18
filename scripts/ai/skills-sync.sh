@@ -2,6 +2,10 @@
 # Sync skills from GitHub repos to ~/.local/share/skills/
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/logging.sh
+source "${SCRIPT_DIR}/../lib/logging.sh"
+
 SKILLS_DIR="$HOME/.local/share/skills"
 mkdir -p "$SKILLS_DIR"
 
@@ -34,12 +38,19 @@ SKILLS=(
 	"supercent-io/skills-template|workflow-automation|workflow-automation"
 	"microsoft/playwright-cli|playwright-cli|playwright-cli"
 	"ChromeDevTools/chrome-devtools-mcp|skills/chrome-devtools-cli|chrome-devtools-cli"
+	"callstackincubator/agent-device|agent-device|agent-device"
 )
 
 echo "Syncing ${#SKILLS[@]} skills to $SKILLS_DIR..."
 
 success=0
 failed=0
+current_tmpdir=""
+
+cleanup_tmpdir() {
+	[[ -n "${current_tmpdir:-}" ]] && rm -rf "$current_tmpdir"
+}
+trap cleanup_tmpdir EXIT
 
 for entry in "${SKILLS[@]}"; do
 	IFS='|' read -r repo skill_path skill_name <<<"$entry"
@@ -48,10 +59,11 @@ for entry in "${SKILLS[@]}"; do
 	echo -n "  → $skill_name: "
 
 	tmpdir=$(mktemp -d)
+	current_tmpdir="$tmpdir"
 
 	# Clone the repo
 	if ! git clone --quiet --depth 1 --filter=blob:none --sparse "https://github.com/$repo.git" "$tmpdir/repo" 2>/dev/null; then
-		echo "❌ clone failed"
+		print_error "clone failed for ${skill_name}"
 		failed=$((failed + 1))
 		rm -rf "$tmpdir"
 		continue
@@ -86,17 +98,18 @@ for entry in "${SKILLS[@]}"; do
 	if [[ -n "$skill_dir" && -f "$skill_dir/SKILL.md" ]]; then
 		rm -rf "$target"
 		cp -r "$skill_dir" "$target"
-		echo "✔"
+		print_success "${skill_name}"
 		success=$((success + 1))
 	else
-		echo "⚠ SKILL.md not found"
+		print_warning "SKILL.md not found for ${skill_name}"
 		failed=$((failed + 1))
 	fi
 
 	rm -rf "$tmpdir"
+	current_tmpdir=""
 done
 
 echo ""
-echo "✓ Synced $success skills ($failed failed) to $SKILLS_DIR"
+	print_success "Synced $success skills ($failed failed) to $SKILLS_DIR"
 echo ""
 echo "Run 'just home' to symlink to opencode profiles."

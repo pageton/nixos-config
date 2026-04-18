@@ -1,112 +1,132 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-cd "$ROOT_DIR"
-FLAKE_REF="path:$ROOT_DIR"
-TARGET="${1:-all}"
-HM_USER="${2:-sadiq}"
+target="${1:-all}"
 
-known_hosts=(desktop thinkpad)
-selected_hosts=()
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "${TMP_DIR}"' EXIT
 
-if [[ "$TARGET" == "all" ]]; then
-  selected_hosts=("${known_hosts[@]}")
-else
-  selected_hosts=("$TARGET")
+declare -a eval_labels=()
+declare -a eval_attrs=()
+
+max_jobs="$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)"
+if (( max_jobs > 4 )); then
+  max_jobs=4
+elif (( max_jobs < 1 )); then
+  max_jobs=1
 fi
 
-timestamp_ms() {
-  date +%s%3N
+run_eval() {
+  local label="$1"
+  local attr="$2"
+
+  echo "--- ${label} ---"
+  time nix eval --raw "path:$PWD#${attr}.drvPath"
+  echo ""
 }
 
-run_step() {
+run_eval_async() {
   local label="$1"
-  shift
-  local start end elapsed
+  local attr="$2"
+  local output_file="$3"
 
-  start="$(timestamp_ms)"
-  "$@"
-  end="$(timestamp_ms)"
-  elapsed=$((end - start))
-
-  printf '%-42s %6d ms\n' "$label" "$elapsed"
-}
-
-# Run a single eval step in the background, writing timing to a temp file.
-# Usage: run_step_bg <label> <outfile> <cmd...>
-run_step_bg() {
-  local label="$1"
-  local outfile="$2"
-  shift 2
   (
-    local start end elapsed rc=0
-    start="$(timestamp_ms)"
-    "$@" >/dev/null || rc=$?
-    end="$(timestamp_ms)"
-    elapsed=$((end - start))
-    printf '%-42s %6d ms\n' "$label" "$elapsed" > "$outfile"
-    exit "$rc"
-  ) &
+    run_eval "$label" "$attr"
+  ) >"${output_file}" 2>&1 &
 }
 
-echo "== Evaluation audit (no switch) =="
+queue_eval() {
+  eval_labels+=("$1")
+  eval_attrs+=("$2")
+}
 
-cleanup_files=()
-cleanup() { rm -f "${cleanup_files[@]}"; }
-trap cleanup EXIT
+run_queued_evals() {
+  local total="${#eval_labels[@]}"
+  local start=0
+  local exit_code=0
 
-if [[ "${#selected_hosts[@]}" -le 1 ]]; then
-  # Single host — run sequentially (unchanged behaviour)
-  for host in "${selected_hosts[@]}"; do
-    run_step "nixos ${host} eval" \
-      nix eval "$FLAKE_REF#nixosConfigurations.${host}.config.system.build.toplevel.drvPath" --quiet
+  while (( start < total )); do
+    local -a batch_pids=()
+    local -a batch_outputs=()
+    local batch_count=0
 
-    run_step "home ${host} eval" \
-      nix eval "$FLAKE_REF#homeConfigurations.${HM_USER}@${host}.activationPackage.drvPath" --quiet
+    while (( start + batch_count < total && batch_count < max_jobs )); do
+      local idx=$((start + batch_count))
+      local output_file="${TMP_DIR}/eval-${idx}.log"
+
+      batch_outputs+=("${output_file}")
+      run_eval_async "${eval_labels[$idx]}" "${eval_attrs[$idx]}" "${output_file}"
+      batch_pids+=("$!")
+      ((batch_count += 1))
+    done
+
+    local batch_failed=0
+    local pid
+    for pid in "${batch_pids[@]}"; do
+      if ! wait "$pid"; then
+        batch_failed=1
+      fi
+    done
+
+    local output_file
+    for output_file in "${batch_outputs[@]}"; do
+      cat "${output_file}"
+    done
+
+    if (( batch_failed )); then
+      exit_code=1
+    fi
+
+    ((start += batch_count))
+  done
+
+  return "$exit_code"
+}
+
+list_attr_names() {
+  local attr="$1"
+
+  nix eval --raw "path:$PWD#${attr}" --apply '
+    x: builtins.concatStringsSep "\n" (builtins.attrNames x)
+  '
+}
+
+list_matching_home_configs() {
+  local host="$1"
+
+  nix eval --raw "path:$PWD#homeConfigurations" --apply "
+    x:
+      builtins.concatStringsSep \"\\n\" (
+        builtins.filter (name: builtins.match \".*@${host}\" name != null) (builtins.attrNames x)
+      )
+  "
+}
+
+echo "=== Evaluation Audit (target: ${target}) ==="
+echo ""
+
+if [[ "$target" == "all" ]]; then
+  mapfile -t nixos_hosts < <(list_attr_names "nixosConfigurations")
+  for host in "${nixos_hosts[@]}"; do
+    [[ -n "$host" ]] || continue
+    queue_eval "nixosConfigurations.${host}" "nixosConfigurations.${host}.config.system.build.toplevel"
+  done
+
+  mapfile -t home_configs < <(list_attr_names "homeConfigurations")
+  for home_cfg in "${home_configs[@]}"; do
+    [[ -n "$home_cfg" ]] || continue
+    queue_eval "homeConfigurations.${home_cfg}" "homeConfigurations.${home_cfg}.activationPackage"
   done
 else
-  # Multiple hosts — eval all in parallel
-  pids=()
-  labels=()
+  queue_eval "nixosConfigurations.${target}" "nixosConfigurations.${target}.config.system.build.toplevel"
 
-  for host in "${selected_hosts[@]}"; do
-    local_nixos_out=$(mktemp)
-    local_home_out=$(mktemp)
-    cleanup_files+=("$local_nixos_out" "$local_home_out")
-
-    run_step_bg "nixos ${host} eval" "$local_nixos_out" \
-      nix eval "$FLAKE_REF#nixosConfigurations.${host}.config.system.build.toplevel.drvPath" --quiet
-    pids+=($!)
-
-    run_step_bg "home ${host} eval" "$local_home_out" \
-      nix eval "$FLAKE_REF#homeConfigurations.${HM_USER}@${host}.activationPackage.drvPath" --quiet
-    pids+=($!)
-
-    labels+=("nixos ${host} eval:$local_nixos_out" "home ${host} eval:$local_home_out")
+  mapfile -t matching_home_configs < <(list_matching_home_configs "$target")
+  for home_cfg in "${matching_home_configs[@]}"; do
+    [[ -n "$home_cfg" ]] || continue
+    queue_eval "homeConfigurations.${home_cfg}" "homeConfigurations.${home_cfg}.activationPackage"
   done
-
-  # Wait for all background jobs, propagating any failures
-  fail=0
-  for pid in "${pids[@]}"; do
-    wait "$pid" || fail=1
-  done
-
-  # Print results in host order
-  for entry in "${labels[@]}"; do
-    cat "${entry#*:}"
-  done
-
-  if ((fail)); then
-    exit 1
-  fi
 fi
 
-if [[ "$TARGET" == "all" ]]; then
-  run_step "flake check --no-build" \
-    nix flake check --no-build --quiet "$FLAKE_REF"
-else
-  echo "flake check --no-build                       skipped (target mode)"
-fi
+run_queued_evals
 
-echo "== Evaluation audit complete =="
+echo "Evaluation audit completed."

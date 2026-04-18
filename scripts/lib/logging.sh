@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 # Shared logging library for shell scripts - provides colored output and timestamped logging
+# Guard: safe to source multiple times (readonly vars only set once).
+[[ -n "${_LOGGING_LOADED:-}" ]] && return 0
+_LOGGING_LOADED=1
+readonly _LOGGING_LOADED
 
 # Color codes
 readonly RED='\033[0;31m'
@@ -26,15 +30,6 @@ log_with_level() {
 	timestamp=$(date '+%Y-%m-%d %H:%M:%S')
 	local formatted="${color}[${level}]${NC} ${timestamp} - ${msg}"
 
-	if [[ -n "${LOG_FILE:-}" ]]; then
-		if [[ "$stream" == "stderr" ]]; then
-			printf '%b\n' "$formatted" | tee -a "$LOG_FILE" >&2
-		else
-			printf '%b\n' "$formatted" | tee -a "$LOG_FILE"
-		fi
-		return
-	fi
-
 	if [[ "$stream" == "stderr" ]]; then
 		printf '%b\n' "$formatted" >&2
 	else
@@ -44,19 +39,19 @@ log_with_level() {
 
 # Simple colored output functions (emoji style)
 print_info() {
-	print_colored "$BLUE" "i" "$1"
+	print_colored "$BLUE" "ℹ" "$1"
 }
 
 print_success() {
-	print_colored "$GREEN" "v" "$1"
+	print_colored "$GREEN" "✓" "$1"
 }
 
 print_warning() {
-	print_colored "$YELLOW" "!" "$1"
+	print_colored "$YELLOW" "⚠" "$1"
 }
 
 print_error() {
-	print_colored "$RED" "x" "$1"
+	print_colored "$RED" "✗" "$1"
 }
 
 # Timestamped logging functions (with optional file logging)
