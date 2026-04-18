@@ -41,43 +41,43 @@ Primary catalog (full matrix): [`AI-AGENTS-RESOURCE-INDEX.md`](./AI-AGENTS-RESOU
 
 ### Core Docs
 
-| Tech | Official Docs | GitHub |
-| --- | --- | --- |
-| Claude Code | <https://docs.anthropic.com/en/docs/claude-code/overview> | <https://github.com/anthropics/claude-code> |
-| OpenCode | <https://opencode.ai/docs> | <https://github.com/anomalyco/opencode> |
-| Forge | <https://forgecode.dev> | <https://github.com/nicepkg/forge> |
-| Codex CLI | <https://platform.openai.com/docs/codex> | <https://github.com/openai/codex> |
-| Gemini CLI | <https://ai.google.dev/gemini-api/docs> | <https://github.com/google-gemini/gemini-cli> |
-| MCP Specification | <https://modelcontextprotocol.io/introduction> | <https://github.com/modelcontextprotocol/specification> |
+| Tech              | Official Docs                                             | GitHub                                                  |
+| ----------------- | --------------------------------------------------------- | ------------------------------------------------------- |
+| Claude Code       | <https://docs.anthropic.com/en/docs/claude-code/overview> | <https://github.com/anthropics/claude-code>             |
+| OpenCode          | <https://opencode.ai/docs>                                | <https://github.com/anomalyco/opencode>                 |
+| Forge             | <https://forgecode.dev>                                   | <https://github.com/nicepkg/forge>                      |
+| Codex CLI         | <https://platform.openai.com/docs/codex>                  | <https://github.com/openai/codex>                       |
+| Gemini CLI        | <https://ai.google.dev/gemini-api/docs>                   | <https://github.com/google-gemini/gemini-cli>           |
+| MCP Specification | <https://modelcontextprotocol.io/introduction>            | <https://github.com/modelcontextprotocol/specification> |
 
 ### Plugin Docs
 
-| Tech | Docs | GitHub |
-| --- | --- | --- |
-| oh-my-opencode | <https://github.com/code-yeongyu/oh-my-opencode#readme> | <https://github.com/code-yeongyu/oh-my-opencode> |
-| oh-my-claudecode | <https://github.com/Yeachan-Heo/oh-my-claudecode#readme> | <https://github.com/Yeachan-Heo/oh-my-claudecode> |
+| Tech                   | Docs                                                        | GitHub                                               |
+| ---------------------- | ----------------------------------------------------------- | ---------------------------------------------------- |
+| oh-my-opencode         | <https://github.com/code-yeongyu/oh-my-opencode#readme>     | <https://github.com/code-yeongyu/oh-my-opencode>     |
+| oh-my-claudecode       | <https://github.com/Yeachan-Heo/oh-my-claudecode#readme>    | <https://github.com/Yeachan-Heo/oh-my-claudecode>    |
 | everything-claude-code | <https://github.com/affaan-m/everything-claude-code#readme> | <https://github.com/affaan-m/everything-claude-code> |
 
 ### MCP Server Docs
 
-| Server | Docs | Source |
-| --- | --- | --- |
-| context7 | <https://context7.com> | <https://github.com/upstash/context7> |
-| github MCP | <https://github.com/modelcontextprotocol/servers/tree/main/src/github> | <https://github.com/modelcontextprotocol/servers> |
-| cloudflare-docs MCP | <https://developers.cloudflare.com/agents/model-context-protocol/> | <https://github.com/cloudflare/mcp-server-cloudflare> |
-| Z.AI API docs | <https://docs.z.ai> | <https://www.z.ai> |
+| Server              | Docs                                                                   | Source                                                |
+| ------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------- |
+| context7            | <https://context7.com>                                                 | <https://github.com/upstash/context7>                 |
+| github MCP          | <https://github.com/modelcontextprotocol/servers/tree/main/src/github> | <https://github.com/modelcontextprotocol/servers>     |
+| cloudflare-docs MCP | <https://developers.cloudflare.com/agents/model-context-protocol/>     | <https://github.com/cloudflare/mcp-server-cloudflare> |
+| Z.AI API docs       | <https://docs.z.ai>                                                    | <https://www.z.ai>                                    |
 
 ### Skills Ecosystem Docs
 
-| Tech | Docs | GitHub |
-| --- | --- | --- |
-| skills CLI | <https://skills.sh> | <https://github.com/vercel-labs/skills> |
-| obra superpowers | <https://github.com/obra/superpowers#readme> | <https://github.com/obra/superpowers> |
-| anthropics/skills | <https://github.com/anthropics/skills#readme> | <https://github.com/anthropics/skills> |
-| vercel-labs/agent-skills | <https://github.com/vercel-labs/agent-skills#readme> | <https://github.com/vercel-labs/agent-skills> |
-| remotion-dev/skills | <https://github.com/remotion-dev/skills#readme> | <https://github.com/remotion-dev/skills> |
+| Tech                      | Docs                                                  | GitHub                                         |
+| ------------------------- | ----------------------------------------------------- | ---------------------------------------------- |
+| skills CLI                | <https://skills.sh>                                   | <https://github.com/vercel-labs/skills>        |
+| obra superpowers          | <https://github.com/obra/superpowers#readme>          | <https://github.com/obra/superpowers>          |
+| anthropics/skills         | <https://github.com/anthropics/skills#readme>         | <https://github.com/anthropics/skills>         |
+| vercel-labs/agent-skills  | <https://github.com/vercel-labs/agent-skills#readme>  | <https://github.com/vercel-labs/agent-skills>  |
+| remotion-dev/skills       | <https://github.com/remotion-dev/skills#readme>       | <https://github.com/remotion-dev/skills>       |
 | vercel-labs/agent-browser | <https://github.com/vercel-labs/agent-browser#readme> | <https://github.com/vercel-labs/agent-browser> |
-| playwright-cli | <https://playwright.dev> | <https://github.com/microsoft/playwright-cli> |
+| playwright-cli            | <https://playwright.dev>                              | <https://github.com/microsoft/playwright-cli>  |
 
 ### CLI Commands to Pull Docs/Metadata
 
@@ -109,22 +109,22 @@ btca ask --resource <name> --question "Summarize setup, auth, and latest breakin
 
 ### Quick Reference
 
-| Alias/Function               | What It Runs                                                       | Notes                                                                |
-| ---------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------- |
-| `cl`                         | `claude`                                                           | Claude Code safe default                                              |
-| `clu`                        | `claude --dangerously-skip-permissions`                            | Claude Code YOLO (unsafe explicit)                                    |
-| `clglm`                      | `claude_glm`                                                       | Claude via Z.AI GLM-5 proxy (includes YOLO)                          |
-| `oc`                         | `opencode`                                                         | Default OpenCode                                                     |
-| `ocglm`                      | `opencode_glm`                                                     | OpenCode with GLM-5 profile                                          |
-| `ocgem`                      | `opencode_gemini`                                                  | OpenCode with Gemini profile                                          |
-| `ocgpt`                      | `opencode_gpt`                                                     | OpenCode with GPT profile                                            |
-| `ocs`                        | `opencode_sonnet`                                                  | OpenCode with Sonnet profile                                         |
-| `oczen`                      | `opencode_zen`                                                     | OpenCode with Zen profile (free models)                              |
-| `gem`                        | `gemini --yolo`                                                    | Gemini CLI YOLO (default)                                            |
-| `cx`                         | `codex --no-alt-screen`                                            | Codex safe default                                                    |
-| `cxu`                        | `codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox` | Codex YOLO (unsafe explicit)                                          |
-| `fg`                         | `forge`                                                            | Forge CLI (default model/provider)                                    |
-| `aip`                        | AI Panes — multi-agent side-by-side in Zellij                      | Function: `aip cl oc gem "prompt"` opens 3 panes with prompt         |
+| Alias/Function              | What It Runs                                                       | Notes                                                                |
+| --------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| `cl`                        | `claude`                                                           | Claude Code safe default                                             |
+| `clu`                       | `claude --dangerously-skip-permissions`                            | Claude Code YOLO (unsafe explicit)                                   |
+| `clglm`                     | `claude_glm`                                                       | Claude via Z.AI GLM-5 proxy (includes YOLO)                          |
+| `oc`                        | `opencode`                                                         | Default OpenCode                                                     |
+| `ocglm`                     | `opencode_glm`                                                     | OpenCode with GLM-5 profile                                          |
+| `ocgem`                     | `opencode_gemini`                                                  | OpenCode with Gemini profile                                         |
+| `ocgpt`                     | `opencode_gpt`                                                     | OpenCode with GPT profile                                            |
+| `ocs`                       | `opencode_sonnet`                                                  | OpenCode with Sonnet profile                                         |
+| `oczen`                     | `opencode_zen`                                                     | OpenCode with Zen profile (free models)                              |
+| `gem`                       | `gemini --yolo`                                                    | Gemini CLI YOLO (default)                                            |
+| `cx`                        | `codex --no-alt-screen`                                            | Codex safe default                                                   |
+| `cxu`                       | `codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox` | Codex YOLO (unsafe explicit)                                         |
+| `fg`                        | `forge`                                                            | Forge CLI (default model/provider)                                   |
+| `aip`                       | AI Panes — multi-agent side-by-side in Zellij                      | Function: `aip cl oc gem "prompt"` opens 3 panes with prompt         |
 | `claude_glm` (`clglm`)      | Claude Code via Z.AI GLM-5 proxy                                   | Function: sets ANTHROPIC base URL + GLM model env vars               |
 | `opencode_glm` (`ocglm`)    | OpenCode with GLM-5 profile                                        | Function: sets `OPENCODE_CONFIG_DIR=~/.config/opencode-glm/`         |
 | `opencode_gemini` (`ocgem`) | OpenCode with Gemini profile                                       | Function: sets `OPENCODE_CONFIG_DIR=~/.config/opencode-gemini/`      |
@@ -140,7 +140,7 @@ btca ask --resource <name> --question "Summarize setup, auth, and latest breakin
 ### Aliases vs Functions
 
 - **Aliases** (`cl`, `clglm`, `oc`, `ocglm`, `ocgem`, `ocgpt`, `gem`, `cx`, `fg`, `occm`, `fgcm`, etc.) are defined in `home/programs/ai-agents/services.nix`. Workflow aliases (`*cm`, `*rf`, `*sa`, `*md`) are generated automatically from the base agent alias list.
-- **Functions** (`claude_glm`, `opencode_glm`, `opencode_gemini`, `opencode_gpt`, `aip`) are defined in `home/modules/terminal/zsh/functions.nix` for env var injection, sops key loading, or multi-line logic.
+- **Functions** (`claude_glm`, `opencode_glm`, `opencode_gemini`, `opencode_gpt`, `aip`) are defined in `home/programs/terminal/zsh/functions.nix` for env var injection, sops key loading, or multi-line logic.
 
 ---
 
@@ -173,8 +173,8 @@ ai-agents/
 1. **Nix generates** base configs from `config.nix` values
 2. **Activation scripts** write configs as real files (not symlinks, so plugins can modify)
 3. **`setupForgeConfig`** configures Forge via CLI (`forge config set`) and imports local MCP servers
-5. **`patchAiAgentSecrets`** injects the Z.AI API key into all agents + all OpenCode profiles from sops, and imports Z.AI remote MCP servers into Forge
-6. Agents read their native config files at runtime
+4. **`patchAiAgentSecrets`** injects the Z.AI API key into all agents + all OpenCode profiles from sops, and imports Z.AI remote MCP servers into Forge
+5. Agents read their native config files at runtime
 
 ---
 
@@ -196,28 +196,28 @@ Permissions allow: `git`, `gh`, `npm run`, `pnpm`, `bun`, `just`, `nix`, `cargo`
 
 ### OpenCode
 
-| Setting         | Value                                            | Why                                                  |
-| --------------- | ------------------------------------------------ | ---------------------------------------------------- |
-| Model           | `anthropic/claude-opus-4-6`                      | Primary coding model                                 |
-| Theme           | `gruvbox`                                        | Matches system theme                                 |
-| Small model     | `claude-haiku-4-5`                               | Cheap model for titles, summaries                    |
-| Compaction      | Auto + prune                                     | Remove old tool outputs, reserve 10k tokens          |
-| Custom commands | test, deploy, review                             | Workflow shortcuts via `/test`, `/deploy`, `/review` |
-| Plugins         | oh-my-opencode                                  | Stable baseline plugin stack                         |
+| Setting         | Value                       | Why                                                  |
+| --------------- | --------------------------- | ---------------------------------------------------- |
+| Model           | `anthropic/claude-opus-4-6` | Primary coding model                                 |
+| Theme           | `gruvbox`                   | Matches system theme                                 |
+| Small model     | `claude-haiku-4-5`          | Cheap model for titles, summaries                    |
+| Compaction      | Auto + prune                | Remove old tool outputs, reserve 10k tokens          |
+| Custom commands | test, deploy, review        | Workflow shortcuts via `/test`, `/deploy`, `/review` |
+| Plugins         | oh-my-opencode              | Stable baseline plugin stack                         |
 
 ### Gemini CLI
 
-| Setting           | Value     | Why                                         |
-| ----------------- | --------- | ------------------------------------------- |
-| Theme             | `Gruvbox` | Matches system theme                        |
-| Vim mode          | Enabled   | Consistent with Neovim workflow             |
-| Auto-update       | Enabled   | Keep Gemini CLI current between Nix updates |
-| Session retention | 30 days   | Auto-cleanup old sessions                   |
+| Setting           | Value     | Why                                          |
+| ----------------- | --------- | -------------------------------------------- |
+| Theme             | `Gruvbox` | Matches system theme                         |
+| Vim mode          | Enabled   | Consistent with Neovim workflow              |
+| Auto-update       | Enabled   | Keep Gemini CLI current between Nix updates  |
+| Session retention | 30 days   | Auto-cleanup old sessions                    |
 | Checkpointing     | Disabled  | Disabled in config due upstream PATH/env bug |
-| Privacy/telemetry | Disabled  | Privacy-conscious                           |
-| Tips/banner       | Hidden    | Clean interface                             |
-| Code execution    | Enabled   | Run code in sandbox                         |
-| Search grounding  | Enabled   | Web-grounded responses                      |
+| Privacy/telemetry | Disabled  | Privacy-conscious                            |
+| Tips/banner       | Hidden    | Clean interface                              |
+| Code execution    | Enabled   | Run code in sandbox                          |
+| Search grounding  | Enabled   | Web-grounded responses                       |
 
 ### Codex
 
@@ -239,15 +239,15 @@ Trusted projects: `~/System`.
 
 ### Forge
 
-| Setting           | Value        | Why                                             |
-| ----------------- | ------------ | ----------------------------------------------- |
-| Model             | `glm-5.1`    | Cost-effective primary model                    |
-| Provider          | `zai_coding` | Z.AI coding provider                            |
-| Reasoning effort  | `high`       | Better reasoning for complex tasks              |
-| Config method     | CLI (`forge config set`) | Native workflow, not static files     |
-| MCP import        | `forge mcp import --scope user` | Two-phase: local + remote |
-| Skills            | Built-in (`forge://skills/`) | No external skills.sh needed         |
-| Global instructions | `~/forge/AGENTS.md` | Shared instructions file              |
+| Setting             | Value                           | Why                                |
+| ------------------- | ------------------------------- | ---------------------------------- |
+| Model               | `glm-5.1`                       | Cost-effective primary model       |
+| Provider            | `zai_coding`                    | Z.AI coding provider               |
+| Reasoning effort    | `high`                          | Better reasoning for complex tasks |
+| Config method       | CLI (`forge config set`)        | Native workflow, not static files  |
+| MCP import          | `forge mcp import --scope user` | Two-phase: local + remote          |
+| Skills              | Built-in (`forge://skills/`)    | No external skills.sh needed       |
+| Global instructions | `~/forge/AGENTS.md`             | Shared instructions file           |
 
 Forge uses a CLI-driven config approach instead of writing static config files. Local MCP servers (context7, github, chrome-devtools) are imported during `setupForgeConfig`, while Z.AI remote servers (web-search-prime, web-reader, zread) are imported during `patchAiAgentSecrets` when the API key is available. Forge has its own built-in skills system and does not use the skills.sh ecosystem.
 
@@ -259,17 +259,17 @@ Z.AI GLM-5 as primary model for cost-effective coding sessions. Two entry points
 
 Uses a separate config directory (`~/.config/opencode-glm/`) with all models overridden to GLM variants. Reuses the same MCP servers, plugins, and permissions as the default profile.
 
-| Agent             | GLM Model                     | Tier               |
-| ----------------- | ----------------------------- | ------------------ |
-| sisyphus          | zai-coding-plan/glm-5         | Heavy              |
-| hephaestus        | zai-coding-plan/glm-5         | Heavy              |
-| oracle            | zai-coding-plan/glm-5         | Heavy              |
-| prometheus        | zai-coding-plan/glm-5         | Heavy              |
-| metis             | zai-coding-plan/glm-5         | Heavy              |
-| librarian         | zai-coding-plan/glm-4.7       | Standard           |
-| momus             | zai-coding-plan/glm-4.7       | Standard           |
-| atlas             | zai-coding-plan/glm-4.7       | Standard           |
-| explore           | zai-coding-plan/glm-4.7-flash | Fast               |
+| Agent             | GLM Model                     | Tier                             |
+| ----------------- | ----------------------------- | -------------------------------- |
+| sisyphus          | zai-coding-plan/glm-5         | Heavy                            |
+| hephaestus        | zai-coding-plan/glm-5         | Heavy                            |
+| oracle            | zai-coding-plan/glm-5         | Heavy                            |
+| prometheus        | zai-coding-plan/glm-5         | Heavy                            |
+| metis             | zai-coding-plan/glm-5         | Heavy                            |
+| librarian         | zai-coding-plan/glm-4.7       | Standard                         |
+| momus             | zai-coding-plan/glm-4.7       | Standard                         |
+| atlas             | zai-coding-plan/glm-4.7       | Standard                         |
+| explore           | zai-coding-plan/glm-4.7-flash | Fast                             |
 | multimodal-looker | anthropic/claude-sonnet-4-6   | Inherited from base agent config |
 
 Category overrides:
@@ -317,38 +317,38 @@ Google Gemini models as primary models for Gemini-native coding sessions.
 
 Uses a separate config directory (`~/.config/opencode-gemini/`) with models overridden to Gemini variants. Reuses the same MCP servers and permissions as the default profile.
 
-| Agent             | Gemini Model               | Variant | Tier                   |
-| ----------------- | -------------------------- | ------- | ---------------------- |
-| sisyphus          | gemini-2.5-pro             | —       | Heavy                  |
-| hephaestus        | gemini-2.5-pro             | —       | Heavy                  |
-| oracle            | gemini-2.5-pro             | —       | Heavy                  |
-| prometheus        | gemini-2.5-pro             | high    | Heavy (max thinking)   |
-| metis             | gemini-2.5-pro             | —       | Heavy                  |
-| momus             | gemini-2.5-pro             | low     | Heavy (light thinking) |
-| librarian         | gemini-2.5-flash           | medium  | Fast                   |
-| atlas             | gemini-2.5-flash           | medium  | Fast                   |
-| explore           | gemini-2.5-flash           | minimal | Fast (speed priority)  |
+| Agent             | Gemini Model                | Variant | Tier                             |
+| ----------------- | --------------------------- | ------- | -------------------------------- |
+| sisyphus          | gemini-2.5-pro              | —       | Heavy                            |
+| hephaestus        | gemini-2.5-pro              | —       | Heavy                            |
+| oracle            | gemini-2.5-pro              | —       | Heavy                            |
+| prometheus        | gemini-2.5-pro              | high    | Heavy (max thinking)             |
+| metis             | gemini-2.5-pro              | —       | Heavy                            |
+| momus             | gemini-2.5-pro              | low     | Heavy (light thinking)           |
+| librarian         | gemini-2.5-flash            | medium  | Fast                             |
+| atlas             | gemini-2.5-flash            | medium  | Fast                             |
+| explore           | gemini-2.5-flash            | minimal | Fast (speed priority)            |
 | multimodal-looker | anthropic/claude-sonnet-4-6 | —       | Inherited from base agent config |
 
 Category overrides:
 
-| Category           | Model                      | Variant |
-| ------------------ | -------------------------- | ------- |
-| visual-engineering | gemini-2.5-pro             | —       |
-| ultrabrain         | gemini-2.5-pro             | high    |
-| deep               | gemini-2.5-pro             | high    |
-| artistry           | gemini-2.5-pro             | —       |
-| unspecified-high   | gemini-2.5-pro             | high    |
-| unspecified-low    | gemini-2.5-flash           | medium  |
-| writing            | gemini-2.5-flash           | medium  |
-| quick              | gemini-2.5-flash           | minimal |
+| Category           | Model            | Variant |
+| ------------------ | ---------------- | ------- |
+| visual-engineering | gemini-2.5-pro   | —       |
+| ultrabrain         | gemini-2.5-pro   | high    |
+| deep               | gemini-2.5-pro   | high    |
+| artistry           | gemini-2.5-pro   | —       |
+| unspecified-high   | gemini-2.5-pro   | high    |
+| unspecified-low    | gemini-2.5-flash | medium  |
+| writing            | gemini-2.5-flash | medium  |
+| quick              | gemini-2.5-flash | minimal |
 
 ### Gemini Model Reference
 
-| Model ID          | Context | Thinking Variants | Use Case                                 |
-| ----------------- | ------- | ----------------- | ---------------------------------------- |
-| gemini-2.5-pro    | 1M      | high              | Flagship reasoning, coding, architecture |
-| gemini-2.5-flash  | 1M      | minimal, medium   | Fast coding, search, writing             |
+| Model ID         | Context | Thinking Variants | Use Case                                 |
+| ---------------- | ------- | ----------------- | ---------------------------------------- |
+| gemini-2.5-pro   | 1M      | high              | Flagship reasoning, coding, architecture |
+| gemini-2.5-flash | 1M      | minimal, medium   | Fast coding, search, writing             |
 
 ---
 
@@ -360,17 +360,17 @@ OpenAI GPT models as primary models for GPT-first coding sessions.
 
 Uses a separate config directory (`~/.config/opencode-gpt/`) with models overridden to GPT variants. Reuses the same MCP servers, plugins, and permissions as the default profile.
 
-| Agent             | GPT Model             | Tier               |
-| ----------------- | --------------------- | ------------------ |
-| sisyphus          | openai/gpt-5.3-codex  | Heavy              |
-| hephaestus        | openai/gpt-5.3-codex  | Heavy              |
-| oracle            | openai/gpt-5.3        | Standard           |
-| prometheus        | openai/gpt-5.3-codex  | Heavy              |
-| metis             | openai/gpt-5.3-codex  | Heavy              |
-| librarian         | openai/gpt-5.3        | Standard           |
-| momus             | openai/gpt-5.3        | Standard           |
-| atlas             | openai/gpt-5.3        | Standard           |
-| explore           | opencode/gpt-5-nano   | Fast               |
+| Agent             | GPT Model                   | Tier                             |
+| ----------------- | --------------------------- | -------------------------------- |
+| sisyphus          | openai/gpt-5.3-codex        | Heavy                            |
+| hephaestus        | openai/gpt-5.3-codex        | Heavy                            |
+| oracle            | openai/gpt-5.3              | Standard                         |
+| prometheus        | openai/gpt-5.3-codex        | Heavy                            |
+| metis             | openai/gpt-5.3-codex        | Heavy                            |
+| librarian         | openai/gpt-5.3              | Standard                         |
+| momus             | openai/gpt-5.3              | Standard                         |
+| atlas             | openai/gpt-5.3              | Standard                         |
+| explore           | opencode/gpt-5-nano         | Fast                             |
 | multimodal-looker | anthropic/claude-sonnet-4-6 | Inherited from base agent config |
 
 Category overrides:
@@ -424,15 +424,15 @@ Installed automatically via activation script. Provides multi-agent orchestratio
 
 Defined in `home-manager/modules/ai-agents/config/mcp-servers.nix`, then transformed per-agent and shared across Claude Code, OpenCode, Gemini CLI, Codex, and Forge.
 
-| Server              | Purpose                                    | Status                          |
-| ------------------- | ------------------------------------------ | ------------------------------- |
-| context7            | Library documentation context              | Enabled (all agents)            |
-| zai-mcp-server      | Z.AI tools (key injected from sops)        | Enabled (all agents)            |
-| github              | GitHub API (issues, PRs, code search)      | Enabled (all agents)            |
-| cloudflare-docs     | Cloudflare documentation search            | Enabled (remote)                |
-| web-search-prime    | Web search via Z.AI                        | Defined + auth headers patched at activation |
-| web-reader          | Read web pages via Z.AI                    | Injected at activation          |
-| zread               | Document reader via Z.AI                   | Injected (Claude/OpenCode/Gemini) |
+| Server           | Purpose                               | Status                                       |
+| ---------------- | ------------------------------------- | -------------------------------------------- |
+| context7         | Library documentation context         | Enabled (all agents)                         |
+| zai-mcp-server   | Z.AI tools (key injected from sops)   | Enabled (all agents)                         |
+| github           | GitHub API (issues, PRs, code search) | Enabled (all agents)                         |
+| cloudflare-docs  | Cloudflare documentation search       | Enabled (remote)                             |
+| web-search-prime | Web search via Z.AI                   | Defined + auth headers patched at activation |
+| web-reader       | Read web pages via Z.AI               | Injected at activation                       |
+| zread            | Document reader via Z.AI              | Injected (Claude/OpenCode/Gemini)            |
 
 Remote MCP servers are injected into all 5 agents by `patchAiAgentSecrets` using the sops-decrypted Z.AI API key. Forge receives its remote MCP servers via `forge mcp import --scope user` during the secret patching phase.
 
@@ -477,10 +477,10 @@ btca add -g https://github.com/get-convex/convex-backend -n convex
 
 btca CLI operates in two modes with different auth requirements:
 
-| Mode | Command | Auth Needed | Who Provides AI |
-| ---- | ------- | ----------- | --------------- |
-| MCP server | `btca mcp` | None | The calling agent (Claude Code, OpenCode, etc.) |
-| CLI standalone | `btca ask` | Yes | btca calls an AI provider directly |
+| Mode           | Command    | Auth Needed | Who Provides AI                                 |
+| -------------- | ---------- | ----------- | ----------------------------------------------- |
+| MCP server     | `btca mcp` | None        | The calling agent (Claude Code, OpenCode, etc.) |
+| CLI standalone | `btca ask` | Yes         | btca calls an AI provider directly              |
 
 The MCP server mode always works — it's the agent that pays for inference. The CLI mode (`btca ask`, `bs` alias) needs its own authenticated AI provider.
 
@@ -498,16 +498,16 @@ opencode auth logout        # Remove credentials
 
 Not all auth types work with btca CLI. Consumer subscription OAuth (Claude Max, ChatGPT Plus) behaves differently from developer API keys:
 
-| Provider | Auth Type | btca CLI Support | Notes |
-| -------- | --------- | ---------------- | ----- |
-| OpenCode Zen | API key | Yes | Default btca provider; requires billing at opencode.ai |
-| OpenAI | OAuth (ChatGPT) | Partial | Only `gpt-5*` models work (Codex endpoint); `gpt-4o*` rejected |
-| Anthropic | OAuth (Claude Max) | No | btca needs an API key, not consumer OAuth |
-| Anthropic | API key | Yes | From console.anthropic.com; use `opencode auth login` |
-| Google | OAuth | No | btca needs AI Studio API key, not Google account OAuth |
-| Google | API key | Yes | From aistudio.google.com/api-keys |
-| OpenRouter | API key | Yes | From openrouter.ai |
-| OpenAI-compat | API key | Yes | Any OpenAI-compatible endpoint (Z.AI, LM Studio, etc.) |
+| Provider      | Auth Type          | btca CLI Support | Notes                                                          |
+| ------------- | ------------------ | ---------------- | -------------------------------------------------------------- |
+| OpenCode Zen  | API key            | Yes              | Default btca provider; requires billing at opencode.ai         |
+| OpenAI        | OAuth (ChatGPT)    | Partial          | Only `gpt-5*` models work (Codex endpoint); `gpt-4o*` rejected |
+| Anthropic     | OAuth (Claude Max) | No               | btca needs an API key, not consumer OAuth                      |
+| Anthropic     | API key            | Yes              | From console.anthropic.com; use `opencode auth login`          |
+| Google        | OAuth              | No               | btca needs AI Studio API key, not Google account OAuth         |
+| Google        | API key            | Yes              | From aistudio.google.com/api-keys                              |
+| OpenRouter    | API key            | Yes              | From openrouter.ai                                             |
+| OpenAI-compat | API key            | Yes              | Any OpenAI-compatible endpoint (Z.AI, LM Studio, etc.)         |
 
 ### Recommended Setup (ChatGPT Plus)
 
@@ -535,13 +535,13 @@ btca config lives at `~/.config/btca/btca.config.jsonc` (global) or `.btca/btca.
 
 ### Troubleshooting
 
-| Error | Cause | Fix |
-| ----- | ----- | --- |
-| `Provider "X" is not authenticated` | No credentials for that provider | `opencode auth login` → select provider |
-| `Provider "X" is not connected` | OAuth token expired or wrong auth type | Re-auth: `opencode auth login` |
-| `model is not supported when using Codex with a ChatGPT account` | Non-Codex model with ChatGPT OAuth | Use `gpt-5.3-codex` (or another Codex-compatible `gpt-5*` model) |
-| `No payment method` (OpenCode Zen) | OpenCode Zen needs billing | Add payment at opencode.ai or switch provider |
-| `API key not valid` (Google) | Google account OAuth ≠ AI Studio key | Get key from aistudio.google.com |
+| Error                                                            | Cause                                  | Fix                                                              |
+| ---------------------------------------------------------------- | -------------------------------------- | ---------------------------------------------------------------- |
+| `Provider "X" is not authenticated`                              | No credentials for that provider       | `opencode auth login` → select provider                          |
+| `Provider "X" is not connected`                                  | OAuth token expired or wrong auth type | Re-auth: `opencode auth login`                                   |
+| `model is not supported when using Codex with a ChatGPT account` | Non-Codex model with ChatGPT OAuth     | Use `gpt-5.3-codex` (or another Codex-compatible `gpt-5*` model) |
+| `No payment method` (OpenCode Zen)                               | OpenCode Zen needs billing             | Add payment at opencode.ai or switch provider                    |
+| `API key not valid` (Google)                                     | Google account OAuth ≠ AI Studio key   | Get key from aistudio.google.com                                 |
 
 Check status anytime: `btca status` (shows provider, model, auth state, resources).
 
@@ -571,12 +571,12 @@ API keys are managed via sops-nix (age-encrypted). The Z.AI API key lives at `~/
 
 ### Shell Functions (sops-enabled)
 
-| Function                    | What It Does                                                   |
-| --------------------------- | -------------------------------------------------------------- |
-| `claude_glm` (`clglm`)      | Claude Code via Z.AI proxy (GLM-5 models + skip-permissions)   |
-| `opencode_glm` (`ocglm`)    | OpenCode with GLM-5 profile (separate config dir)              |
-| `opencode_gemini` (`ocgem`) | OpenCode with Gemini profile (separate config dir) |
-| `opencode_gpt` (`ocgpt`)    | OpenCode with GPT profile (separate config dir)                |
+| Function                    | What It Does                                                 |
+| --------------------------- | ------------------------------------------------------------ |
+| `claude_glm` (`clglm`)      | Claude Code via Z.AI proxy (GLM-5 models + skip-permissions) |
+| `opencode_glm` (`ocglm`)    | OpenCode with GLM-5 profile (separate config dir)            |
+| `opencode_gemini` (`ocgem`) | OpenCode with Gemini profile (separate config dir)           |
+| `opencode_gpt` (`ocgpt`)    | OpenCode with GPT profile (separate config dir)              |
 
 All sops functions use `_load_zai_key()` which reads `~/.config/sops-nix/secrets/zai_api_key`. If the file is missing, run `just nixos` to decrypt secrets.
 
@@ -591,7 +591,7 @@ All sops functions use `_load_zai_key()` which reads `~/.config/sops-nix/secrets
 5. `~/.mcp.json` — Claude Code MCP server env + remote MCPs
 6. `~/.codex/config.toml` — MCP server env
 7. `~/.gemini/settings.json` — MCP server env + remote MCPs
-7. `~/.gemini/settings.json` — MCP server env + remote MCPs
+8. `~/.gemini/settings.json` — MCP server env + remote MCPs
 9. Forge — remote MCP servers imported via `forge mcp import --scope user`
 
 ---
@@ -610,16 +610,16 @@ All sops functions use `_load_zai_key()` which reads `~/.config/sops-nix/secrets
 
 ### Commands
 
-| Alias       | What It Does                                |
-| ----------- | ------------------------------------------- |
-| `ai-logs`   | Tail real OpenCode + Codex logs             |
-| `ai-errors-all` | Raw grep for errors/panics/fatals in agent logs |
-| `ai-errors` | Error grep filtered for known benign MCP probe noise |
-| `ai-errors-runtime` | Focused runtime failures (`Not connected`, TUI/bootstrap, bun info) |
-| `ai-mcp-health` | MCP readiness check (bun/bunx/uvx, gh auth, JSON validity, token placeholders) |
-| `ai-stats`  | Log statistics summary (wrapper-based)      |
-| `ai-report` | Full analysis report                        |
-| `ai-dash`   | Interactive fzf dashboard                   |
+| Alias               | What It Does                                                                   |
+| ------------------- | ------------------------------------------------------------------------------ |
+| `ai-logs`           | Tail real OpenCode + Codex logs                                                |
+| `ai-errors-all`     | Raw grep for errors/panics/fatals in agent logs                                |
+| `ai-errors`         | Error grep filtered for known benign MCP probe noise                           |
+| `ai-errors-runtime` | Focused runtime failures (`Not connected`, TUI/bootstrap, bun info)            |
+| `ai-mcp-health`     | MCP readiness check (bun/bunx/uvx, gh auth, JSON validity, token placeholders) |
+| `ai-stats`          | Log statistics summary (wrapper-based)                                         |
+| `ai-report`         | Full analysis report                                                           |
+| `ai-dash`           | Interactive fzf dashboard                                                      |
 
 ### Wrapper Logging (Optional)
 
