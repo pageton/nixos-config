@@ -6,11 +6,9 @@
   pkgs,
   lib,
   ...
-}:
-let
+}: let
   isThinkpad = hostname == "thinkpad";
-in
-{
+in {
   services.status-notifier-watcher.enable = true;
 
   programs.noctalia-shell = {
@@ -47,8 +45,8 @@ in
               showNetworkStats = true;
               showDiskUsage = true;
             }
-            { id = "ActiveWindow"; }
-            { id = "MediaMini"; }
+            {id = "ActiveWindow";}
+            {id = "MediaMini";}
           ];
           center = [
             {
@@ -66,27 +64,24 @@ in
               emptyColor = "secondary"; # Empty workspace
             }
           ];
-          right = [
-            { id = "Tray"; }
-            {
-              id = "KeyboardLayout";
-              showIcon = false;
-            }
-            { id = "Network"; }
-            { id = "NotificationHistory"; }
-            { id = "plugin:tailscale"; } # Tailscale status
-            { id = "Battery"; }
-            { id = "Volume"; }
-            { id = "Microphone"; }
-          ]
-          ++ lib.optionals isThinkpad [ { id = "Brightness"; } ]
-          ++ [
-            {
-              id = "ControlCenter";
-              useDistroLogo = false;
-              icon = "settings";
-            }
-          ];
+          right =
+            [
+              {id = "Tray";}
+              {id = "Network";}
+              {id = "NotificationHistory";}
+              {id = "plugin:tailscale";} # Tailscale status
+              {id = "Battery";}
+              {id = "Volume";}
+              {id = "Microphone";}
+            ]
+            ++ lib.optionals isThinkpad [{id = "Brightness";}]
+            ++ [
+              {
+                id = "ControlCenter";
+                useDistroLogo = false;
+                icon = "settings";
+              }
+            ];
         };
       };
 
@@ -172,6 +167,5 @@ in
 
   # nm-connection-editor for advanced network config
   # (nm-applet service is enabled in home.nix; this provides the GUI editor)
-  home.packages = [ pkgs.networkmanagerapplet ];
-
+  home.packages = [pkgs.networkmanagerapplet];
 }
