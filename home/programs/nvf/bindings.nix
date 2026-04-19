@@ -280,7 +280,18 @@
       {
         key = "<leader>rs";
         mode = "n";
-        action = ":LspRestart<CR>";
+        lua = true;
+        action = ''
+          function()
+            local buf_clients = vim.lsp.get_clients({ bufnr = 0 })
+            for _, client in ipairs(buf_clients) do
+              client:stop()
+            end
+            vim.defer_fn(function()
+              vim.cmd("edit")
+            end, 200)
+          end
+        '';
         silent = true;
         desc = "Restart LSP";
       }
