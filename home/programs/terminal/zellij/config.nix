@@ -43,17 +43,17 @@
     extraConfig = ''
       themes {
         catppuccin-mocha-custom {
-          fg "${config.lib.stylix.colors.base05}"
-          bg "${config.lib.stylix.colors.base01}"
-          black "${config.lib.stylix.colors.base03}"
-          red "${config.lib.stylix.colors.base08}"
+          fg "#${config.lib.stylix.colors.base05}"
+          bg "#${config.lib.stylix.colors.base01}"
+          black "#${config.lib.stylix.colors.base03}"
+          red "#${config.lib.stylix.colors.base08}"
           green "${constants.color.blue_dim}"
-          yellow "${config.lib.stylix.colors.base0A}"
-          blue "${config.lib.stylix.colors.base0D}"
-          magenta "${config.lib.stylix.colors.base0E}"
-          cyan "${config.lib.stylix.colors.base0C}"
-          white "${config.lib.stylix.colors.base07}"
-          orange "${config.lib.stylix.colors.base09}"
+          yellow "#${config.lib.stylix.colors.base0A}"
+          blue "#${config.lib.stylix.colors.base0D}"
+          magenta "#${config.lib.stylix.colors.base0E}"
+          cyan "#${config.lib.stylix.colors.base0C}"
+          white "#${config.lib.stylix.colors.base07}"
+          orange "#${config.lib.stylix.colors.base09}"
         }
       }
 
