@@ -1,5 +1,5 @@
 # Shared option constructors for NixOS and Home Manager modules.
-# Usage: import ../../shared/_option-helpers.nix { inherit lib; }
+# Usage: import ../../shared/option-helpers.nix { inherit lib; }
 
 { lib }:
 let
