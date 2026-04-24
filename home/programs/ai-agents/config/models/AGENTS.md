@@ -11,7 +11,7 @@ Parent: `home-manager/modules/ai-agents/AGENTS.md`
 | File                | Purpose                                                                                     |
 | ------------------- | ------------------------------------------------------------------------------------------- |
 | `default.nix`       | Import hub: imports codex, gemini, opencode                                                 |
-| `codex.nix`         | Codex CLI: model (gpt-5.4), profiles, custom agents, features                               |
+| `codex.nix`         | Codex CLI: model (gpt-5.5), profiles, custom agents, features                               |
 | `gemini.nix`        | Gemini CLI: theme (Gruvbox), model aliases, auto-format hooks, security, experimental flags |
 | `opencode.nix`      | OpenCode: model (claude-opus-4-6), 7 agents, 6 commands, LSP, permissions                   |
 | `_opencode-lsp.nix` | Plain attrset (not a module): LSP server definitions for 9 languages                        |

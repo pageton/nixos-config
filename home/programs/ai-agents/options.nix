@@ -8,7 +8,7 @@
 }:
 
 let
-  opt = import ../../../shared/_option-helpers.nix { inherit lib; };
+  opt = import ../../../shared/option-helpers.nix { inherit lib; };
   inherit (opt)
     mkTypedOption
     mkStrOption
@@ -236,7 +236,7 @@ in
     codex = {
       enable = lib.mkEnableOption "Codex CLI configuration";
 
-      model = mkStrOption "gpt-5.4" "Default model for Codex";
+      model = mkStrOption "gpt-5.5" "Default model for Codex";
       sandboxMode = mkStrOption "workspace-write" "Default sandbox mode for Codex";
       # Active only at top-level codex settings.
       enableSearch = mkBoolOption false "Enable native Codex web search by default";

@@ -7,7 +7,7 @@
 let
   scriptsDir = "${config.home.homeDirectory}/${constants.paths.scripts}";
   launcherScript = "${scriptsDir}/ai/android-re/opencode-android-re.sh";
-  inherit (import ../../../../shared/_secret-loader.nix) loadSecretFn;
+  inherit (import ../../../../shared/secret-loader.nix) loadSecretFn;
   inherit (constants.services.zai) timeout;
   inherit (constants.services.zai.models) haiku sonnet opus;
 
@@ -66,9 +66,9 @@ let
       # Set up model/provider env vars
       ${modelEnv}
 
-      # Launch Alacritty with Claude Code and the android-re prompt
-      if command -v alacritty >/dev/null 2>&1; then
-        alacritty -t "android-re (claude)" -e claude \
+      # Launch Ghostty with Claude Code and the android-re prompt
+      if command -v ghostty >/dev/null 2>&1; then
+        ghostty --title="android-re (claude)" -e claude \
           --append-system-prompt ${escapedPrompt} \
           ${extraFlags} \
           "$@"

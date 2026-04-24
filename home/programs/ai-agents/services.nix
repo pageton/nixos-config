@@ -1,4 +1,4 @@
-# Zsh aliases, systemd user services/timers, and packages for AI agents.
+# Packages, zsh aliases, systemd user services/timers, and log analysis for AI agents.
 
 {
   config,
@@ -42,22 +42,13 @@ let
   };
   inherit (aliasLib) aiAliases aiAgentLauncher aiAgentInventory;
   mkCliAutoupdateScript = import ./helpers/_mk-cli-autoupdate-script.nix { inherit pkgs; };
-  shellAliases = import ./helpers/_services-shell-aliases.nix { inherit cfg aiAliases; };
+  shellAliases = import ./helpers/_services-shell-aliases.nix { inherit cfg aiAliases constants; };
 
   logCleanupCommand = ''
     find "${cfg.logging.directory}" -name "*.log" -mtime +${toString cfg.logging.retentionDays} -delete
-    find "$HOME/.local/share/opencode/log" -name "*.log" -mtime +${toString cfg.logging.retentionDays} -delete 2>/dev/null || true
-    find "$HOME/.codex/log" -name "*.log" -mtime +${toString cfg.logging.retentionDays} -delete 2>/dev/null || true
+    find "$HOME/${constants.paths.opencodeLogDir}" -name "*.log" -mtime +${toString cfg.logging.retentionDays} -delete 2>/dev/null || true
+    find "$HOME/${constants.paths.codexLogDir}" -name "*.log" -mtime +${toString cfg.logging.retentionDays} -delete 2>/dev/null || true
   '';
-
-  mkWeeklyTimer = description: {
-    Unit.Description = description;
-    Timer = {
-      OnCalendar = "weekly";
-      Persistent = true;
-    };
-    Install.WantedBy = [ "timers.target" ];
-  };
 
   aiSystemdUser = import ./helpers/_services-systemd.nix {
     inherit
@@ -67,7 +58,6 @@ let
       pkgs
       logCleanupCommand
       mkCliAutoupdateScript
-      mkWeeklyTimer
       ;
   };
 in
@@ -91,7 +81,7 @@ in
 
     home.sessionVariables = lib.mkIf cfg.opencode.enable { OPENCODE_EXPERIMENTAL_LSP_TOOL = "true"; };
 
-    programs = import ../../../shared/_alias-helpers.nix { inherit shellAliases; };
+    programs = import ../../../shared/alias-helpers.nix { inherit shellAliases; };
 
     systemd.user = aiSystemdUser;
   };

@@ -1,6 +1,11 @@
 # Home file and XDG config file declarations for AI agents.
 
-{ config, lib, ... }:
+{
+  config,
+  constants,
+  lib,
+  ...
+}:
 
 let
   cfg = config.programs.aiAgents;
@@ -11,42 +16,49 @@ let
   geminiPolicies = import ./helpers/_gemini-policies.nix;
   impeccable = import ./helpers/_impeccable-commands.nix;
   models = import ./helpers/_models.nix;
-  settingsBuilders = import ./helpers/_settings-builders.nix { inherit cfg lib; };
+  agentEnvContent = import ./helpers/_agent-env.nix { inherit constants; };
+  settingsBuilders = import ./helpers/_settings-builders.nix { inherit cfg config lib; };
   inherit (settingsBuilders) geminiSettings opencodeSettingsByProfile;
 
   opencodeProfiles = import ./helpers/_opencode-profiles.nix { inherit config; };
   opencodeProfileNames = opencodeProfiles.names;
-
-  opencodeConfigFiles = lib.foldl' (
-    acc: name:
-    acc
-    // {
-      "${name}/opencode.json" = {
-        text = toJSON opencodeSettingsByProfile.${name};
-        force = true;
-      };
-      "${name}/tui.json" = {
-        text = toJSON { theme = "catppuccin-mocha"; };
-        force = true;
-      };
-    }
-  ) { } opencodeProfileNames;
+  opencodeConfigFiles = builtins.listToAttrs (
+    lib.flatten (
+      map (name: [
+        {
+          name = "${name}/opencode.json";
+          value = {
+            text = toJSON opencodeSettingsByProfile.${name};
+            force = true;
+          };
+        }
+        {
+          name = "${name}/tui.json";
+          value = {
+            text = toJSON { theme = "catppuccin-macchiato"; };
+            force = true;
+          };
+        }
+      ]) opencodeProfileNames
+    )
+  );
 
   opencodeImpeccableCommandFiles =
     if cfg.impeccable.enable then
-      lib.foldl' (
-        acc: profile:
-        acc
-        // builtins.listToAttrs (
-          map (cmd: {
-            name = "${profile}/commands/${cmd.name}.md";
-            value = {
-              text = impeccable.mkImpeccableCommandText cmd;
-              force = true;
-            };
-          }) impeccable.impeccableCommandDefs
+      builtins.listToAttrs (
+        lib.flatten (
+          map (
+            profile:
+            map (cmd: {
+              name = "${profile}/commands/${cmd.name}.md";
+              value = {
+                text = impeccable.mkImpeccableCommandText cmd;
+                force = true;
+              };
+            }) impeccable.impeccableCommandDefs
+          ) opencodeProfileNames
         )
-      ) { } opencodeProfileNames
+      )
     else
       { };
 
@@ -101,8 +113,16 @@ in
       ))
     ];
 
-    xdg.configFile = lib.mkIf cfg.opencode.enable (
-      opencodeConfigFiles // opencodeImpeccableCommandFiles
-    );
+    xdg.configFile = lib.mkMerge [
+      # Runtime model/service config for shell scripts (always available when agents enabled)
+      (lib.mkIf cfg.enable {
+        "ai-agents/models.sh" = {
+          text = agentEnvContent;
+          force = true;
+        };
+      })
+      # OpenCode profile configs
+      (lib.mkIf cfg.opencode.enable (opencodeConfigFiles // opencodeImpeccableCommandFiles))
+    ];
   };
 }

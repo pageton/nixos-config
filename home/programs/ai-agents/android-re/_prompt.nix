@@ -1,9 +1,7 @@
 { lib, homeDir }:
-
 let
-  # Read files from the Nix store copy (needed for builtins.readFile)
-  repoRoot = ../../../../.;
-  promptSourceDir = repoRoot + "/home/programs/ai-agents/android-re/prompts";
+  # Read files from the flake source copy in the Nix store.
+  promptSourceDir = ./prompts;
   promptEntries = builtins.readDir promptSourceDir;
   markdownFiles = builtins.filter (
     name: promptEntries.${name} == "regular" && lib.hasSuffix ".md" name

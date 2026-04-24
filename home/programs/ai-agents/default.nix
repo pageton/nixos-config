@@ -6,7 +6,7 @@
     ./options.nix # Option definitions for programs.aiAgents
     ./activation # Activation scripts (secret patching, config setup, plugin installs)
     ./files.nix # home.file and xdg.configFile declarations
-    ./services.nix # Packages, zsh aliases, systemd services/timers
+    ./services.nix # Packages, zsh aliases, systemd services/timers, log analysis
     ./log-analyzer.nix # AI agent log analysis and dashboard
     ./config # Actual agent configuration values
   ];
