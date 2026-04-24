@@ -1,12 +1,9 @@
-# Idle management (swayidle) — ported from Hypridle.
+# Idle management (swayidle).
 # Chain: 3min dim -> 8min lock (Noctalia) -> 20min DPMS off.
-
-{ pkgs, ... }:
-
+{ config, pkgs, ... }:
 let
-  lockCmd = "${pkgs.bash}/bin/sh -c '${pkgs.noctalia-shell}/bin/noctalia-shell ipc call lockScreen lock >/dev/null 2>&1 || ${pkgs.swaylock}/bin/swaylock -f'";
+  lockCmd = "${config.home.profileDirectory}/bin/noctalia-shell ipc call lockScreen lock";
 in
-
 {
   services.swayidle = {
     enable = true;

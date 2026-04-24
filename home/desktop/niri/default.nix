@@ -7,17 +7,6 @@
   ...
 }:
 let
-  inherit (config.theme)
-    border-size
-    gaps-in
-    active-opacity
-    inactive-opacity
-    rounding
-    ;
-  inherit (config.lib.stylix) colors;
-  accent = "#${colors.base0D}";
-  accentAlt = "#${colors.base0E}";
-  inactive = "#${colors.base03}";
   isThinkpad = hostname == "thinkpad";
 in
 {
@@ -25,309 +14,123 @@ in
     ./animations.nix
     ./bindings.nix
     ./idle.nix
+    ./input.nix
+    ./layout.nix
     ./lock.nix
+    ./rules.nix
+    ./_auth-float.nix
   ];
 
-  # MPRIS player priority daemon — routes media keys to the most recently
-  # active player and enables proper cross-player coordination.
   services.playerctld.enable = true;
 
-  # XWayland compatibility layer (required by spawn-at-startup below)
   home.packages = [ pkgs.xwayland-satellite ];
 
-  programs.niri = {
-    settings = {
-      prefer-no-csd = true;
-      screenshot-path = "~/Pictures/Screenshots/screenshot-%Y-%m-%d-%H-%M-%S.png";
-      hotkey-overlay.skip-at-startup = true;
+  programs.niri.settings = {
+    prefer-no-csd = true;
+    screenshot-path = "~/Pictures/Screenshots/screenshot-%Y-%m-%d-%H-%M-%S.png";
+    hotkey-overlay.skip-at-startup = true;
 
-      # ── Input ─────────────────────────────────────────────────
-      input = {
-        keyboard = {
-          xkb = { inherit (constants.keyboard) layout options; };
-          repeat-delay = 300;
-          repeat-rate = 30;
-        };
+    cursor = {
+      theme = config.stylix.cursor.name;
+      inherit (config.stylix.cursor) size;
+    };
 
-        touchpad = {
-          tap = true;
-          dwt = true;
-          dwtp = true;
-          natural-scroll = false;
-          click-method = "clickfinger";
-          accel-profile = "adaptive";
-        };
+    environment = {
+      DISPLAY = ":0";
+      _JAVA_AWT_WM_NONREPARENTING = "1";
+      IN_NIX_SHELL = null;
+      NIXOS_OZONE_WL = "1";
+      MOZ_ENABLE_WAYLAND = "1";
+      QT_QPA_PLATFORM = "wayland;xcb";
+      QT_AUTO_SCREEN_SCALE_FACTOR = "1";
+      QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
+      ELECTRON_OZONE_PLATFORM_HINT = "auto";
+      XDG_SESSION_TYPE = "wayland";
+      XDG_CURRENT_DESKTOP = "niri";
+      CLUTTER_BACKEND = "wayland";
+      ANKI_WAYLAND = "1";
+      XCURSOR_SIZE = if isThinkpad then "20" else "24";
+    };
 
-        mouse = {
-          accel-profile = "flat";
-          accel-speed = 1.0;
-        };
-
-        focus-follows-mouse = {
-          enable = true;
-          max-scroll-amount = "0%";
-        };
-        warp-mouse-to-focus.enable = false;
-        workspace-auto-back-and-forth = true;
-      };
-
-      # ── Cursor ────────────────────────────────────────────────
-      cursor = {
-        theme = config.stylix.cursor.name;
-        inherit (config.stylix.cursor) size;
-      };
-
-      # ── Environment ───────────────────────────────────────────
-      environment = {
-        DISPLAY = ":0"; # XWayland display for X11 apps (set by xwayland-satellite)
-        _JAVA_AWT_WM_NONREPARENTING = "1"; # Fix Java Swing apps on non-reparenting WMs
-        IN_NIX_SHELL = null; # Prevent nix-shell env from leaking into the session
-        NIXOS_OZONE_WL = "1";
-        MOZ_ENABLE_WAYLAND = "1";
-        QT_QPA_PLATFORM = "wayland;xcb"; # Wayland first, X11 fallback for compat
-        QT_AUTO_SCREEN_SCALE_FACTOR = "1";
-        QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
-        ELECTRON_OZONE_PLATFORM_HINT = "auto";
-        XDG_SESSION_TYPE = "wayland";
-        XDG_CURRENT_DESKTOP = "niri";
-        CLUTTER_BACKEND = "wayland";
-        ANKI_WAYLAND = "1";
-        XCURSOR_SIZE = if isThinkpad then "20" else "24";
-      };
-
-      # ── Layout ────────────────────────────────────────────────
-      layout = {
-        gaps = gaps-in;
-        center-focused-column = "on-overflow";
-        always-center-single-column = true;
-
-        border = {
-          enable = true;
-          width = border-size;
-          active.gradient = {
-            from = accent;
-            to = accentAlt;
-            angle = 45;
-          };
-          inactive.color = inactive;
-        };
-
-        focus-ring.enable = false;
-
-        shadow = {
-          enable = true;
-          softness = 30;
-          spread = 5;
-          offset = {
-            x = 0;
-            y = 5;
-          };
-          color = "#00000070";
-        };
-
-        tab-indicator = {
-          hide-when-single-tab = true;
-          place-within-column = true;
-          position = "left";
-          gap = 4;
-          width = 4;
-          corner-radius = rounding * 1.0;
-          active.color = accent;
-          inactive.color = inactive;
-        };
-
-        preset-column-widths = [
-          { proportion = 1.0 / 3.0; }
-          { proportion = 1.0 / 2.0; }
-          { proportion = 2.0 / 3.0; }
+    spawn-at-startup = [
+      {
+        command = [
+          "${pkgs.bash}/bin/bash"
+          "-c"
+          "pgrep -f 'niri-auth-float' > /dev/null || exec ${config.home.profileDirectory}/.local/bin/niri-auth-float"
         ];
-
-        preset-window-heights = [
-          { proportion = 1.0 / 3.0; }
-          { proportion = 1.0 / 2.0; }
-          { proportion = 2.0 / 3.0; }
+      }
+      {
+        command = [
+          "dbus-update-activation-environment"
+          "--systemd"
+          "DISPLAY"
+          "WAYLAND_DISPLAY"
+          "XDG_CURRENT_DESKTOP"
+          "XDG_SESSION_TYPE"
+          "XDG_SESSION_DESKTOP"
+          "DBUS_SESSION_BUS_ADDRESS"
+          "XDG_RUNTIME_DIR"
         ];
-
-        default-column-width = {
-          proportion = 1.0 / 2.0;
-        };
-      };
-
-      # ── Autostart ─────────────────────────────────────────────
-      # Noctalia handles: bar, notifications, clipboard, OSD,
-      # wallpaper, lock screen, app launcher.
-      spawn-at-startup = [
-        {
-          command = [
-            "dbus-update-activation-environment"
-            "--systemd"
-            "DISPLAY"
-            "WAYLAND_DISPLAY"
-            "XDG_CURRENT_DESKTOP"
-            "XDG_SESSION_TYPE"
-            "XDG_SESSION_DESKTOP"
-            "DBUS_SESSION_BUS_ADDRESS"
-            "XDG_RUNTIME_DIR"
-          ];
-        }
-        { command = [ "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1" ]; }
-        { command = [ "${pkgs.noctalia-shell}/bin/noctalia-shell" ]; }
-        { command = [ "xwayland-satellite" ]; }
-        {
-          command = [
-            "wl-paste"
-            "--type"
-            "text"
-            "--watch"
-            "cliphist"
-            "store"
-          ];
-        }
-        {
-          command = [
-            "wl-paste"
-            "--type"
-            "image"
-            "--watch"
-            "cliphist"
-            "store"
-          ];
-        }
-        {
-          command = [
-            "${pkgs.wl-clip-persist}/bin/wl-clip-persist"
-            "--clipboard"
-            "regular"
-          ];
-        }
-      ];
-
-      # ── Switch events ─────────────────────────────────────────
-      switch-events = {
-        lid-close.action.spawn = [
-          "noctalia-shell"
-          "ipc"
-          "call"
-          "lockScreen"
-          "lock"
+      }
+      {
+        command = [
+          "${pkgs.bash}/bin/bash"
+          "-c"
+          "pgrep -x quickshell > /dev/null || exec ${config.home.profileDirectory}/bin/noctalia-shell"
         ];
-      };
+      }
+      { command = [ "xwayland-satellite" ]; }
+      {
+        command = [
+          "wl-paste"
+          "--type"
+          "text"
+          "--watch"
+          "cliphist"
+          "store"
+        ];
+      }
+      {
+        command = [
+          "wl-paste"
+          "--type"
+          "image"
+          "--watch"
+          "cliphist"
+          "store"
+        ];
+      }
+      {
+        command = [
+          "${pkgs.wl-clip-persist}/bin/wl-clip-persist"
+          "--clipboard"
+          "regular"
+        ];
+      }
+    ];
 
-      # ── Noctalia layer rules ─────────────────────────────────
-      # Blurred overview wallpaper (Noctalia docs Option 1)
-      layer-rules = [
-        {
-          matches = [ { namespace = "^noctalia-overview.*"; } ];
-          place-within-backdrop = true;
-        }
+    switch-events = {
+      lid-close.action.spawn = [
+        "${config.home.profileDirectory}/bin/noctalia-shell"
+        "ipc"
+        "call"
+        "lockScreen"
+        "lock"
       ];
+    };
 
-      # ── Debug ────────────────────────────────────────────────
-      # Allow Noctalia notification actions and window activation
-      debug = {
-        honor-xdg-activation-with-invalid-serial = { };
-        # Fix NVIDIA rendering artifacts/flickering during scroll (niri#2477)
-        wait-for-frame-completion-before-queueing = { };
-        # Disable direct scanout — prevents NVIDIA buffer race causing black/white artifacts
-        disable-direct-scanout = { };
-      };
+    layer-rules = [
+      {
+        matches = [ { namespace = "^noctalia-overview.*"; } ];
+        place-within-backdrop = true;
+      }
+    ];
 
-      # ── Window rules ──────────────────────────────────────────
-      window-rules = [
-        # Global: rounded corners + active opacity
-        {
-          geometry-corner-radius =
-            let
-              r = rounding * 1.0;
-            in
-            {
-              top-left = r;
-              top-right = r;
-              bottom-left = r;
-              bottom-right = r;
-            };
-          clip-to-geometry = true;
-          draw-border-with-background = false;
-          opacity = active-opacity;
-        }
-
-        # Inactive opacity
-        {
-          matches = [ { is-focused = false; } ];
-          opacity = inactive-opacity;
-        }
-
-        # Floating: PiP windows
-        {
-          matches = [
-            {
-              app-id = "^firefox$";
-              title = "^Picture-in-Picture$";
-            }
-            {
-              app-id = "^zen$";
-              title = "^Picture-in-Picture$";
-            }
-          ];
-          open-floating = true;
-        }
-
-        # Floating: dialogs and utilities
-        {
-          matches = [
-            { app-id = "^pavucontrol$"; }
-            { app-id = "^blueman-manager$"; }
-            { app-id = "^nm-connection-editor$"; }
-            { app-id = "^gnome-calculator$"; }
-            { title = "^Open File$"; }
-            { title = "^Save File$"; }
-          ];
-          open-floating = true;
-        }
-
-        # Floating: Telegram mini apps
-        {
-          matches = [
-            {
-              app-id = "^org\\.telegram\\.desktop$";
-              title = "^Mini App:.*$";
-            }
-          ];
-          open-floating = true;
-        }
-
-        # Block password managers from screencasts
-        {
-          matches = [
-            { app-id = "^org\\.keepassxc\\.KeePassXC$"; }
-            { app-id = "^Bitwarden$"; }
-          ];
-          block-out-from = "screencast";
-        }
-
-        # Terminal transparency
-        {
-          matches = [
-            { app-id = "^Alacritty$"; }
-            { app-id = "^kitty$"; }
-            { app-id = "^foot$"; }
-          ];
-          opacity = 0.95;
-          draw-border-with-background = false;
-        }
-
-        # Browser transparency
-        {
-          matches = [ { app-id = "^zen$"; } ];
-          opacity = 0.95;
-        }
-
-        # C&C Yuri's Revenge client - keep floating, prevent window loss
-        {
-          matches = [ { app-id = "^clientdx\\.exe$"; } ];
-          open-floating = true;
-        }
-      ];
+    debug = {
+      honor-xdg-activation-with-invalid-serial = { };
+      wait-for-frame-completion-before-queueing = { };
+      disable-direct-scanout = { };
     };
   };
 }

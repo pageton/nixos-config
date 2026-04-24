@@ -11,7 +11,7 @@ let
     ./multimedia.nix
     ./networking.nix
     ./utilities.nix
-    ./niri.nix
+    ./wayland.nix
     ./privacy.nix
     ./linting.nix
     ./system-monitoring.nix
