@@ -1,11 +1,12 @@
-# NVF is a Neovim configuration that provides a minimal setup with essential plugins and configurations.
+# NVF — Neovim configuration via Nix.
 { inputs, pkgs, ... }:
 {
   imports = [
     inputs.nvf.homeManagerModules.default
     ./options.nix
+    ./lsp.nix
     ./languages.nix
-    ./picker.nix
+    ./completion.nix
     ./snacks.nix
     ./bindings.nix
     ./utils.nix
@@ -15,7 +16,7 @@
   programs.nvf = {
     enable = true;
     settings.vim = {
-      luaPackages = [ "jsregexp" ]; # Required by luasnip for variable/placeholder transformations
+      luaPackages = [ "jsregexp" ];
       startPlugins = [
         pkgs.vimPlugins.vim-tmux-navigator
         pkgs.vimPlugins.vim-wakatime

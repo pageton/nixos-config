@@ -295,13 +295,6 @@
         silent = true;
         desc = "Restart LSP";
       }
-      {
-        key = "<C-/>";
-        mode = "n";
-        silent = true;
-        action = "gcc";
-        desc = "Toggle line comment";
-      }
     ];
   };
 }
