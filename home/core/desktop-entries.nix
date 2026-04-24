@@ -1,4 +1,5 @@
-_: {
+{ config, ... }:
+{
   xdg.desktopEntries = {
     "org.telegram.desktop" = {
       name = "Telegram Desktop";
@@ -62,9 +63,9 @@ _: {
 
     "brave-browser" = {
       name = "Brave Web Browser";
-      exec = "/run/current-system/sw/bin/brave %U";
+      exec = "${config.home.homeDirectory}/.local/bin/brave %U";
       icon = "brave-browser";
-      comment = "Brave Web Browser (firejail-wrapped)";
+      comment = "Fast, private web browser";
       categories = [
         "Network"
         "WebBrowser"

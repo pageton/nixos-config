@@ -1,6 +1,7 @@
 # Application sandboxing with Firejail and bubblewrap.
 {
   config,
+  inputs,
   lib,
   pkgs,
   pkgsStable,
@@ -47,12 +48,15 @@ in
           extraArgs = [ mesaEglFirejailArg ];
         };
 
-        # LibreWolf upstream profile works on NixOS (seccomp !chroot handles it)
+        # Zen Browser (Firefox-based) — custom profile extends firefox-common
+        # (firefox.profile hardcodes "firefox" in private-bin, blocking the "zen" binary).
         # Force Mesa EGL inside sandbox — firejail strips session env vars,
         # so the system-wide override in nvidia.nix doesn't reach sandboxed apps.
-        librewolf = {
-          executable = "${pkgs.lib.getBin pkgsStable.librewolf}/bin/librewolf";
-          profile = "${pkgs.firejail}/etc/firejail/librewolf.profile";
+        zen-browser = {
+          executable = "${
+            pkgs.lib.getBin (inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.beta)
+          }/bin/zen-beta";
+          profile = "${pkgs.firejail}/etc/firejail/zen-browser.profile";
           extraArgs = [ mesaEglFirejailArg ];
         };
 
@@ -146,11 +150,21 @@ in
       };
     };
 
-    # Disable only tor-browser profile (has hardcoded paths incompatible with NixOS)
-    # LibreWolf profile works fine - firefox-common includes seccomp !chroot
+    # Disable tor-browser profile (has hardcoded paths incompatible with NixOS)
+    # and create a zen-browser profile (firefox.profile hardcodes "firefox" binary name).
     environment = {
       etc = {
         "firejail/tor-browser.profile".enable = false;
+
+        # Zen Browser firejail profile — extends firefox-common (the actual sandbox rules)
+        # instead of firefox.profile (which hardcodes private-bin firefox).
+        "firejail/zen-browser.profile".text = ''
+          # Zen Browser — Firefox-based, uses same sandbox rules as Firefox.
+          # Extends firefox-common (which contains the actual restrictions) but
+          # uses "zen" as the binary name instead of "firefox".
+          include firefox-common.profile
+          private-bin zen, zen-beta, sh, bash, cat, mkdir, ln, rm, grep, sed, awk
+        '';
 
         # KeePassXC browser integration — whitelist the browser socket so
         # keepassxc-proxy (spawned inside the firejail sandbox) can reach KeePassXC.
@@ -162,8 +176,8 @@ in
           whitelist ''${RUNUSER}/org.keepassxc.KeePassXC.BrowserServer
         '';
 
-        # Apply same KeePassXC whitelist to LibreWolf
-        "firejail/librewolf.local".text = ''
+        # Apply same KeePassXC whitelist to Zen Browser
+        "firejail/zen-browser.local".text = ''
           noblacklist ''${RUNUSER}/app
           whitelist ''${RUNUSER}/app/org.keepassxc.KeePassXC
           whitelist ''${RUNUSER}/kpxc_server
@@ -200,6 +214,13 @@ in
           whitelist ''${HOME}/Videos
           whitelist ''${HOME}/Music
           whitelist ''${HOME}/Desktop
+
+          # Link opening: allow D-Bus access to xdg-desktop-portal OpenURI.
+          # The upstream profile uses dbus-user filter (whitelist mode) which
+          # blocks portal calls. This allows Telegram to delegate URL handling
+          # to the host browser via the portal, without granting broad D-Bus access.
+          dbus-user.talk org.freedesktop.portal.Desktop
+          dbus-user.talk org.freedesktop.impl.portal.FileChooser
         '';
       };
 

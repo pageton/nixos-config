@@ -93,11 +93,28 @@
   proxies = {
     brave = {
       personal = "fi-hel-wg-socks5-001.relays.mullvad.net"; # Finland
+      work = "de-fra-wg-socks5-001.relays.mullvad.net"; # Germany
+      banking = "nl-ams-wg-socks5-001.relays.mullvad.net"; # Netherlands
+      shopping = "ro-buh-wg-socks5-001.relays.mullvad.net"; # Romania
+      illegal = "ch-zur-wg-socks5-001.relays.mullvad.net"; # Switzerland
     };
+    zen-browser = {
+      personal = "se-sto-wg-socks5-001.relays.mullvad.net"; # Sweden
+      work = "de-fra-wg-socks5-001.relays.mullvad.net"; # Germany
+      banking = "nl-ams-wg-socks5-001.relays.mullvad.net"; # Netherlands
+      shopping = "ro-buh-wg-socks5-001.relays.mullvad.net"; # Romania
+      illegal = "ch-zur-wg-socks5-001.relays.mullvad.net"; # Switzerland
+    };
+    i2pd = "127.0.0.1"; # Local I2P daemon
   };
+
+  localhost = "127.0.0.1";
 
   # Service ports — single source of truth for localhost services.
   ports = {
+    socks = 1080; # Default SOCKS5 proxy port
+    i2pd-socks = 4447; # I2P SOCKS proxy port
+    glance = 8082; # Glance dashboard
     activitywatch = 5600;
     vnc = 5900;
     vnc-web = 6080;
@@ -106,6 +123,9 @@
   # Paths relative to HOME for repo-local resources.
   paths = {
     scripts = "System/scripts";
+    screens = "Screens";
+    opencodeLogDir = ".local/share/opencode/log";
+    codexLogDir = ".codex/log";
   };
 
   # External service API endpoints.

@@ -3,19 +3,11 @@
 #
 # Tor browser scripts share common logic extracted into `let` bindings:
 #   - torCheckPort:    detects running Tor SOCKS proxy (port 9150 or 9050)
-#   - torUserJs:       Firefox/LibreWolf preferences for Tor proxy hardening
-#   - torLaunchLibre:  launches LibreWolf with a given profile directory
-{ pkgs, ... }:
+#   - torUserJs:       Firefox/Zen Browser preferences for Tor proxy hardening
+#   - torLaunchZen:    launches Zen Browser with a given profile directory
+{ inputs, pkgs, ... }:
 let
-  librewolfBin = "${pkgs.librewolf}/bin/librewolf";
-  braveBin = ''
-    if [ -x "$HOME/.local/bin/brave" ]; then
-      printf '%s' "$HOME/.local/bin/brave"
-    else
-      printf '%s' "${pkgs.brave}/bin/brave"
-    fi
-  '';
-
+  zenBin = "${inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.beta}/bin/zen-beta";
   mkPersistentProfile = profileName: ''
     PROFILE_DIR="$HOME/${profileName}"
     mkdir -p "$PROFILE_DIR"
@@ -46,7 +38,7 @@ let
     fi
   '';
 
-  # Shared Firefox/LibreWolf preferences for Tor proxy hardening.
+  # Shared Firefox/Zen Browser preferences for Tor proxy hardening.
   # $TOR_PORT must be set before the heredoc is expanded.
   torUserJs = ''
     // Tor SOCKS5 Proxy Configuration
@@ -80,15 +72,15 @@ let
     user_pref("extensions.blocklist.enabled", true);
   '';
 
-  # Launch LibreWolf with Tor proxy settings. Expects PROFILE_DIR to be set.
-  torLaunchLibre = ''
-    echo "Routing LibreWolf through Tor SOCKS proxy (127.0.0.1:$TOR_PORT)..."
+  # Launch Zen Browser with Tor proxy settings. Expects PROFILE_DIR to be set.
+  torLaunchZen = ''
+    echo "Routing Zen Browser through Tor SOCKS proxy (127.0.0.1:$TOR_PORT)..."
 
     cat > "$PROFILE_DIR/user.js" <<EOF
     ${torUserJs}
     EOF
 
-    exec ${librewolfBin} --profile "$PROFILE_DIR" --new-instance 2>/dev/null
+    exec ${zenBin} --profile "$PROFILE_DIR" --new-instance 2>/dev/null
   '';
 in
 {
@@ -100,24 +92,9 @@ in
         # Work browser profile - isolated from personal browsing
         set -euo pipefail
 
-        ${mkPersistentProfile ".librewolf-work"}
+        ${mkPersistentProfile ".zen-work"}
 
-        exec ${librewolfBin} --profile "$PROFILE_DIR" --new-instance 2>/dev/null
-      '';
-    };
-
-    ".local/bin/browser-personal" = {
-      executable = true;
-      text = ''
-        #!/usr/bin/env bash
-        # Personal browser with Brave
-        set -euo pipefail
-
-        ${mkPersistentProfile ".brave-personal"}
-
-        BRAVE_BIN="$(${braveBin})"
-
-        exec "$BRAVE_BIN" --user-data-dir="$PROFILE_DIR" 2>/dev/null
+        exec ${zenBin} --profile "$PROFILE_DIR" --new-instance 2>/dev/null
       '';
     };
 
@@ -125,14 +102,14 @@ in
       executable = true;
       text = ''
         #!/usr/bin/env bash
-        # LibreWolf routed through Tor SOCKS proxy with persistent profile
+        # Zen Browser routed through Tor SOCKS proxy with persistent profile
         set -euo pipefail
 
-        ${mkPersistentProfile ".librewolf-work-tor"}
+        ${mkPersistentProfile ".zen-work-tor"}
 
         ${torCheckPort}
 
-        ${torLaunchLibre}
+        ${torLaunchZen}
       '';
     };
 
@@ -151,7 +128,7 @@ in
 
         trap "rm -rf '$PROFILE_DIR'" EXIT
 
-        ${torLaunchLibre}
+        ${torLaunchZen}
       '';
     };
 
@@ -162,18 +139,7 @@ in
         Name=Browser (Work)
         Exec=browser-work
         Type=Application
-        Icon=librewolf
-        Categories=Network;WebBrowser;
-      '';
-    };
-
-    ".local/share/applications/browser-personal.desktop" = {
-      text = ''
-        [Desktop Entry]
-        Name=Browser (Personal)
-        Exec=browser-personal
-        Type=Application
-        Icon=brave
+        Icon=zen-browser
         Categories=Network;WebBrowser;
       '';
     };
@@ -184,7 +150,7 @@ in
         Name=Browser (Work + Tor)
         Exec=browser-work-tor
         Type=Application
-        Icon=librewolf
+        Icon=zen-browser
         Categories=Network;WebBrowser;
       '';
     };
@@ -195,7 +161,7 @@ in
         Name=Browser (Temporary + Tor)
         Exec=browser-tmp-tor
         Type=Application
-        Icon=librewolf
+        Icon=zen-browser
         Categories=Network;WebBrowser;
       '';
     };

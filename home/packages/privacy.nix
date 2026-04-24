@@ -18,7 +18,7 @@ in
 with pkgsStable;
 [
   # === Privacy-Focused Browsers (Mesa EGL wrapped for NVIDIA) ===
-  (wrapWithMesaEgl "librewolf" librewolf)
+  # Zen Browser is managed by programs.zen-browser module (home/programs/zen-browser/)
   pkgs.tor # Tor client and service
   (wrapWithMesaEgl "tor-browser" tor-browser)
   # === DNS Privacy ===

@@ -48,6 +48,10 @@
       url = "github:pageton/zellij-tui";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    zen-browser = {
+      url = "github:0xc000022070/zen-browser-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -148,6 +152,7 @@
             inputs.stylix.homeModules.stylix
             inputs.niri.homeModules.config
             inputs.noctalia.homeModules.default
+            inputs.zen-browser.homeModules.beta
           ];
         };
 
