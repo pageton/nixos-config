@@ -1,6 +1,11 @@
 # Zsh core options, history, Oh My Zsh, plugins, keymap, and setOptions.
 
-{ config, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   programs.zsh = {
@@ -69,6 +74,11 @@
         src = "${pkgs.zsh-fzf-tab}/share/fzf-tab";
       }
     ];
+
+    initContent = lib.mkAfter ''
+      # Silence bgnotify D-Bus errors when notification daemon is unavailable
+      __bgnotify_notifier() { notify-send "$1" "$2" 2>/dev/null || true; }
+    '';
 
     defaultKeymap = "viins"; # Vi insert mode (hybrid vi/emacs)
     setOptions = [

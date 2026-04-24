@@ -1,10 +1,32 @@
 # Zsh initContent: shell functions, environment setup, and sops-enabled agent wrappers.
-{ constants, ... }:
+
+{
+  config,
+  constants,
+  lib,
+  ...
+}:
+
+let
+  inherit (import ../../../../shared/secret-loader.nix) loadSecretFn;
+  inherit (constants.services.zai) timeout;
+  inherit (constants.services.zai.models) haiku sonnet opus;
+
+  # Derive OpenCode wrapper functions from profile definitions.
+  # Single source: home/programs/ai-agents/helpers/_opencode-profiles.nix.
+  opencodeProfiles = import ../../ai-agents/helpers/_opencode-profiles.nix { inherit config; };
+
+  # Profiles that get a simple wrapper (excludes default "opencode" and
+  # "opencode-openrouter" which needs secret loading).
+  simpleWrapperProfiles = builtins.filter (
+    p: p.alias != "oc" && p.name != "opencode-openrouter"
+  ) opencodeProfiles.profiles;
+
+  profileSuffix = p: builtins.replaceStrings [ "opencode-" ] [ "" ] p.name;
+in
+
 {
   programs.zsh.initContent = ''
-    # === Completion ===
-    autoload -Uz compinit && compinit
-
     # === LS_COLORS ===
     # Vivid LS_COLORS (cached)
     if command -v vivid >/dev/null 2>&1; then
@@ -17,35 +39,34 @@
     fi
 
     # === Sops secret loading ===
-    # Load API keys from sops (needed by gemini CLI)
-    if [[ -f /run/secrets/gemini_api_key ]]; then
-      export GEMINI_API_KEY="$(cat /run/secrets/gemini_api_key)"
-    fi
-    if [[ -f /run/secrets/mimi_api_key ]]; then
-      export MIMI_API_KEY="$(cat /run/secrets/mimi_api_key)"
-    fi
-    if [[ -f /run/secrets/zai_api_key ]]; then
-      export ZAI_API_KEY="$(cat /run/secrets/zai_api_key)"
-    fi
+    ${loadSecretFn}
 
-    # Sops-enabled agent wrappers
-    _load_secret() {
-      local key_file="/run/secrets/$1"
-      if [[ ! -f "$key_file" ]]; then
-        echo "Error: $key_file not found. Run 'just nixos' to decrypt secrets." >&2
-        return 1
-      fi
-      cat "$key_file"
-    }
-
+    _load_gemini_key() { _load_secret gemini_api_key; }
     _load_zai_key() { _load_secret zai_api_key; }
     _load_openrouter_key() { _load_secret openrouter_api_key; }
-    _load_mimi_key() { _load_secret mimi_api_key; }
+
+    # Export Gemini key for gemini CLI (non-fatal — CLI is optional)
+    if _gemini_key="$(_load_gemini_key 2>/dev/null)" && [[ -n "$_gemini_key" ]]; then
+      export GEMINI_API_KEY="$_gemini_key"
+    fi
+
+    # === AI agent wrappers ===
+    _ai_tab_icon() {
+      case "$1" in
+        cl*|ocl*|hcl*) printf '\uf1b0 ' ;;                   #  Claude — cl, clu, clglm, ocl, hcl + all workflow suffixes
+        oc*|locgpt*|mocgpt*|xocgpt*) printf '\ue7a4 ' ;;     #  OpenCode — oc, ocglm, ocgem, ocgpt, ocs, oczen + all workflow suffixes
+        cx*|lcx*|mcx*|hcx*|xcx*) printf '\uf1c0 ' ;;         #  Codex — cx, lcx, mcx, hcx, xcx + all workflow suffixes
+        gem*) printf '\uf529 ' ;;                              #  Gemini — gem + all workflow suffixes
+        *) ;;
+      esac
+    }
 
     _zellij_rename_tab() {
       local tab_name="$1"
       [[ -n "$tab_name" && -n "${"ZELLIJ:-"}" ]] || return 0
-      command zellij action rename-tab "$tab_name" >/dev/null 2>&1 || true
+      local icon
+      icon="$(_ai_tab_icon "$tab_name")"
+      command zellij action rename-tab "''${icon}''${tab_name}" >/dev/null 2>&1 || true
     }
 
     _ai_agent_exec() {
@@ -58,48 +79,37 @@
       "$@"
     }
 
-    # === AI agent wrappers ===
     claude_glm() {
       local key; key="$(_load_zai_key)" || return 1
+      _zellij_rename_tab "clglm"
       ANTHROPIC_AUTH_TOKEN="$key" \
       ANTHROPIC_BASE_URL="${constants.services.zai.apiRoot}/anthropic" \
-      API_TIMEOUT_MS="3000000" \
-      ANTHROPIC_DEFAULT_HAIKU_MODEL="glm-5-turbo" \
-      ANTHROPIC_DEFAULT_SONNET_MODEL="glm-5.1" \
-      ANTHROPIC_DEFAULT_OPUS_MODEL="glm-5.1" \
-      CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1 \
+      API_TIMEOUT_MS="${toString timeout}" \
+      ANTHROPIC_DEFAULT_HAIKU_MODEL="${haiku}" \
+      ANTHROPIC_DEFAULT_SONNET_MODEL="${sonnet}" \
+      ANTHROPIC_DEFAULT_OPUS_MODEL="${opus}" \
       claude --dangerously-skip-permissions "$@"
     }
 
     _opencode_profile() {
       local profile="$1"
-      shift
+      local tab_name="$2"
+      shift 2
+      _zellij_rename_tab "$tab_name"
       OPENCODE_CONFIG_DIR="$HOME/.config/opencode-$profile" opencode "$@"
     }
 
-    opencode_glm() {
-      _opencode_profile "glm" "$@"
-    }
-
-    opencode_gemini() {
-      _opencode_profile "gemini" "$@"
-    }
-
-    opencode_gpt() {
-      _opencode_profile "gpt" "$@"
-    }
+    ${lib.concatStringsSep "\n\n" (
+      map (p: ''
+        opencode_${profileSuffix p}() {
+          _opencode_profile "${profileSuffix p}" "${p.alias}" "$@"
+        }
+      '') simpleWrapperProfiles
+    )}
 
     opencode_openrouter() {
       local key; key="$(_load_openrouter_key)" || return 1
-      OPENROUTER_API_KEY="$key" _opencode_profile "openrouter" "$@"
-    }
-
-    opencode_sonnet() {
-      _opencode_profile "sonnet" "$@"
-    }
-
-    opencode_zen() {
-      _opencode_profile "zen" "$@"
+      OPENROUTER_API_KEY="$key" _opencode_profile "openrouter" "ocor" "$@"
     }
 
     # === AI multi-pane launcher ===
@@ -135,6 +145,7 @@
       local layout_file zsh_bin
       layout_file=$(mktemp /tmp/aip-XXXXXX.kdl)
       zsh_bin="$SHELL"
+      local joined_agents="''${(j:+:)agents}"
 
       # Escape double quotes for KDL string safety
       local kdl_prompt="''${prompt//\"/\\\"}"
@@ -148,7 +159,7 @@
       fi
 
       {
-        echo '  tab name="aip" focus=true {'
+        echo "  tab name=\"$joined_agents\" focus=true {"
         echo '    pane split_direction="vertical" {'
         local i=0 cmd
         for agent in "''${agents[@]}"; do
@@ -200,8 +211,5 @@
         break
       fi
     done
-
-    # === Zoxide (must be last) ===
-    eval "$(zoxide init zsh)"
   '';
 }

@@ -3,6 +3,6 @@
 {
   programs.zoxide = {
     enable = true;
-    enableZshIntegration = false;
+    enableZshIntegration = true;
   };
 }

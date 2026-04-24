@@ -144,7 +144,7 @@
           bind "Alt w" { ToggleFloatingPanes; SwitchToMode "Normal"; }
           bind "Alt f" { TogglePaneEmbedOrFloating; SwitchToMode "Normal"; }
 
-          bind "Alt Enter" { NewTab cwd="${config.home.homeDirectory}"; SwitchToMode "Normal"; }
+          bind "Alt Enter" { NewTab; SwitchToMode "Normal"; }
           bind "Alt q" { CloseTab; SwitchToMode "Normal"; }
           bind "Alt 0" { ToggleTab; }
           bind "Alt ." { MoveTab "Right"; }

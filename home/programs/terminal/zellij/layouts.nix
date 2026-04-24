@@ -44,7 +44,7 @@ let
         tab_sync_indicator      " "
 
         datetime          " {format} "
-        datetime_timezone "Etc/GMT-3"
+        datetime_timezone "UTC"
         datetime_format   "%I:%M %p  %d %b"
       }
     }
