@@ -38,6 +38,7 @@ with pkgsStable;
   # === VPN and Secure Tunneling ===
   openvpn # OpenVPN client
   wireguard-tools # WireGuard VPN tools
+  cloudflared # Cloudflare Tunnel — expose local services via Cloudflare edge
 
   # === Network Performance and Diagnostics ===
   iperf3 # Network bandwidth measurement

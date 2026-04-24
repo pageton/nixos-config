@@ -47,9 +47,6 @@
     scrutiny = {
       enable = true;
     };
-    kdeconnect = {
-      enable = true;
-    };
     syncthing = {
       enable = true;
     };
