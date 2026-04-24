@@ -3,6 +3,6 @@
 {
   imports = [
     ./build # Build and deployment helper scripts
-    ./nerdfont-fzf # Nerd Font icon integration for fzf
+    ./nerdfont-fzf.nix # Nerd Font icon integration for fzf
   ];
 }

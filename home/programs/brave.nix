@@ -1,8 +1,7 @@
 # Brave browser with Wayland wrapper and declarative extensions.
-
 { pkgs, ... }:
 let
-  inherit (import ../isolation/_mk-wayland-browser-wrapper.nix) mkWaylandBrowserWrapper;
+  inherit (import ./isolation/_mk-wayland-browser-wrapper.nix) mkWaylandBrowserWrapper;
 in
 {
   programs.brave = {
@@ -19,6 +18,12 @@ in
       "gppongmhjkpfnbhagpmjfkannfbllamg" # Wappalyzer - Technology profiler
       "hfjbmagddngcpeloejdejnfgbamkjaeg" # Vimium C - All by Keyboard
       "eifflpmocdbdmepbjaopkkhbfmdgijcc" # JSON Viewer Pro
+      "bkhaagjahfmjljalopjnoealnfndnagc" # Octotree - GitHub code tree
+      "anlikcnbgdeidpacdbdljnabclhahhmd" # Enhanced Github
+      "dphilobhebphkdjbpfohgikllaljmgbn" # SimpleLogin by Proton: Secure Email Aliases
+      "clngdbkpkpeebahjckkjfobafhncgmne" # Stylus
+      "bkkmolkhemgaeaeggcmfbghljjjoofoh" # Catppuccin Chrome Theme - Mocha
+      "mnlohknjofogcljbcknkakphddjpijak" # Translate - Translator, Dictionary, TTS
     ];
   };
 
