@@ -13,17 +13,6 @@ source "${SCRIPT_DIR}/_agent-registry.sh"
 
 need_cmd fzf
 
-pick() {
-	local header="$1"
-	shift
-	printf '%s\n' "$@" | fzf --height=50% --reverse --header="$header"
-}
-
-pick_lines() {
-	local header="$1"
-	fzf --height=50% --reverse --header="$header"
-}
-
 usage() {
 	echo "Usage: ai-agent-launcher [-s|--simple]"
 	echo "  default: sectioned mode (provider -> profile/mode -> suffix)"
@@ -89,21 +78,15 @@ execute_agent() {
 
 	local entry="${AGENT_REGISTRY[$agent_alias]:-}"
 	if [[ -z "$entry" ]]; then
-		print_error "Unsupported alias: $agent_alias"
-		exit 1
+		error_exit "Unsupported alias: $agent_alias"
 	fi
 
 	local env_marker="${entry%%|*}"
 	local command_prefix="${entry#*|}"
 
 	# Resolve env vars
-	local resolved_env=""
-	case "$env_marker" in
-	"-") ;;
-	"ZAI") resolved_env="$(zai_claude_env | tr '\n' ' ')" ;;
-	"MIMI") resolved_env="$(mimi_env | tr '\n' ' ')" ;;
-	*) resolved_env="$env_marker" ;;
-	esac
+	local resolved_env
+	resolved_env="$(resolve_env_marker "$env_marker")"
 
 	# Build command array for safe execution
 	local -a cmd=()
@@ -160,9 +143,8 @@ run_simple_mode() {
 	agent_alias="$(pick "Simple Mode: Select Agent Prefix" \
 		cl ocl hcl clglm \
 		oc ocglm ocgem ocgpt locgpt mocgpt xocgpt ocs oczen \
-		cx lcx mcx hcx xcx cxu \
-		gem \
-)"
+		cx lcx mcx hcx xcx \
+		gem)"
 	if [[ -z "${agent_alias:-}" ]]; then
 		return 1
 	fi
@@ -227,7 +209,7 @@ run_sectioned_mode() {
 		mode_choice="$(pick "Codex Mode" default yolo)"
 		case "$mode_choice" in
 		default) agent_alias="$(pick_codex_effort_alias)" || return 1 ;;
-		yolo) agent_alias="cxu" ;;
+		yolo) agent_alias="cx" ;;
 		"") return 1 ;;
 		esac
 		;;

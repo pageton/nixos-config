@@ -19,7 +19,7 @@ validate_import_path() {
 	target="$(cd "$dir" && realpath -m "$import_path" 2>/dev/null)" || true
 
 	if [[ -z "$target" ]]; then
-		echo "✗  Bad import (cannot resolve path): $dir/$import_path" >&2
+		print_error "Bad import (cannot resolve path): $dir/$import_path"
 		return 1
 	fi
 
@@ -29,13 +29,13 @@ validate_import_path() {
 
 	if [[ -d "$target" ]]; then
 		if [[ ! -f "${target}/default.nix" ]]; then
-			echo "✗  Bad import (directory import missing default.nix): $dir/$import_path" >&2
+			print_error "Bad import (directory import missing default.nix): $dir/$import_path"
 			return 1
 		fi
 		return 0
 	fi
 
-	echo "✗  Bad import (no such file or directory): $dir/$import_path" >&2
+	print_error "Bad import (no such file or directory): $dir/$import_path"
 	return 1
 }
 
@@ -76,9 +76,9 @@ FNR == 1 {
 
 {
 	raw_line = $0
+	extract_nix_paths(raw_line)
 	line = raw_line
 	sub(/#.*/, "", line)
-	extract_nix_paths(line)
 	if (!in_imports) {
 		if (line ~ /imports[[:space:]]*=/) {
 			if (index(line, "[") > 0) {
@@ -110,10 +110,6 @@ write_manual_awk() {
 	cat >"${TMP_DIR}/manual-awk.awk" <<'AWK'
 {
 	line = $0; lower_line = tolower(line)
-	if (line ~ /#/ && lower_line ~ /modules-check:[[:space:]]*subdir-loader/) {
-		norm_file = FILENAME; sub(/^\.\//, "", norm_file)
-		print norm_file "\tmode\tsubdir-loader"
-	}
 	is_manual = (line ~ /#/ && (lower_line ~ /modules-check:[[:space:]]*manual-helper/ || lower_line ~ /imported manually/))
 	if (is_manual) {
 		norm_file = FILENAME; sub(/^\.\//, "", norm_file)
@@ -156,21 +152,18 @@ main() {
 			| xargs -0 awk -f "${TMP_DIR}/manual-awk.awk" 2>/dev/null || true
 	} | sort -u >"${TMP_DIR}/all-extracts.txt"
 
-	# Pre-build indexed extract files (one per default.nix, using numeric index)
-	local idx=0
-	for default in "${defaults[@]}"; do
-		local pattern
-		pattern="$(printf '%s' "$default" | sed 's|^\./||')"
-		grep "^${pattern}"$'\t' "${TMP_DIR}/all-extracts.txt" >"${TMP_DIR}/extracts-${idx}.txt" 2>/dev/null || true
-		((idx++)) || true
-	done
+	# Single-pass AWK split: map each extract line to its default.nix index
+	awk -F'\t' '
+	NR == FNR { sub(/^\.\//, ""); map[$0] = FNR - 1; next }
+	{ p = $1; if (p in map) print > "'"${TMP_DIR}"'/extracts-" map[p] ".txt" }
+	' <(printf '%s\n' "${defaults[@]}") "${TMP_DIR}/all-extracts.txt" 2>/dev/null || true
 
 	# Batch find all local modules across all directories at once
 	local -a all_local_modules=()
+	local -a all_dirs=()
+	mapfile -t all_dirs < <(printf '%s\n' "${defaults[@]}" | xargs dirname | sort -u)
 	mapfile -t all_local_modules < <(
-		for default in "${defaults[@]}"; do
-			dirname "$default"
-		done | sort -u | xargs -I{} find {} -maxdepth 1 -type f -name '*.nix' \
+		find "${all_dirs[@]}" -maxdepth 1 -type f -name '*.nix' \
 			! -name default.nix ! -name '_*.nix' -printf '%h\t%f\n' 2>/dev/null
 	)
 
@@ -179,20 +172,17 @@ main() {
 	for default in "${defaults[@]}"; do
 		local dir
 		dir=$(dirname "$default")
-		echo "⟳ Checking $default" >&2
+		print_info "Checking $default"
 
 		local -a imported=()
 		local -a manual_helpers=()
 		local -a unique_imports=()
-		local local_module_policy="direct-imports"
 
-		local extract_file="${TMP_DIR}/extracts-${proc_idx}.txt"
+		local extract_file="${TMP_DIR}/extracts-${proc_idx}"
 		[[ -f "$extract_file" ]] || { ((proc_idx++)) || true; continue; }
 		while IFS=$'\t' read -r _ type path; do
 			if [[ "$type" == "manual" ]]; then
 				manual_helpers+=("$path")
-			elif [[ "$type" == "mode" ]]; then
-				local_module_policy="$path"
 			else
 				imported+=("$path")
 			fi
@@ -224,23 +214,21 @@ main() {
 		done <<< "$(printf '%s\n' "${all_local_modules[@]}")"
 
 		# Check for missing imports
-		if [[ "$local_module_policy" != "subdir-loader" ]]; then
-			local module_file
-			for module_file in "${local_modules[@]}"; do
-				if [[ -n "${manual_helper_set[$module_file]:-}" ]]; then
-					continue
-				fi
-				if [[ -z "${imported_set[$module_file]:-}" ]]; then
-					echo "✗  Missing import: $dir/$module_file" >&2
-					((error_count += 1))
-				fi
-			done
-		fi
+		local module_file
+		for module_file in "${local_modules[@]}"; do
+			if [[ -n "${manual_helper_set[$module_file]:-}" ]]; then
+				continue
+			fi
+			if [[ -z "${imported_set[$module_file]:-}" ]]; then
+				print_error "Missing import: $dir/$module_file"
+				((error_count++))
+			fi
+		done
 
 		# Validate import paths
 		for import_path in "${unique_imports[@]}"; do
 			if ! validate_import_path "$dir" "$import_path"; then
-				((error_count += 1))
+				((error_count++))
 			fi
 		done
 
@@ -249,11 +237,11 @@ main() {
 	done
 
 	if ((error_count > 0)); then
-		echo "➤ Found $error_count import error(s)." >&2
+		print_error "Found $error_count import error(s)."
 		return 1
 	fi
 
-	echo "➤ All imports OK!" >&2
+	print_success "All imports OK!"
 	return 0
 }
 

@@ -13,11 +13,6 @@ ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-${HOME}/Android/Sdk}"
 ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT}}"
 RUNTIME_LOG="${RUNTIME_LOG:-${HOME}/Downloads/android-re-tools/emulator-runtime.log}"
 
-adb_run() {
-	need_cmd adb
-	adb "$@"
-}
-
 # shellcheck source=scripts/ai/android-re/_helpers.sh
 source "${SCRIPT_DIR}/_helpers.sh"
 # shellcheck source=scripts/ai/android-re/_spoof-table.sh
@@ -58,7 +53,7 @@ start_re() {
 	# ── Phase 3: Set up tmux + mitmproxy ──
 	start_mitm_tmux
 
-	# ── Phase 4: Open Alacritty terminal on android workspace ──
+	# ── Phase 4: Open Ghostty terminal on android workspace ──
 	open_re_terminal
 
 	# ── Phase 5: Root + SELinux ──
@@ -106,7 +101,7 @@ Env:
 Commands:
   start                         Boot the rooted RE AVD and wire Frida + mitmproxy
   start-basic                   Boot only the rooted analysis AVD
-  attach                        Attach Alacritty to the Android RE tmux session
+  attach                        Attach Ghostty to the Android RE tmux session
   stop                          Stop the running emulator
   status                        Show runtime health, root, cert, and Frida state
   root-check                    Verify unattended su with Magisk

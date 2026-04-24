@@ -7,8 +7,34 @@
 # requires editing the _def calls below (plus any fzf picker menus in
 # agent-launcher.sh).
 #
+# NOTE: Agent aliases are also defined in
+# home-manager/modules/ai-agents/helpers/_aliases.nix for zsh alias generation.
+# Adding or renaming an alias requires updating both files.
+#
 # Source this file from agent-launcher.sh and agent-iter.sh.
 # Requires: logging.sh sourced before this file.
+
+# --- Runtime config (model IDs, ZAI endpoints) ---
+# Sourced from Nix-generated config when available; falls back to defaults
+# for test environments and pre-home-manager-boot scenarios.
+# Single source of truth: shared/constants.nix, helpers/_models.nix.
+_ai_models_sh="${XDG_CONFIG_HOME:-$HOME/.config}/ai-agents/models.sh"
+if [[ -f "$_ai_models_sh" ]]; then
+  # shellcheck source=/dev/null
+  source "$_ai_models_sh"
+else
+  print_warning "Using fallback model defaults — run 'just home' to generate $_ai_models_sh"
+  # Fallback defaults — kept in sync with _models.nix and constants.nix.
+  # These are overridden by the generated config after 'just home'.
+  AI_MODEL_GPT_LOW="${AI_MODEL_GPT_LOW:-openai/gpt-5.4-spark}"
+  AI_MODEL_GPT_DEFAULT="${AI_MODEL_GPT_DEFAULT:-openai/gpt-5.4}"
+  AI_MODEL_GPT_XHIGH="${AI_MODEL_GPT_XHIGH:-openai/gpt-5.1-codex-max}"
+  ZAI_API_ROOT="${ZAI_API_ROOT:-https://api.z.ai/api}"
+  ZAI_TIMEOUT="${ZAI_TIMEOUT:-3000000}"
+  ZAI_MODEL_HAIKU="${ZAI_MODEL_HAIKU:-glm-5-turbo}"
+  ZAI_MODEL_SONNET="${ZAI_MODEL_SONNET:-glm-5.1}"
+  ZAI_MODEL_OPUS="${ZAI_MODEL_OPUS:-glm-5.1}"
+fi
 
 # --- Workflow prompt env vars (set defaults for set -u safety) ---
 COMMIT_SPLIT_PROMPT="${COMMIT_SPLIT_PROMPT:-}"
@@ -76,7 +102,6 @@ _def clglm ZAI  "claude --dangerously-skip-permissions"                         
 
 # Codex
 _def cx    -    "codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox"                                            "codex exec --dangerously-bypass-approvals-and-sandbox"
-_def cxu   -    "codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox"                                            "codex exec --dangerously-bypass-approvals-and-sandbox"
 _def lcx   -    "codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort=\"low\"'"       "codex exec --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort=\"low\"'"
 _def mcx   -    "codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort=\"medium\"'"     "codex exec --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort=\"medium\"'"
 _def hcx   -    "codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort=\"high\"'"       "codex exec --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort=\"high\"'"
@@ -87,9 +112,9 @@ _def oc      -                                      "opencode"                  
 _def ocglm   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-glm"     "opencode"         "opencode run"
 _def ocgem   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-gemini"  "opencode"         "opencode run"
 _def ocgpt   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-gpt"    "opencode"         "opencode run"
-_def locgpt  "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-gpt"    "opencode --model openai/gpt-5.4-spark"     "opencode run --model openai/gpt-5.4-spark"
-_def mocgpt  "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-gpt"    "opencode --model openai/gpt-5.4"           "opencode run --model openai/gpt-5.4"
-_def xocgpt  "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-gpt"    "opencode --model openai/gpt-5.1-codex-max" "opencode run --model openai/gpt-5.1-codex-max"
+_def locgpt  "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-gpt"    "opencode --model ${AI_MODEL_GPT_LOW}"     "opencode run --model ${AI_MODEL_GPT_LOW}"
+_def mocgpt  "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-gpt"    "opencode --model ${AI_MODEL_GPT_DEFAULT}" "opencode run --model ${AI_MODEL_GPT_DEFAULT}"
+_def xocgpt  "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-gpt"    "opencode --model ${AI_MODEL_GPT_XHIGH}"   "opencode run --model ${AI_MODEL_GPT_XHIGH}"
 _def ocs     "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-sonnet" "opencode"         "opencode run"
 _def oczen   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-zen"    "opencode"         "opencode run"
 
@@ -125,35 +150,16 @@ zai_key() {
 
 # Common Z.AI environment variables for claude --dangerously-skip-permissions.
 # Outputs KEY=VAL lines (one per line) for consumption by env.
-# Source of truth: shared/constants.nix (services.zai.models, services.zai.timeout).
+# Values sourced from Nix-generated config (or fallback defaults above).
 zai_claude_env() {
   local key
   key="$(zai_key)"
   printf '%s\n' "ANTHROPIC_AUTH_TOKEN=${key}"
-  printf '%s\n' "ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic"
-  printf '%s\n' "API_TIMEOUT_MS=3000000"
-  printf '%s\n' "ANTHROPIC_DEFAULT_HAIKU_MODEL=glm-5-turbo"
-  printf '%s\n' "ANTHROPIC_DEFAULT_SONNET_MODEL=glm-5.1"
-  printf '%s\n' "ANTHROPIC_DEFAULT_OPUS_MODEL=glm-5.1"
-}
-
-# MiMi custom endpoint environment variables.
-# Reads API key from sops secret and exposes it as MIMI_API_KEY for models.json resolution.
-mimi_key_path() {
-  printf '%s\n' "${MIMI_API_KEY_FILE:-/run/secrets/mimi_api_key}"
-}
-
-mimi_key() {
-  local key_path
-  key_path="$(mimi_key_path)"
-  require_secret_file "${key_path}"
-  cat "${key_path}"
-}
-
-mimi_env() {
-  local key
-  key="$(mimi_key)"
-  printf '%s\n' "MIMI_API_KEY=${key}"
+  printf '%s\n' "ANTHROPIC_BASE_URL=${ZAI_API_ROOT}/anthropic"
+  printf '%s\n' "API_TIMEOUT_MS=${ZAI_TIMEOUT}"
+  printf '%s\n' "ANTHROPIC_DEFAULT_HAIKU_MODEL=${ZAI_MODEL_HAIKU}"
+  printf '%s\n' "ANTHROPIC_DEFAULT_SONNET_MODEL=${ZAI_MODEL_SONNET}"
+  printf '%s\n' "ANTHROPIC_DEFAULT_OPUS_MODEL=${ZAI_MODEL_OPUS}"
 }
 
 # --- Workflow suffix resolution ---
@@ -166,6 +172,23 @@ resolve_workflow_prompt() {
   else
     printf '%s\n' ""
   fi
+}
+
+# --- Env marker resolution ---
+
+# Resolve an env_marker from a registry entry into a space-separated env string.
+# Usage: resolved_env="$(resolve_env_marker "$env_marker")"
+#   env_marker:
+#     "-"   = no extra env vars (outputs empty string)
+#     "ZAI" = resolve Z.AI API vars at runtime
+#     otherwise = literal env string (e.g. "FOO=bar BAZ=qux")
+resolve_env_marker() {
+	local env_marker="$1"
+	case "$env_marker" in
+	"-") ;;
+	"ZAI") zai_claude_env | tr '\n' ' ' ;;
+	*) printf '%s' "$env_marker" ;;
+	esac
 }
 
 # --- Alias/suffix splitting ---

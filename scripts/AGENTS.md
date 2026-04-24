@@ -16,7 +16,10 @@ scripts/
 │   ├── agent-analyze.sh     # Log analyzer CLI (stats/errors/sessions/search/tail/report)
 │   ├── agent-dashboard.sh   # fzf dashboard wrapper for analyzer commands
 │   ├── agent-inventory.sh   # Interactive fzf inventory for AI tools (skills, MCP, agents)
+│   ├── _inventory-collectors.sh # Shared inventory data collectors (sourced by agent-inventory.sh)
+│   ├── _inventory-helpers.sh # Shared inventory helper functions (sourced by agent-inventory.sh)
 │   ├── agents-search.sh     # Scan project trees for directories needing AGENTS.md
+│   ├── agents-search-test.sh # Unit tests for agents-search.sh
 │   ├── agent-iter.sh        # Run an AI agent command N times (iterative loop)
 │   ├── agent-iter-test.sh   # Unit tests for agent-iter.sh
 │   ├── skills-sync.sh       # Sync AI agent skills from GitHub to ~/.local/share/skills/
@@ -62,6 +65,7 @@ scripts/
 │   ├── test-helpers.sh      # Shared test utilities (assertions, mocking)
 │   ├── awk-utils.awk        # Shared AWK helper functions
 │   ├── extract-nix-shell.awk # Extract shell snippets from Nix files
+│   ├── extract-nix-packages.awk # Extract package names from Nix files
 │   ├── fzf-theme.sh         # FZF theme configuration (Gruvbox colors)
 │   └── require.sh           # Shared dependency assertion helpers
 ├── sops/
@@ -110,7 +114,7 @@ source "$(dirname "$0")/../lib/logging.sh"
 
 ## Complexity Hotspots (Warnings)
 
-- **`ai/agent-launcher.sh`**: Uses a procedural registry (large `case` statements) for agent and workflow selection. When adding new agents, you must update multiple functions (`supports_workflow_suffix`, `resolve_workflow_prompt`, `execute_agent`, etc.).
+- **`ai/agent-launcher.sh`**: Uses a procedural registry (large `case` statements) for agent and workflow selection. When adding new agents, you must update multiple functions (`resolve_workflow_prompt`, `execute_agent`, etc.).
 - **`ai/agent-inventory.sh`**: Relies on manual JSON/TOML parsing and directory traversal to build the AI tool inventory. Ensure changes to config locations are reflected here.
 
 ---
@@ -139,8 +143,8 @@ source "$(dirname "$0")/../lib/logging.sh"
 | `system/report/report-helpers.sh`                  | Sourced by `system-report.sh`                                                                                            |
 | `ai/agent-launcher.sh`                             | `home-manager/modules/ai-agents/helpers/_aliases.nix` (`ai-agent-launcher` wrapper)                                      |
 | `ai/agent-log-wrapper.sh`                          | `home-manager/modules/ai-agents/services.nix` (`ai-agent-log-wrapper` wrapper)                                           |
-| `ai/agent-analyze.sh`                              | `home-manager/modules/ai-agents/log-analyzer.nix` (`ai-agent-analyze` wrapper)                                           |
-| `ai/agent-dashboard.sh`                            | `home-manager/modules/ai-agents/log-analyzer.nix` (`ai-agent-dashboard` wrapper)                                         |
+| `ai/agent-analyze.sh`                              | `home-manager/modules/ai-agents/services.nix` (`ai-agent-analyze` wrapper)                                               |
+| `ai/agent-dashboard.sh`                            | `home-manager/modules/ai-agents/services.nix` (`ai-agent-dashboard` wrapper)                                             |
 | `ai/agent-inventory.sh`                            | `home-manager/modules/ai-agents/helpers/_aliases.nix` (`ai-agent-inventory` wrapper)                                     |
 | `ai/agent-iter.sh`                                 | `home-manager/modules/ai-agents/services.nix` (iterative agent loop wrapper)                                             |
 | `ai/android-re/re-avd.sh`                          | `home-manager/modules/ai-agents/config/models/opencode.nix` (prompt docs), called at runtime by `opencode-android-re.sh` |

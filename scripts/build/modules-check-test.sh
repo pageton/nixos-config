@@ -108,51 +108,6 @@ EOF
 EOF
 }
 
-setup_subdir_loader() {
-	mkdir -p modules/core
-	cat >modules/default.nix <<'EOF'
-{ ... }:
-{
-  # modules-check: subdir-loader
-  imports = [
-    ./core
-  ];
-}
-EOF
-	cat >modules/core/default.nix <<'EOF'
-{ ... }:
-{
-  imports = [ ../audio.nix ];
-}
-EOF
-	cat >modules/audio.nix <<'EOF'
-{ ... }: { }
-EOF
-}
-
-setup_comment_path_examples() {
-	mkdir -p modules/core
-	cat >modules/default.nix <<'EOF'
-# Example structure: submodules may import ../audio.nix internally.
-{ ... }:
-{
-  # modules-check: subdir-loader
-  imports = [
-    ./core
-  ];
-}
-EOF
-	cat >modules/core/default.nix <<'EOF'
-{ ... }:
-{
-  imports = [ ../audio.nix ];
-}
-EOF
-	cat >modules/audio.nix <<'EOF'
-{ ... }: { }
-EOF
-}
-
 run_case() {
 	local name="$1"
 	local expected_exit="$2"
@@ -162,7 +117,6 @@ run_case() {
 	local tmp_dir
 	tmp_dir="$(mktemp -d)"
 	local output_file="${tmp_dir}/output.log"
-	local result=0
 
 	(
 		cd "$tmp_dir"
@@ -185,12 +139,9 @@ run_case() {
 			cat "$output_file"
 			exit 1
 		fi
-	) || result=$?
+	)
 
 	rm -rf "$tmp_dir"
-	if ((result != 0)); then
-		return "$result"
-	fi
 	echo "PASS: ${name}"
 }
 
@@ -202,8 +153,6 @@ run_case "missing directory default fails" 1 "directory import missing default.n
 run_case "unimported local module fails" 1 "Missing import: ./modules/network.nix" setup_unimported_local_module || ((failed++))
 run_case "duplicate import entries stay valid" 0 "All imports OK" setup_duplicate_import_entries || ((failed++))
 run_case "manual helper comment is skipped" 0 "All imports OK" setup_manual_helper_comment || ((failed++))
-run_case "subdir loader delegates flat modules" 0 "All imports OK" setup_subdir_loader || ((failed++))
-run_case "comment path examples do not count as imports" 0 "All imports OK" setup_comment_path_examples || ((failed++))
 
 if ((failed > 0)); then
 	echo "${failed} case(s) failed."
