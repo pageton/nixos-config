@@ -26,7 +26,7 @@
     ];
 
   home.file.".face" = {
-    source = ../profile_picture.png;
+    source = ../assets/profile_picture.png;
   };
 
   fonts.fontconfig.enable = true;
