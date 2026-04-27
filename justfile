@@ -115,7 +115,7 @@ all:
 
 # Update all flake inputs
 update:
-	nix flake update
+    nix flake update
 
 # Update Nixpkgs
 update-pkgs:
@@ -128,14 +128,14 @@ update-pkgs-stable:
 
 # Clean up build artifacts and caches
 clean:
-	@echo -e "\n➤ Cleaning up build artifacts and caches…"
-	@echo "[DEL] Cleaning Nix store (1 day older)..."
-	nh clean all --keep 1
-	@echo "[HM] Cleaning Home Manager generations..."
-	home-manager expire-generations "-1 days"
-	@echo "[OPT] Optimizing Nix store..."
-	nix store optimise
-	@echo -e "✔ Cleanup completed!"
+    @echo -e "\n➤ Cleaning up build artifacts and caches…"
+    @echo "[DEL] Cleaning Nix store (1 day older)..."
+    nh clean all --keep 1
+    @echo "[HM] Cleaning Home Manager generations..."
+    home-manager expire-generations "-1 days"
+    @echo "[OPT] Optimizing Nix store..."
+    nix store optimise
+    @echo -e "✔ Cleanup completed!"
 
 # Edit secrets with SOPS
 # Decrypted file is written to XDG_RUNTIME_DIR (tmpfs) so plaintext never touches disk.
@@ -184,24 +184,24 @@ secrets-add key:
 
 # Setup SOPS age key
 sops-setup:
-	@echo -e "\n➤ Setting up SOPS age key…"
-	./scripts/sops/sops-setup.sh
+    @echo -e "\n➤ Setting up SOPS age key…"
+    ./scripts/sops/sops-setup.sh
 
 # Setup SSH and GPG keys from SOPS
 setup-keys:
-	@echo -e "\n➤ Setting up SSH and GPG keys from SOPS…"
-	./scripts/sops/setup-keys.sh
+    @echo -e "\n➤ Setting up SSH and GPG keys from SOPS…"
+    ./scripts/sops/setup-keys.sh
 
 # Show SOPS public key
 sops-key:
-	@echo -e "\n➤ SOPS public key:"
-	@sops --version && echo ""
-	@if [ -f ~/.config/sops/age/keys.txt ]; then \
-		echo "Public key:"; \
-		nix shell nixpkgs#age -c age-keygen -y ~/.config/sops/age/keys.txt; \
-	else \
-		echo "No age key found. Run 'just sops-setup' to create one."; \
-	fi
+    @echo -e "\n➤ SOPS public key:"
+    @sops --version && echo ""
+    @if [ -f ~/.config/sops/age/keys.txt ]; then \
+        echo "Public key:"; \
+        nix shell nixpkgs#age -c age-keygen -y ~/.config/sops/age/keys.txt; \
+    else \
+        echo "No age key found. Run 'just sops-setup' to create one."; \
+    fi
 
 # Sync skills from GitHub to ~/.local/share/skills/
 skills-sync:

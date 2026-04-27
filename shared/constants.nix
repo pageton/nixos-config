@@ -112,6 +112,8 @@
 
   # Service ports — single source of truth for localhost services.
   ports = {
+    tor-socks = 9050; # Tor SOCKS5 proxy
+    tor-dns = 9053; # Tor DNS port
     socks = 1080; # Default SOCKS5 proxy port
     i2pd-socks = 4447; # I2P SOCKS proxy port
     glance = 8082; # Glance dashboard

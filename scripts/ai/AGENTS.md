@@ -1,6 +1,6 @@
 # AI Agent Orchestration Scripts
 
-AI agent launching, iterating, logging, analyzing, and inventorying across Claude Code, Codex, OpenCode, and Gemini CLI with a unified alias system and shared workflow suffixes.
+AI agent launching, iterating, logging, analyzing, and inventorying across Claude Code, Codex, OpenCode, Gemini CLI, and Pi Coding Agent with a unified alias system and shared workflow suffixes.
 
 Parent: `scripts/AGENTS.md`
 
@@ -45,6 +45,8 @@ Parent: `scripts/AGENTS.md`
 - Workflow suffix env vars (`COMMIT_SPLIT_PROMPT`, etc.) are set externally by Nix wrappers or shell env, not defined here.
 - `agent-iter.sh` rejects interactive-only aliases (like plain `cl`) without a prompt — headless-only.
 - ZAI API key for Claude GLM variants is resolved from `/run/secrets/zai_api_key`.
+- Pi aliases use `PI_CODING_AGENT_DIR` env markers (resolved as literal env strings by `resolve_env_marker`). Pi uses positional prompts in interactive mode and `-p` (print mode) in headless mode.
+- Pi has no native MCP support — the MCP bridge TypeScript extension handles translation.
 
 ---
 

@@ -8,6 +8,8 @@ source "${SCRIPT_DIR}/../lib/logging.sh"
 source "${SCRIPT_DIR}/../lib/log-dirs.sh"
 # shellcheck source=scripts/lib/error-patterns.sh
 source "${SCRIPT_DIR}/../lib/error-patterns.sh"
+# shellcheck source=scripts/ai/_agent-registry.sh
+source "${SCRIPT_DIR}/_agent-registry.sh"
 
 count_errors() {
 	local agent="$1"
@@ -46,7 +48,7 @@ usage() {
 	echo "  tail [agent]    Live tail logs (optionally filter by agent)"
 	echo "  report          Generate daily report"
 	echo ""
-	echo "Agents: claude, opencode, codex, gemini"
+	echo "Agents: ${SUPPORTED_TOOLS[*]}"
 }
 
 stats() {
@@ -55,7 +57,7 @@ stats() {
 	echo "---------------------------------------------------------------"
 	echo ""
 
-	for agent in claude opencode codex gemini; do
+	for agent in "${SUPPORTED_TOOLS[@]}"; do
 		sessions=$(find_agent_logs "$agent" -7 | wc -l)
 		errors=$(count_errors "$agent")
 
@@ -87,7 +89,7 @@ errors() {
 	esac
 
 	if [[ "$agent" == "*" ]]; then
-		find_all_agent_logs -7 | xargs -r rg -n -i "$ERROR_PATTERN" 2>/dev/null | tail -100
+		find_all_agent_logs -7 | xargs -r rg -n -i "$CODEX_ERROR_PATTERN" 2>/dev/null | tail -100
 	else
 		find_agent_logs "$agent" -7 | while IFS= read -r file; do
 			[[ -n "$file" ]] || continue
@@ -141,7 +143,7 @@ report() {
 	echo ""
 
 	echo "Error Summary:"
-	for agent in claude opencode codex gemini; do
+	for agent in "${SUPPORTED_TOOLS[@]}"; do
 		count=$(count_errors "$agent")
 		if [[ "$count" -gt 0 ]]; then
 			echo "  $agent: $count errors"
@@ -150,7 +152,7 @@ report() {
 	echo ""
 
 	echo "Most Recent Errors:"
-	find_all_agent_logs -7 | xargs -r rg -n -i "$ERROR_PATTERN" 2>/dev/null | tail -20
+	find_all_agent_logs -7 | xargs -r rg -n -i "$CODEX_ERROR_PATTERN" 2>/dev/null | tail -20
 }
 
 patterns() {
@@ -161,7 +163,7 @@ patterns() {
 	all_logs="$(find_all_agent_logs -7)"
 
 	if echo "$all_logs" | grep -q .; then
-		echo "$all_logs" | xargs -r rg --no-filename -o -i "${ERROR_PATTERN}:? .{0,120}" 2>/dev/null |
+		echo "$all_logs" | xargs -r rg --no-filename -o -i "${CODEX_ERROR_PATTERN}:? .{0,120}" 2>/dev/null |
 			sort | uniq -c | sort -rn | head -20
 	else
 		print_warning "No log files found."

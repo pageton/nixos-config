@@ -53,7 +53,7 @@ start_re() {
 	# ── Phase 3: Set up tmux + mitmproxy ──
 	start_mitm_tmux
 
-	# ── Phase 4: Open Ghostty terminal on android workspace ──
+	# ── Phase 4: Open Alacritty terminal on android workspace ──
 	open_re_terminal
 
 	# ── Phase 5: Root + SELinux ──
@@ -101,7 +101,7 @@ Env:
 Commands:
   start                         Boot the rooted RE AVD and wire Frida + mitmproxy
   start-basic                   Boot only the rooted analysis AVD
-  attach                        Attach Ghostty to the Android RE tmux session
+  attach                        Attach Alacritty to the Android RE tmux session
   stop                          Stop the running emulator
   status                        Show runtime health, root, cert, and Frida state
   root-check                    Verify unattended su with Magisk

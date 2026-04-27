@@ -166,15 +166,6 @@ in
 
   # SSH managed by networking.nix — not overridden here.
 
-  # === Logind Session Security ===
-  services.logind.settings.Login = {
-    IdleAction = "lock";
-    IdleActionSec = 300; # seconds
-    HandleLidSwitch = "lock";
-    HandleLidSwitchExternalPower = "lock";
-    HandleLidSwitchDocked = "lock";
-  };
-
   # === Security Settings ===
   security = {
     apparmor.enable = true;
@@ -247,26 +238,7 @@ in
     '';
   };
 
-  # === RAM-only Swap — Prevents sensitive data leaking to unencrypted partitions ===
-  zramSwap = {
-    enable = true;
-    algorithm = "zstd";
-    memoryPercent = 50;
-  };
-
-  # === NTS Chrony (Authenticated Time) — Replaces systemd-timesyncd ===
   services = {
-    timesyncd.enable = lib.mkForce false;
-    chrony = {
-      enable = true;
-      servers = [ ]; # NTS sources below instead of plain NTP
-      extraConfig = ''
-        server time.cloudflare.com iburst nts
-        server virginia.time.system.gov iburst nts
-        makestep 1.0 3
-      '';
-    };
-
     # Modern dbus-broker (faster and more secure than dbus-daemon)
     dbus.implementation = "broker";
 

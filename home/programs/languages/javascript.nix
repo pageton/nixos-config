@@ -24,6 +24,7 @@ let
     "@magicuidesign/mcp"
     "@modelcontextprotocol/server-github"
     "agent-browser"
+    "agent-device"
     "@z_ai/mcp-server"
     "@mariozechner/pi-coding-agent"
   ];

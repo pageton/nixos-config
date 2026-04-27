@@ -20,6 +20,7 @@ with pkgsStable;
   tealdeer # Fast tldr pages client
 
   # === File and Directory Management ===
+  file # Identify file types using magic numbers
   duf # Enhanced df with better formatting
   dust # Modern du with tree visualization
   fd # Modern find replacement with intuitive syntax

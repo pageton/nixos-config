@@ -55,6 +55,21 @@ let
       ];
       skillContext = "Use for diffs, configs, RE artifacts, and toolchain review.";
     };
+    planning-engineer = {
+      description = "Analyze requirements, explore the codebase, and produce a concrete implementation plan before any changes are made.";
+      tools = "Read,Grep,Glob,Bash";
+      role = "You are a planning specialist who explores code and designs implementation strategies.";
+      rules = [
+        "READ ONLY — never edit, write, or modify any files."
+        "Explore the codebase thoroughly: map affected files, understand existing patterns, and identify constraints."
+        "Produce a numbered implementation plan with exact file paths and specific changes."
+        "For each step: state what to change, why, and which existing pattern to follow."
+        "Flag risks: circular dependencies, breaking changes, test gaps, and security concerns."
+        "Estimate blast radius — list every file that could be affected by the proposed changes."
+        "If the task is ambiguous, list assumptions and ask for clarification rather than guessing."
+      ];
+      skillContext = "Use before implementing — produces a plan that any implementation agent can follow.";
+    };
   };
 
   # Helper: map over attrset, producing a list of (name, value) results.
@@ -109,8 +124,70 @@ let
         ${builtins.concatStringsSep "\n" rulesLines}
       '';
     };
+  # Derive Forge agent file from canonical definition.
+  # Forge agents use YAML frontmatter with id, tools, and markdown body as system prompt.
+  mkForgeAgent =
+    name: concept:
+    let
+      rulesText = builtins.concatStringsSep "\n- " concept.rules;
+      toolsList = builtins.replaceStrings [ "," ] [ "\n  - " ] concept.tools;
+    in
+    {
+      name = "${name}.md";
+      value = ''
+        ---
+        id: ${name}
+        title: "${builtins.replaceStrings [ "-" ] [ " " ] name}"
+        description: "${concept.description}"
+        tools:
+          - ${toolsList}
+        ---
+
+        ${concept.role}
+
+        Rules:
+        - ${rulesText}
+      '';
+    };
+
+  # Derive Pi agent file from canonical definition.
+  # Pi uses SKILL.md format for persona/instruction injection.
+  # Each agent becomes a skill that can be loaded via the /agent extension command.
+  mkPiAgent =
+    name: concept:
+    let
+      rulesLines = map (r: "- ${r}") concept.rules;
+      titles = {
+        implementation-engineer = "Implementation Engineer";
+        static-recon = "Static Recon";
+        protocol-triage = "Protocol Triage";
+        security-reviewer = "Security Reviewer";
+      };
+      title = titles.${name} or (builtins.replaceStrings [ "-" ] [ " " ] name);
+    in
+    {
+      name = "${name}/SKILL.md";
+      value = ''
+        ---
+        name: ${name}
+        description: ${concept.description} ${concept.skillContext}
+        ---
+
+        # ${title}
+
+        ${concept.role}
+
+        Rules:
+        ${builtins.concatStringsSep "\n" rulesLines}
+      '';
+    };
+
 in
 {
+  forgeAgents = builtins.listToAttrs (mapAttrsToList mkForgeAgent agentConcepts);
+
+  piAgents = builtins.listToAttrs (mapAttrsToList mkPiAgent agentConcepts);
+
   claudeAgents = (builtins.listToAttrs (mapAttrsToList mkClaudeAgent agentConcepts)) // {
     "release-notes.md" = ''
       ---

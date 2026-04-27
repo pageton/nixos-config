@@ -28,10 +28,11 @@ in
       context7 = {
         enable = true;
         command = "bunx";
-        args = [ "@upstash/context7-mcp@2.1.2" ];
-        env = {
-          CONTEXT7_API_KEY = "__CONTEXT7_API_KEY_PLACEHOLDER__"; # patched at activation from sops secret
-        };
+        args = [
+          "@upstash/context7-mcp@2.1.2"
+          "--api-key"
+          "__CONTEXT7_API_KEY_PLACEHOLDER__"
+        ];
       };
 
       github = {

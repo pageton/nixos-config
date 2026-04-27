@@ -29,6 +29,16 @@ Parent: `home-manager/modules/ai-agents/AGENTS.md`
 | `_zai-filters.nix`              | Agent-specific jq filters for Z.AI MCP secret injection                            |
 | `_git-clone-update.nix`         | Generates Bash snippet for git clone/update under `~/.local/share/`                |
 | `_android-re-launchers.nix`     | Shell script binaries for Android RE OpenCode launchers                            |
+| `_pi-profiles.nix`              | Eight Pi profile definitions (provider, model, zaiKey flags)                       |
+| `_pi-settings-builder.nix`      | Pi settings.json, models.json, auth.json generation per profile                    |
+
+### TypeScript Extensions (`pi-extensions/`)
+
+| File                    | Purpose                                                                                       |
+| ----------------------- | --------------------------------------------------------------------------------------------- |
+| `mcp-bridge.ts`         | MCP bridge: reads manifest, spawns MCP servers, translates MCP ↔ pi tool calls via stdio/JSON-RPC |
+| `subagent.ts`           | `delegate_task` tool: spawns headless `pi -p` for isolated subtask execution                  |
+| `git-checkpoint.ts`     | Git checkpoint tools: create, list, restore tags with auto-checkpoint on session start        |
 
 ---
 
@@ -47,4 +57,6 @@ Parent: `home-manager/modules/ai-agents/AGENTS.md`
 - `_zai-filters.nix` imports `_zai-services.nix` directly; both must stay in sync.
 - `_gemini-policies.nix` imports `_destructive-rules.nix` directly.
 - `_aliases.nix` and `_android-re-launchers.nix` both import `_models.nix`.
+- `_pi-settings-builder.nix` uses `__ZAI_API_ROOT__` and `__ZAI_API_KEY_FILE__` placeholders in models.json — patched by `activation/secrets.nix`.
+- `_pi-profiles.nix` references raw model IDs from `_models.nix` (unprefixed, since pi uses provider + model separately).
 - `toHookPattern` in `_destructive-rules.nix` has special-case regex escaping for `rm -rf /`, `rm -rf ~`, `dd` — consider grep regex safety when adding commands.

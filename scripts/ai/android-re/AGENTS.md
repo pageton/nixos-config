@@ -49,7 +49,7 @@ Parent: `scripts/ai/AGENTS.md`
 - `re-avd.sh start` kills ALL running emulators on start — be careful if other AVDs are running.
 - Frida server deployed to `/data/local/tmp/` on the emulator (configurable via `FRIDA_BIN`).
 - `opencode-android-re.sh` reads `ANDROID_RE_OPENCODE_PROFILE` env var (set by Nix wrapper).
-- Niri window rule matches title `^android-re` — do not change the Ghostty title without updating niri config.
+- Niri window rule matches title `^android-re` — do not change the Alacritty title without updating niri config.
 - Runtime tools required: `adb`, `emulator`, `frida`/`frida-ps`, `mitmdump`, `apktool`, `jadx`.
 
 ---

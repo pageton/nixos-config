@@ -19,6 +19,7 @@ let
     mkStrListOption
     mkLinesOption
     mkNullOrStrOption
+    mkNullableOption
     ;
 
   # Shared Codex enum types — used by top-level, profiles, and customAgents options.
@@ -78,7 +79,7 @@ in
     secrets = {
       zaiApiKeyFile = mkNullOrStrOption "/run/secrets/zai_api_key" "Path to sops-decrypted Z.AI API key file";
       openrouterApiKeyFile = mkNullOrStrOption "/run/secrets/openrouter_api_key" "Path to sops-decrypted OpenRouter API key file";
-      context7ApiKeyFile = mkNullOrStrOption "/run/secrets/context7_api_key" "Path to sops-decrypted Context7 API key file";
+      context7ApiKeyFile = mkNullOrStrOption "/run/secrets/context7-api-key" "Path to sops-decrypted Context7 API key file";
     };
 
     skills = lib.mkOption {
@@ -171,9 +172,7 @@ in
             command = mkStrOption "" "Command to run for local servers";
             args = mkStrListOption [ ] "Arguments for the command";
             url = mkNullOrStrOption null "URL for remote MCP servers";
-            headers = mkTypedOption (lib.types.nullOr (
-              lib.types.attrsOf lib.types.str
-            )) null "Headers for remote MCP servers";
+            headers = mkNullableOption (lib.types.attrsOf lib.types.str) null "Headers for remote MCP servers";
             env = mkAttrsOfStrOption { } "Environment variables for the server";
           };
         }
@@ -278,6 +277,24 @@ in
       extraToml = mkLinesOption "" "Extra TOML lines appended to config.toml";
     };
 
+    # === Forge Options ===
+    forge = {
+      enable = lib.mkEnableOption "Forge (tailcallhq/forgecode) configuration";
+
+      defaultProfile = mkStrOption "forge" "Default forge profile name";
+      reasoningEffort = mkTypedOption (lib.types.enum [
+        "none"
+        "minimal"
+        "low"
+        "medium"
+        "high"
+        "xhigh"
+        "max"
+      ]) "high" "Reasoning effort level";
+      maxTokens = mkIntOption 20480 "Maximum output tokens";
+      extraToml = mkLinesOption "" "Extra TOML content appended to each profile's .forge.toml";
+    };
+
     # === Gemini Options ===
     gemini = {
       enable = lib.mkEnableOption "Gemini CLI configuration";
@@ -285,6 +302,56 @@ in
       theme = mkStrOption "Default" "Theme for Gemini CLI";
       sandboxMode = mkStrOption "cautious" "Sandbox mode (none, cautious, strict)";
       extraSettings = mkAttrsOption { } "Additional Gemini CLI settings";
+    };
+
+    # === Pi Options ===
+    pi = {
+      enable = lib.mkEnableOption "Pi coding agent (@mariozechner/pi-coding-agent) configuration";
+
+      model = mkStrOption "claude-sonnet-4-20250514" "Default model ID for pi";
+      provider = mkStrOption "anthropic" "Default provider for pi";
+      thinkingLevel = mkTypedOption (lib.types.enum [
+        "off"
+        "minimal"
+        "low"
+        "medium"
+        "high"
+        "xhigh"
+      ]) "medium" "Default thinking level";
+      theme = mkStrOption "dark" "Pi TUI theme";
+      sessionDir = mkStrOption "" "Custom session directory (empty = pi default)";
+
+      extensions = mkStrListOption [ ] "Extension file paths or directories to load";
+      skills = mkStrListOption [ ] "Skill file paths or directories to load";
+      packages = mkStrListOption [ ] "npm/git packages to load resources from";
+
+      compaction = mkAttrsOption {
+        enabled = true;
+        reserveTokens = 16384;
+        keepRecentTokens = 20000;
+      } "Compaction settings";
+
+      retry = mkAttrsOption {
+        enabled = true;
+        maxRetries = 3;
+        baseDelayMs = 2000;
+      } "Retry settings";
+
+      enabledModels = mkStrListOption [ ] "Model patterns for Ctrl+P cycling";
+
+      mcpBridge = {
+        enable = mkBoolOption true "Install the MCP bridge extension that translates MCP servers to pi tools";
+      };
+
+      subagent = {
+        enable = mkBoolOption true "Install the subagent extension for task delegation with isolated context";
+      };
+
+      gitCheckpoint = {
+        enable = mkBoolOption true "Install git checkpoint extension (stash per turn for easy restoration)";
+      };
+
+      extraSettings = mkAttrsOption { } "Additional pi settings.json overrides";
     };
   };
 }

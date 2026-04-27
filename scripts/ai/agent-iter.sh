@@ -55,41 +55,35 @@ is_rate_limit_error() {
 }
 
 # Run a single headless iteration of an agent using AGENT_ITER_REGISTRY.
-# Returns 0 on success, 1 on rate-limit error (stderr captured in _ITER_LAST_STDERR),
+# Returns 0 on success, 2 on rate-limit error (stderr captured in _ITER_LAST_STDERR),
 # or the agent's raw exit code for other failures.
 run_agent_once() {
 	local alias_name="$1"
 	local prompt="$2"
 
-	local entry="${AGENT_ITER_REGISTRY[$alias_name]:-}"
-	if [[ -z "$entry" ]]; then
+	if ! resolve_alias_entry AGENT_ITER_REGISTRY "$alias_name"; then
 		error_exit "Unsupported alias for iter: ${alias_name}"
 	fi
 
-	local env_marker="${entry%%|*}"
-	local command="${entry#*|}"
 	local stderr_file
 	stderr_file="$(mktemp)"
 	trap 'rm -f "${stderr_file}"' RETURN
 
-	local resolved_env
-	resolved_env="$(resolve_env_marker "$env_marker")"
-
 	local rc=0
 	# Execute with resolved env, capturing stderr for rate-limit detection
-	if [[ -n "$resolved_env" ]]; then
+	if [[ -n "$_RESOLVED_ENV" ]]; then
 		# shellcheck disable=SC2086,SC2046
-		env $resolved_env $command "${prompt}" 2>"${stderr_file}" || rc=$?
+		env $_RESOLVED_ENV $_COMMAND_PREFIX "${prompt}" 2>"${stderr_file}" || rc=$?
 	else
 		# shellcheck disable=SC2086
-		$command "${prompt}" 2>"${stderr_file}" || rc=$?
+		$_COMMAND_PREFIX "${prompt}" 2>"${stderr_file}" || rc=$?
 	fi
 
 	_ITER_LAST_STDERR="$(cat "${stderr_file}")"
 
 	if ((rc != 0)) && is_rate_limit_error "${_ITER_LAST_STDERR}"; then
 		trap - RETURN
-		return 1
+		return 2
 	fi
 	trap - RETURN
 	return "${rc}"
@@ -151,7 +145,7 @@ main() {
 			status=$?
 		fi
 
-		if ((status == 1)) && is_rate_limit_error "${_ITER_LAST_STDERR}"; then
+		if ((status == 2)); then
 			rate_limit_attempts=$((rate_limit_attempts + 1))
 			if ((rate_limit_attempts > rate_limit_retries)); then
 				print_error "Rate-limit retry limit (${rate_limit_retries}) exceeded"

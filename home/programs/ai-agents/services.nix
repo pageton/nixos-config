@@ -3,6 +3,7 @@
 {
   config,
   constants,
+  inputs,
   lib,
   pkgs,
   ...
@@ -44,6 +45,8 @@ let
   mkCliAutoupdateScript = import ./helpers/_mk-cli-autoupdate-script.nix { inherit pkgs; };
   shellAliases = import ./helpers/_services-shell-aliases.nix { inherit cfg aiAliases constants; };
 
+  forgePkg = inputs.forgecode.packages.${pkgs.stdenv.hostPlatform.system}.default;
+
   logCleanupCommand = ''
     find "${cfg.logging.directory}" -name "*.log" -mtime +${toString cfg.logging.retentionDays} -delete
     find "$HOME/${constants.paths.opencodeLogDir}" -name "*.log" -mtime +${toString cfg.logging.retentionDays} -delete 2>/dev/null || true
@@ -71,6 +74,7 @@ in
       aiAgentInventory
       pkgs.bubblewrap
     ]
+    ++ (lib.optional cfg.forge.enable forgePkg)
     ++ androidReLaunchers
     ++ (lib.optional cfg.logging.enable (
       pkgs.writeShellScriptBin "ai-agent-log-cleanup" ''

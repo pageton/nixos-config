@@ -52,6 +52,10 @@
       url = "github:0xc000022070/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    forgecode = {
+      url = "github:tailcallhq/forgecode";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =

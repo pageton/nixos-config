@@ -3,6 +3,7 @@
 
 {
   cfg,
+  config,
   lib,
   pkgs,
   toJSON,
@@ -223,6 +224,56 @@ lib.mkIf (cfg.skills != [ ]) (
       done
       shopt -u nullglob
       echo "✓ Mirrored Claude skills into ~/.codex/skills"
+
+      # Mirror Claude skills into each forge profile directory (forge looks for <base>/skills/<name>/SKILL.md).
+      ${
+        let
+          forgeProfiles = import ../helpers/_forge-profiles.nix { inherit config; };
+        in
+        lib.optionalString cfg.forge.enable (
+          lib.concatStringsSep "\n" (
+            map (profile: ''
+              if [[ -d "$HOME/.${profile.name}" ]]; then
+                mkdir -p "$HOME/.${profile.name}/skills"
+                find "$HOME/.${profile.name}/skills" -mindepth 1 -maxdepth 1 -type l -delete
+                shopt -s nullglob
+                for skill_dir in "$HOME/.claude/skills"/*; do
+                  [[ -d "$skill_dir" ]] || continue
+                  ln -sfn "$skill_dir" "$HOME/.${profile.name}/skills/$(basename "$skill_dir")"
+                done
+                shopt -u nullglob
+                echo "✓ Mirrored Claude skills into ~/.${profile.name}/skills"
+              fi
+            '') forgeProfiles.profiles
+          )
+        )
+      }
+
+      # Mirror Claude skills into pi agent directory (pi looks for skills/ under PI_CODING_AGENT_DIR).
+      # Pi expects skills in SKILL.md format under ~/.pi/agent/skills/<name>/SKILL.md.
+      # Pi requires the symlink directory name to match the "name" field in SKILL.md.
+      ${
+        let
+          piProfiles = import ../helpers/_pi-profiles.nix { inherit config; };
+        in
+        lib.optionalString cfg.pi.enable ''
+          mkdir -p "$HOME/.pi/agent/skills"
+          find "$HOME/.pi/agent/skills" -mindepth 1 -maxdepth 1 -type l -delete
+          shopt -s nullglob
+          for skill_dir in "$HOME/.claude/skills"/*; do
+            [[ -d "$skill_dir" ]] || continue
+            # Read the "name" field from SKILL.md frontmatter — pi requires it to match directory name
+            skill_name="$(basename "$skill_dir")"
+            if [[ -f "$skill_dir/SKILL.md" ]]; then
+              frontmatter_name="$(awk '/^---$/{n++; next} n==1 && /^name:/{gsub(/^name:[[:space:]]*/, ""); print; exit}' "$skill_dir/SKILL.md" 2>/dev/null | tr -d '"' | xargs)"
+              [[ -n "$frontmatter_name" ]] && skill_name="$frontmatter_name"
+            fi
+            ln -sfn "$skill_dir" "$HOME/.pi/agent/skills/$skill_name"
+          done
+          shopt -u nullglob
+          echo "✓ Mirrored Claude skills into ~/.pi/agent/skills"
+        ''
+      }
     fi
   ''
 )

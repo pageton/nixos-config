@@ -15,6 +15,7 @@ in
       "oc-port" = "opencode --port 4096";
       "codex-log" = "ai-agent-log-wrapper codex codex";
       "gemini-log" = "ai-agent-log-wrapper gemini gemini";
+      "fg-log" = "ai-agent-log-wrapper forge forge";
 
       "ai-logs" = "tail -f ${ol}/*.log ${cl}/*.log 2>/dev/null";
       "ai-errors-all" =

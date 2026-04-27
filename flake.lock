@@ -226,6 +226,26 @@
         "type": "github"
       }
     },
+    "forgecode": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1777191022,
+        "narHash": "sha256-tA/IOcFcE5vhNGpZNV7sAGEao/LlP6hY/QUnJz0hbeY=",
+        "owner": "tailcallhq",
+        "repo": "forgecode",
+        "rev": "8a9f3410f460d1618931dcc0a4b222e65eff0f58",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tailcallhq",
+        "repo": "forgecode",
+        "type": "github"
+      }
+    },
     "fromYaml": {
       "flake": false,
       "locked": {
@@ -735,6 +755,7 @@
     },
     "root": {
       "inputs": {
+        "forgecode": "forgecode",
         "ghgrab": "ghgrab",
         "home-manager": "home-manager",
         "niri": "niri",

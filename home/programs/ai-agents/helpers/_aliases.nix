@@ -1,4 +1,7 @@
 # Zsh alias generation for AI agent launchers and workflow prompts.
+#
+# NOTE: Agent aliases are also defined in scripts/ai/_agent-registry.sh for runtime
+# dispatch (launcher/iter). Adding or renaming an alias requires updating both files.
 
 {
   config,
@@ -142,40 +145,124 @@ let
       command = "opencode_zen";
       workflowPromptMode = "flag";
     }
+    {
+      alias = "fg";
+      command = "forge";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "fgglm";
+      command = "forge_glm";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "fggem";
+      command = "forge_gemini";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "fggpt";
+      command = "forge_gpt";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "fgor";
+      command = "forge_openrouter";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "fgs";
+      command = "forge_sonnet";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "fgzen";
+      command = "forge_zen";
+      workflowPromptMode = "flag";
+    }
+    # Pi (default and profiles)
+    {
+      alias = "pi";
+      command = "pi";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "pis";
+      command = "pi_sonnet";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "piop";
+      command = "pi_opus";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "piglm";
+      command = "pi_glm";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "pigem";
+      command = "pi_gemini";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "pigpt";
+      command = "pi_gpt";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "pior";
+      command = "pi_openrouter";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "pizen";
+      command = "pi_zen";
+      workflowPromptMode = "flag";
+    }
   ];
 
   workflowPromptSpecs = [
     {
       suffix = "cm";
       prompt = commitSplitPrompt;
+      envVar = "COMMIT_SPLIT_PROMPT";
     }
     {
       suffix = "rf";
       prompt = refactorMaintainabilityPrompt;
+      envVar = "REFACTOR_MAINTAINABILITY_PROMPT";
     }
     {
       suffix = "fx";
       prompt = bugfixRootCausePrompt;
+      envVar = "BUGFIX_ROOT_CAUSE_PROMPT";
     }
     {
       suffix = "sa";
       prompt = securityAuditPrompt;
+      envVar = "SECURITY_AUDIT_PROMPT";
     }
     {
       suffix = "du";
       prompt = dependencyUpgradePrompt;
+      envVar = "DEPENDENCY_UPGRADE_PROMPT";
     }
     {
       suffix = "bp";
       prompt = buildPerformancePrompt;
+      envVar = "BUILD_PERFORMANCE_PROMPT";
     }
     {
       suffix = "rp";
       prompt = runtimePerformancePrompt;
+      envVar = "RUNTIME_PERFORMANCE_PROMPT";
     }
     {
       suffix = "md";
       prompt = markdownSyncPrompt;
+      envVar = "MARKDOWN_SYNC_PROMPT";
     }
   ];
 
@@ -213,17 +300,15 @@ let
   );
 
   # Shared env var passthrough for workflow prompts (used by launcher and iter wrappers).
-  mkWorkflowEnvVars = targetScript: ''
-    COMMIT_SPLIT_PROMPT=${lib.escapeShellArg commitSplitPrompt} \
-    REFACTOR_MAINTAINABILITY_PROMPT=${lib.escapeShellArg refactorMaintainabilityPrompt} \
-    BUGFIX_ROOT_CAUSE_PROMPT=${lib.escapeShellArg bugfixRootCausePrompt} \
-    SECURITY_AUDIT_PROMPT=${lib.escapeShellArg securityAuditPrompt} \
-    DEPENDENCY_UPGRADE_PROMPT=${lib.escapeShellArg dependencyUpgradePrompt} \
-    BUILD_PERFORMANCE_PROMPT=${lib.escapeShellArg buildPerformancePrompt} \
-    RUNTIME_PERFORMANCE_PROMPT=${lib.escapeShellArg runtimePerformancePrompt} \
-    MARKDOWN_SYNC_PROMPT=${lib.escapeShellArg markdownSyncPrompt} \
-    exec ${targetScript} "$@"
-  '';
+  mkWorkflowEnvVars =
+    targetScript:
+    let
+      envAssignments = map (spec: "${spec.envVar}=${lib.escapeShellArg spec.prompt}") workflowPromptSpecs;
+    in
+    ''
+      ${builtins.concatStringsSep " \\\n    " envAssignments} \
+      exec ${targetScript} "$@"
+    '';
 
   aiAgentLauncher = pkgs.writeShellScriptBin "ai-agent-launcher" (
     mkWorkflowEnvVars "${scriptsDir}/ai/agent-launcher.sh"

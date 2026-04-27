@@ -1,130 +1,10 @@
 #!/usr/bin/env bash
 # _inventory-collectors.sh - Per-tool data collection functions for agent inventory.
-# Source this file after sourcing _inventory-helpers.sh.
-
-# List skills from a single base directory.
-list_skill_dirs() {
-	local base="$1"
-	local scope="$2"
-	if [[ ! -d "$base" ]]; then
-		return 0
-	fi
-
-	shopt -s nullglob
-	local d
-	for d in "$base"/*; do
-		[[ -d "$d" ]] || continue
-		local skill_file="$d/SKILL.md"
-		if [[ -f "$skill_file" ]]; then
-			row "$scope" "skill" "$(basename "$d")" "$(basename "$base")" "$skill_file"
-		else
-			row "$scope" "skill" "$(basename "$d")" "$(basename "$base")" "$d"
-		fi
-	done
-	shopt -u nullglob
-}
-
-# List skills from multiple base directories, deduplicating by skill name.
-list_skill_dirs_merged() {
-	local scope="$1"
-	shift
-
-	declare -A skill_sources=()
-	declare -A skill_source_path=()
-
-	local base d skill
-	for base in "$@"; do
-		[[ -d "$base" ]] || continue
-		shopt -s nullglob
-		for d in "$base"/*; do
-			[[ -d "$d" ]] || continue
-			skill="$(basename "$d")"
-			if [[ -n "${skill_sources[$skill]:-}" ]]; then
-				skill_sources[$skill]="${skill_sources[$skill]}, $(basename "$base")"
-			else
-				skill_sources[$skill]="$(basename "$base")"
-				if [[ -f "$d/SKILL.md" ]]; then
-					skill_source_path[$skill]="$d/SKILL.md"
-				else
-					skill_source_path[$skill]="$d"
-				fi
-			fi
-		done
-		shopt -u nullglob
-	done
-
-	for skill in "${!skill_sources[@]}"; do
-		row "$scope" "skill" "$skill" "${skill_sources[$skill]}" "${skill_source_path[$skill]}"
-	done
-}
-
-# List skill slash commands from multiple base directories, deduplicating.
-list_skill_commands_merged() {
-	local scope="$1"
-	shift
-
-	declare -A cmd_source_path=()
-	local base d skill
-	for base in "$@"; do
-		[[ -d "$base" ]] || continue
-		shopt -s nullglob
-		for d in "$base"/*; do
-			[[ -d "$d" ]] || continue
-			skill="$(basename "$d")"
-			if [[ -z "${cmd_source_path[$skill]:-}" ]]; then
-				if [[ -f "$d/SKILL.md" ]]; then
-					cmd_source_path[$skill]="$d/SKILL.md"
-				else
-					cmd_source_path[$skill]="$d"
-				fi
-			fi
-		done
-		shopt -u nullglob
-	done
-
-	for skill in "${!cmd_source_path[@]}"; do
-		row "$scope" "command" "/$skill" "skill slash command" "${cmd_source_path[$skill]}"
-	done
-}
-
-# List command files from a directory.
-list_command_files() {
-	local base="$1"
-	local scope="$2"
-	if [[ ! -d "$base" ]]; then
-		return 0
-	fi
-
-	shopt -s nullglob
-	local f
-	for f in "$base"/*; do
-		[[ -f "$f" ]] || continue
-		row "$scope" "command" "$(basename "$f")" "file" "$f"
-	done
-	shopt -u nullglob
-}
-
-# List agent definition files from multiple directories, deduplicating by name.
-list_agent_files_merged() {
-	local scope="$1"
-	shift
-
-	declare -A seen=()
-	local base f name
-	for base in "$@"; do
-		[[ -d "$base" ]] || continue
-		shopt -s nullglob
-		for f in "$base"/*.md; do
-			[[ -f "$f" ]] || continue
-			name="$(basename "$f" .md)"
-			if [[ -z "${seen[$name]:-}" ]]; then
-				row "$scope" "agent" "$name" "file agent definition" "$f"
-				seen[$name]=1
-			fi
-		done
-		shopt -u nullglob
-	done
-}
+# Source this file after sourcing _inventory-helpers.sh and _inventory-walkers.sh.
+#
+# Generic directory-walking helpers (list_skill_dirs, list_skill_dirs_merged, etc.)
+# live in _inventory-walkers.sh.  This file contains only the per-tool collectors
+# that combine those walkers with tool-specific config parsing and row emission.
 
 # Collect OpenCode inventory rows.
 collect_opencode() {
@@ -174,12 +54,7 @@ collect_claude() {
 
 	local mcp_cfg="$HOME/.mcp.json"
 	if [[ -f "$mcp_cfg" ]]; then
-		while IFS= read -r server; do
-			[[ -n "$server" ]] || continue
-			local mcp_type
-			mcp_type="$(mcp_type_for "$mcp_cfg" "$server")"
-			row "claude" "mcp" "$server" "$mcp_type" "$mcp_cfg"
-		done < <(json_keys "$mcp_cfg" '.mcpServers // {} | keys[]')
+		collect_mcp_rows "claude" "$mcp_cfg"
 	fi
 
 	local agents_dir="$HOME/.claude/agents"
@@ -269,16 +144,80 @@ collect_gemini() {
 		mapfile -t gemini_configured_hooks < <(json_keys "$cfg" '.hooks // {} | keys[]')
 		list_hook_rows_with_unconfigured "gemini" "$cfg" "https://geminicli.com/docs/hooks/reference/" "${gemini_configured_hooks[@]}"
 
-		while IFS= read -r mcp; do
-			[[ -n "$mcp" ]] || continue
-			local mcp_type
-			mcp_type="$(mcp_type_for "$cfg" "$mcp")"
-			row "gemini" "mcp" "$mcp" "$mcp_type" "$cfg"
-		done < <(json_keys "$cfg" '.mcpServers // {} | keys[]')
+		collect_mcp_rows "gemini" "$cfg"
 	fi
 
 	list_skill_dirs "$HOME/.gemini/skills" "gemini"
 	list_command_files "$HOME/.gemini/commands" "gemini"
+}
+
+# Collect Pi inventory rows.
+collect_pi() {
+	need_cmd jq
+	shopt -s nullglob
+	local profiles=("$HOME"/.pi/profiles/*/settings.json)
+	shopt -u nullglob
+
+	local cfg profile_dir profile_name provider model thinking
+	for cfg in "${profiles[@]}"; do
+		profile_dir="$(dirname "$cfg")"
+		profile_name="$(basename "$profile_dir")"
+
+		provider="$(jq -r '.defaultProvider // "n/a"' "$cfg" 2>/dev/null || echo "n/a")"
+		model="$(jq -r '.defaultModel // "n/a"' "$cfg" 2>/dev/null || echo "n/a")"
+		thinking="$(jq -r '.defaultThinkingLevel // "n/a"' "$cfg" 2>/dev/null || echo "n/a")"
+
+		row "pi" "profile" "$profile_name" "provider=$provider model=$model" "$cfg"
+		row "pi" "thinking" "$profile_name" "$thinking" "$cfg"
+
+		# Collect extensions listed in profile settings
+		local extensions_cfg
+		extensions_cfg="$(dirname "$cfg")"
+		if [[ -f "$cfg" ]]; then
+			local ext
+			while IFS= read -r ext; do
+				[[ -n "$ext" ]] || continue
+				row "pi" "extension" "$profile_name" "$(basename "$ext")" "$ext"
+			done < <(jq -r '.extensions[]? // empty' "$cfg" 2>/dev/null)
+		fi
+
+		# Collect custom providers from models.json
+		local models_json="$profile_dir/models.json"
+		if [[ -f "$models_json" ]]; then
+			local prov_name
+			while IFS= read -r prov_name; do
+				[[ -n "$prov_name" ]] || continue
+				local api
+				api="$(jq -r ".providers.${prov_name}.api // \"n/a\"" "$models_json" 2>/dev/null || echo "n/a")"
+				row "pi" "custom_provider" "$profile_name" "$prov_name ($api)" "$models_json"
+			done < <(jq -r '.providers // {} | keys[]' "$models_json" 2>/dev/null)
+		fi
+	done
+
+	# MCP manifest
+	local mcp_manifest="$HOME/.pi/agent/mcp-manifest.json"
+	if [[ -f "$mcp_manifest" ]]; then
+		local srv_name
+		while IFS= read -r srv_name; do
+			[[ -n "$srv_name" ]] || continue
+			local srv_type
+			srv_type="$(jq -r ".servers[] | select(.name==\"$srv_name\") | .type // \"local\"" "$mcp_manifest" 2>/dev/null || echo "local")"
+			row "pi" "mcp" "shared" "$srv_name ($srv_type)" "$mcp_manifest"
+		done < <(jq -r '.servers[]?.name // empty' "$mcp_manifest" 2>/dev/null)
+	fi
+
+	# Shared extensions in ~/.pi/agent/extensions/
+	shopt -s nullglob
+	local exts=("$HOME"/.pi/agent/extensions/*.ts)
+	shopt -u nullglob
+	local ext
+	for ext in "${exts[@]}"; do
+		[[ -f "$ext" ]] || continue
+		row "pi" "extension" "shared" "$(basename "$ext")" "$ext"
+	done
+
+	# Skills mirrored from Claude
+	list_skill_dirs_merged "pi" "$HOME/.pi/agent/skills" "$HOME/.agents/skills"
 }
 
 # Dispatch to the correct collector(s) for a tool name.
@@ -297,11 +236,15 @@ collect_rows_for_tool() {
 	gemini)
 		collect_gemini
 		;;
+	pi)
+		collect_pi
+		;;
 	all)
 		collect_opencode
 		collect_claude
 		collect_codex
 		collect_gemini
+		collect_pi
 		;;
 	*)
 		print_error "Unknown tool: $tool"

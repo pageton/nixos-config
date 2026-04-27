@@ -1,10 +1,8 @@
-{
-  hostname,
-  lib,
-  ...
-}: let
+{ hostname, lib, ... }:
+let
   isThinkpad = hostname == "thinkpad";
-in {
+in
+{
   programs.noctalia-shell.settings.bar = {
     position = "top";
     floating = true;
@@ -24,8 +22,8 @@ in {
           showNetworkStats = true;
           showDiskUsage = true;
         }
-        {id = "ActiveWindow";}
-        {id = "MediaMini";}
+        { id = "ActiveWindow"; }
+        { id = "MediaMini"; }
       ];
       center = [
         {
@@ -43,24 +41,23 @@ in {
           emptyColor = "secondary";
         }
       ];
-      right =
-        [
-          {id = "Tray";}
-          {id = "Network";}
-          {id = "NotificationHistory";}
-          {id = "plugin:tailscale";}
-          {id = "plugin:usb-drive-manager";}
-          {id = "Battery";}
-          {id = "Volume";}
-        ]
-        ++ lib.optionals isThinkpad [{id = "Brightness";}]
-        ++ [
-          {
-            id = "ControlCenter";
-            useDistroLogo = false;
-            icon = "settings";
-          }
-        ];
+      right = [
+        { id = "Tray"; }
+        { id = "Network"; }
+        { id = "NotificationHistory"; }
+        { id = "plugin:tailscale"; }
+        { id = "plugin:usb-drive-manager"; }
+        { id = "Battery"; }
+        { id = "Volume"; }
+      ]
+      ++ lib.optionals isThinkpad [ { id = "Brightness"; } ]
+      ++ [
+        {
+          id = "ControlCenter";
+          useDistroLogo = false;
+          icon = "settings";
+        }
+      ];
     };
   };
 }

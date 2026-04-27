@@ -16,6 +16,10 @@ let
   # Single source: home/programs/ai-agents/helpers/_opencode-profiles.nix.
   opencodeProfiles = import ../../ai-agents/helpers/_opencode-profiles.nix { inherit config; };
 
+  # Derive Forge wrapper functions from profile definitions.
+  # Single source: home/programs/ai-agents/helpers/_forge-profiles.nix.
+  forgeProfiles = import ../../ai-agents/helpers/_forge-profiles.nix { inherit config; };
+
   # Profiles that get a simple wrapper (excludes default "opencode" and
   # "opencode-openrouter" which needs secret loading).
   simpleWrapperProfiles = builtins.filter (
@@ -23,6 +27,22 @@ let
   ) opencodeProfiles.profiles;
 
   profileSuffix = p: builtins.replaceStrings [ "opencode-" ] [ "" ] p.name;
+
+  # Forge: simple wrappers (excludes default "forge" and "forge-openrouter" which needs secret loading).
+  simpleForgeProfiles = builtins.filter (
+    p: p.alias != "fg" && p.name != "forge-openrouter"
+  ) forgeProfiles.profiles;
+
+  forgeProfileSuffix = p: builtins.replaceStrings [ "forge-" ] [ "" ] p.name;
+
+  # Pi profile definitions for wrapper functions.
+  # Single source: home/programs/ai-agents/helpers/_pi-profiles.nix.
+  piProfiles = import ../../ai-agents/helpers/_pi-profiles.nix { inherit config; };
+
+  # Pi: simple wrappers (excludes default "pi" which has no profile suffix).
+  simplePiProfiles = builtins.filter (p: p.name != "pi") piProfiles.profiles;
+
+  piProfileSuffix = p: builtins.replaceStrings [ "pi-" ] [ "" ] p.name;
 in
 
 {
@@ -57,6 +77,8 @@ in
         oc*|locgpt*|mocgpt*|xocgpt*) printf '\ue7a4 ' ;;     #  OpenCode — oc, ocglm, ocgem, ocgpt, ocs, oczen + all workflow suffixes
         cx*|lcx*|mcx*|hcx*|xcx*) printf '\uf1c0 ' ;;         #  Codex — cx, lcx, mcx, hcx, xcx + all workflow suffixes
         gem*) printf '\uf529 ' ;;                              #  Gemini — gem + all workflow suffixes
+        fg*) printf '\uf7d9 ' ;;                               #  Forge — fg, fgglm, fggem, fggpt, fgor, fgs, fgzen + all workflow suffixes
+        pi*) printf '\uf1b2 ' ;;                                #  Pi — pi, pis, piop, piglm, pigem, pigpt, pior, pizen + all workflow suffixes
         *) ;;
       esac
     }
@@ -112,13 +134,52 @@ in
       OPENROUTER_API_KEY="$key" _opencode_profile "openrouter" "ocor" "$@"
     }
 
+    # === Forge profile wrappers ===
+    _forge_profile() {
+      local profile="$1"
+      local tab_name="$2"
+      shift 2
+      _zellij_rename_tab "$tab_name"
+      FORGE_CONFIG="$HOME/.''${profile}" forge "$@"
+    }
+
+    ${lib.concatStringsSep "\n\n" (
+      map (p: ''
+        forge_${forgeProfileSuffix p}() {
+          _forge_profile "${p.name}" "${p.alias}" "$@"
+        }
+      '') simpleForgeProfiles
+    )}
+
+    forge_openrouter() {
+      local key; key="$(_load_openrouter_key)" || return 1
+      OPENROUTER_API_KEY="$key" _forge_profile "forge-openrouter" "fgor" "$@"
+    }
+
+    # === Pi profile wrappers ===
+    _pi_profile() {
+      local profile="$1"
+      local tab_name="$2"
+      shift 2
+      _zellij_rename_tab "$tab_name"
+      PI_CODING_AGENT_DIR="$HOME/.pi/profiles/$profile" pi "$@"
+    }
+
+    ${lib.concatStringsSep "\n\n" (
+      map (p: ''
+        pi_${piProfileSuffix p}() {
+          _pi_profile "${p.name}" "${p.alias}" "$@"
+        }
+      '') simplePiProfiles
+    )}
+
     # === AI multi-pane launcher ===
     # Launch multiple AI agents side-by-side in Zellij panes
     # Prompt injection: claude/codex/gemini use positional, opencode uses --prompt
     aip() {
       if [[ $# -eq 0 ]]; then
         echo "Usage: aip <agent> [agent...] [\"prompt\"]" >&2
-        echo "  Any alias or function: cl, clglm, oc, ocglm, gem, cx..." >&2
+        echo "  Any alias or function: cl, clglm, oc, ocglm, gem, cx, pi, piglm..." >&2
         echo "  Last arg becomes the initial prompt if not a known command." >&2
         echo "Examples:" >&2
         echo "  aip oc cl                  # Two agents side-by-side" >&2

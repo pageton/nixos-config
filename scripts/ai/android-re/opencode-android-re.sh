@@ -66,14 +66,14 @@ if [[ -f "${RUNTIME_CONFIG_DIR}/opencode.json" ]] && command -v jq >/dev/null 2>
 	mv -f "${RUNTIME_CONFIG_DIR}/opencode.json.tmp" "${RUNTIME_CONFIG_DIR}/opencode.json"
 fi
 
-if command -v ghostty >/dev/null 2>&1; then
+if command -v alacritty >/dev/null 2>&1; then
 	title="android-re"
 	if [[ "${PROFILE}" != "default" ]]; then
 		title="android-re (${PROFILE})"
 	fi
 
 	OPENCODE_CONFIG_DIR="${RUNTIME_CONFIG_DIR}" \
-		exec ghostty --title="${title}" -e opencode "$@"
+		exec alacritty --title "${title}" -e opencode "$@"
 else
 	# Fallback: run directly in current terminal
 	OPENCODE_CONFIG_DIR="${RUNTIME_CONFIG_DIR}" \

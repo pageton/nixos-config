@@ -31,6 +31,11 @@ let
       npmPackage = "@google/gemini-cli";
       label = "Gemini CLI";
     }
+    {
+      binary = "pi";
+      npmPackage = "@mariozechner/pi-coding-agent";
+      label = "Pi Coding Agent CLI";
+    }
   ];
 
   mkAutoUpdateService =

@@ -77,4 +77,12 @@ in
       args = "[]";
     };
   };
+
+  # Forge uses mcp-remote as a local stdio proxy for remote servers (see _mcp-transforms.nix
+  # forgeRemoteToLocal). The proxy args contain ${ZAI_API_KEY} which mcp-remote expands from
+  # the env block. We only need to replace the __ZAI_API_KEY_PLACEHOLDER__ in the env —
+  # do NOT overwrite the proxy entries with direct HTTP like claudeZaiFilter does.
+  forgeZaiFilter = ''
+    walk(if type == "string" then gsub("__ZAI_API_KEY_PLACEHOLDER__"; $key) else . end)
+  '';
 }

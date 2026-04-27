@@ -26,23 +26,23 @@ focus_re_workspace() {
 open_re_terminal() {
 	local title="android-re"
 
-	if ! command -v ghostty >/dev/null 2>&1; then
+	if ! command -v alacritty >/dev/null 2>&1; then
 		return 0
 	fi
 
 	if command -v niri >/dev/null 2>&1 && niri msg version >/dev/null 2>&1; then
 		focus_re_workspace
-		if niri msg action spawn -- ghostty --title="${title}" -e "${SCRIPT_DIR}/re-avd.sh" attach >/dev/null 2>&1; then
+		if niri msg action spawn -- alacritty --title "${title}" -e "${SCRIPT_DIR}/re-avd.sh" attach >/dev/null 2>&1; then
 			return 0
 		fi
-		log_warning "failed to spawn Ghostty for tmux session ${TMUX_SESSION} through niri"
+		log_warning "failed to spawn Alacritty for tmux session ${TMUX_SESSION} through niri"
 	fi
 
 	if [[ -n "${DISPLAY:-}" || -n "${WAYLAND_DISPLAY:-}" ]]; then
-		nohup ghostty --title="${title}" -e "${SCRIPT_DIR}/re-avd.sh" attach >/dev/null 2>&1 &
-		log_success "opened Ghostty attached to tmux session ${TMUX_SESSION}"
+		nohup alacritty --title "${title}" -e "${SCRIPT_DIR}/re-avd.sh" attach >/dev/null 2>&1 &
+		log_success "opened Alacritty attached to tmux session ${TMUX_SESSION}"
 	else
-		log_warning "Ghostty launch skipped because no GUI display variables were present"
+		log_warning "Alacritty launch skipped because no GUI display variables were present"
 	fi
 }
 

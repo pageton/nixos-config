@@ -24,7 +24,12 @@ let
   opencodeConfigPathList = lib.concatMapStringsSep " " lib.escapeShellArg opencodeConfigPaths;
 
   zaiFilters = import ../helpers/_zai-filters.nix { inherit lib constants; };
-  inherit (zaiFilters) opencodeZaiFilter claudeZaiFilter geminiZaiFilter;
+  inherit (zaiFilters)
+    opencodeZaiFilter
+    claudeZaiFilter
+    geminiZaiFilter
+    forgeZaiFilter
+    ;
   githubPlaceholderFilter = ''
     walk(if type == "string" then gsub("__GITHUB_TOKEN_PLACEHOLDER__"; $token) else . end)
   '';
@@ -36,19 +41,23 @@ let
   '';
 
   # Import helper modules
-  # modules-check: manual-helper ./secrets.nix ./codex-setup.nix ./claude-setup.nix ./plugins.nix ./skills.nix
+  # modules-check: manual-helper ./secrets.nix ./codex-setup.nix ./claude-setup.nix ./forge-setup.nix ./plugins.nix ./skills.nix
   secretPatching = import ./secrets.nix {
     inherit
       cfg
       pkgs
       lib
+      config
+      constants
       opencodeConfigPathList
       opencodeZaiFilter
       claudeZaiFilter
       geminiZaiFilter
+      forgeZaiFilter
       githubPlaceholderFilter
       openrouterPlaceholderFilter
       context7PlaceholderFilter
+      zaiProfileNames
       ;
   };
   codexConfig = import ./codex-setup.nix {
@@ -69,6 +78,17 @@ let
       claudeMcpServers
       ;
   };
+  forgeProfiles = import ../helpers/_forge-profiles.nix { inherit config; };
+  inherit (forgeProfiles) zaiProfileNames;
+
+  forgeConfig = import ./forge-setup.nix {
+    inherit
+      cfg
+      pkgs
+      lib
+      config
+      ;
+  };
   pluginInstalls = import ./plugins.nix {
     inherit
       cfg
@@ -80,6 +100,7 @@ let
   skillInstallation = import ./skills.nix {
     inherit
       cfg
+      config
       lib
       pkgs
       toJSON
@@ -112,6 +133,10 @@ in
       # === Claude Configuration ===
       # Real files (not symlinks) so plugins can modify them.
       setupClaudeConfig = claudeConfig;
+
+      # === Forge Configuration ===
+      # Real files so forge can modify them at runtime.
+      setupForgeConfig = forgeConfig;
 
       # === Plugin Installation ===
       inherit (pluginInstalls)

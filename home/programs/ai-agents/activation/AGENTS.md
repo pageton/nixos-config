@@ -11,10 +11,10 @@ Parent: `home-manager/modules/ai-agents/AGENTS.md`
 | File                                  | Purpose                                                                                  |
 | ------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `default.nix`                         | Aggregation hub: wires all activation DAG entries into `home.activation`                 |
-| `secrets.nix`                         | Secret patching: injects Z.AI, OpenRouter, Context7, GitHub tokens via jq/sed            |
+| `secrets.nix`                         | Secret patching: injects Z.AI, OpenRouter, Context7, GitHub tokens + Pi API root/key via jq/sed |
 | `claude-setup.nix`                    | Generates `~/.claude/settings.json` and `~/.mcp.json` with jq merge for existing configs |
 | `codex-setup.nix`                     | Generates `~/.codex/config.toml` with personality, model, MCP, profiles, agents          |
-| `skills.nix`                          | Skills CLI bootstrap with retry, state caching (SHA256 skip), Claude-to-Codex mirroring  |
+| `skills.nix`                          | Skills CLI bootstrap with retry, state caching (SHA256 skip), Claude-to-Codex/Pi mirroring |
 | `plugins.nix`                         | Plugin aggregation: imports impeccable, agency-agents, ECC installers + cleanup          |
 | `_plugin-impeccable.nix`              | Impeccable skill pack: git clone, bun build, copy to Claude/OpenCode skill dirs          |
 | `_plugin-agency-agents.nix`           | Agency agents: clone and copy division agent `.md` files to agent dirs                   |
@@ -37,6 +37,8 @@ Parent: `home-manager/modules/ai-agents/AGENTS.md`
 ## Gotchas
 
 - `secrets.nix` placeholder strings (`__GITHUB_TOKEN_PLACEHOLDER__`, etc.) must match exactly what `files.nix` and model configs write.
+- Pi models.json uses `__ZAI_API_ROOT__` and `__ZAI_API_KEY_FILE__` placeholders — patched by `secrets.nix` using `sed` (not jq walk filters) since the file is generated fresh each activation.
+- `skills.nix` mirrors Claude skills into `~/.pi/agent/skills/` via symlinks (same pattern as forge profiles).
 - `skills.nix` intentionally disables `~/.agents/skills` (moves to `.disabled-by-home-manager`) to prevent OpenCode duplicate-skill spam.
 - `codex-setup.nix` deletes non-ECC custom agents on each activation (`find ... ! -name 'ecc-*.toml' -delete`).
 - `claude-setup.nix` writes CLAUDE.md from `cfg.globalInstructions` — same content injected into Codex and OpenCode via their own paths.
@@ -46,5 +48,5 @@ Parent: `home-manager/modules/ai-agents/AGENTS.md`
 
 ## Dependencies
 
-- `../helpers/_mcp-transforms.nix`, `../helpers/_settings-builders.nix`, `../helpers/_opencode-profiles.nix`, `../helpers/_zai-filters.nix`, `../helpers/_file-templates.nix`, `../helpers/_git-clone-update.nix`
+- `../helpers/_mcp-transforms.nix`, `../helpers/_settings-builders.nix`, `../helpers/_opencode-profiles.nix`, `../helpers/_pi-profiles.nix`, `../helpers/_zai-filters.nix`, `../helpers/_file-templates.nix`, `../helpers/_git-clone-update.nix`
 - `constants` from flake for Z.AI URL resolution

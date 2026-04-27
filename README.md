@@ -119,28 +119,28 @@ System/
 ├── .sops.yaml                   # SOPS encryption config
 ├── shared/                      # Cross-boundary shared Nix helpers
 │   ├── constants.nix            # Single source of truth (user, fonts, colors, keyboard, ports)
-│   ├── _option-helpers.nix      # Typed option constructors (mkBoolOption, mkStrOption, etc.)
-│   ├── _alias-helpers.nix       # Shared shell alias injection for zsh/bash
-│   └── _secret-loader.nix       # Shell function to load SOPS secrets from /run/secrets/
+│   ├── option-helpers.nix       # Typed option constructors (mkBoolOption, mkStrOption, etc.)
+│   ├── alias-helpers.nix        # Shared shell alias injection for zsh/bash
+│   └── secret-loader.nix        # Shell function to load SOPS secrets from /run/secrets/
 ├── scripts/                     # Repository-level audit and lab scripts
 │   ├── build/                   # modules/security/performance audit scripts
 │   ├── ai/                      # AI agent launchers, inventory, and log analysis
 │   ├── apps/                    # Desktop app wrappers (browser-select, youtube-mpv, etc.)
+│   ├── hardware/                # Hardware control scripts (nvidia-fans)
 │   ├── system/                  # System health report collectors
 │   ├── sops/                    # SOPS editing helpers
 │   └── lib/                     # Shared shell helpers (logging, testing, AWK)
 │
 ├── hosts/                       # Host-specific configurations
-│   ├── _inventory.nix           # Host list (currently unused — see file header)
+│   ├── _inventory.nix           # Host list (single source of truth for flake.nix)
 │   ├── desktop/                 # Desktop PC configuration
 │   │   ├── configuration.nix
 │   │   ├── hardware-configuration.nix
-│   │   ├── local-packages.nix
 │   │   └── modules/
 │   ├── thinkpad/                # Laptop configuration
 │   │   ├── configuration.nix
 │   │   ├── hardware-configuration.nix
-│   │   ├── local-packages.nix
+│   │   └── modules/
 │
 ├── nixos/modules/               # Shared NixOS system modules (two-level pattern)
 │   ├── default.nix              # Root loader — imports category directories
@@ -162,36 +162,42 @@ System/
 │
 └── home/                        # Home-Manager user configuration
     ├── home.nix                 # Main Home-Manager entry point
-    ├── modules/                 # Home base split (core/session/ui/activation)
+    ├── assets/                  # Static assets (profile picture, etc.)
+    ├── core/                    # Home base split (user, session, GTK, activation, desktop-entries)
     │
     ├── packages/                # User package definitions
     │   ├── cli.nix              # Command-line tools
     │   ├── applications.nix     # Desktop applications
     │   ├── development.nix      # Development tools
-    │   ├── fonts.nix            # Font packages
+    │   ├── multimedia.nix       # Multimedia packages
     │   └── ...
     │
     ├── programs/                # Application configurations
+    │   ├── terminal/            # Terminal, shell (zsh), and CLI tools
+    │   │   ├── alacritty.nix    #   Alacritty terminal
+    │   │   ├── shell.nix        #   Zsh configuration
+    │   │   ├── zellij/          #   Zellij terminal multiplexer
+    │   │   └── ...
     │   ├── nvf/                 # NVF (Neovim)
-    │   ├── helix/               # Helix editor
-    │   ├── shell/               # Zsh configuration
-    │   ├── languages/           # Language tooling
-    │   └── ...
+    │   ├── languages/           # Language toolchains (Go, Python, Node.js)
+    │   ├── ai-agents/           # AI coding agent wrappers and launchers
+    │   ├── zen-browser/         # Zen Browser multi-profile setup
+    │   ├── isolation/           # Application isolation wrappers
+    │   └── ...                  # brave, discord, gpg, obs, spicetify, ssh, etc.
     │
-    ├── system/                  # Desktop environment configs
+    ├── desktop/                 # Desktop environment configs
     │   ├── niri/                # Niri session config
     │   ├── noctalia/            # Noctalia shell/bar/launcher
     │   ├── qt/                  # Qt Wayland integration
     │   ├── mime/                # MIME defaults
-    │   └── ...
+    │   └── udiskie/             # Auto-mount removable media
     │
     ├── themes/                  # Theme configurations
-    │   └── catppuccin.nix     # Catppuccin Mocha + Stylix theming
+    │   ├── stylix.nix           # Stylix theming engine
+    │   ├── palette.nix          # Catppuccin Mocha color palette
+    │   └── options.nix          # Theme option definitions
     │
-    └── scripts/                 # User scripts
-        ├── ai/                  # AI helper scripts
-        ├── build/               # Build helpers
-        └── ...
+    └── scripts/                 # User scripts (nerdfont-fzf, build helpers)
 ```
 
 ---

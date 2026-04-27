@@ -144,7 +144,8 @@ run_simple_mode() {
 		cl ocl hcl clglm \
 		oc ocglm ocgem ocgpt locgpt mocgpt xocgpt ocs oczen \
 		cx lcx mcx hcx xcx \
-		gem)"
+		gem \
+		pi pis piop piglm pigem pigpt pior pizen)"
 	if [[ -z "${agent_alias:-}" ]]; then
 		return 1
 	fi
@@ -177,7 +178,7 @@ run_simple_mode() {
 run_sectioned_mode() {
 	local provider_choice profile_choice mode_choice agent_alias
 
-	provider_choice="$(pick "Select Provider" "OpenCode" "Claude Code" "Codex" "Gemini")"
+	provider_choice="$(pick "Select Provider" "OpenCode" "Claude Code" "Codex" "Gemini" "Pi")"
 	if [[ -z "${provider_choice:-}" ]]; then
 		return 1
 	fi
@@ -215,6 +216,20 @@ run_sectioned_mode() {
 		;;
 	"Gemini")
 		agent_alias="gem"
+		;;
+	"Pi")
+		profile_choice="$(pick "Pi profile" default sonnet opus glm gemini gpt openrouter zen)"
+		case "$profile_choice" in
+		default) agent_alias="pi" ;;
+		sonnet) agent_alias="pis" ;;
+		opus) agent_alias="piop" ;;
+		glm) agent_alias="piglm" ;;
+		gemini) agent_alias="pigem" ;;
+		gpt) agent_alias="pigpt" ;;
+		openrouter) agent_alias="pior" ;;
+		zen) agent_alias="pizen" ;;
+		"") return 1 ;;
+		esac
 		;;
 	esac
 
