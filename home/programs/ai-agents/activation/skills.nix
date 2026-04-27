@@ -265,7 +265,7 @@ lib.mkIf (cfg.skills != [ ]) (
             # Read the "name" field from SKILL.md frontmatter — pi requires it to match directory name
             skill_name="$(basename "$skill_dir")"
             if [[ -f "$skill_dir/SKILL.md" ]]; then
-              frontmatter_name="$(awk '/^---$/{n++; next} n==1 && /^name:/{gsub(/^name:[[:space:]]*/, ""); print; exit}' "$skill_dir/SKILL.md" 2>/dev/null | tr -d '"' | xargs)"
+              frontmatter_name="$(grep '^name:' "$skill_dir/SKILL.md" | head -1 | sed 's/^name:[[:space:]]*//' | tr -d '"' | xargs 2>/dev/null)"
               [[ -n "$frontmatter_name" ]] && skill_name="$frontmatter_name"
             fi
             ln -sfn "$skill_dir" "$HOME/.pi/agent/skills/$skill_name"

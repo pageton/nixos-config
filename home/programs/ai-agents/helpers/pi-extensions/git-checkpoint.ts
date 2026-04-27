@@ -73,7 +73,7 @@ export default function (pi: ExtensionAPI): void {
         const status = await git(["status", "--porcelain"], ctx.cwd);
         if (status.stdout.trim()) {
           await git(["add", "-A"], ctx.cwd);
-          await git(["commit", "-m", `pi-checkpoint: ${params.label}`], ctx.cwd);
+          await git(["commit", "-m", `chore(pi): checkpoint: ${params.label}`], ctx.cwd);
         }
 
         const tagName = makeTagName(params.label);
@@ -204,7 +204,7 @@ export default function (pi: ExtensionAPI): void {
       // Auto-checkpoint dirty state at session start
       try {
         await git(["add", "-A"], ctx.cwd);
-        await git(["commit", "-m", "pi: auto-checkpoint at session start"], ctx.cwd);
+        await git(["commit", "-m", "chore(pi): auto-checkpoint at session start"], ctx.cwd);
         const tag = makeTagName("session-start");
         await git(["tag", tag], ctx.cwd);
       } catch {
