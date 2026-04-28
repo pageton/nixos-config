@@ -122,24 +122,26 @@ _def oczen   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-zen"    "opencode"     
 # Gemini
 _def gem   -    "gemini --approval-mode=yolo"         "gemini --approval-mode=yolo --prompt"
 
-# Pi (default and profiles)
-# Pi uses PI_CODING_AGENT_DIR env var for profile switching (no native config-dir flag).
-_def pi    "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi"                                "pi"           "pi -p"
-_def pis   "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-sonnet"                         "pi"           "pi -p"
-_def piop  "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-opus"                           "pi"           "pi -p"
-_def piglm "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-glm"                            "pi"           "pi -p"
-_def pigem "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-gemini"                         "pi"           "pi -p"
-_def pigpt "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-gpt"                            "pi"           "pi -p"
-_def pior  "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-openrouter"                     "pi"           "pi -p"
-_def pizen "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-zen"                            "pi"           "pi -p"
+# Oh My Pi — omp prefix (explicit)
+# OMP uses PI_CODING_AGENT_DIR env var for profile switching (no native config-dir flag).
+_def omp    "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp"                                "omp"           "omp -p"
+_def omps   "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-sonnet"                         "omp"           "omp -p"
+_def ompop  "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-opus"                           "omp"           "omp -p"
+_def ompglm "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-glm"                            "omp --model zai/glm-5.1"  "omp -p"
+_def ompgem "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-gemini"                         "omp"           "omp -p"
+_def ompgpt "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-gpt"                            "omp"           "omp -p"
+_def ompor  "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-openrouter"                     "omp"           "omp -p"
+_def ompzen "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-zen"                            "omp"           "omp -p"
 
-# --- Supported tools (single source of truth) ---
-# shellcheck disable=SC2034 # Used by agent-analyze.sh, agent-inventory.sh, _inventory-collectors.sh
-SUPPORTED_TOOLS=(claude opencode codex gemini pi)
-
-# --- Supported base aliases ---
-
-is_supported_base_alias() {
+# Oh My Pi — pi prefix (shorter)
+_def pi     "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp"                                "omp"           "omp -p"
+_def pis    "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-sonnet"                         "omp"           "omp -p"
+_def piop   "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-opus"                           "omp"           "omp -p"
+_def piglm  "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-glm"                            "omp --model zai/glm-5.1"  "omp -p"
+_def pigem  "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-gemini"                         "omp"           "omp -p"
+_def pigpt  "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-gpt"                            "omp"           "omp -p"
+_def pior   "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-openrouter"                     "omp"           "omp -p"
+_def pizen  "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-zen"                            "omp"           "omp -p"
   [[ -v AGENT_REGISTRY[$1] ]]
 }
 

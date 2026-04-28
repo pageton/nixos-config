@@ -89,12 +89,14 @@ let
       config
       ;
   };
+  opencodeProfileNames = opencodeProfiles.names;
+
   pluginInstalls = import ./plugins.nix {
     inherit
       cfg
-      config
       pkgs
       lib
+      opencodeProfileNames
       ;
   };
   skillInstallation = import ./skills.nix {

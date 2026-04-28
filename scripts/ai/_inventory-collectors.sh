@@ -152,10 +152,18 @@ collect_gemini() {
 }
 
 # Collect Pi inventory rows.
-collect_pi() {
+collect_omp() {
 	need_cmd jq
 	shopt -s nullglob
-	local profiles=("$HOME"/.pi/profiles/*/settings.json)
+	# Oh My Pi uses YAML config files — parse with yq or grep
+	local profiles=()
+	for profile_dir in "$HOME"/.omp/profiles/*/; do
+		[[ -d "$profile_dir" ]] || continue
+		local cfg_file="${profile_dir}config.yml"
+		[[ -f "$cfg_file" ]] || cfg_file="${profile_dir}config.json"
+		[[ -f "$cfg_file" ]] || continue
+		profiles+=("$cfg_file")
+	done
 	shopt -u nullglob
 
 	local cfg profile_dir profile_name provider model thinking
@@ -163,61 +171,80 @@ collect_pi() {
 		profile_dir="$(dirname "$cfg")"
 		profile_name="$(basename "$profile_dir")"
 
-		provider="$(jq -r '.defaultProvider // "n/a"' "$cfg" 2>/dev/null || echo "n/a")"
-		model="$(jq -r '.defaultModel // "n/a"' "$cfg" 2>/dev/null || echo "n/a")"
-		thinking="$(jq -r '.defaultThinkingLevel // "n/a"' "$cfg" 2>/dev/null || echo "n/a")"
+		# Parse YAML config (yq if available, else grep)
+		if command -v yq >/dev/null 2>&1; then
+			provider="$(yq '.defaultProvider // "n/a"' "$cfg" 2>/dev/null || echo "n/a")"
+			model="$(yq '.defaultModel // "n/a"' "$cfg" 2>/dev/null || echo "n/a")"
+			thinking="$(yq '.defaultThinkingLevel // "n/a"' "$cfg" 2>/dev/null || echo "n/a")"
+		else
+			provider="$(grep '^defaultProvider:' "$cfg" 2>/dev/null | head -1 | sed 's/^defaultProvider:[[:space:]]*//' | tr -d '"' || echo "n/a")"
+			model="$(grep '^defaultModel:' "$cfg" 2>/dev/null | head -1 | sed 's/^defaultModel:[[:space:]]*//' | tr -d '"' || echo "n/a")"
+			thinking="$(grep '^defaultThinkingLevel:' "$cfg" 2>/dev/null | head -1 | sed 's/^defaultThinkingLevel:[[:space:]]*//' | tr -d '"' || echo "n/a")"
+		fi
 
-		row "pi" "profile" "$profile_name" "provider=$provider model=$model" "$cfg"
-		row "pi" "thinking" "$profile_name" "$thinking" "$cfg"
+		row "omp" "profile" "$profile_name" "provider=$provider model=$model" "$cfg"
+		row "omp" "thinking" "$profile_name" "$thinking" "$cfg"
 
-		# Collect extensions listed in profile settings
-		local extensions_cfg
-		extensions_cfg="$(dirname "$cfg")"
+		# Collect extensions listed in profile config
 		if [[ -f "$cfg" ]]; then
 			local ext
 			while IFS= read -r ext; do
 				[[ -n "$ext" ]] || continue
-				row "pi" "extension" "$profile_name" "$(basename "$ext")" "$ext"
-			done < <(jq -r '.extensions[]? // empty' "$cfg" 2>/dev/null)
+				row "omp" "extension" "$profile_name" "$(basename "$ext")" "$ext"
+			done < <(grep '^extensions:' "$cfg" >/dev/null 2>&1 && grep '^  - ' "$cfg" | sed 's/^  - //' || true)
 		fi
 
-		# Collect custom providers from models.json
+		# Collect custom providers from models.yml
+		local models_yml="$profile_dir/models.yml"
 		local models_json="$profile_dir/models.json"
-		if [[ -f "$models_json" ]]; then
+		local models_file=""
+		if [[ -f "$models_yml" ]]; then
+			models_file="$models_yml"
+			if command -v yq >/dev/null 2>&1; then
+				local prov_name
+				while IFS= read -r prov_name; do
+					[[ -n "$prov_name" ]] || continue
+					local api
+				api="$(yq ".providers.${prov_name}.api // \"n/a\"" "$models_yml" 2>/dev/null || echo "n/a")"
+				row "omp" "custom_provider" "$profile_name" "$prov_name ($api)" "$models_yml"
+				done < <(yq '.providers // {} | keys[]' "$models_yml" 2>/dev/null)
+			fi
+		elif [[ -f "$models_json" ]]; then
+			models_file="$models_json"
 			local prov_name
 			while IFS= read -r prov_name; do
 				[[ -n "$prov_name" ]] || continue
 				local api
-				api="$(jq -r ".providers.${prov_name}.api // \"n/a\"" "$models_json" 2>/dev/null || echo "n/a")"
-				row "pi" "custom_provider" "$profile_name" "$prov_name ($api)" "$models_json"
+			api="$(jq -r ".providers.${prov_name}.api // \"n/a\"" "$models_json" 2>/dev/null || echo "n/a")"
+				row "omp" "custom_provider" "$profile_name" "$prov_name ($api)" "$models_json"
 			done < <(jq -r '.providers // {} | keys[]' "$models_json" 2>/dev/null)
 		fi
 	done
 
 	# MCP manifest
-	local mcp_manifest="$HOME/.pi/agent/mcp-manifest.json"
+	local mcp_manifest="$HOME/.omp/agent/mcp-manifest.json"
 	if [[ -f "$mcp_manifest" ]]; then
 		local srv_name
 		while IFS= read -r srv_name; do
 			[[ -n "$srv_name" ]] || continue
 			local srv_type
 			srv_type="$(jq -r ".servers[] | select(.name==\"$srv_name\") | .type // \"local\"" "$mcp_manifest" 2>/dev/null || echo "local")"
-			row "pi" "mcp" "shared" "$srv_name ($srv_type)" "$mcp_manifest"
+			row "omp" "mcp" "shared" "$srv_name ($srv_type)" "$mcp_manifest"
 		done < <(jq -r '.servers[]?.name // empty' "$mcp_manifest" 2>/dev/null)
 	fi
 
-	# Shared extensions in ~/.pi/agent/extensions/
+	# Shared extensions in ~/.omp/agent/extensions/
 	shopt -s nullglob
-	local exts=("$HOME"/.pi/agent/extensions/*.ts)
+	local exts=("$HOME"/.omp/agent/extensions/*.ts)
 	shopt -u nullglob
 	local ext
 	for ext in "${exts[@]}"; do
 		[[ -f "$ext" ]] || continue
-		row "pi" "extension" "shared" "$(basename "$ext")" "$ext"
+		row "omp" "extension" "shared" "$(basename "$ext")" "$ext"
 	done
 
 	# Skills mirrored from Claude
-	list_skill_dirs_merged "pi" "$HOME/.pi/agent/skills" "$HOME/.agents/skills"
+	list_skill_dirs_merged "omp" "$HOME/.omp/agent/skills" "$HOME/.agents/skills"
 }
 
 # Dispatch to the correct collector(s) for a tool name.
@@ -236,15 +263,15 @@ collect_rows_for_tool() {
 	gemini)
 		collect_gemini
 		;;
-	pi)
-		collect_pi
+	omp)
+		collect_omp
 		;;
 	all)
 		collect_opencode
 		collect_claude
 		collect_codex
 		collect_gemini
-		collect_pi
+		collect_omp
 		;;
 	*)
 		print_error "Unknown tool: $tool"

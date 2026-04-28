@@ -2,14 +2,13 @@
 
 {
   cfg,
-  config,
   pkgs,
   lib,
+  opencodeProfileNames,
 }:
 
 let
   eccCfg = cfg.everythingClaudeCode;
-  opencodeProfiles = import ../helpers/_opencode-profiles.nix { inherit config; };
   gitCloneUpdate = import ../helpers/_git-clone-update.nix { inherit pkgs; };
 in
 
@@ -85,7 +84,7 @@ in
       if [[ -d "$ECC_DIR" && "${if cfg.opencode.enable then "1" else "0"}" == "1" && "${
         if eccCfg.opencode.enable then "1" else "0"
       }" == "1" ]]; then
-        for profile in ${lib.concatStringsSep " " (map lib.escapeShellArg opencodeProfiles.names)}; do
+        for profile in ${lib.concatStringsSep " " (map lib.escapeShellArg opencodeProfileNames)}; do
           commands_dir="$HOME/.config/$profile/commands"
           mkdir -p "$commands_dir"
           ${lib.concatMapStringsSep "\n" (name: ''

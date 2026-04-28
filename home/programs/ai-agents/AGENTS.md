@@ -1,6 +1,6 @@
 # AI Agents Infrastructure
 
-High-density orchestration for Claude Code, OpenCode, Codex CLI, Gemini CLI, and Pi Coding Agent. This module manages dynamic provider switching and secure secret injection.
+High-density orchestration for Claude Code, OpenCode, Codex CLI, Gemini CLI, and Oh My Pi (omp). This module manages dynamic provider switching and secure secret injection.
 
 ---
 
@@ -24,7 +24,7 @@ The system follows a strict unidirectional flow:
 
 ### Profile-Driven Polymorphism
 
-Profiles switch the primary model across all OpenCode config directories. Each profile re-maps the model field via `helpers/_settings-builders.nix`, allowing instant provider migration with zero configuration redundancy.
+OpenCode profiles switch the primary model across all OpenCode config directories. Each profile re-maps the model field via `helpers/_settings-builders.nix`, allowing instant provider migration with zero configuration redundancy.
 
 Seven OpenCode profiles are defined in `helpers/_opencode-profiles.nix`:
 
@@ -38,11 +38,11 @@ Seven OpenCode profiles are defined in `helpers/_opencode-profiles.nix`:
 | `opencode-sonnet`     | Anthropic Claude Sonnet 4.6                       |
 | `opencode-zen`        | MiniMax M2.5 Free                                 |
 
-Eight Pi profiles are defined in `helpers/_pi-profiles.nix`. Pi uses `PI_CODING_AGENT_DIR` env var for profile switching:
+Eight Oh My Pi (omp) profiles are defined in `helpers/_pi-profiles.nix`. OMP uses `PI_CODING_AGENT_DIR` env var for profile switching:
 
 | Profile Directory       | Provider/Model                                    | Alias  |
 | ----------------------- | ------------------------------------------------- | ------ |
-| `pi`                    | Default (claude-sonnet via Z.AI)                  | `pi`   |
+| `pi`                    | Z.AI GLM-5.1                                      | `pi`   |
 | `pi-sonnet`             | Anthropic Claude Sonnet (direct)                  | `pis`  |
 | `pi-opus`               | Anthropic Claude Opus (direct)                    | `piop` |
 | `pi-glm`                | Z.AI GLM-5.1                                      | `piglm`|
@@ -50,8 +50,6 @@ Eight Pi profiles are defined in `helpers/_pi-profiles.nix`. Pi uses `PI_CODING_
 | `pi-gpt`                | OpenAI GPT                                        | `pigpt`|
 | `pi-openrouter`         | OpenRouter                                        | `pior` |
 | `pi-zen`                | MiniMax M2.5 Free                                 | `pizen`|
-
-Pi has no native MCP support. The MCP bridge TypeScript extension (`helpers/pi-extensions/mcp-bridge.ts`) reads a Nix-generated manifest and spawns MCP servers as child processes, translating tool calls.
 
 ---
 
@@ -82,11 +80,9 @@ ai-agents/
 │   ├── _formatters.nix                   # Formatter registry (shared by claude hooks + gemini config)
 │   ├── _impeccable-commands.nix          # Impeccable skill command definitions and text renderer
 │   ├── _models.nix                       # Shared model/provider constants (names, aliases)
-│   ├── _pi-profiles.nix                  # Pi profile definitions (8 profiles)
+│   ├── _pi-profiles.nix                  # Eight Pi profile definitions (provider, model, zaiKey flags)
 │   ├── _pi-settings-builder.nix          # Pi settings.json/models.json/auth.json generation
-│   ├── pi-extensions/                    # TypeScript extensions for pi
-│   │   ├── mcp-bridge.ts                 # MCP bridge: spawns MCP servers, translates tool calls
-│   │   ├── subagent.ts                   # Sub-agent delegation via headless pi instances
+│   ├── pi-extensions/                    # TypeScript extensions for omp
 │   │   └── git-checkpoint.ts             # Git checkpoint create/list/restore tools
 │   └── _git-clone-update.nix             # Git clone/update helper for plugin repos
 ├── activation/              # Home Manager activation scripts

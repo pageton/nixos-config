@@ -35,14 +35,14 @@ let
 
   forgeProfileSuffix = p: builtins.replaceStrings [ "forge-" ] [ "" ] p.name;
 
-  # Pi profile definitions for wrapper functions.
+  # Oh My Pi profile definitions for wrapper functions.
   # Single source: home/programs/ai-agents/helpers/_pi-profiles.nix.
   piProfiles = import ../../ai-agents/helpers/_pi-profiles.nix { inherit config; };
 
-  # Pi: simple wrappers (excludes default "pi" which has no profile suffix).
-  simplePiProfiles = builtins.filter (p: p.name != "pi") piProfiles.profiles;
+  # OMP: simple wrappers (excludes default "omp" which has no profile suffix).
+  simplePiProfiles = builtins.filter (p: p.name != "omp") piProfiles.profiles;
 
-  piProfileSuffix = p: builtins.replaceStrings [ "pi-" ] [ "" ] p.name;
+  piProfileSuffix = p: builtins.replaceStrings [ "omp-" ] [ "" ] p.name;
 in
 
 {
@@ -78,7 +78,7 @@ in
         cx*|lcx*|mcx*|hcx*|xcx*) printf '\uf1c0 ' ;;         #  Codex — cx, lcx, mcx, hcx, xcx + all workflow suffixes
         gem*) printf '\uf529 ' ;;                              #  Gemini — gem + all workflow suffixes
         fg*) printf '\uf7d9 ' ;;                               #  Forge — fg, fgglm, fggem, fggpt, fgor, fgs, fgzen + all workflow suffixes
-        pi*) printf '\uf1b2 ' ;;                                #  Pi — pi, pis, piop, piglm, pigem, pigpt, pior, pizen + all workflow suffixes
+        omp*) printf '\uf1b2 ' ;;                              #  OMP — omp, omps, ompop, ompglm, ompgem, ompgpt, ompor, ompzen + all workflow suffixes
         *) ;;
       esac
     }
@@ -98,7 +98,15 @@ in
         shift
       fi
       _zellij_rename_tab "$tab_name"
-      "$@"
+      # Run under the ai-agents.slice to cap memory usage and prevent
+      # the compositor/terminal from starving during large output.
+      # Fall back to direct exec if systemd-run is unavailable or the
+      # target is a shell function (systemd-run cannot resolve those).
+      if command -v systemd-run >/dev/null 2>&1 && ! whence -w "$1" 2>/dev/null | grep -q 'function$'; then
+        systemd-run --user --slice=ai-agents.slice --scope --unit="ai-''${tab_name}" -- "$@"
+      else
+        "$@"
+      fi
     }
 
     claude_glm() {
@@ -156,19 +164,19 @@ in
       OPENROUTER_API_KEY="$key" _forge_profile "forge-openrouter" "fgor" "$@"
     }
 
-    # === Pi profile wrappers ===
-    _pi_profile() {
+    # === Oh My Pi profile wrappers ===
+    _omp_profile() {
       local profile="$1"
       local tab_name="$2"
       shift 2
       _zellij_rename_tab "$tab_name"
-      PI_CODING_AGENT_DIR="$HOME/.pi/profiles/$profile" pi "$@"
+      PI_CODING_AGENT_DIR="$HOME/.omp/profiles/$profile" omp "$@"
     }
 
     ${lib.concatStringsSep "\n\n" (
       map (p: ''
-        pi_${piProfileSuffix p}() {
-          _pi_profile "${p.name}" "${p.alias}" "$@"
+        omp_${piProfileSuffix p}() {
+          _omp_profile "${p.name}" "${p.alias}" --model ${p.model} "$@"
         }
       '') simplePiProfiles
     )}
@@ -179,7 +187,7 @@ in
     aip() {
       if [[ $# -eq 0 ]]; then
         echo "Usage: aip <agent> [agent...] [\"prompt\"]" >&2
-        echo "  Any alias or function: cl, clglm, oc, ocglm, gem, cx, pi, piglm..." >&2
+        echo "  Any alias or function: cl, clglm, oc, ocglm, gem, cx, omp, ompglm..." >&2
         echo "  Last arg becomes the initial prompt if not a known command." >&2
         echo "Examples:" >&2
         echo "  aip oc cl                  # Two agents side-by-side" >&2

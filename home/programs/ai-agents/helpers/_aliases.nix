@@ -180,45 +180,86 @@ let
       command = "forge_zen";
       workflowPromptMode = "flag";
     }
-    # Pi (default and profiles)
+    # Oh My Pi — omp prefix (explicit)
+    {
+      alias = "omp";
+      command = "omp";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "omps";
+      command = "omp_sonnet";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "ompop";
+      command = "omp_opus";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "ompglm";
+      command = "omp_glm";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "ompgem";
+      command = "omp_gemini";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "ompgpt";
+      command = "omp_gpt";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "ompor";
+      command = "omp_openrouter";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "ompzen";
+      command = "omp_zen";
+      workflowPromptMode = "flag";
+    }
+    # Oh My Pi — pi prefix (shorter)
     {
       alias = "pi";
-      command = "pi";
+      command = "omp";
       workflowPromptMode = "flag";
     }
     {
       alias = "pis";
-      command = "pi_sonnet";
+      command = "omp_sonnet";
       workflowPromptMode = "flag";
     }
     {
       alias = "piop";
-      command = "pi_opus";
+      command = "omp_opus";
       workflowPromptMode = "flag";
     }
     {
       alias = "piglm";
-      command = "pi_glm";
+      command = "omp_glm";
       workflowPromptMode = "flag";
     }
     {
       alias = "pigem";
-      command = "pi_gemini";
+      command = "omp_gemini";
       workflowPromptMode = "flag";
     }
     {
       alias = "pigpt";
-      command = "pi_gpt";
+      command = "omp_gpt";
       workflowPromptMode = "flag";
     }
     {
       alias = "pior";
-      command = "pi_openrouter";
+      command = "omp_openrouter";
       workflowPromptMode = "flag";
     }
     {
       alias = "pizen";
-      command = "pi_zen";
+      command = "omp_zen";
       workflowPromptMode = "flag";
     }
   ];

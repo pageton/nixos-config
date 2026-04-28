@@ -249,29 +249,50 @@ lib.mkIf (cfg.skills != [ ]) (
         )
       }
 
-      # Mirror Claude skills into pi agent directory (pi looks for skills/ under PI_CODING_AGENT_DIR).
-      # Pi expects skills in SKILL.md format under ~/.pi/agent/skills/<name>/SKILL.md.
-      # Pi requires the symlink directory name to match the "name" field in SKILL.md.
+      # Mirror Claude skills into omp agent directory (omp looks for skills/ under PI_CODING_AGENT_DIR).
+      # OMP expects skills in SKILL.md format under ~/.omp/agent/skills/<name>/SKILL.md.
+      # OMP requires the symlink directory name to match the "name" field in SKILL.md.
       ${
         let
           piProfiles = import ../helpers/_pi-profiles.nix { inherit config; };
         in
         lib.optionalString cfg.pi.enable ''
-          mkdir -p "$HOME/.pi/agent/skills"
-          find "$HOME/.pi/agent/skills" -mindepth 1 -maxdepth 1 -type l -delete
+          mkdir -p "$HOME/.omp/agent/skills"
+          find "$HOME/.omp/agent/skills" -mindepth 1 -maxdepth 1 -type l -delete
           shopt -s nullglob
           for skill_dir in "$HOME/.claude/skills"/*; do
             [[ -d "$skill_dir" ]] || continue
-            # Read the "name" field from SKILL.md frontmatter — pi requires it to match directory name
+            # Read the "name" field from SKILL.md frontmatter — omp requires it to match directory name
             skill_name="$(basename "$skill_dir")"
             if [[ -f "$skill_dir/SKILL.md" ]]; then
-              frontmatter_name="$(grep '^name:' "$skill_dir/SKILL.md" | head -1 | sed 's/^name:[[:space:]]*//' | tr -d '"' | xargs 2>/dev/null)"
+              frontmatter_name="$(grep '^name:' "$skill_dir/SKILL.md" | head -1 | sed 's/^name:[[:space:]]*//' | tr -d '"' | xargs 2>/dev/null || true)"
               [[ -n "$frontmatter_name" ]] && skill_name="$frontmatter_name"
             fi
-            ln -sfn "$skill_dir" "$HOME/.pi/agent/skills/$skill_name"
+            ln -sfn "$skill_dir" "$HOME/.omp/agent/skills/$skill_name"
           done
           shopt -u nullglob
-          echo "✓ Mirrored Claude skills into ~/.pi/agent/skills"
+
+          # Fix mirrored skills missing required `description` frontmatter for omp compatibility.
+          # OMP requires both `name` and `description` in frontmatter. Claude skills may lack `description`.
+          for skill_dir in "$HOME/.omp/agent/skills"/*; do
+            [[ -d "$skill_dir" ]] || continue
+            skill_file="$skill_dir/SKILL.md"
+            [[ -f "$skill_file" ]] || continue
+            # Only fix if it's a symlink (mirrored, not Nix-managed)
+            [[ -L "$skill_file" ]] || continue
+            if ! grep -q '^description:' "$skill_file" 2>/dev/null; then
+              # Copy the symlink to a real file and inject description
+              dir_name="$(basename "$skill_dir")"
+              desc="Auto-mirrored skill: $dir_name"
+              # Try to extract first meaningful paragraph as description
+              first_para="$(sed -n '/^#/,/^[^#]/p' "$skill_file" | head -5 | tail -1 | sed 's/^ *//' | head -c 120 || true)"
+              [[ -n "$first_para" ]] && desc="$first_para"
+              cp -L "$skill_file" "$skill_file.tmp" 2>/dev/null || continue
+              sed -i "/^---$/a description: \"''${desc}\"" "$skill_file.tmp" 2>/dev/null && mv "$skill_file.tmp" "$skill_file" || rm -f "$skill_file.tmp"
+            fi
+          done
+
+          echo "✓ Mirrored Claude skills into ~/.omp/agent/skills"
         ''
       }
     fi

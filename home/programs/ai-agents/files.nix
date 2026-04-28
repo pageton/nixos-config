@@ -4,6 +4,7 @@
   config,
   constants,
   lib,
+  pkgs,
   ...
 }:
 
@@ -111,44 +112,37 @@ let
       )
     );
 
-  # Pi profile config files: settings.json, models.json, auth.json per profile.
+  # Oh My Pi (omp) profile config files: config.yml, models.yml per profile.
+  # Auth is managed via agent.db (SQLite) — no auth.json needed.
   piProfiles = import ./helpers/_pi-profiles.nix { inherit config; };
-  piSettingsBuilders = import ./helpers/_pi-settings-builder.nix { inherit cfg config lib; };
-  inherit (piSettingsBuilders) piSettingsByProfile piModelsByProfile piAuthByProfile;
+  piSettingsBuilders = import ./helpers/_pi-settings-builder.nix { inherit cfg config lib pkgs; };
+  inherit (piSettingsBuilders) piConfigsByProfile piModelsByProfile;
 
   piProfileConfigFiles = builtins.listToAttrs (
     lib.flatten (
       map (
         profile:
         let
-          profileDir = ".pi/profiles/${profile.name}";
+          profileDir = ".omp/profiles/${profile.name}";
         in
         [
-          # settings.json — model, thinking, compaction, retry, resource paths
+          # config.yml — model, thinking, compaction, retry, resource paths
           {
-            name = "${profileDir}/settings.json";
+            name = "${profileDir}/config.yml";
             value = {
-              text = toJSON piSettingsByProfile.${profile.name};
-              force = true;
-            };
-          }
-          # models.json — custom providers (Z.AI, OpenRouter, etc.)
-          {
-            name = "${profileDir}/models.json";
-            value = {
-              text = toJSON piModelsByProfile.${profile.name};
-              force = true;
-            };
-          }
-          # auth.json — API key entries (shell command resolution for secrets)
-          {
-            name = "${profileDir}/auth.json";
-            value = {
-              text = toJSON piAuthByProfile.${profile.name};
+              text = piConfigsByProfile.${profile.name};
               force = true;
             };
           }
         ]
+        # models.yml — custom providers (OpenRouter, etc.) — only if non-empty
+        ++ (lib.optional (piModelsByProfile.${profile.name} != "") {
+          name = "${profileDir}/models.yml";
+          value = {
+            text = piModelsByProfile.${profile.name};
+            force = true;
+          };
+        })
         # AGENTS.md — global instructions
         ++ (lib.optional (cfg.globalInstructions != "") {
           name = "${profileDir}/AGENTS.md";
@@ -161,78 +155,88 @@ let
     )
   );
 
-  # Shared extensions installed to the default ~/.pi/agent/ directory.
-  # These are available to all profiles since they share the same agent dir.
+  # Shared extension and resource files installed to ~/.omp/agent/.
+  # Available to all profiles since they share the same agent dir.
+  #
+  # OMP natively supports MCP (via mcp.json), agent switching (via /agents),
+  # and subagents (via Task tool). Only custom extensions are deployed here.
   piSharedExtensionFiles =
     let
-      mcpManifest = import ./helpers/_mcp-transforms.nix { inherit cfg lib; };
+      mcpTransforms = import ./helpers/_mcp-transforms.nix { inherit cfg lib; };
     in
     builtins.listToAttrs (
-      lib.optional cfg.pi.mcpBridge.enable {
-        name = ".pi/agent/extensions/mcp-bridge.ts";
-        value = {
-          source = ./helpers/pi-extensions/mcp-bridge.ts;
-          force = true;
-        };
-      }
-      ++ lib.optional cfg.pi.subagent.enable {
-        name = ".pi/agent/extensions/subagent.ts";
-        value = {
-          source = ./helpers/pi-extensions/subagent.ts;
-          force = true;
-        };
-      }
-      ++ lib.optional cfg.pi.gitCheckpoint.enable {
-        name = ".pi/agent/extensions/git-checkpoint.ts";
+      # Git checkpoint — custom extension (not built into OMP).
+      lib.optional cfg.pi.gitCheckpoint.enable {
+        name = ".omp/agent/extensions/git-checkpoint.ts";
         value = {
           source = ./helpers/pi-extensions/git-checkpoint.ts;
           force = true;
         };
       }
-      # Agent switcher — /agent command for persona switching (implementation-engineer, static-recon, etc.)
-      ++ [
-        {
-          name = ".pi/agent/extensions/agent-switcher.ts";
-          value = {
-            source = ./helpers/pi-extensions/agent-switcher.ts;
-            force = true;
-          };
-        }
-      ]
-      # MCP manifest — JSON config listing all MCP servers for the bridge extension to spawn.
-      ++ lib.optional cfg.pi.mcpBridge.enable {
-        name = ".pi/agent/mcp-manifest.json";
+      # Native MCP config — OMP discovers ~/.omp/agent/mcp.json automatically.
+      ++ lib.optional (builtins.length (builtins.attrValues mcpTransforms.sharedMcpServers) > 0) {
+        name = ".omp/agent/mcp.json";
         value = {
-          text = toJSON { servers = mcpManifest.piMcpManifest; };
+          text = toJSON { mcpServers = mcpTransforms.ompMcpServers; };
           force = true;
         };
       }
-      # Agent definitions — same canonical concepts as Claude/Forge agents, in SKILL.md format.
-      # These are loaded by the /agent extension command for persona switching.
+      # Agent definitions — OMP discovers ~/.omp/agent/agents/*/SKILL.md natively.
       ++ (lib.mapAttrsToList (name: text: {
-        name = ".pi/agent/agents/${name}";
+        name = ".omp/agent/agents/${name}";
         value = {
           inherit text;
           force = true;
         };
       }) fileTemplates.piAgents)
-      # Custom pi skills (init, deep-init) — become /skill:init and /skill:deep-init commands.
-      ++ [
-        {
-          name = ".pi/agent/skills/init/SKILL.md";
-          value = {
-            source = ./helpers/pi-skills/init/SKILL.md;
-            force = true;
-          };
-        }
-        {
-          name = ".pi/agent/skills/deep-init/SKILL.md";
-          value = {
-            source = ./helpers/pi-skills/deep-init/SKILL.md;
-            force = true;
-          };
-        }
-      ]
+      # Custom omp skills — auto-discovered from helpers/pi-skills/ directory.
+      # Each subdirectory becomes ~/.omp/agent/skills/<name>/SKILL.md.
+      ++ (map (name: {
+        name = ".omp/agent/skills/${name}/SKILL.md";
+        value = {
+          source = ./helpers/pi-skills/${name}/SKILL.md;
+          force = true;
+        };
+      }) (builtins.attrNames (builtins.readDir ./helpers/pi-skills)))
+      # GitHub-sourced skills — fetched at build time from upstream repos.
+      ++ (
+        let
+          githubSkillRepos = [
+            {
+              owner = "samber";
+              repo = "cc-skills-golang";
+              rev = "main";
+            }
+          ];
+          mkGithubSkills =
+            {
+              owner,
+              repo,
+              rev,
+            }:
+            let
+              src = pkgs.fetchFromGitHub {
+                inherit owner repo rev;
+                hash = "sha256-IHHPdoPH44sHDfV7c7RVr+S/CpayTk4j/3QHEIiab0k=";
+              };
+              entries = builtins.readDir src;
+            in
+            map
+              (name: {
+                name = ".omp/agent/skills/${name}/SKILL.md";
+                value = {
+                  source = "${src}/${name}/SKILL.md";
+                  force = true;
+                };
+              })
+              (
+                builtins.filter (
+                  name: entries.${name} == "directory" && builtins.pathExists "${src}/${name}/SKILL.md"
+                ) (builtins.attrNames entries)
+              );
+        in
+        builtins.concatLists (map mkGithubSkills githubSkillRepos)
+      )
     );
 in
 {

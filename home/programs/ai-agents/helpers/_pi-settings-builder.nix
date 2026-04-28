@@ -1,24 +1,67 @@
-# Pi settings.json builder: generates configuration per profile.
+# Oh My Pi (omp) config.yml builder: generates configuration per profile.
 #
-# Pi uses JSON settings files with project settings overriding global settings.
-# Each profile gets its own directory under ~/.pi/profiles/<name>/
-# with settings.json, models.json, and auth.json.
+# Oh My Pi uses YAML config files (config.yml) with automatic JSON→YAML migration.
+# Each profile gets its own directory under ~/.omp/profiles/<name>/
+# with config.yml and models.yml.
+# Auth is managed via agent.db (SQLite) using `omp auth login` or env vars.
 
 {
   cfg,
   config,
   lib,
+  pkgs,
 }:
 
 let
   piProfiles = import ./_pi-profiles.nix { inherit config; };
-  globalInstructions = cfg.globalInstructions;
 
-  # Base settings shared across all pi profiles.
+  # Helper to convert Nix attrs to YAML string.
+  # Uses nested attrset → YAML line format.
+  toYaml =
+    val:
+    let
+      indent = level: builtins.concatStringsSep "" (builtins.genList (_: "  ") level);
+      serialize =
+        v: depth:
+        if builtins.isAttrs v then
+          let
+            entries = lib.mapAttrsToList (k: valAt: {
+              inherit k valAt;
+            }) v;
+          in
+          if entries == [ ] then
+            "{}"
+          else
+            "\n"
+            + builtins.concatStringsSep "\n" (
+              map (
+                e:
+                "${indent depth}${e.k}:${serialize e.valAt (depth + 1)}"
+              ) entries
+            )
+        else if builtins.isList v then
+          if v == [ ] then
+            " []"
+          else
+            "\n"
+            + builtins.concatStringsSep "\n" (
+              map (item: "${indent depth}-${serialize item (depth + 1)}") v
+            )
+        else if builtins.isBool v then
+          " ${lib.boolToString v}"
+        else if builtins.isInt v then
+          " ${toString v}"
+        else if builtins.isFloat v then
+          " ${toString v}"
+        else
+          " \"${builtins.replaceStrings [ "\"" "\\" ] [ "\\\"" "\\\\" ] (toString v)}\"";
+    in
+    serialize val 0;
+
+  # Base settings shared across all omp profiles.
   piBaseSettings =
     let
       inherit (cfg.pi)
-        theme
         compaction
         retry
         extensions
@@ -28,23 +71,18 @@ let
     in
     {
       defaultThinkingLevel = cfg.pi.thinkingLevel;
-      inherit
-        theme
-        compaction
-        retry
-        extensions
-        skills
-        packages
-        ;
-      quietStartup = false;
-      enableSkillCommands = true;
+      collapseChangelog = true;
+      inherit compaction retry;
     }
+    // (lib.optionalAttrs (extensions != [ ]) { inherit extensions; })
+    // (lib.optionalAttrs (skills != [ ]) { inherit skills; })
+    // (lib.optionalAttrs (packages != [ ]) { inherit packages; })
+    // (lib.optionalAttrs (cfg.pi.theme != "") { theme = cfg.pi.theme; })
     // (lib.optionalAttrs (cfg.pi.sessionDir != "") { sessionDir = cfg.pi.sessionDir; })
-    // (lib.optionalAttrs (cfg.pi.enabledModels != [ ]) { enabledModels = cfg.pi.enabledModels; })
-    // (lib.optionalAttrs (cfg.pi.extraSettings != { }) cfg.pi.extraSettings);
+    // (lib.optionalAttrs (cfg.pi.enabledModels != [ ]) { enabledModels = cfg.pi.enabledModels; });
 
-  # Generate settings.json for a specific profile (provider + model override).
-  mkPiSettings =
+  # Generate config.yml for a specific profile (provider + model override).
+  mkOmpConfig =
     {
       provider,
       model,
@@ -58,17 +96,17 @@ let
     }
     // (lib.optionalAttrs (thinkingLevel != null) { defaultThinkingLevel = thinkingLevel; });
 
-  # All profile settings, keyed by profile name.
-  piSettingsByProfile = builtins.listToAttrs (
+  # All profile configs, keyed by profile name (YAML text).
+  piConfigsByProfile = builtins.listToAttrs (
     map (profile: {
       inherit (profile) name;
-      value = mkPiSettings profile;
+      value = toYaml (mkOmpConfig profile);
     }) piProfiles.profiles
   );
 
-  # Generate models.json for a profile.
-  # Adds custom providers (Z.AI proxy) where needed.
-  mkPiModels =
+  # Generate models.yml for a profile.
+  # Adds custom providers (OpenRouter, MiniMax, etc.) where needed.
+  mkOmpModels =
     {
       provider,
       model,
@@ -77,25 +115,6 @@ let
       ...
     }:
     let
-      # Z.AI provider entry — uses Anthropic Messages API compatibility.
-      # NOTE: apiKey intentionally omitted here. Auth is handled by auth.json
-      # which supports !command syntax (resolveConfigValue). models.json's
-      # apiKey field does NOT resolve shell commands — only auth.json does.
-      zaiProvider = {
-        baseUrl = "__ZAI_API_ROOT__/anthropic";
-        api = "anthropic-messages";
-        models = [
-          {
-            id = model;
-            reasoning = true;
-            input = [
-              "text"
-              "image"
-            ];
-            inherit contextWindow;
-          }
-        ];
-      };
       # OpenRouter provider entry.
       openrouterProvider = {
         baseUrl = "https://openrouter.ai/api/v1";
@@ -113,7 +132,7 @@ let
           }
         ];
       };
-      # MiniMax provider entry (free tier via opencode).
+      # MiniMax provider entry.
       minimaxProvider = {
         baseUrl = "https://api.minimaxi.chat/v1";
         api = "openai-completions";
@@ -131,77 +150,21 @@ let
         ];
       };
     in
-    {
-      providers =
-        if provider == "zai" then
-          { } # Pi has native ZAI support — no custom provider needed.
-        else if provider == "openrouter" then
-          { openrouter = openrouterProvider; }
-        else if provider == "minimax" then
-          { minimax = minimaxProvider; }
-        else
-          { };
-    };
+    if provider == "openrouter" then
+      toYaml { providers.openrouter = openrouterProvider; }
+    else if provider == "minimax" then
+      toYaml { providers.minimax = minimaxProvider; }
+    else
+      "";
 
-  # All profile models.json, keyed by profile name.
+  # All profile models.yml, keyed by profile name.
   piModelsByProfile = builtins.listToAttrs (
     map (profile: {
       inherit (profile) name;
-      value = mkPiModels profile;
-    }) piProfiles.profiles
-  );
-
-  # Generate auth.json for a profile.
-  # Uses shell command resolution (!command) to read secrets at runtime.
-  mkPiAuth =
-    {
-      provider,
-      zaiKey ? false,
-      ...
-    }:
-    let
-      # Base auth entries — pi resolves keys from env vars for built-in providers.
-      entries =
-        { }
-        # Anthropic: use env var or existing auth.
-        // (lib.optionalAttrs (provider == "anthropic") {
-          anthropic = {
-            type = "api_key";
-            key = "ANTHROPIC_API_KEY";
-          };
-        })
-        # Google: use env var.
-        // (lib.optionalAttrs (provider == "google") {
-          google = {
-            type = "api_key";
-            key = "GEMINI_API_KEY";
-          };
-        })
-        # OpenAI: use env var.
-        // (lib.optionalAttrs (provider == "openai") {
-          openai = {
-            type = "api_key";
-            key = "OPENAI_API_KEY";
-          };
-        })
-        # Z.AI: shell command to read secret.
-        // (lib.optionalAttrs zaiKey {
-          zai = {
-            type = "api_key";
-            key = "!cat ${cfg.secrets.zaiApiKeyFile}";
-          };
-        });
-    in
-    entries;
-
-  # All profile auth.json, keyed by profile name.
-  piAuthByProfile = builtins.listToAttrs (
-    map (profile: {
-      inherit (profile) name;
-      value = mkPiAuth profile;
+      value = mkOmpModels profile;
     }) piProfiles.profiles
   );
 in
 {
-  inherit piSettingsByProfile piModelsByProfile piAuthByProfile;
+  inherit piConfigsByProfile piModelsByProfile;
 }

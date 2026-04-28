@@ -19,7 +19,7 @@
   gpt-xhigh = "openai/gpt-5.1-codex-max";
 
   # OpenAI models (raw IDs)
-  gpt-default-raw = "gpt-5.5";
+  gpt-default-raw = "openai-codex/gpt-5.5";
   gpt-low-raw = "gpt-5.5-spark";
 
   # Provider-specific aliases
@@ -28,11 +28,11 @@
 
   # ZAI / other
   glm = "zai-coding-plan/glm-5.1";
-  glm-raw = "glm-5.1";
+  glm-raw = "zai/glm-5.1";
   gemini = "google/gemini-3-pro-preview";
-  gemini-raw = "gemini-3-pro-preview";
+  gemini-raw = "google/gemini-3-pro-preview";
   zen = "opencode/minimax-m2.5-free";
-  zen-raw = "minimax-m2.5-free";
+  zen-raw = "opencode-zen/minimax-m2.5-free";
 
   # Aider (uses Anthropic model IDs without provider prefix)
   aider-model = "claude-sonnet-4-6";

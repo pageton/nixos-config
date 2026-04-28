@@ -120,31 +120,19 @@ let
     includeRemoteHeaders = false;
   };
 
-  # Pi MCP manifest: JSON config listing all enabled MCP servers.
-  # The MCP bridge TypeScript extension reads this manifest and spawns
-  # each server as a child process, translating MCP tool calls to pi tools.
-  # Unlike other agents, pi has no native MCP support — the extension is the bridge.
-  piMcpManifest = lib.mapAttrsToList (
-    name: server:
-    let
-      isLocal = (server.type or "local") == "local";
-    in
-    {
-      inherit name;
-      type = if isLocal then "local" else "remote";
-    }
-    // (
-      if isLocal then
-        {
-          command = server.command;
-          args = server.args or [ ];
-        }
-      else
-        { url = server.url; }
-    )
-    // (lib.optionalAttrs (server.env or { } != { }) { env = server.env; })
-    // (lib.optionalAttrs (server.headers or null != null) { headers = server.headers; })
-  ) (lib.filterAttrs (_: s: s.enable) sharedMcpServers);
+  # OMP native MCP server config (mcp.json format).
+  # OMP discovers ~/.omp/agent/mcp.json automatically and supports
+  # stdio, http, and sse transports natively.
+  ompMcpServers = mkMcpTransform {
+    localAttrs = server: {
+      inherit (server) command;
+      args = server.args or [ ];
+    };
+    remoteAttrs = server: {
+      type = "http";
+      inherit (server) url;
+    };
+  };
 
 in
 {
@@ -154,6 +142,6 @@ in
     opencodeMcpServers
     geminiMcpServers
     forgeMcpServers
-    piMcpManifest
+    ompMcpServers
     ;
 }

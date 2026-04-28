@@ -80,6 +80,7 @@ in
       zaiApiKeyFile = mkNullOrStrOption "/run/secrets/zai_api_key" "Path to sops-decrypted Z.AI API key file";
       openrouterApiKeyFile = mkNullOrStrOption "/run/secrets/openrouter_api_key" "Path to sops-decrypted OpenRouter API key file";
       context7ApiKeyFile = mkNullOrStrOption "/run/secrets/context7-api-key" "Path to sops-decrypted Context7 API key file";
+      minimaxApiKeyFile = mkNullOrStrOption "/run/secrets/minimax_api_key" "Path to sops-decrypted MiniMax API key file";
     };
 
     skills = lib.mkOption {
@@ -304,12 +305,12 @@ in
       extraSettings = mkAttrsOption { } "Additional Gemini CLI settings";
     };
 
-    # === Pi Options ===
+    # === Oh My Pi Options ===
     pi = {
-      enable = lib.mkEnableOption "Pi coding agent (@mariozechner/pi-coding-agent) configuration";
+      enable = lib.mkEnableOption "Oh My Pi coding agent (@oh-my-pi/pi-coding-agent) configuration";
 
-      model = mkStrOption "claude-sonnet-4-20250514" "Default model ID for pi";
-      provider = mkStrOption "anthropic" "Default provider for pi";
+      model = mkStrOption "claude-sonnet-4-20250514" "Default model ID for omp";
+      provider = mkStrOption "anthropic" "Default provider for omp";
       thinkingLevel = mkTypedOption (lib.types.enum [
         "off"
         "minimal"
@@ -318,8 +319,8 @@ in
         "high"
         "xhigh"
       ]) "medium" "Default thinking level";
-      theme = mkStrOption "dark" "Pi TUI theme";
-      sessionDir = mkStrOption "" "Custom session directory (empty = pi default)";
+      theme = mkStrOption "dark" "OMP TUI theme";
+      sessionDir = mkStrOption "" "Custom session directory (empty = omp default)";
 
       extensions = mkStrListOption [ ] "Extension file paths or directories to load";
       skills = mkStrListOption [ ] "Skill file paths or directories to load";
@@ -339,19 +340,13 @@ in
 
       enabledModels = mkStrListOption [ ] "Model patterns for Ctrl+P cycling";
 
-      mcpBridge = {
-        enable = mkBoolOption true "Install the MCP bridge extension that translates MCP servers to pi tools";
-      };
-
-      subagent = {
-        enable = mkBoolOption true "Install the subagent extension for task delegation with isolated context";
-      };
 
       gitCheckpoint = {
         enable = mkBoolOption true "Install git checkpoint extension (stash per turn for easy restoration)";
       };
 
-      extraSettings = mkAttrsOption { } "Additional pi settings.json overrides";
+
+      extraSettings = mkAttrsOption { } "Additional omp settings overrides";
     };
   };
 }

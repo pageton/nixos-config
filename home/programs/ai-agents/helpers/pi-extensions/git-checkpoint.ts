@@ -19,8 +19,8 @@
  * Configuration in options.nix:
  *   programs.aiAgents.pi.gitCheckpoint.enable = true;
  */
-import { Type } from "@mariozechner/pi-ai";
-import { defineTool, type ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import { Type } from "@oh-my-pi/pi-ai";
+import { defineTool, type ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 

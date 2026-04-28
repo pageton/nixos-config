@@ -26,7 +26,7 @@ let
     "agent-browser"
     "agent-device"
     "@z_ai/mcp-server"
-    "@mariozechner/pi-coding-agent"
+    "@oh-my-pi/pi-coding-agent"
   ];
 in
 {
