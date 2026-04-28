@@ -6,6 +6,7 @@
       config = {
         signs = {
           text = {
+            # Intentionally blank — rely on sign highlight color only, not text
             "vim.diagnostic.severity.Error" = " ";
             "vim.diagnostic.severity.Warn" = " ";
             "vim.diagnostic.severity.Hint" = " ";
@@ -13,14 +14,8 @@
           };
         };
         underline = true;
-        update_in_insert = true;
-        virtual_text = {
-          format = lib.generators.mkLuaInline ''
-            function(diagnostic)
-              return string.format("%s", diagnostic.message)
-            end
-          '';
-        };
+        update_in_insert = false; # avoid LSP slowdown in large files during typing
+        virtual_text = true;
       };
       nvim-lint.enable = true;
     };
@@ -32,8 +27,8 @@
       autotagHtml = true;
       context.enable = true;
       highlight.enable = true;
+      # Extra grammars beyond what language modules install
       grammars = with pkgs.vimPlugins.nvim-treesitter.builtGrammars; [
-        typescript
         latex
         typst
         scss
@@ -52,7 +47,7 @@
 
       servers.nil.settings.nil.nix.autoArchive = true;
       servers.gopls = {
-        single_file_support = false;
+        single_file_support = false; # gopls requires a go.mod — disables LSP for standalone .go files
         settings = {
           gopls = {
             analyses = {

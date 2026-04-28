@@ -37,14 +37,16 @@
       {
         key = "<leader>q";
         mode = "n";
-        action = ":quit<CR>";
+        action = "<cmd>quit<cr>";
+        silent = true;
         desc = "Quit";
       }
       {
         key = "<leader>nh";
         mode = "n";
-        action = ":nohl<CR>";
+        action = "<cmd>nohlsearch<cr>";
         silent = true;
+        desc = "Clear search highlight";
       }
       {
         key = "s";
@@ -74,13 +76,7 @@
         action = "<cmd>bdelete<cr>";
         desc = "Delete Buffer";
       }
-      {
-        key = "<C-w>";
-        mode = "n";
-        silent = true;
-        action = "<cmd>bdelete<cr>";
-        desc = "Delete Buffer";
-      }
+
       {
         key = "<C-[>";
         mode = "n";

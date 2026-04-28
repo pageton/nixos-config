@@ -70,5 +70,23 @@
         pcall(vim.keymap.del, "n", "gra")
       end)
     '';
+
+    # Auto-trim trailing whitespace and final newlines on save
+    luaConfigRC.trim-whitespace = ''
+      vim.api.nvim_create_autocmd("BufWritePre", {
+        callback = function()
+          local ok, _ = pcall(vim.fn.expand, "%:p")
+          if not ok then return end
+          -- Save cursor position
+          local saved = vim.fn.winsaveview()
+          -- Trim trailing whitespace
+          vim.cmd([[%s/\s\+$//e]])
+          -- Trim trailing blank lines at end of file
+          vim.cmd([[%s/\n\+\%$//e]])
+          vim.fn.winrestview(saved)
+        end,
+        group = vim.api.nvim_create_augroup("TrimWhitespace", { clear = true }),
+      })
+    '';
   };
 }

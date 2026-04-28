@@ -16,11 +16,11 @@
   programs.nvf = {
     enable = true;
     settings.vim = {
-      luaPackages = [ "jsregexp" ];
+      luaPackages = [ "jsregexp" ]; # required by LuaSnip for regex match nodes
       startPlugins = [
         pkgs.vimPlugins.vim-tmux-navigator
         pkgs.vimPlugins.vim-wakatime
-        pkgs.vimPlugins.catppuccin-nvim
+        pkgs.vimPlugins.catppuccin-nvim # theme override via options.nix
       ];
     };
   };

@@ -54,9 +54,14 @@
   programs.nvf.settings.vim.luaConfigRC.cmp-cmdline = ''
     require("luasnip.loaders.from_vscode").lazy_load()
 
-    vim.defer_fn(function()
-      local ok, cmp = pcall(require, "cmp")
-      if ok then
+    -- Setup command-line completion after cmp is fully loaded.
+    -- Uses VeryLazy autocmd instead of a fragile timer.
+    vim.api.nvim_create_autocmd("User", {
+      pattern = "LazyDone",
+      once = true,
+      callback = function()
+        local ok, cmp = pcall(require, "cmp")
+        if not ok then return end
         cmp.setup.cmdline(":", {
           mapping = cmp.mapping.preset.cmdline(),
           sources = cmp.config.sources({
@@ -71,10 +76,8 @@
             { name = "buffer" }
           }
         })
-      else
-        vim.notify("cmp not ready yet, retrying...", vim.log.levels.WARN)
-      end
-    end, 100)
+      end,
+    })
 
     -- Auto organize imports on save for Go
     vim.api.nvim_create_autocmd("BufWritePre", {
@@ -105,10 +108,14 @@
     vim.api.nvim_create_autocmd("BufWritePre", {
       pattern = { "*.ts", "*.tsx", "*.js", "*.jsx" },
       callback = function()
-        vim.lsp.buf.code_action({
-          context = {only = {"source.organizeImports"}},
-          apply = true,
-        })
+        local clients = vim.lsp.get_clients({ bufnr = 0 })
+        if #clients == 0 then return end
+        pcall(function()
+          vim.lsp.buf.code_action({
+            context = {only = {"source.organizeImports"}},
+            apply = true,
+          })
+        end)
       end,
     })
   '';

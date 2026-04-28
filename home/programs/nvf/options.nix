@@ -19,9 +19,9 @@
       wrap = false;
     };
     globals = {
-      navic_silence = true; # navic tries to attach multiple LSPs and fails
-      suda_smart_edit = 1; # use super user write automatically
-      neovide_scale_factor = 0.7;
+      navic_silence = true; # suppress navic multi-LSP attach warnings
+      suda_smart_edit = 1; # auto-escalate to root when writing read-only files
+      neovide_scale_factor = 0.7; # GUI frontend settings (no-op in terminal)
       neovide_cursor_animation_length = 0.1;
       neovide_cursor_short_animation_length = 0;
     };
