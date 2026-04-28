@@ -9,7 +9,7 @@ let
   noctalia =
     cmd:
     [
-      "${pkgs.bash}/bin/sh"
+      "${pkgs.bash}/bin/bash"
       "-c"
       ''
         if ! ${config.home.profileDirectory}/bin/noctalia-shell ipc call "$@" >/dev/null 2>&1; then
@@ -18,7 +18,7 @@ let
           ${config.home.profileDirectory}/bin/noctalia-shell ipc call "$@" >/dev/null 2>&1 || true
         fi
       ''
-      "sh"
+      "bash"
     ]
     ++ (lib.splitString " " cmd);
 in

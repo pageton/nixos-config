@@ -7,7 +7,7 @@
     settings = {
       clock = true;
       timestr = "%I:%M %p";
-      font = config.stylix.fonts.monospace.name or "monospace";
+      font = config.stylix.fonts.monospace.name;
       font-size = 24;
       indicator-idle-visible = false;
       indicator-radius = 100;

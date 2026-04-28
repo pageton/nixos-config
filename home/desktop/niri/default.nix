@@ -38,7 +38,7 @@ in
     environment = {
       DISPLAY = ":0";
       _JAVA_AWT_WM_NONREPARENTING = "1";
-      IN_NIX_SHELL = null;
+      IN_NIX_SHELL = null; # unset — prevents GUI apps from thinking they're in a nix-shell
       NIXOS_OZONE_WL = "1";
       MOZ_ENABLE_WAYLAND = "1";
       QT_QPA_PLATFORM = "wayland;xcb";
@@ -127,6 +127,8 @@ in
       }
     ];
 
+    # Debug flags — niri KDL uses nullary nodes, so {} produces a bare flag
+    # (e.g. "disable-direct-scanout" not "disable-direct-scanout true").
     debug = {
       honor-xdg-activation-with-invalid-serial = { };
       wait-for-frame-completion-before-queueing = { };
