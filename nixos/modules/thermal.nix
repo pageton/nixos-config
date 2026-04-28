@@ -2,19 +2,24 @@
 # The firmware doesn't export ACPI thermal zones, so the kernel never throttles.
 # This module provides software-defined thermal control via thermald.
 {
-  config,
   lib,
   pkgs,
   ...
 }:
 
 let
-  # Thermal configuration for AMD Ryzen 5 7600X (Tctl offset ~30C on AM5).
-  # Real temp ≈ Tctl - 30, so Tctl 95°C ≈ die 65°C.
-  # We throttle at Tctl 90°C (die ~60°C) to keep headroom.
+  # Thermal configuration for AMD Ryzen 5 7600X using k10temp hwmon sensor.
+  # Previous config used x86_pkg_temp + intel_powerclamp (Intel-only) —
+  # thermald silently failed: "invalid sensor type x86_pkg_temp".
   #
-  # Trip points use k10temp (hwmon3 on this board) — verify with
-  #   cat /sys/class/hwmon/hwmon*/name
+  # Tctl on AM5 includes a ~30°C offset. Real temp ≈ Tctl - 30.
+  #   Tctl 80°C → die ~50°C (comfortable)
+  #   Tctl 90°C → die ~60°C (warm, throttle proactively)
+  #   Tctl 95°C → die ~65°C (AMD spec limit, hardware throttles)
+  #
+  # Verify sensor path with:
+  #   cat /sys/class/hwmon/hwmon*/name   → find "k10temp"
+  #   cat /sys/class/hwmon/hwmon2/temp1_input  → current Tctl in millidegC
   thermaldConfig = pkgs.writeText "thermal-conf.xml" ''
     <?xml version="1.0"?>
     <ThermalConfiguration>
@@ -26,39 +31,30 @@ let
             <Type>CPU</Type>
             <TripPoints>
               <TripPoint>
-                <SensorType>x86_pkg_temp</SensorType>
-                <Temperature>80000</Temperature>
-                <type>passive</type>
-                <CoolingDevice>
-                  <type>intel_powerclamp</type>
-                  <influence>100</influence>
-                </CoolingDevice>
-                <CoolingDevice>
-                  <type>Processor</type>
-                  <influence>100</influence>
-                </CoolingDevice>
-              </TripPoint>
-              <TripPoint>
-                <SensorType>x86_pkg_temp</SensorType>
+                <SensorType>hwmon</SensorType>
+                <SensorPath>/sys/class/hwmon/hwmon2/temp1_input</SensorPath>
                 <Temperature>85000</Temperature>
                 <type>passive</type>
                 <CoolingDevice>
-                  <type>intel_powerclamp</type>
+                  <type>Processor</type>
                   <influence>100</influence>
                 </CoolingDevice>
+              </TripPoint>
+              <TripPoint>
+                <SensorType>hwmon</SensorType>
+                <SensorPath>/sys/class/hwmon/hwmon2/temp1_input</SensorPath>
+                <Temperature>90000</Temperature>
+                <type>passive</type>
                 <CoolingDevice>
                   <type>Processor</type>
                   <influence>100</influence>
                 </CoolingDevice>
               </TripPoint>
               <TripPoint>
-                <SensorType>x86_pkg_temp</SensorType>
-                <Temperature>90000</Temperature>
+                <SensorType>hwmon</SensorType>
+                <SensorPath>/sys/class/hwmon/hwmon2/temp1_input</SensorPath>
+                <Temperature>93000</Temperature>
                 <type>passive</type>
-                <CoolingDevice>
-                  <type>intel_powerclamp</type>
-                  <influence>100</influence>
-                </CoolingDevice>
                 <CoolingDevice>
                   <type>Processor</type>
                   <influence>100</influence>
