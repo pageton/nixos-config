@@ -4,18 +4,17 @@
   config,
   constants,
   lib,
+  secretLoader,
   ...
 }:
 
 let
-  inherit (import ../../../../shared/secret-loader.nix) loadSecretFn;
-  inherit (constants.services.zai) timeout;
-  inherit (constants.services.zai.models) haiku sonnet opus;
+  inherit (secretLoader) loadSecretFn;
+  zaiEnv = import ../../ai-agents/helpers/_zai-env.nix { inherit constants; };
 
   # Derive OpenCode wrapper functions from profile definitions.
   # Single source: home/programs/ai-agents/helpers/_opencode-profiles.nix.
   opencodeProfiles = import ../../ai-agents/helpers/_opencode-profiles.nix { inherit config; };
-
   # Derive Forge wrapper functions from profile definitions.
   # Single source: home/programs/ai-agents/helpers/_forge-profiles.nix.
   forgeProfiles = import ../../ai-agents/helpers/_forge-profiles.nix { inherit config; };
@@ -35,14 +34,20 @@ let
 
   forgeProfileSuffix = p: builtins.replaceStrings [ "forge-" ] [ "" ] p.name;
 
-  # Oh My Pi profile definitions for wrapper functions.
-  # Single source: home/programs/ai-agents/helpers/_pi-profiles.nix.
-  piProfiles = import ../../ai-agents/helpers/_pi-profiles.nix { inherit config; };
+  # Oh My Pi (omp) profile definitions for wrapper functions.
+  ompProfiles = import ../../ai-agents/helpers/_omp-profiles.nix { inherit config; };
 
   # OMP: simple wrappers (excludes default "omp" which has no profile suffix).
-  simplePiProfiles = builtins.filter (p: p.name != "omp") piProfiles.profiles;
+  simpleOmpProfiles = builtins.filter (p: p.name != "omp") ompProfiles.profiles;
 
-  piProfileSuffix = p: builtins.replaceStrings [ "omp-" ] [ "" ] p.name;
+  ompProfileSuffix = p: builtins.replaceStrings [ "omp-" ] [ "" ] p.name;
+
+  # Pi (badlogic/pi-mono) profile definitions for wrapper functions.
+  piProfiles = import ../../ai-agents/helpers/_pi-profiles.nix { inherit config; };
+
+  simplePiProfiles = builtins.filter (p: p.name != "pi") piProfiles.profiles;
+
+  piProfileSuffix = p: builtins.replaceStrings [ "pi-" ] [ "" ] p.name;
 in
 
 {
@@ -70,6 +75,11 @@ in
       export GEMINI_API_KEY="$_gemini_key"
     fi
 
+    # Export Z.AI key for omp models.yml resolution (non-fatal)
+    if _zai_key_export="$(_load_zai_key 2>/dev/null)" && [[ -n "$_zai_key_export" ]]; then
+      export ZAI_API_KEY="$_zai_key_export"
+    fi
+
     # === AI agent wrappers ===
     _ai_tab_icon() {
       case "$1" in
@@ -79,6 +89,8 @@ in
         gem*) printf '\uf529 ' ;;                              #  Gemini — gem + all workflow suffixes
         fg*) printf '\uf7d9 ' ;;                               #  Forge — fg, fgglm, fggem, fggpt, fgor, fgs, fgzen + all workflow suffixes
         omp*) printf '\uf1b2 ' ;;                              #  OMP — omp, omps, ompop, ompglm, ompgem, ompgpt, ompor, ompzen + all workflow suffixes
+        pi*) printf '\uf1b2 ' ;;                              #  Pi — pi, pis, piop, piglm, pigem, pigpt, pior, pizen + all workflow suffixes
+        opi*) printf '\uf135 ' ;;                              #  oh-my-pi — opi + all workflow suffixes
         *) ;;
       esac
     }
@@ -98,12 +110,19 @@ in
         shift
       fi
       _zellij_rename_tab "$tab_name"
+      # Inject --debug-file for Claude Code sessions
+      if [[ "$1" == "claude" ]]; then
+        local debug_dir="''${AI_AGENT_LOG_DIR:-$HOME/.local/share/ai-agents/logs}"
+        mkdir -p "$debug_dir"
+        set -- "$@" "--debug-file" "$debug_dir/claude-debug-$(date +%Y-%m-%d).log"
+      fi
       # Run under the ai-agents.slice to cap memory usage and prevent
       # the compositor/terminal from starving during large output.
-      # Fall back to direct exec if systemd-run is unavailable or the
-      # target is a shell function (systemd-run cannot resolve those).
+      # Fall back to direct exec if systemd-run is unavailable, the
+      # target is a shell function (systemd-run cannot resolve those),
+      # or the transient scope already exists from a prior session.
       if command -v systemd-run >/dev/null 2>&1 && ! whence -w "$1" 2>/dev/null | grep -q 'function$'; then
-        systemd-run --user --slice=ai-agents.slice --scope --unit="ai-''${tab_name}" -- "$@"
+        systemd-run --user --slice=ai-agents.slice --scope --unit="ai-''${tab_name}" -- "$@" 2>/dev/null || "$@"
       else
         "$@"
       fi
@@ -112,13 +131,17 @@ in
     claude_glm() {
       local key; key="$(_load_zai_key)" || return 1
       _zellij_rename_tab "clglm"
+      local debug_dir="''${AI_AGENT_LOG_DIR:-$HOME/.local/share/ai-agents/logs}"
+      mkdir -p "$debug_dir"
       ANTHROPIC_AUTH_TOKEN="$key" \
-      ANTHROPIC_BASE_URL="${constants.services.zai.apiRoot}/anthropic" \
-      API_TIMEOUT_MS="${toString timeout}" \
-      ANTHROPIC_DEFAULT_HAIKU_MODEL="${haiku}" \
-      ANTHROPIC_DEFAULT_SONNET_MODEL="${sonnet}" \
-      ANTHROPIC_DEFAULT_OPUS_MODEL="${opus}" \
-      claude --dangerously-skip-permissions "$@"
+      ${zaiEnv.inlinePrefix} \
+      claude --dangerously-skip-permissions --debug-file "$debug_dir/claude-debug-$(date +%Y-%m-%d).log" "$@"
+    }
+
+    omp_glm() {
+      local key; key="$(_load_zai_key)" || return 1
+      _zellij_rename_tab "opi"
+      ZAI_API_KEY="$key" omp "$@"
     }
 
     _opencode_profile() {
@@ -126,7 +149,7 @@ in
       local tab_name="$2"
       shift 2
       _zellij_rename_tab "$tab_name"
-      OPENCODE_CONFIG_DIR="$HOME/.config/opencode-$profile" opencode "$@"
+      OPENCODE_CONFIG_DIR="$HOME/.config/opencode-$profile" opencode --log-level WARN "$@"
     }
 
     ${lib.concatStringsSep "\n\n" (
@@ -141,6 +164,7 @@ in
       local key; key="$(_load_openrouter_key)" || return 1
       OPENROUTER_API_KEY="$key" _opencode_profile "openrouter" "ocor" "$@"
     }
+
 
     # === Forge profile wrappers ===
     _forge_profile() {
@@ -164,7 +188,7 @@ in
       OPENROUTER_API_KEY="$key" _forge_profile "forge-openrouter" "fgor" "$@"
     }
 
-    # === Oh My Pi profile wrappers ===
+    # === Oh My Pi (omp) profile wrappers ===
     _omp_profile() {
       local profile="$1"
       local tab_name="$2"
@@ -175,8 +199,25 @@ in
 
     ${lib.concatStringsSep "\n\n" (
       map (p: ''
-        omp_${piProfileSuffix p}() {
+        omp_${ompProfileSuffix p}() {
           _omp_profile "${p.name}" "${p.alias}" --model ${p.model} "$@"
+        }
+      '') simpleOmpProfiles
+    )}
+
+    # === Pi (badlogic/pi-mono) profile wrappers ===
+    _pi_profile() {
+      local profile="$1"
+      local tab_name="$2"
+      shift 2
+      _zellij_rename_tab "$tab_name"
+      PI_CODING_AGENT_DIR="$HOME/.pi/profiles/$profile" pi "$@"
+    }
+
+    ${lib.concatStringsSep "\n\n" (
+      map (p: ''
+        pi_${piProfileSuffix p}() {
+          _pi_profile "${p.name}" "${p.alias}" --model ${p.model} "$@"
         }
       '') simplePiProfiles
     )}
@@ -235,7 +276,7 @@ in
           # Build command with prompt injection per agent family
           if [[ -n "$prompt" ]]; then
             case "$agent" in
-              oc|ocglm|ocgem|ocgpt|ocor|ocs|oczen|ocf|ocrun|occm|ocrf|ocsa|ocmd|opencode*)
+              oc|ocglm|ocgem|ocgpt|ocor|ocs|oczen|opi|opencode*)
                 cmd="$agent --prompt '$kdl_prompt'" ;;
               *)
                 cmd="$agent '$kdl_prompt'" ;;
@@ -266,6 +307,19 @@ in
 
       rm -f "$layout_file"
     }
+
+    # === Zellij auto-rename tab ===
+    if [[ -n "''${ZELLIJ:-}" ]]; then
+      _zellij_auto_tab_preexec() {
+        local name="''${2%% *}"
+        name="''${name:t}"
+        case "$name" in
+          cd|ls|ll|la|l|clear|cls|exit|source|.|zellij) return 0 ;;
+        esac
+        command zellij action rename-tab "$name" >/dev/null 2>&1 || true
+      }
+      preexec_functions+=(_zellij_auto_tab_preexec)
+    fi
 
     # === Environment setup ===
     export GPG_TTY=$(tty)

@@ -84,7 +84,7 @@
       KEYTIMEOUT=1
 
       # Better autosuggestions: prefer history, fall back to completion
-      ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+      ZSH_AUTOSUGGEST_STRATEGY=("history" "completion")
     '';
 
     defaultKeymap = "viins"; # Vi insert mode (hybrid vi/emacs)
@@ -105,12 +105,10 @@
       "NOTIFY"
       "NUMERIC_GLOB_SORT"
       "PROMPT_SUBST"
-      "HIST_BEEP"
       "HIST_FIND_NO_DUPS"
       "HIST_IGNORE_ALL_DUPS"
       "HIST_SAVE_NO_DUPS"
       "HIST_VERIFY"
-      "INC_APPEND_HISTORY"
       "SHARE_HISTORY"
     ];
   };

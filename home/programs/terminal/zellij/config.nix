@@ -22,6 +22,8 @@
       styled_underlines = true;
       auto_layout = true;
       mouse_mode = true;
+      focus_follows_mouse = true;
+      visual_bell = true;
 
       copy_command = "${pkgs.wl-clipboard}/bin/wl-copy";
       copy_on_select = true;
@@ -31,6 +33,8 @@
 
       session_serialization = true;
       pane_viewport_serialization = true;
+      scrollback_lines_to_serialize = 10000;
+      serialization_interval = 120;
 
       # "detach" keeps the session server alive when the terminal is closed (Mod+Q, SIGHUP).
       # This is required for zellij-tui: sessions created via the TUI must survive terminal closure.
