@@ -24,6 +24,11 @@ let
   runtimePerformancePrompt = workflowPrompts.runtimePerformance;
   markdownSyncPrompt = workflowPrompts.markdownSync;
 
+  # Flatten newlines for single-line alias values.
+  # zsh `alias` cannot span multiple lines, so replace literal \n
+  # with $'\n' (ANSI-C quoting) which the shell expands at use time.
+  flattenForAlias = builtins.replaceStrings [ "\n" ] [ "\\n" ];
+
   codexBase = "command codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox";
 
   gptLowModel = models.gpt-low;
@@ -97,7 +102,7 @@ let
     }
     {
       alias = "oc";
-      command = "opencode";
+      command = "opencode --log-level WARN";
       workflowPromptMode = "flag";
     }
     {
@@ -145,6 +150,89 @@ let
       command = "opencode_zen";
       workflowPromptMode = "flag";
     }
+    # Oh My OpenAgent — oco prefix (code-yeongyu/oh-my-openagent)
+    {
+      alias = "ocoglm";
+      command = "opencode_omo_glm";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "ocogem";
+      command = "opencode_omo_gemini";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "ocogpt";
+      command = "opencode_omo_gpt";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "ocoor";
+      command = "opencode_omo_openrouter";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "ocos";
+      command = "opencode_omo_sonnet";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "ocozen";
+      command = "opencode_omo_zen";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "opi";
+      command = "omp_glm";
+      workflowPromptMode = "flag";
+    }
+
+
+    {
+      alias = "ocohep";
+      command = "opencode_hephaestus";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "ocopro";
+      command = "opencode_prometheus";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "ocoatl";
+      command = "opencode_atlas";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "ocoora";
+      command = "opencode_oracle";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "ocolib";
+      command = "opencode_librarian";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "ocoex";
+      command = "opencode_explore";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "ocomt";
+      command = "opencode_metis";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "ocomom";
+      command = "opencode_momus";
+      workflowPromptMode = "flag";
+    }
+    {
+      alias = "ocomul";
+      command = "opencode_multimodal";
+      workflowPromptMode = "flag";
+    }
     {
       alias = "fg";
       command = "forge";
@@ -180,7 +268,7 @@ let
       command = "forge_zen";
       workflowPromptMode = "flag";
     }
-    # Oh My Pi — omp prefix (explicit)
+    # Oh My Pi — omp prefix (can1357/oh-my-pi)
     {
       alias = "omp";
       command = "omp";
@@ -221,45 +309,45 @@ let
       command = "omp_zen";
       workflowPromptMode = "flag";
     }
-    # Oh My Pi — pi prefix (shorter)
+    # Pi — pi prefix (badlogic/pi-mono)
     {
       alias = "pi";
-      command = "omp";
+      command = "pi";
       workflowPromptMode = "flag";
     }
     {
       alias = "pis";
-      command = "omp_sonnet";
+      command = "pi_sonnet";
       workflowPromptMode = "flag";
     }
     {
       alias = "piop";
-      command = "omp_opus";
+      command = "pi_opus";
       workflowPromptMode = "flag";
     }
     {
       alias = "piglm";
-      command = "omp_glm";
+      command = "pi_glm";
       workflowPromptMode = "flag";
     }
     {
       alias = "pigem";
-      command = "omp_gemini";
+      command = "pi_gemini";
       workflowPromptMode = "flag";
     }
     {
       alias = "pigpt";
-      command = "omp_gpt";
+      command = "pi_gpt";
       workflowPromptMode = "flag";
     }
     {
       alias = "pior";
-      command = "omp_openrouter";
+      command = "pi_openrouter";
       workflowPromptMode = "flag";
     }
     {
       alias = "pizen";
-      command = "omp_zen";
+      command = "pi_zen";
       workflowPromptMode = "flag";
     }
   ];
@@ -312,25 +400,33 @@ let
   aiWorkflowAliasSpecs = lib.flatten (
     map (
       workflow:
+      let
+        flatPrompt = flattenForAlias workflow.prompt;
+      in
       map (agent: {
         alias = "${agent.alias}${workflow.suffix}";
         command =
           if agent.workflowPromptMode == "flag" then
-            "_ai_agent_exec ${agent.alias}${workflow.suffix} -- ${agent.command} --prompt ${lib.escapeShellArg workflow.prompt}"
+            "_ai_agent_exec ${agent.alias}${workflow.suffix} -- ${agent.command} --prompt ${lib.escapeShellArg flatPrompt}"
           else
-            "_ai_agent_exec ${agent.alias}${workflow.suffix} -- ${agent.command} ${lib.escapeShellArg workflow.prompt}";
+            "_ai_agent_exec ${agent.alias}${workflow.suffix} -- ${agent.command} ${lib.escapeShellArg flatPrompt}";
       }) workflowAgentSpecs
     ) workflowPromptSpecs
   );
 
-  workflowClipboardAliasSpecs = map (workflow: {
-    alias = "cp${workflow.suffix}";
-    command =
-      "if command -v wl-copy >/dev/null 2>&1; then printf '%s' ${lib.escapeShellArg workflow.prompt} | wl-copy; "
-      + "elif command -v xclip >/dev/null 2>&1; then printf '%s' ${lib.escapeShellArg workflow.prompt} | xclip -selection clipboard; "
-      + "else echo 'Clipboard tool not found (need wl-copy or xclip)' >&2; false; fi "
-      + "&& echo 'Copied ${workflow.suffix} prompt to clipboard'";
-  }) workflowPromptSpecs;
+  workflowClipboardAliasSpecs = map (workflow:
+    let
+      flatPrompt = flattenForAlias workflow.prompt;
+    in
+    {
+      alias = "cp${workflow.suffix}";
+      command =
+        "if command -v wl-copy >/dev/null 2>&1; then printf '%s' ${lib.escapeShellArg flatPrompt} | wl-copy; "
+        + "elif command -v xclip >/dev/null 2>&1; then printf '%s' ${lib.escapeShellArg flatPrompt} | xclip -selection clipboard; "
+        + "else echo 'Clipboard tool not found (need wl-copy or xclip)' >&2; false; fi "
+        + "&& echo 'Copied ${workflow.suffix} prompt to clipboard'";
+    }
+  ) workflowPromptSpecs;
 
   aiAliases = mkAliasAttrs (
     (map (

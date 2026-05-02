@@ -20,14 +20,17 @@ let
   inherit (settingsBuilders) claudeSettings;
 
   opencodeProfiles = import ../helpers/_opencode-profiles.nix { inherit config; };
+  omoProfiles = import ../helpers/_omo-profiles.nix { inherit config; };
   opencodeConfigPaths = map opencodeProfiles.configPath opencodeProfiles.names;
-  opencodeConfigPathList = lib.concatMapStringsSep " " lib.escapeShellArg opencodeConfigPaths;
+  omoConfigPaths = map omoProfiles.configPath omoProfiles.names;
+  opencodeConfigPathList = lib.concatMapStringsSep " " lib.escapeShellArg (opencodeConfigPaths ++ omoConfigPaths);
 
   zaiFilters = import ../helpers/_zai-filters.nix { inherit lib constants; };
   inherit (zaiFilters)
     opencodeZaiFilter
     claudeZaiFilter
     geminiZaiFilter
+    ompZaiFilter
     forgeZaiFilter
     ;
   githubPlaceholderFilter = ''
@@ -53,6 +56,7 @@ let
       opencodeZaiFilter
       claudeZaiFilter
       geminiZaiFilter
+      ompZaiFilter
       forgeZaiFilter
       githubPlaceholderFilter
       openrouterPlaceholderFilter
@@ -89,7 +93,7 @@ let
       config
       ;
   };
-  opencodeProfileNames = opencodeProfiles.names;
+  opencodeProfileNames = opencodeProfiles.names ++ omoProfiles.names;
 
   pluginInstalls = import ./plugins.nix {
     inherit
@@ -97,15 +101,16 @@ let
       pkgs
       lib
       opencodeProfileNames
+      config
       ;
   };
   skillInstallation = import ./skills.nix {
     inherit
       cfg
-      config
       lib
       pkgs
       toJSON
+      opencodeProfileNames
       ;
   };
 in

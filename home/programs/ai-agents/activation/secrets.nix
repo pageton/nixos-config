@@ -11,6 +11,7 @@
   claudeZaiFilter,
   geminiZaiFilter,
   forgeZaiFilter,
+  ompZaiFilter,
   githubPlaceholderFilter,
   openrouterPlaceholderFilter,
   context7PlaceholderFilter,
@@ -24,8 +25,13 @@ let
 
   piProfiles = import ../helpers/_pi-profiles.nix { inherit config; };
   piModelsPathList = lib.concatMapStringsSep " " (
-    name: "$HOME/.omp/profiles/${name}/models.yml"
+    name: "$HOME/.pi/profiles/${name}/models.yml"
   ) piProfiles.names;
+
+  ompProfiles = import ../helpers/_omp-profiles.nix { inherit config; };
+  ompModelsPathList = lib.concatMapStringsSep " " (
+    name: "$HOME/.omp/profiles/${name}/models.yml"
+  ) ompProfiles.names;
 
   zaiApiRoot = constants.services.zai.apiRoot;
 in
@@ -117,6 +123,13 @@ lib.hm.dag.entryAfter
           '') zaiProfileNames
         )}
 
+
+        # OMP agent MCP config
+        if [[ -f "$HOME/.omp/agent/mcp.json" ]]; then
+          patch_json_file "$HOME/.omp/agent/mcp.json" key "$ZAI_KEY" ${lib.escapeShellArg ompZaiFilter}
+          echo "✓ Patched .omp/agent/mcp.json with Z.AI API key + remote MCPs"
+        fi
+
         unset ZAI_KEY
       else
         echo "⚠ ${cfg.secrets.zaiApiKeyFile} not found - run 'just nixos' first"
@@ -150,6 +163,12 @@ lib.hm.dag.entryAfter
           "__CONTEXT7_API_KEY_PLACEHOLDER__" \
           "" \
           "Context7 API key"
+        # OMP agent MCP config
+        if [[ -f "$HOME/.omp/agent/mcp.json" ]]; then
+          patch_json_file "$HOME/.omp/agent/mcp.json" key "$CONTEXT7_KEY" ${lib.escapeShellArg context7PlaceholderFilter}
+          echo "✓ Patched .omp/agent/mcp.json with Context7 API key"
+        fi
+
         unset CONTEXT7_KEY
       else
         echo "⚠ ${cfg.secrets.context7ApiKeyFile} not found - run 'just nixos' first"
@@ -167,21 +186,25 @@ lib.hm.dag.entryAfter
         "__GITHUB_TOKEN_PLACEHOLDER__" \
         "" \
         "GitHub token from gh CLI"
+
+      # OMP agent MCP config
+      if [[ -f "$HOME/.omp/agent/mcp.json" ]]; then
+        patch_json_file "$HOME/.omp/agent/mcp.json" token "$GH_TOKEN" ${lib.escapeShellArg githubPlaceholderFilter}
+        echo "✓ Patched .omp/agent/mcp.json with GitHub token"
+      fi
+
       unset GH_TOKEN
     else
       echo "⚠ gh CLI not authenticated - GitHub MCP will not work (run 'gh auth login')"
     fi
 
-    # --- Oh My Pi Profile Secret Patching ---
-    # Oh My Pi models.yml contains placeholders for API keys that must be
-    # resolved at activation time.
-    if [[ -n "${lib.optionalString cfg.pi.enable "true"}" ]]; then
-      # Patch OpenRouter API key into omp models.yml files
+    # --- Oh My Pi (omp) Profile Secret Patching ---
+    if [[ -n "${lib.optionalString cfg.omp.enable "true"}" ]]; then
       if [[ -n "${
         cfg.secrets.openrouterApiKeyFile or ""
       }" ]] && [[ -f "${cfg.secrets.openrouterApiKeyFile}" ]]; then
         OPENROUTER_KEY="$(cat "${cfg.secrets.openrouterApiKeyFile}")"
-        for OMP_MODELS in ${piModelsPathList}; do
+        for OMP_MODELS in ${ompModelsPathList}; do
           if [[ -f "$OMP_MODELS" ]]; then
             ${pkgs.gnused}/bin/sed -i "s|__OPENROUTER_API_KEY_PLACEHOLDER__|$OPENROUTER_KEY|g" "$OMP_MODELS"
             echo "✓ Patched $(dirname "$OMP_MODELS" | xargs basename)/models.yml with OpenRouter key"
@@ -190,18 +213,33 @@ lib.hm.dag.entryAfter
         unset OPENROUTER_KEY
       fi
 
-      # Patch MiniMax API key into omp models.yml files
       if [[ -n "${
         cfg.secrets.minimaxApiKeyFile or ""
       }" ]] && [[ -f "${cfg.secrets.minimaxApiKeyFile}" ]]; then
         MINIMAX_KEY="$(cat "${cfg.secrets.minimaxApiKeyFile}")"
-        for OMP_MODELS in ${piModelsPathList}; do
+        for OMP_MODELS in ${ompModelsPathList}; do
           if [[ -f "$OMP_MODELS" ]]; then
             ${pkgs.gnused}/bin/sed -i "s|__MINIMAX_API_KEY_PLACEHOLDER__|$MINIMAX_KEY|g" "$OMP_MODELS"
             echo "✓ Patched $(dirname "$OMP_MODELS" | xargs basename)/models.yml with MiniMax key"
           fi
         done
         unset MINIMAX_KEY
+      fi
+    fi
+
+    # --- Pi (badlogic/pi-mono) Profile Secret Patching ---
+    if [[ -n "${lib.optionalString cfg.pi.enable "true"}" ]]; then
+      if [[ -n "${
+        cfg.secrets.openrouterApiKeyFile or ""
+      }" ]] && [[ -f "${cfg.secrets.openrouterApiKeyFile}" ]]; then
+        OPENROUTER_KEY="$(cat "${cfg.secrets.openrouterApiKeyFile}")"
+        for PI_MODELS in ${piModelsPathList}; do
+          if [[ -f "$PI_MODELS" ]]; then
+            ${pkgs.gnused}/bin/sed -i "s|__OPENROUTER_API_KEY_PLACEHOLDER__|$OPENROUTER_KEY|g" "$PI_MODELS"
+            echo "✓ Patched $(dirname "$PI_MODELS" | xargs basename)/models.yml with OpenRouter key"
+          fi
+        done
+        unset OPENROUTER_KEY
       fi
     fi
 

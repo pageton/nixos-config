@@ -3,6 +3,7 @@
 { config, constants, ... }:
 
 let
+  models = import ../../helpers/_models.nix;
   mkModelAlias = model: generateContentConfig: {
     modelConfig = { inherit model generateContentConfig; };
   };
@@ -13,7 +14,7 @@ in
 {
   programs.aiAgents.gemini = {
     enable = true;
-    theme = "Catppuccin";
+    theme = "Gruvbox";
     sandboxMode = "none";
 
     extraSettings = {
@@ -74,14 +75,23 @@ in
       privacy = {
         usageStatisticsEnabled = false;
       };
+      # --- Telemetry (local file logging) ---
+      telemetry = {
+        enabled = true;
+        target = "local";
+        outfile = "${config.home.homeDirectory}/.local/share/ai-agents/logs/gemini-telemetry.jsonl";
+      };
       # --- UI and Theming ---
       ui = {
         hideTips = true;
         hideBanner = true;
         showLineNumbers = true;
+        showCitations = true;
+        compactToolOutput = true;
+        showModelInfoInChat = true;
         customThemes = {
-          Catppuccin = {
-            name = "Catppuccin";
+          Gruvbox = {
+            name = "Gruvbox";
             type = "custom";
             background = {
               primary = constants.color.bg_soft;
@@ -122,13 +132,17 @@ in
       experimental = {
         enableAgents = true;
         worktrees = true;
+        contextManagement = {
+          distillation = true;
+          outputMasking = true;
+        };
       };
       skills.enabled = true;
       agents = {
         overrides = {
           codebase_investigator = {
             enabled = true;
-            modelConfig.model = "gemini-3-pro-preview";
+            modelConfig.model = models.gemini-pro;
             runConfig.maxTurns = 50;
           };
         };
@@ -137,29 +151,34 @@ in
       modelConfigs = {
         customAliases = {
           auto = mkModelAlias "auto" { };
-          fast = mkModelAlias "gemini-2.5-flash-lite" {
+          fast = mkModelAlias models.gemini-flash-lite {
             temperature = 0;
             maxOutputTokens = 8192;
           };
-          flash = mkModelAlias "gemini-2.5-flash" {
+          flash = mkModelAlias models.gemini-flash {
             temperature = 0;
             maxOutputTokens = 16384;
           };
-          deep = mkThinkingAlias "gemini-3-pro-preview" "HIGH" { };
-          code = mkThinkingAlias "gemini-3-pro-preview" "HIGH" { maxOutputTokens = 65536; };
+          deep = mkThinkingAlias models.gemini-pro "HIGH" { };
+          code = mkThinkingAlias models.gemini-pro "HIGH" { maxOutputTokens = 65536; };
         };
       };
       # --- Tool Settings ---
       tools = {
         sandbox = false;
         sandboxNetworkAccess = false;
-        shell.showColor = true;
         useRipgrep = true;
+        truncateToolOutputThreshold = 50000;
+        shell = {
+          showColor = true;
+          enableShellOutputEfficiency = true;
+        };
       };
       # --- Model Defaults And Compression ---
       model = {
-        name = "gemini-3-pro-preview";
-        compressionThreshold = 0.75; # Wait until 75% full before compressing (was 0.5)
+        name = models.gemini-pro;
+        compressionThreshold = 0.80;
+        summarizeToolOutput = true;
       };
       # --- Hooks ---
       hooks = {

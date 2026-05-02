@@ -38,6 +38,17 @@ Seven OpenCode profiles are defined in `helpers/_opencode-profiles.nix`:
 | `opencode-sonnet`     | Anthropic Claude Sonnet 4.6                       |
 | `opencode-zen`        | MiniMax M2.5 Free                                 |
 
+Six Oh My OpenAgent (omo) profiles are defined in `helpers/_omo-profiles.nix`. Omo profiles add the `oh-my-openagent` plugin to OpenCode, enabling Sisyphus orchestration, discipline agents, and ultrawork. The `oco` alias prefix = opencode + omo:
+
+| Profile Directory        | Provider/Model              | Alias    |
+| ------------------------ | --------------------------- | -------- |
+| `opencode-omo-glm`       | Z.AI GLM-5.1               | `ocoglm` |
+| `opencode-omo-gemini`    | Google Gemini 3 Pro Preview| `ocogem` |
+| `opencode-omo-gpt`       | OpenAI GPT-5.4             | `ocogpt` |
+| `opencode-omo-openrouter`| OpenRouter Hunter Alpha    | `ocoor`  |
+| `opencode-omo-sonnet`    | Anthropic Claude Sonnet 4.6| `ocos`   |
+| `opencode-omo-zen`       | MiniMax M2.5 Free          | `ocozen` |
+
 Eight Oh My Pi (omp) profiles are defined in `helpers/_pi-profiles.nix`. OMP uses `PI_CODING_AGENT_DIR` env var for profile switching:
 
 | Profile Directory       | Provider/Model                                    | Alias  |
@@ -66,6 +77,7 @@ ai-agents/
 │   ├── _settings-builders.nix   # Per-agent settings + profile variant overrides
 │   ├── _mcp-transforms.nix      # Unified MCP abstraction (shared → agent-specific schemas)
 │   ├── _opencode-profiles.nix   # OpenCode profile names and config paths
+│   ├── _omo-profiles.nix        # Six Oh My OpenAgent profile definitions (oco prefix)
 │   ├── _aliases.nix             # Zsh alias generation for agent launchers/workflows
 │   ├── _destructive-rules.nix   # Destructive action allow/deny rules per agent
 │   ├── _file-templates.nix      # Config file templates
@@ -73,7 +85,6 @@ ai-agents/
 │   ├── _workflow-prompts.nix    # Workflow prompt definitions
 │   ├── _zai-services.nix        # Z.AI MCP service registry
 │   ├── _zai-filters.nix         # Z.AI MCP jq filter generation
-│   ├── _android-re-launchers.nix         # Android RE emulator/script launchers
 │   ├── _mk-cli-autoupdate-script.nix     # CLI autoupdate script builder
 │   ├── _services-shell-aliases.nix       # Shell alias definitions for agent services
 │   ├── _services-systemd.nix             # Systemd user service/timer definitions

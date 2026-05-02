@@ -1,9 +1,19 @@
 # MCP server definitions and logging configuration.
 
-{ config, constants, ... }:
+{
+  config,
+  constants,
+  pkgs,
+  ...
+}:
 
 let
   zai = import ../helpers/_zai-services.nix { inherit constants; };
+
+  # jpype (used by pyghidra) needs libstdc++.so.6 at runtime.
+  # On NixOS the FHS path is not available to uvx, so we inject
+  # LD_LIBRARY_PATH from the system gcc lib output.
+  gccLib = pkgs.stdenv.cc.cc.lib;
 
   mkZaiRemoteMcp = path: {
     enable = true;
@@ -52,6 +62,16 @@ in
           "chrome-devtools-mcp@latest"
           "--autoConnect"
         ];
+      };
+
+      pyghidra-mcp = {
+        enable = true;
+        command = "uvx";
+        args = [ "pyghidra-mcp" ];
+        env = {
+          GHIDRA_INSTALL_DIR = "${pkgs.ghidra-bin}/lib/ghidra";
+          LD_LIBRARY_PATH = "${gccLib}/lib";
+        };
       };
 
     };

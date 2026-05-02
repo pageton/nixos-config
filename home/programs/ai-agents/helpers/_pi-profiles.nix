@@ -1,8 +1,8 @@
-# Shared Oh My Pi (omp) profile definitions: single source of truth for profile names
-# and their provider/model overrides. Adding a new profile only requires editing this file.
+# Pi (badlogic/pi-mono) profile definitions: single source of truth for profile names
+# and their provider/model overrides.
 #
-# Oh My Pi uses PI_CODING_AGENT_DIR to switch config directories, each with its own
-# config.yml and models.yml. This mirrors the OPENCODE_CONFIG_DIR pattern.
+# Pi uses PI_CODING_AGENT_DIR to switch config directories, each with its own
+# config.yml and models.yml.
 
 { config }:
 
@@ -10,63 +10,63 @@ let
   models = import ./_models.nix;
   profiles = [
     {
-      name = "omp";
+      name = "pi";
       provider = "zai";
       model = models.glm-raw;
-      alias = "omp";
+      alias = "pi";
       contextWindow = 204800;
       thinkingLevel = "high";
       zaiKey = true;
     }
     {
-      name = "omp-sonnet";
+      name = "pi-sonnet";
       provider = "anthropic";
       model = models.claude-sonnet-raw;
-      alias = "omps";
+      alias = "pis";
       contextWindow = 200000;
     }
     {
-      name = "omp-opus";
+      name = "pi-opus";
       provider = "anthropic";
       model = models.claude-opus-raw;
-      alias = "ompop";
+      alias = "piop";
       contextWindow = 200000;
     }
     {
-      name = "omp-glm";
+      name = "pi-glm";
       provider = "zai";
       model = models.glm-raw;
-      alias = "ompglm";
+      alias = "piglm";
       contextWindow = 204800;
       thinkingLevel = "high";
       zaiKey = true;
     }
     {
-      name = "omp-gemini";
+      name = "pi-gemini";
       provider = "google";
       model = models.gemini-raw;
-      alias = "ompgem";
+      alias = "pigem";
       contextWindow = 1048576;
     }
     {
-      name = "omp-gpt";
+      name = "pi-gpt";
       provider = "openai";
       model = models.gpt-default-raw;
-      alias = "ompgpt";
+      alias = "pigpt";
       contextWindow = 128000;
     }
     {
-      name = "omp-openrouter";
+      name = "pi-openrouter";
       provider = "openrouter";
       model = models.openrouter-raw;
-      alias = "ompor";
+      alias = "pior";
       contextWindow = 200000;
     }
     {
-      name = "omp-zen";
-      provider = "opencode-zen";
-      model = models.zen-raw;
-      alias = "ompzen";
+      name = "pi-zen";
+      provider = "minimax";
+      model = models.zen-pi;
+      alias = "pizen";
       contextWindow = 1048576;
     }
   ];
@@ -75,10 +75,7 @@ let
   zaiProfileNames = map (p: p.name) zaiProfiles;
 
   names = map (p: p.name) profiles;
-  # Oh My Pi profiles live under ~/.omp/profiles/<name>/
-  # Each gets its own config.yml and models.yml.
-  # The PI_CODING_AGENT_DIR env var switches between them.
-  basePath = name: "${config.home.homeDirectory}/.omp/profiles/${name}";
+  basePath = name: "${config.home.homeDirectory}/.pi/profiles/${name}";
 in
 {
   inherit

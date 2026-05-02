@@ -116,7 +116,6 @@ in
       ];
     };
 
-    omitSkills = mkStrListOption [ ] "Installed skill names to remove after sync (global scope)";
 
     agencyAgents = {
       enable = mkBoolOption false "Install msitarzewski/agency-agents for Claude and OpenCode";
@@ -182,6 +181,48 @@ in
       description = "Shared MCP server definitions used by all agents";
     };
 
+    androidReMcpServers = lib.mkOption {
+      type = lib.types.attrsOf (
+        lib.types.submodule {
+          options = {
+            enable = mkBoolOption true "Enable this MCP server";
+            type = mkTypedOption (lib.types.enum [
+              "local"
+              "remote"
+            ]) "local" "Server type (local stdio or remote HTTP)";
+            command = mkStrOption "" "Command to run for local servers";
+            args = mkStrListOption [ ] "Arguments for the command";
+            url = mkNullOrStrOption null "URL for remote MCP servers";
+            headers = mkNullableOption (lib.types.attrsOf lib.types.str) null "Headers for remote MCP servers";
+            env = mkAttrsOfStrOption { } "Environment variables for the server";
+          };
+        }
+      );
+      default = { };
+      description = "MCP servers only loaded for the android-re agent (not shared globally)";
+    };
+
+    webReMcpServers = lib.mkOption {
+      type = lib.types.attrsOf (
+        lib.types.submodule {
+          options = {
+            enable = mkBoolOption true "Enable this MCP server";
+            type = mkTypedOption (lib.types.enum [
+              "local"
+              "remote"
+            ]) "local" "Server type (local stdio or remote HTTP)";
+            command = mkStrOption "" "Command to run for local servers";
+            args = mkStrListOption [ ] "Arguments for the command";
+            url = mkNullOrStrOption null "URL for remote MCP servers";
+            headers = mkNullableOption (lib.types.attrsOf lib.types.str) null "Headers for remote MCP servers";
+            env = mkAttrsOfStrOption { } "Environment variables for the server";
+          };
+        }
+      );
+      default = { };
+      description = "MCP servers only loaded for the web-re agent.";
+    };
+
     logging = {
       enable = lib.mkEnableOption "centralized logging for AI agents";
 
@@ -211,7 +252,7 @@ in
     opencode = {
       enable = lib.mkEnableOption "OpenCode configuration";
 
-      model = mkStrOption "anthropic/claude-opus-4-6" "Default model for OpenCode";
+      model = mkStrOption "opencode/claude-opus-4-7" "Default model for OpenCode";
       plugins = mkStrListOption [ ] "OpenCode plugins to enable";
       providers = mkAttrsOption { } "Provider configurations for OpenCode";
       permission =
@@ -236,7 +277,7 @@ in
     codex = {
       enable = lib.mkEnableOption "Codex CLI configuration";
 
-      model = mkStrOption "gpt-5.5" "Default model for Codex";
+      model = mkStrOption "openai/gpt-5.5" "Default model for Codex";
       sandboxMode = mkStrOption "workspace-write" "Default sandbox mode for Codex";
       # Active only at top-level codex settings.
       enableSearch = mkBoolOption false "Enable native Codex web search by default";
@@ -305,8 +346,8 @@ in
       extraSettings = mkAttrsOption { } "Additional Gemini CLI settings";
     };
 
-    # === Oh My Pi Options ===
-    pi = {
+    # === Oh My Pi (omp) Options ===
+    omp = {
       enable = lib.mkEnableOption "Oh My Pi coding agent (@oh-my-pi/pi-coding-agent) configuration";
 
       model = mkStrOption "claude-sonnet-4-20250514" "Default model ID for omp";
@@ -326,6 +367,10 @@ in
       skills = mkStrListOption [ ] "Skill file paths or directories to load";
       packages = mkStrListOption [ ] "npm/git packages to load resources from";
 
+      defaultModel = mkStrOption "zai/glm-5.1" "Default model for oh-my-pi";
+      planModel = mkStrOption "zai/glm-5.1" "Model for planning tasks";
+      smolModel = mkStrOption "zai/glm-5-turbo" "Lightweight model for simple tasks";
+
       compaction = mkAttrsOption {
         enabled = true;
         reserveTokens = 16384;
@@ -340,13 +385,47 @@ in
 
       enabledModels = mkStrListOption [ ] "Model patterns for Ctrl+P cycling";
 
-
       gitCheckpoint = {
         enable = mkBoolOption true "Install git checkpoint extension (stash per turn for easy restoration)";
       };
 
-
       extraSettings = mkAttrsOption { } "Additional omp settings overrides";
+    };
+
+    # === Pi (badlogic/pi-mono) Options ===
+    pi = {
+      enable = lib.mkEnableOption "Pi coding agent (@mariozechner/pi-coding-agent) configuration";
+
+      model = mkStrOption "claude-sonnet-4-20250514" "Default model ID for pi";
+      provider = mkStrOption "anthropic" "Default provider for pi";
+      thinkingLevel = mkTypedOption (lib.types.enum [
+        "off"
+        "minimal"
+        "low"
+        "medium"
+        "high"
+        "xhigh"
+      ]) "medium" "Default thinking level";
+      theme = mkStrOption "dark" "Pi TUI theme";
+      sessionDir = mkStrOption "" "Custom session directory (empty = pi default)";
+
+      skills = mkStrListOption [ ] "Skill file paths or directories to load";
+
+      compaction = mkAttrsOption {
+        enabled = true;
+        reserveTokens = 16384;
+        keepRecentTokens = 20000;
+      } "Compaction settings";
+
+      retry = mkAttrsOption {
+        enabled = true;
+        maxRetries = 3;
+        baseDelayMs = 2000;
+      } "Retry settings";
+
+      enabledModels = mkStrListOption [ ] "Model patterns for Ctrl+P cycling";
+
+      extraSettings = mkAttrsOption { } "Additional pi settings overrides";
     };
   };
 }

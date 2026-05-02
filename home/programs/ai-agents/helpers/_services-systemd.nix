@@ -3,18 +3,12 @@
   config,
   lib,
   pkgs,
+  hmSystemdHelpers,
   logCleanupCommand,
   mkCliAutoupdateScript,
 }:
 let
-  mkWeeklyTimer = description: {
-    Unit.Description = description;
-    Timer = {
-      OnCalendar = "weekly";
-      Persistent = true;
-    };
-    Install.WantedBy = [ "timers.target" ];
-  };
+  inherit (hmSystemdHelpers) mkWeeklyTimer;
   autoUpdateTools = [
     {
       binary = "claude";
@@ -32,9 +26,14 @@ let
       label = "Gemini CLI";
     }
     {
-      binary = "pi";
+      binary = "omp";
       npmPackage = "@oh-my-pi/pi-coding-agent";
       label = "Oh My Pi CLI";
+    }
+    {
+      binary = "pi";
+      npmPackage = "@mariozechner/pi-coding-agent";
+      label = "Pi CLI";
     }
   ];
 
@@ -71,44 +70,44 @@ lib.mkMerge [
   (lib.mkIf cfg.logging.enable {
     tmpfiles.rules = [ "d ${cfg.logging.directory} 0755 - - -" ];
 
-    services =
-      {
-        ai-agent-log-cleanup = {
-          Unit.Description = "Clean up old AI agent logs";
-          Service = {
-            Type = "oneshot";
-            ExecStart = "${pkgs.writeShellScript "cleanup" logCleanupCommand}";
-          };
+    services = {
+      ai-agent-log-cleanup = {
+        Unit.Description = "Clean up old AI agent logs";
+        Service = {
+          Type = "oneshot";
+          ExecStart = "${pkgs.writeShellScript "cleanup" logCleanupCommand}";
         };
+      };
 
-        opencode-db-vacuum = {
-          Unit.Description = "Vacuum OpenCode SQLite database";
-          Service = {
-            Type = "oneshot";
-            ExecStart = "${pkgs.writeShellScript "opencode-vacuum" ''
-              DB="${config.xdg.dataHome}/opencode/opencode.db"
-              if [[ -f "$DB" ]]; then
-                ${pkgs.sqlite}/bin/sqlite3 "$DB" "VACUUM;"
-                echo "Vacuumed OpenCode database"
-              fi
-            ''}";
-          };
+      opencode-db-vacuum = {
+        Unit.Description = "Vacuum OpenCode SQLite database";
+        Service = {
+          Type = "oneshot";
+          ExecStart = "${pkgs.writeShellScript "opencode-vacuum" ''
+            DB="${config.xdg.dataHome}/opencode/opencode.db"
+            if [[ -f "$DB" ]]; then
+              ${pkgs.sqlite}/bin/sqlite3 "$DB" "VACUUM;"
+              echo "Vacuumed OpenCode database"
+            fi
+          ''}";
         };
-      }
-      // builtins.listToAttrs (
-        map (tool: lib.nameValuePair "${tool.binary}-autoupdate" (mkAutoUpdateService tool)) autoUpdateTools
-      );
+      };
+    }
+    // builtins.listToAttrs (
+      map (tool: lib.nameValuePair "${tool.binary}-autoupdate" (mkAutoUpdateService tool)) autoUpdateTools
+    );
 
-    timers =
-      {
-        ai-agent-log-cleanup = mkWeeklyTimer "Weekly AI agent log cleanup";
-        opencode-db-vacuum = mkWeeklyTimer "Weekly OpenCode database vacuum";
-      }
-      // builtins.listToAttrs (
-        map (
-          tool:
-          lib.nameValuePair "${tool.binary}-autoupdate" (mkWeeklyTimer "Weekly ${tool.label} auto-update")
-        ) autoUpdateTools
-      );
+    timers = {
+      ai-agent-log-cleanup = mkWeeklyTimer { description = "Weekly AI agent log cleanup"; };
+      opencode-db-vacuum = mkWeeklyTimer { description = "Weekly OpenCode database vacuum"; };
+    }
+    // builtins.listToAttrs (
+      map (
+        tool:
+        lib.nameValuePair "${tool.binary}-autoupdate" (mkWeeklyTimer {
+          description = "Weekly ${tool.label} auto-update";
+        })
+      ) autoUpdateTools
+    );
   })
 ]

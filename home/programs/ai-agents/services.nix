@@ -3,6 +3,7 @@
 {
   config,
   constants,
+  hmSystemdHelpers,
   inputs,
   lib,
   pkgs,
@@ -24,7 +25,22 @@ let
   agentsSearch = pkgs.writeShellScriptBin "agents-search" ''
     exec ${scriptsDir}/ai/agents-search.sh "$@"
   '';
-  androidReLaunchers = import ./helpers/_android-re-launchers.nix {
+  findingsAndroid = pkgs.writeShellScriptBin "findings-android" ''
+    exec ${scriptsDir}/ai/android-re/findings.sh "$@"
+  '';
+  findingsWeb = pkgs.writeShellScriptBin "findings-web" ''
+    exec ${scriptsDir}/ai/web-re/findings.sh "$@"
+  '';
+  generateTotp = pkgs.writeShellScriptBin "generate-totp" ''
+    exec ${scriptsDir}/ai/web-re/generate-totp.sh "$@"
+  '';
+  reDoctor = pkgs.writeShellScriptBin "re-doctor" ''
+    exec ${scriptsDir}/ai/android-re/re-doctor.sh "$@"
+  '';
+  webReDoctor = pkgs.writeShellScriptBin "web-re-doctor" ''
+    exec ${scriptsDir}/ai/web-re/web-re-doctor.sh "$@"
+  '';
+  androidReLaunchers = import ./android-re/_launchers.nix {
     inherit
       config
       constants
@@ -32,6 +48,23 @@ let
       pkgs
       ;
   };
+
+  webReLaunchers = import ./web-re/_launchers.nix {
+    inherit
+      lib
+      pkgs
+      scriptsDir
+      ;
+  };
+
+  omoProfiles = import ./helpers/_omo-profiles.nix { inherit config; };
+  omoWrappers = map (profile:
+    pkgs.writeShellScriptBin (builtins.replaceStrings ["-"] ["_"] profile.name) ''
+      OPENCODE_CONFIG_DIR="${config.xdg.configHome}/${profile.name}" \
+        exec opencode --log-level WARN "$@"
+    ''
+  ) omoProfiles.profiles;
+
 
   aliasLib = import ./helpers/_aliases.nix {
     inherit
@@ -59,6 +92,7 @@ let
       config
       lib
       pkgs
+      hmSystemdHelpers
       logCleanupCommand
       mkCliAutoupdateScript
       ;
@@ -73,9 +107,16 @@ in
       aiAgentLauncher
       aiAgentInventory
       pkgs.bubblewrap
+      findingsAndroid
+      findingsWeb
+      generateTotp
+      reDoctor
+      webReDoctor
     ]
     ++ (lib.optional cfg.forge.enable forgePkg)
     ++ androidReLaunchers
+    ++ webReLaunchers
+    ++ omoWrappers
     ++ (lib.optional cfg.logging.enable (
       pkgs.writeShellScriptBin "ai-agent-log-cleanup" ''
         ${logCleanupCommand}

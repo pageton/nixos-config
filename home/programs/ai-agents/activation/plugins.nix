@@ -7,6 +7,7 @@
   pkgs,
   lib,
   opencodeProfileNames,
+  config,
 }:
 
 let
@@ -22,6 +23,7 @@ let
       ;
   };
   agencyAgents = import ./_plugin-agency-agents.nix { inherit cfg pkgs lib; };
+  omoPlugin = import ./_plugin-oh-my-openagent.nix { inherit config lib; };
   everythingClaudeCode = import ./_plugin-everything-claude-code.nix {
     inherit
       cfg
@@ -42,3 +44,4 @@ impeccable
 // everythingClaudeCode
 // cleanupAgencyAgents
 // cleanupEverythingClaudeCode
+// omoPlugin

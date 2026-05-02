@@ -11,7 +11,8 @@ let
   formatterRegistry = import ./_formatters.nix;
   opencodeProfiles = import ./_opencode-profiles.nix { inherit config; };
   forgeProfiles = import ./_forge-profiles.nix { inherit config; };
-  inherit (mcpTransforms) opencodeMcpServers geminiMcpServers forgeMcpServers;
+  omoProfiles = import ./_omo-profiles.nix { inherit config; };
+  inherit (mcpTransforms) opencodeMcpServers geminiMcpServers forgeMcpServers ompMcpServers opencodeAndroidReMcpServers opencodeWebReMcpServers;
   opencodeFormatterSettings = builtins.listToAttrs (
     map (formatter: {
       name = formatter.tool;
@@ -51,6 +52,16 @@ let
     provider = cfg.opencode.providers;
     # Disable snapshot system to prevent tmp_pack_* file leaks and disk bloat (#14811)
     snapshot = false;
+    # Suppress INFO permission spam
+    logLevel = "WARN";
+    # Auto-compact context
+    compaction = {
+      auto = true;
+      prune = true;
+      reserved = 10000;
+      tail_turns = 3;
+      preserve_recent_tokens = 8000;
+    };
     watcher.ignore = [
       "node_modules/**"
       "dist/**"
@@ -86,16 +97,88 @@ let
   })
   // (lib.optionalAttrs (cfg.gemini.extraSettings != { }) cfg.gemini.extraSettings);
 
+  ompSettings = {
+    mcpServers = ompMcpServers;
+  }
+  // (lib.optionalAttrs (cfg.omp.extraSettings != { }) cfg.omp.extraSettings);
+
+  # Override agent-level model fields to match the profile's top-level model.
+  # OpenCode's deep merge preserves agent-level models from the global config even when
+  # OPENCODE_CONFIG_DIR loads a profile config without them, so we must explicitly set
+  # each agent's model to the profile model to override the defaults at runtime.
+  overrideAgentModels =
+    model: agents:
+    if agents == null || agents == { } then
+      agents
+    else
+      builtins.mapAttrs (_name: agent: agent // { inherit model; }) agents;
+
   # Derived from _opencode-profiles.nix — single source of truth for profile→model mapping.
   opencodeSettingsByProfile = builtins.listToAttrs (
     map (
       { name, model, ... }:
       {
         inherit name;
-        value = if model == null then opencodeSettings else opencodeSettings // { inherit model; };
+        value =
+          if model == null then
+            opencodeSettings
+          else
+            opencodeSettings
+            // {
+              inherit model;
+            }
+            // (lib.optionalAttrs (opencodeSettings ? agent) {
+              agent = overrideAgentModels model opencodeSettings.agent;
+            });
       }
     ) opencodeProfiles.profiles
   );
+
+  # Oh My OpenAgent (omo) profile settings.
+  # Each omo profile gets opencode.json with the oh-my-openagent plugin, plus
+  # a separate oh-my-openagent.json with sisyphus model override.
+  omoOpencodeSettingsByProfile = builtins.listToAttrs (
+    map (
+      { name, model, ... }:
+      {
+        inherit name;
+        value =
+          opencodeSettings
+          // {
+            inherit model;
+            plugin = (opencodeSettings.plugin or [ ]) ++ [ "oh-my-openagent@latest" ];
+            default_agent = "sisyphus";
+          }
+          // (lib.optionalAttrs (opencodeSettings ? agent) {
+            agent = overrideAgentModels model opencodeSettings.agent;
+          });
+      }
+    ) omoProfiles.profiles
+  );
+
+  mkOmoConfig = model: {
+    "$schema" = "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json";
+    agents = {
+      sisyphus = { inherit model; };
+    };
+    experimental = {
+      aggressive_truncation = true;
+      task_system = true;
+    };
+  };
+
+  omoConfigsByProfile = builtins.listToAttrs (
+    map (
+      { name, model, ... }:
+      {
+        inherit name;
+        value = mkOmoConfig model;
+      }
+    ) omoProfiles.profiles
+  );
+
+
+
 
   # Forge TOML config generation per profile.
   # Forge uses TOML with [session] provider_id/model_id for model selection.
@@ -167,7 +250,12 @@ in
     claudeSettings
     opencodeSettings
     geminiSettings
+    ompSettings
     opencodeSettingsByProfile
+    omoOpencodeSettingsByProfile
+    omoConfigsByProfile
+    opencodeAndroidReMcpServers
+    opencodeWebReMcpServers
     forgeTomlByProfile
     forgeMcpJson
     ;

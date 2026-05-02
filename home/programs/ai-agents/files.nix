@@ -21,7 +21,12 @@ let
   settingsBuilders = import ./helpers/_settings-builders.nix { inherit cfg config lib; };
   inherit (settingsBuilders)
     geminiSettings
+    ompSettings
     opencodeSettingsByProfile
+    omoOpencodeSettingsByProfile
+    omoConfigsByProfile
+    opencodeAndroidReMcpServers
+    opencodeWebReMcpServers
     forgeTomlByProfile
     forgeMcpJson
     ;
@@ -48,6 +53,37 @@ let
       ]) opencodeProfileNames
     )
   );
+
+  omoProfiles = import ./helpers/_omo-profiles.nix { inherit config; };
+  omoConfigFiles = builtins.listToAttrs (
+    lib.flatten (
+      map (name: [
+        {
+          name = "${name}/opencode.json";
+          value = {
+            text = toJSON omoOpencodeSettingsByProfile.${name};
+            force = true;
+          };
+        }
+        {
+          name = "${name}/oh-my-openagent.json";
+          value = {
+            text = toJSON omoConfigsByProfile.${name};
+            force = true;
+          };
+        }
+        {
+          name = "${name}/tui.json";
+          value = {
+            text = toJSON { theme = "catppuccin-macchiato"; };
+            force = true;
+          };
+        }
+      ]) omoProfiles.names
+    )
+  );
+
+
 
   opencodeImpeccableCommandFiles =
     if cfg.impeccable.enable then
@@ -113,12 +149,18 @@ let
     );
 
   # Oh My Pi (omp) profile config files: config.yml, models.yml per profile.
-  # Auth is managed via agent.db (SQLite) — no auth.json needed.
-  piProfiles = import ./helpers/_pi-profiles.nix { inherit config; };
-  piSettingsBuilders = import ./helpers/_pi-settings-builder.nix { inherit cfg config lib pkgs; };
-  inherit (piSettingsBuilders) piConfigsByProfile piModelsByProfile;
+  ompProfiles = import ./helpers/_omp-profiles.nix { inherit config; };
+  ompSettingsBuilders = import ./helpers/_omp-settings-builder.nix {
+    inherit
+      cfg
+      config
+      lib
+      pkgs
+      ;
+  };
+  inherit (ompSettingsBuilders) ompConfigsByProfile ompModelsByProfile;
 
-  piProfileConfigFiles = builtins.listToAttrs (
+  ompProfileConfigFiles = builtins.listToAttrs (
     lib.flatten (
       map (
         profile:
@@ -126,7 +168,100 @@ let
           profileDir = ".omp/profiles/${profile.name}";
         in
         [
-          # config.yml — model, thinking, compaction, retry, resource paths
+          {
+            name = "${profileDir}/config.yml";
+            value = {
+              text = ompConfigsByProfile.${profile.name};
+              force = true;
+            };
+          }
+        ]
+        ++ (lib.optional (ompModelsByProfile.${profile.name} != "") {
+          name = "${profileDir}/models.yml";
+          value = {
+            text = ompModelsByProfile.${profile.name};
+            force = true;
+          };
+        })
+        ++ (lib.optional (cfg.globalInstructions != "") {
+          name = "${profileDir}/AGENTS.md";
+          value = {
+            text = cfg.globalInstructions;
+            force = true;
+          };
+        })
+      ) ompProfiles.profiles
+    )
+  );
+
+  # Skills deployed to ~/.omp/agent/skills/.
+  ompSharedSkillFiles = builtins.listToAttrs (
+    (map (name: {
+      name = ".omp/agent/skills/${name}/SKILL.md";
+      value = {
+        source = ./helpers/pi-skills/${name}/SKILL.md;
+        force = true;
+      };
+    }) (builtins.attrNames (builtins.readDir ./helpers/pi-skills)))
+    ++ (
+      let
+        githubSkillRepos = [
+          {
+            owner = "samber";
+            repo = "cc-skills-golang";
+            rev = "main";
+          }
+        ];
+        mkGithubSkills =
+          {
+            owner,
+            repo,
+            rev,
+          }:
+          let
+            src = pkgs.fetchFromGitHub {
+              inherit owner repo rev;
+              hash = "sha256-IHHPdoPH44sHDfV7c7RVr+S/CpayTk4j/3QHEIiab0k=";
+            };
+            entries = builtins.readDir src;
+          in
+          map
+            (name: {
+              name = ".omp/agent/skills/${name}/SKILL.md";
+              value = {
+                source = "${src}/${name}/SKILL.md";
+                force = true;
+              };
+            })
+            (
+              builtins.filter (
+                name: entries.${name} == "directory" && builtins.pathExists "${src}/${name}/SKILL.md"
+              ) (builtins.attrNames entries)
+            );
+      in
+      builtins.concatLists (map mkGithubSkills githubSkillRepos)
+    )
+  );
+
+  # Pi (badlogic/pi-mono) profile config files: config.yml, models.yml per profile.
+  piProfiles = import ./helpers/_pi-profiles.nix { inherit config; };
+  piSettingsBuilders = import ./helpers/_pi-settings-builder.nix {
+    inherit
+      cfg
+      config
+      lib
+      ;
+  };
+  inherit (piSettingsBuilders) piConfigsByProfile piModelsByProfile;
+
+  piProfileConfigFiles = builtins.listToAttrs (
+    lib.flatten (
+      map (
+        profile:
+        let
+          profileDir = ".pi/profiles/${profile.name}";
+        in
+        [
           {
             name = "${profileDir}/config.yml";
             value = {
@@ -135,7 +270,6 @@ let
             };
           }
         ]
-        # models.yml — custom providers (OpenRouter, etc.) — only if non-empty
         ++ (lib.optional (piModelsByProfile.${profile.name} != "") {
           name = "${profileDir}/models.yml";
           value = {
@@ -143,7 +277,6 @@ let
             force = true;
           };
         })
-        # AGENTS.md — global instructions
         ++ (lib.optional (cfg.globalInstructions != "") {
           name = "${profileDir}/AGENTS.md";
           value = {
@@ -155,89 +288,54 @@ let
     )
   );
 
-  # Shared extension and resource files installed to ~/.omp/agent/.
-  # Available to all profiles since they share the same agent dir.
-  #
-  # OMP natively supports MCP (via mcp.json), agent switching (via /agents),
-  # and subagents (via Task tool). Only custom extensions are deployed here.
-  piSharedExtensionFiles =
-    let
-      mcpTransforms = import ./helpers/_mcp-transforms.nix { inherit cfg lib; };
-    in
-    builtins.listToAttrs (
-      # Git checkpoint — custom extension (not built into OMP).
-      lib.optional cfg.pi.gitCheckpoint.enable {
-        name = ".omp/agent/extensions/git-checkpoint.ts";
-        value = {
-          source = ./helpers/pi-extensions/git-checkpoint.ts;
-          force = true;
-        };
-      }
-      # Native MCP config — OMP discovers ~/.omp/agent/mcp.json automatically.
-      ++ lib.optional (builtins.length (builtins.attrValues mcpTransforms.sharedMcpServers) > 0) {
-        name = ".omp/agent/mcp.json";
-        value = {
-          text = toJSON { mcpServers = mcpTransforms.ompMcpServers; };
-          force = true;
-        };
-      }
-      # Agent definitions — OMP discovers ~/.omp/agent/agents/*/SKILL.md natively.
-      ++ (lib.mapAttrsToList (name: text: {
-        name = ".omp/agent/agents/${name}";
-        value = {
-          inherit text;
-          force = true;
-        };
-      }) fileTemplates.piAgents)
-      # Custom omp skills — auto-discovered from helpers/pi-skills/ directory.
-      # Each subdirectory becomes ~/.omp/agent/skills/<name>/SKILL.md.
-      ++ (map (name: {
-        name = ".omp/agent/skills/${name}/SKILL.md";
-        value = {
-          source = ./helpers/pi-skills/${name}/SKILL.md;
-          force = true;
-        };
-      }) (builtins.attrNames (builtins.readDir ./helpers/pi-skills)))
-      # GitHub-sourced skills — fetched at build time from upstream repos.
-      ++ (
-        let
-          githubSkillRepos = [
-            {
-              owner = "samber";
-              repo = "cc-skills-golang";
-              rev = "main";
-            }
-          ];
-          mkGithubSkills =
-            {
-              owner,
-              repo,
-              rev,
-            }:
-            let
-              src = pkgs.fetchFromGitHub {
-                inherit owner repo rev;
-                hash = "sha256-IHHPdoPH44sHDfV7c7RVr+S/CpayTk4j/3QHEIiab0k=";
+  # Skills deployed to ~/.pi/agent/skills/.
+  piSharedSkillFiles = builtins.listToAttrs (
+    (map (name: {
+      name = ".pi/agent/skills/${name}/SKILL.md";
+      value = {
+        source = ./helpers/pi-skills/${name}/SKILL.md;
+        force = true;
+      };
+    }) (builtins.attrNames (builtins.readDir ./helpers/pi-skills)))
+    ++ (
+      let
+        githubSkillRepos = [
+          {
+            owner = "samber";
+            repo = "cc-skills-golang";
+            rev = "main";
+          }
+        ];
+        mkGithubSkills =
+          {
+            owner,
+            repo,
+            rev,
+          }:
+          let
+            src = pkgs.fetchFromGitHub {
+              inherit owner repo rev;
+              hash = "sha256-IHHPdoPH44sHDfV7c7RVr+S/CpayTk4j/3QHEIiab0k=";
+            };
+            entries = builtins.readDir src;
+          in
+          map
+            (name: {
+              name = ".pi/agent/skills/${name}/SKILL.md";
+              value = {
+                source = "${src}/${name}/SKILL.md";
+                force = true;
               };
-              entries = builtins.readDir src;
-            in
-            map
-              (name: {
-                name = ".omp/agent/skills/${name}/SKILL.md";
-                value = {
-                  source = "${src}/${name}/SKILL.md";
-                  force = true;
-                };
-              })
-              (
-                builtins.filter (
-                  name: entries.${name} == "directory" && builtins.pathExists "${src}/${name}/SKILL.md"
-                ) (builtins.attrNames entries)
-              );
-        in
-        builtins.concatLists (map mkGithubSkills githubSkillRepos)
-      )
-    );
+            })
+            (
+              builtins.filter (
+                name: entries.${name} == "directory" && builtins.pathExists "${src}/${name}/SKILL.md"
+              ) (builtins.attrNames entries)
+            );
+      in
+      builtins.concatLists (map mkGithubSkills githubSkillRepos)
+    )
+  );
 in
 {
   config = lib.mkIf cfg.enable {
@@ -267,7 +365,7 @@ in
         };
       }
 
-      # === Gemini Files (Settings, Commands, Skills) ===
+      # === Gemini Files (Settings, Commands, Policies) ===
       (lib.mkIf cfg.gemini.enable (
         {
           ".gemini/settings.json" = {
@@ -276,18 +374,22 @@ in
           };
         }
         // (mkTextFiles ".gemini/commands" fileTemplates.geminiCommands)
-        // (mkTextFiles ".gemini/skills" fileTemplates.geminiSkills)
         // (mkTextFiles ".gemini/policies" geminiPolicies)
       ))
 
       # === Forge Profile Configs (one directory per profile) ===
       (lib.mkIf cfg.forge.enable forgeProfileConfigFiles)
 
-      # === Pi Profile Configs (settings, models, auth per profile) ===
-      (lib.mkIf cfg.pi.enable piProfileConfigFiles)
+      # === Oh My Pi (omp) Profile Configs & Skills ===
+      (lib.mkIf cfg.omp.enable (ompProfileConfigFiles // ompSharedSkillFiles // {
+        ".omp/agent/mcp.json" = {
+          text = toJSON ompSettings;
+          force = true;
+        };
+      }))
 
-      # === Pi Shared Extensions & MCP Manifest ===
-      (lib.mkIf cfg.pi.enable piSharedExtensionFiles)
+      # === Pi (badlogic/pi-mono) Profile Configs & Skills ===
+      (lib.mkIf cfg.pi.enable (piProfileConfigFiles // piSharedSkillFiles))
     ];
 
     xdg.configFile = lib.mkMerge [
@@ -298,8 +400,21 @@ in
           force = true;
         };
       })
-      # OpenCode profile configs
-      (lib.mkIf cfg.opencode.enable (opencodeConfigFiles // opencodeImpeccableCommandFiles))
+      # Android RE agent-specific MCP server fragment (merged into runtime config by launcher)
+      (lib.mkIf cfg.enable {
+        "opencode/android-re-mcp-servers.json" = {
+          text = toJSON opencodeAndroidReMcpServers;
+          force = true;
+        };
+      })
+      # Web RE agent-specific MCP server fragment (merged into runtime config by launcher)
+      (lib.mkIf cfg.enable {
+        "opencode/web-re-mcp-servers.json" = {
+          text = toJSON opencodeWebReMcpServers;
+          force = true;
+        };
+      })
+      (lib.mkIf cfg.opencode.enable (opencodeConfigFiles // opencodeImpeccableCommandFiles // omoConfigFiles))
     ];
   };
 }

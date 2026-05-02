@@ -14,7 +14,9 @@ Parent: `home-manager/modules/ai-agents/AGENTS.md`
 | `codex.nix`         | Codex CLI: model (gpt-5.5), profiles, custom agents, features                               |
 | `gemini.nix`        | Gemini CLI: theme (Gruvbox), model aliases, auto-format hooks, security, experimental flags |
 | `opencode.nix`      | OpenCode: model (claude-opus-4-6), 7 agents, 6 commands, LSP, permissions                   |
+| `omp.nix`                  | OMP CLI: model configuration                                                                |
 | `_opencode-lsp.nix` | Plain attrset (not a module): LSP server definitions for 9 languages                        |
+| `_opencode-web-re.nix`     | OpenCode Web RE agent definition (imports `../../web-re/_prompt.nix`)                       |
 
 ---
 

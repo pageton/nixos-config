@@ -1,38 +1,29 @@
 # Skill installation activation script.
 # Bootstraps skills CLI, installs configured skills with retry, manages state caching.
+# Also mirrors installed skills to all OpenCode profiles.
 
 {
   cfg,
-  config,
   lib,
   pkgs,
   toJSON,
+  opencodeProfileNames,
 }:
 
 let
   normalizedSkills = lib.unique cfg.skills;
-  normalizedOmitSkills = lib.unique cfg.omitSkills;
-  desiredSkillStateJson = toJSON {
-    skills = normalizedSkills;
-    omitSkills = normalizedOmitSkills;
-    agents = {
-      claude = cfg.claude.enable;
-      opencode = cfg.opencode.enable;
-    };
-  };
-  repoLevelRepos = builtins.filter builtins.isString normalizedSkills;
+  desiredSkillStateJson = toJSON normalizedSkills;
   # Pre-generate install commands at Nix eval time
   skillCommands = map (
     s:
     if builtins.isString s then
-      # Repo-level: skills add "owner/repo" --global --all --yes
+      # Repo-level: skills add "owner/repo" --global --yes
       ''
         processed_entries=$((processed_entries + 1))
         echo "  [$processed_entries/$configured_entries] ${s}"
         echo "  → ${s}"
-        echo "  [AI] starting install for ${s} at $(date +'%F %T')"
         total_attempts=$((total_attempts + 1))
-        if ! attempt_cmd "install ${s}" "$SKILLS_BIN" add "${s}" --global --all --yes "''${skill_agent_scope_args[@]}"; then
+        if ! attempt_cmd "install ${s}" "$SKILLS_BIN" add "${s}" --global --yes; then
           echo "❌ Failed to install ${s}"
           failed_installs=$((failed_installs + 1))
         else
@@ -40,24 +31,14 @@ let
           successful_installs=$((successful_installs + 1))
         fi
       ''
-    else if lib.elem s.repo repoLevelRepos then
-      # Skip redundant per-skill install when repo-level --all is already present.
-      ''
-        processed_entries=$((processed_entries + 1))
-        echo "  [$processed_entries/$configured_entries] ${s.repo}#${s.skill}"
-        echo "  → ${s.repo}#${s.skill}"
-        echo "  ⏭ Skipped ${s.repo}#${s.skill} (repo ${s.repo} already installed with --all)"
-        skipped_installs=$((skipped_installs + 1))
-      ''
     else
       # Individual: skills add https://github.com/owner/repo --skill name --global --yes
       ''
         processed_entries=$((processed_entries + 1))
         echo "  [$processed_entries/$configured_entries] ${s.repo}#${s.skill}"
         echo "  → ${s.repo}#${s.skill}"
-        echo "  [AI] starting install for ${s.repo}#${s.skill} at $(date +'%F %T')"
         total_attempts=$((total_attempts + 1))
-        if ! attempt_cmd "install ${s.repo}#${s.skill}" "$SKILLS_BIN" add "https://github.com/${s.repo}" --skill "${s.skill}" --global --yes "''${skill_agent_scope_args[@]}"; then
+        if ! attempt_cmd "install ${s.repo}#${s.skill}" "$SKILLS_BIN" add "https://github.com/${s.repo}" --skill "${s.skill}" --global --yes; then
           echo "❌ Failed to install ${s.repo}#${s.skill}"
           failed_installs=$((failed_installs + 1))
         else
@@ -66,17 +47,6 @@ let
         fi
       ''
   ) normalizedSkills;
-  omitCommands = map (skill: ''
-    omit_processed=$((omit_processed + 1))
-    echo "  [omit $omit_processed/$omit_total] ${skill}"
-        if ! attempt_cmd "remove omitted skill ${skill}" "$SKILLS_BIN" remove "${skill}" --global --yes "''${skill_agent_scope_args[@]}"; then
-      echo "❌ Failed to remove omitted skill ${skill}"
-      omit_failures=$((omit_failures + 1))
-      failed_installs=$((failed_installs + 1))
-    else
-      echo "✔ Removed omitted skill ${skill}"
-    fi
-  '') normalizedOmitSkills;
 in
 lib.mkIf (cfg.skills != [ ]) (
   lib.hm.dag.entryAfter [ "writeBoundary" "createJSWorkspace" ] ''
@@ -111,33 +81,9 @@ lib.mkIf (cfg.skills != [ ]) (
       exit 1
     fi
 
-    declare -a skill_agents=()
-    if [[ -d "$HOME/.claude" ]]; then
-      skill_agents+=(claude-code)
-    fi
-
-    # Do not install skills.sh packs into the shared ~/.agents/skills tree for
-    # OpenCode. OpenCode already has explicit per-profile local skills under
-    # ~/.config/opencode*/skills, and the shared tree causes massive duplicate
-    # skill discovery warnings and large log files.
-
-    declare -a skill_agent_scope_args=()
-    if [[ "''${#skill_agents[@]}" -gt 0 ]]; then
-      for skill_agent in "''${skill_agents[@]}"; do
-        skill_agent_scope_args+=(--agent "$skill_agent")
-      done
-      echo "ℹ Restricting skills install scope to detected agents: ''${skill_agents[*]}"
-    else
-      echo "ℹ No specific local agent config detected; using skills CLI default agent scope"
-    fi
-
-    detected_skill_agents_scope=""
-    if [[ "''${#skill_agents[@]}" -gt 0 ]]; then
-      detected_skill_agents_scope="''${skill_agents[*]}"
-    fi
-
     desired_skill_state_json=${lib.escapeShellArg desiredSkillStateJson}
-    desired_skill_state_hash=$(printf '%s\n%s' "$desired_skill_state_json" "$detected_skill_agents_scope" | ${pkgs.coreutils}/bin/sha256sum | cut -d' ' -f1)
+    # Include a version marker so cache invalidates when install flags change
+    desired_skill_state_hash=$(printf '%s:v3' "$desired_skill_state_json" | ${pkgs.coreutils}/bin/sha256sum | cut -d' ' -f1)
     skill_state_cache_dir="$HOME/.cache/ai-agents"
     skill_state_cache_file="$skill_state_cache_dir/skills-state.sha256"
     skill_lock_file="$HOME/.agents/.skill-lock.json"
@@ -152,6 +98,16 @@ lib.mkIf (cfg.skills != [ ]) (
     fi
 
     if [[ "$skip_skill_install" -eq 0 ]]; then
+      # Remove all existing global skills before reinstall to prevent stale accumulation
+      echo "🧹 Removing all existing global skills before reinstall..."
+      "$SKILLS_BIN" remove --global --yes 2>/dev/null || true
+      # Clean all skill storage locations (skills.sh stores in ~/.agents/skills/,
+      # symlinks into ~/.claude/skills/; OpenCode reads from both)
+      rm -rf "$HOME/.agents/skills"/* 2>/dev/null || true
+      rm -rf "$HOME/.agents/.skill-lock.json" 2>/dev/null || true
+      rm -rf "$HOME/.claude/skills"/* 2>/dev/null || true
+      echo "✓ Cleaned skill directories"
+
       attempt_cmd() {
         local label="$1"
         shift
@@ -171,25 +127,15 @@ lib.mkIf (cfg.skills != [ ]) (
       skipped_installs=0
       total_attempts=0
       processed_entries=0
-      omit_failures=0
       configured_entries=${toString (builtins.length normalizedSkills)}
       install_started_epoch=$(date +%s)
       echo "📦 Installing agent skills from skills.sh (${toString (builtins.length normalizedSkills)} configured entries)..."
       echo "ℹ Running installs sequentially to avoid skills lock contention in global state"
       ${lib.concatStringsSep "" skillCommands}
-      ${lib.optionalString (normalizedOmitSkills != [ ]) ''
-        omit_total=${toString (builtins.length normalizedOmitSkills)}
-        omit_processed=0
-        echo "🧹 Removing omitted skills ($omit_total entries)..."
-        ${lib.concatStringsSep "" omitCommands}
-        if [[ "$omit_failures" -eq 0 ]]; then
-          echo "✔ Omitted skills removal complete"
-        fi
-      ''}
 
       install_duration_seconds=$(( $(date +%s) - install_started_epoch ))
 
-      echo "🧠 Skills summary: configured=$configured_entries processed=$processed_entries attempted=$total_attempts success=$successful_installs skipped=$skipped_installs omit_failures=$omit_failures failures=$failed_installs duration=''${install_duration_seconds}s"
+      echo "🧠 Skills summary: configured=$configured_entries processed=$processed_entries attempted=$total_attempts success=$successful_installs skipped=$skipped_installs failures=$failed_installs duration=''${install_duration_seconds}s"
 
       if [[ "$failed_installs" -gt 0 ]]; then
         echo "⚠ Skills installation finished with $failed_installs failures"
@@ -202,99 +148,27 @@ lib.mkIf (cfg.skills != [ ]) (
       echo "✓ Skills installation complete"
     fi
 
-    if [[ -d "$HOME/.agents/skills" ]]; then
-      disabled_dir="$HOME/.agents/skills.disabled-by-home-manager"
-      if [[ ! -e "$disabled_dir" ]]; then
-        echo "🧹 Disabling shared ~/.agents/skills tree to prevent Gemini/OpenCode duplicate-skill spam"
-        mv "$HOME/.agents/skills" "$disabled_dir"
-      else
-        extra_disabled_dir="$disabled_dir.$(date +%s)"
-        echo "🧹 Disabling additional shared ~/.agents/skills tree at $extra_disabled_dir"
-        mv "$HOME/.agents/skills" "$extra_disabled_dir"
-      fi
-    fi
-
+    # Mirror Claude skills to all OpenCode profiles.
+    # skills.sh only installs to the default opencode profile,
+    # so we symlink from ~/.claude/skills into every profile's skills dir.
     if [[ -d "$HOME/.claude/skills" ]]; then
-      mkdir -p "$HOME/.codex/skills"
-      find "$HOME/.codex/skills" -mindepth 1 -maxdepth 1 -type l -delete
-      shopt -s nullglob
-      for skill_dir in "$HOME/.claude/skills"/*; do
-        [[ -d "$skill_dir" ]] || continue
-        ln -sfn "$skill_dir" "$HOME/.codex/skills/$(basename "$skill_dir")"
+      for profile in ${lib.concatStringsSep " " (map lib.escapeShellArg opencodeProfileNames)}; do
+        profile_skills="$HOME/.config/$profile/skills"
+        mkdir -p "$profile_skills"
+        # Remove stale dead symlinks first
+        find "$profile_skills" -maxdepth 1 -type l ! -exec test -e {} \; -delete 2>/dev/null || true
+        shopt -s nullglob
+        for skill_dir in "$HOME/.claude/skills"/*; do
+          [[ -d "$skill_dir" ]] || continue
+          skill_name="$(basename "$skill_dir")"
+          link="$profile_skills/$skill_name"
+          if [[ ! -e "$link" ]]; then
+            ln -sfn "$skill_dir" "$link"
+          fi
+        done
+        shopt -u nullglob
       done
-      shopt -u nullglob
-      echo "✓ Mirrored Claude skills into ~/.codex/skills"
-
-      # Mirror Claude skills into each forge profile directory (forge looks for <base>/skills/<name>/SKILL.md).
-      ${
-        let
-          forgeProfiles = import ../helpers/_forge-profiles.nix { inherit config; };
-        in
-        lib.optionalString cfg.forge.enable (
-          lib.concatStringsSep "\n" (
-            map (profile: ''
-              if [[ -d "$HOME/.${profile.name}" ]]; then
-                mkdir -p "$HOME/.${profile.name}/skills"
-                find "$HOME/.${profile.name}/skills" -mindepth 1 -maxdepth 1 -type l -delete
-                shopt -s nullglob
-                for skill_dir in "$HOME/.claude/skills"/*; do
-                  [[ -d "$skill_dir" ]] || continue
-                  ln -sfn "$skill_dir" "$HOME/.${profile.name}/skills/$(basename "$skill_dir")"
-                done
-                shopt -u nullglob
-                echo "✓ Mirrored Claude skills into ~/.${profile.name}/skills"
-              fi
-            '') forgeProfiles.profiles
-          )
-        )
-      }
-
-      # Mirror Claude skills into omp agent directory (omp looks for skills/ under PI_CODING_AGENT_DIR).
-      # OMP expects skills in SKILL.md format under ~/.omp/agent/skills/<name>/SKILL.md.
-      # OMP requires the symlink directory name to match the "name" field in SKILL.md.
-      ${
-        let
-          piProfiles = import ../helpers/_pi-profiles.nix { inherit config; };
-        in
-        lib.optionalString cfg.pi.enable ''
-          mkdir -p "$HOME/.omp/agent/skills"
-          find "$HOME/.omp/agent/skills" -mindepth 1 -maxdepth 1 -type l -delete
-          shopt -s nullglob
-          for skill_dir in "$HOME/.claude/skills"/*; do
-            [[ -d "$skill_dir" ]] || continue
-            # Read the "name" field from SKILL.md frontmatter — omp requires it to match directory name
-            skill_name="$(basename "$skill_dir")"
-            if [[ -f "$skill_dir/SKILL.md" ]]; then
-              frontmatter_name="$(grep '^name:' "$skill_dir/SKILL.md" | head -1 | sed 's/^name:[[:space:]]*//' | tr -d '"' | xargs 2>/dev/null || true)"
-              [[ -n "$frontmatter_name" ]] && skill_name="$frontmatter_name"
-            fi
-            ln -sfn "$skill_dir" "$HOME/.omp/agent/skills/$skill_name"
-          done
-          shopt -u nullglob
-
-          # Fix mirrored skills missing required `description` frontmatter for omp compatibility.
-          # OMP requires both `name` and `description` in frontmatter. Claude skills may lack `description`.
-          for skill_dir in "$HOME/.omp/agent/skills"/*; do
-            [[ -d "$skill_dir" ]] || continue
-            skill_file="$skill_dir/SKILL.md"
-            [[ -f "$skill_file" ]] || continue
-            # Only fix if it's a symlink (mirrored, not Nix-managed)
-            [[ -L "$skill_file" ]] || continue
-            if ! grep -q '^description:' "$skill_file" 2>/dev/null; then
-              # Copy the symlink to a real file and inject description
-              dir_name="$(basename "$skill_dir")"
-              desc="Auto-mirrored skill: $dir_name"
-              # Try to extract first meaningful paragraph as description
-              first_para="$(sed -n '/^#/,/^[^#]/p' "$skill_file" | head -5 | tail -1 | sed 's/^ *//' | head -c 120 || true)"
-              [[ -n "$first_para" ]] && desc="$first_para"
-              cp -L "$skill_file" "$skill_file.tmp" 2>/dev/null || continue
-              sed -i "/^---$/a description: \"''${desc}\"" "$skill_file.tmp" 2>/dev/null && mv "$skill_file.tmp" "$skill_file" || rm -f "$skill_file.tmp"
-            fi
-          done
-
-          echo "✓ Mirrored Claude skills into ~/.omp/agent/skills"
-        ''
-      }
+      echo "✓ Mirrored skills to ${toString (builtins.length opencodeProfileNames)} OpenCode profiles"
     fi
   ''
 )

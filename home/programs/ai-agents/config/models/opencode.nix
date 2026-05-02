@@ -1,83 +1,19 @@
-# OpenCode model selections, provider registries, agent definitions, and per-agent tool configurations.
+# OpenCode model selections, provider registries, and tool configurations.
 
 { config, lib, ... }:
 
 let
   models = import ../../helpers/_models.nix;
   workflowPrompts = import ../../helpers/_workflow-prompts.nix { };
-  androidRePrompt = import ../../android-re/_prompt.nix {
-    inherit lib;
-    homeDir = config.home.homeDirectory;
+  opencodeAgents = import ./_opencode-agents.nix { inherit models; };
+  opencodeCommands = import ./_opencode-commands.nix { inherit workflowPrompts; };
+  androidReAgent = import ./_opencode-android-re.nix {
+    inherit config lib;
+    inherit (opencodeAgents) yoloPermission;
   };
-  mkAllowPatterns =
-    patterns:
-    builtins.listToAttrs (
-      map (pattern: {
-        name = pattern;
-        value = "allow";
-      }) patterns
-    );
-  readOnlyBashPatterns = mkAllowPatterns [
-    "pwd"
-    "pwd *"
-    "ls"
-    "ls *"
-    "find *"
-    "rg"
-    "rg *"
-    "grep *"
-    "sed *"
-    "cat *"
-    "head *"
-    "tail *"
-    "wc *"
-    "stat *"
-    "tree *"
-    "file *"
-    "strings *"
-    "jq *"
-    "git status*"
-    "git diff*"
-    "git log*"
-    "git show*"
-    "git branch*"
-    "git ls-files*"
-  ];
-  yoloPermission = {
-    bash = "allow";
-    read = "allow";
-    edit = "allow";
-    glob = "allow";
-    grep = "allow";
-    list = "allow";
-    task = "allow";
-    todowrite = "allow";
-    question = "allow";
-    webfetch = "allow";
-    websearch = "allow";
-    codesearch = "allow";
-    lsp = "allow";
-    external_directory = "allow";
-    doom_loop = "allow";
-    skill = "allow";
-  };
-  readOnlyPermission = {
-    read = "allow";
-    edit = "deny";
-    glob = "allow";
-    grep = "allow";
-    list = "allow";
-    bash = readOnlyBashPatterns;
-    task = "allow";
-    todowrite = "allow";
-    question = "allow";
-    webfetch = "allow";
-    websearch = "allow";
-    codesearch = "allow";
-    lsp = "allow";
-    external_directory = "deny";
-    doom_loop = "deny";
-    skill = "allow";
+  webReAgent = import ./_opencode-web-re.nix {
+    inherit config lib;
+    inherit (opencodeAgents) yoloPermission;
   };
 in
 {
@@ -85,172 +21,15 @@ in
     enable = true;
     model = models.claude-opus;
     defaultAgent = "build";
-    permission = yoloPermission;
+    permission = opencodeAgents.yoloPermission;
 
-    plugins = [ "opencode-gemini-auth@latest" ];
+    plugins = [
+      "opencode-gemini-auth@latest"
+    ];
 
-    command = {
-      "commit-split" = {
-        description = "Split current changes into minimal logical signed commits";
-        agent = "patch";
-        subtask = true;
-        template = workflowPrompts.commitSplit;
-      };
-      refactor = {
-        description = "Raise maintainability without behavior drift";
-        agent = "patch";
-        subtask = true;
-        template = workflowPrompts.refactorMaintainability;
-      };
-      "security-audit" = {
-        description = "Run an evidence-first security review";
-        agent = "review";
-        subtask = true;
-        template = workflowPrompts.securityAudit;
-      };
-      "build-perf" = {
-        description = "Measure and improve build bottlenecks";
-        agent = "build";
-        subtask = true;
-        template = workflowPrompts.buildPerformance;
-      };
-      "runtime-perf" = {
-        description = "Measure and improve runtime/code bottlenecks";
-        agent = "optimize";
-        subtask = true;
-        template = workflowPrompts.runtimePerformance;
-      };
-      "markdown-sync" = {
-        description = "Sync docs with current repository behavior";
-        agent = "patch";
-        subtask = true;
-        template = workflowPrompts.markdownSync;
-      };
-    };
+    command = opencodeCommands;
 
-    agent = {
-      plan = {
-        model = models.claude-sonnet;
-        description = "Primary planning agent for specs, decomposition, and research-backed execution plans.";
-        mode = "primary";
-        steps = 8;
-        permission = readOnlyPermission;
-        prompt = ''
-          Produce implementation plans that are decision-complete before execution starts.
-          Clarify goal, constraints, validation path, interfaces, and rollout risks.
-          Prefer evidence from repository files, generated config, and current tool output over assumptions.
-        '';
-      };
-      build = {
-        model = models.claude-opus;
-        description = "Primary implementation agent for coding work with repo-native validation.";
-        mode = "primary";
-        steps = 20;
-        permission = yoloPermission;
-        prompt = ''
-          Implement minimal, high-leverage changes that match repository conventions.
-          Reuse local patterns, validate with narrow checks first, and avoid speculative refactors.
-          Treat formatter, lint, eval, and build output as required evidence before claiming success.
-        '';
-      };
-      review = {
-        model = models.claude-sonnet;
-        description = "Subagent for bugs, regressions, security issues, and test gaps.";
-        mode = "subagent";
-        color = "warning";
-        steps = 12;
-        permission = readOnlyPermission;
-        prompt = ''
-          Review code and configuration changes for correctness first.
-          Prioritize concrete bugs, behavioral regressions, security issues, and missing validation.
-          Do not edit files. Report exact evidence with file and line references when available.
-        '';
-      };
-      recon = {
-        model = models.gpt-default;
-        description = "Subagent for reverse-engineering triage, static inspection, and evidence gathering.";
-        mode = "subagent";
-        color = "info";
-        steps = 16;
-        permission = yoloPermission;
-        prompt = ''
-          Focus on reverse-engineering and static triage.
-          Map binaries, strings, symbols, endpoints, protocols, config formats, persistence, and trust boundaries.
-          Prefer non-mutating inspection and summarize likely next probes before suggesting dynamic work.
-        '';
-      };
-      patch = {
-        model = models.claude-sonnet;
-        description = "Subagent for bounded edits, validation passes, and commit shaping.";
-        mode = "subagent";
-        color = "accent";
-        steps = 10;
-        permission = yoloPermission;
-        prompt = ''
-          Make tightly scoped edits against an existing plan or clearly bounded task.
-          Preserve behavior unless the task explicitly changes behavior.
-          After edits, run the narrowest relevant validation and summarize residual risk.
-        '';
-      };
-      optimize = {
-        model = models.claude-opus;
-        description = "Subagent for performance profiling, bottleneck analysis, and low-risk speedups across codebases.";
-        mode = "subagent";
-        color = "accent";
-        steps = 14;
-        permission = yoloPermission;
-        prompt = ''
-          Optimize runtime performance with evidence, not guesses.
-          Measure the real hot path first, prefer the highest-impact low-risk change, and preserve correctness plus repository conventions.
-          Report before-and-after performance evidence, correctness validation, and any tradeoffs left in place.
-        '';
-      };
-      "android-re" = {
-        model = models.claude-opus;
-        description = "Primary Android reverse-engineering agent for rooted emulator workflows, Frida instrumentation, proxy triage, and static APK inspection.";
-        mode = "primary";
-        steps = 24;
-        permission = yoloPermission;
-        prompt = ''
-          You are the dedicated Android reverse-engineering operator for this machine.
-          Use the repository's Android RE workspace as your system prompt and source of truth.
-
-          ## Editable prompt files (update these to improve future sessions)
-          ${androidRePrompt.promptSourceDir}/AGENTS.md
-          ${androidRePrompt.promptSourceDir}/README.md
-          ${androidRePrompt.promptSourceDir}/TOOLS.md
-          ${androidRePrompt.promptSourceDir}/WORKFLOW.md
-          ${androidRePrompt.promptSourceDir}/TROUBLESHOOTING.md
-
-          ## Bash scripts (all run from repo root /home/yz/System)
-          scripts/ai/android-re/re-avd.sh          — emulator, root, Frida, proxy, cert, spoofing
-          scripts/ai/android-re/re-static.sh       — static APK analysis
-          scripts/ai/android-re/opencode-android-re.sh — OpenCode launcher (used by oc*are aliases)
-          scripts/ai/android-re/_helpers.sh        — shared logging helpers
-          scripts/ai/android-re/_spoof-table.sh    — declarative spoofing data (Pixel 7 profile)
-
-          ## Skill to load before device UI interaction
-          You MUST load the `agent-device` skill before any `agent-device` commands.
-          Use the skill tool to load it at the start of any session that needs device interaction.
-
-          Operating defaults:
-          - Prefer static triage before dynamic instrumentation.
-          - Use the rooted `re-pixel7-api34` AVD as the baseline target unless evidence requires otherwise.
-          - Use `su 0 ...` syntax for rooted ADB shell commands on this emulator.
-          - Prefer the system Frida `17.5.1` toolchain (matching server + client) for attach and hook work on this host.
-          - Use `agent-device` for all UI interaction on the emulator — load the `agent-device` skill first.
-          - Device identity is spoofed automatically to look like a real Pixel 7 via `re-avd.sh start`.
-          - Prefer explicit proxy configuration plus QUIC blocking when using `mitmproxy`.
-          - Treat proxy failures as a triage problem: root/cert/proxy first, then pinning, Cronet, native TLS, or QUIC fallback.
-          - Use the repo workflow scripts under `scripts/ai/android-re/` instead of ad-hoc command piles.
-          - Keep findings evidence-based and separate verified facts from inference.
-
-          Current Android RE prompt bundle:
-
-          ${androidRePrompt.promptText}
-        '';
-      };
-    };
+    agent = { } // androidReAgent // webReAgent;
 
     lsp = import ./_opencode-lsp.nix;
 
@@ -264,12 +43,7 @@ in
     extraSettings = {
       share = "disabled";
       autoupdate = true;
-      small_model = models.claude-haiku; # Cheap model for titles, summaries
-      compaction = {
-        auto = true;
-        prune = true; # Remove old tool outputs during compaction
-        reserved = 10000; # Reserved tokens after compaction
-      };
+      small_model = models.zen; # Free model for titles, summaries
     };
 
     providers = {
