@@ -56,4 +56,9 @@ with pkgsStable;
 
   # === Reverse Engineering and Dynamic Analysis ===
   frida-tools # Dynamic instrumentation toolkit for reverse engineering
+
+  # Security and pattern analysis
+  yara # Pattern matching engine for malware/rules detection
+  hashid # Hash type identification from hash strings
+  cewl # Custom wordlist generator by spidering target sites
 ]

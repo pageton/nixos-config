@@ -48,6 +48,10 @@ with pkgsStable;
   mitmproxy # HTTP proxy for debugging and analysis
   wireshark-cli # Network protocol analyzer (CLI)
 
+  # Code coverage and binary hardening analysis
+  gcovr # Code coverage report generator (gcov front-end)
+  checksec # Binary security property checker (NX, PIE, RELRO, canaries, Fortify)
+
   # === Nix Tooling ===
   nix-diff # Derivation-level diff between NixOS generations
   nvd # Nix version diff tool
