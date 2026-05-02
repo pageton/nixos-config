@@ -121,7 +121,7 @@ System/
 │   ├── constants.nix            # Single source of truth (user, fonts, colors, keyboard, ports)
 │   ├── option-helpers.nix       # Typed option constructors (mkBoolOption, mkStrOption, etc.)
 │   ├── alias-helpers.nix        # Shared shell alias injection for zsh/bash
-│   └── secret-loader.nix        # Shell function to load SOPS secrets from /run/secrets/
+│   └── *(secret-loader.nix moved to home/_helpers/_secret-loader.nix)*
 ├── scripts/                     # Repository-level audit and lab scripts
 │   ├── build/                   # modules/security/performance audit scripts
 │   ├── ai/                      # AI agent launchers, inventory, and log analysis

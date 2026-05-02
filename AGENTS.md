@@ -2,7 +2,7 @@
 
 ## Role
 
-Declarative, modular NixOS flake managing two hosts (desktop + thinkpad) with Home-Manager, SOPS secrets, Niri Wayland compositor, Noctalia shell, and a comprehensive AI agent orchestration layer. 274 Nix files, 62 shell scripts, 6 JS hooks.
+Declarative, modular NixOS flake managing two hosts (desktop + thinkpad) with Home-Manager, SOPS secrets, Niri Wayland compositor, Noctalia shell, and a comprehensive AI agent orchestration layer. 286 Nix files, 74 shell scripts, 10 JS hooks.
 
 ## Architecture
 
@@ -17,7 +17,8 @@ System/
 │   ├── constants.nix            # SSOT: user identity, fonts, colors, keyboard, ports, proxies, paths
 │   ├── option-helpers.nix       # Typed NixOS option constructors (mkBoolOption, mkStrOption, etc.)
 │   ├── alias-helpers.nix        # Shared shell alias injection (zsh + bash)
-│   └── secret-loader.nix        # Bash fn: load SOPS secrets from /run/secrets/
+│   ├── _hm-systemd-helpers.nix # Shared Home-Manager systemd timer helpers (mkPersistentTimer, mkWeeklyTimer)
+│   └── *(secret-loader.nix → home/_helpers/_secret-loader.nix)*
 ├── hosts/
 │   ├── _inventory.nix           # Host list → flake.nix (single source of truth)
 │   ├── desktop/                 # Desktop PC: gaming, full virt, Mullvad
@@ -25,19 +26,20 @@ System/
 ├── nixos/modules/               # System-level modules (two-level import pattern)
 │   ├── default.nix              # Root loader → 10 category dirs
 │   ├── core/                    # Bootloader, Nix, users, SOPS, timezone, i18n, env, stability, validation
-│   ├── hardware/                # PipeWire audio, Bluetooth, NVIDIA GPU, libinput, upower, thermal
+│   ├── hardware/                # Audio, Android, Bluetooth, GPU, libinput, upower, thermal, fwupd, printing
 │   ├── desktop/                 # Niri compositor, SDDM, X11 disabled, XDG portals
 │   ├── network/                 # NetworkManager, DNSCrypt, Mullvad VPN, Tailscale, Tor
-│   ├── security-stack/          # Kernel/sysctl hardening, firewall, AIDE, AppArmor, Firejail, OpenSnitch
+│   ├── security-stack/          # Kernel/sysctl hardening, firewall, AIDE, AppArmor, Firejail, OpenSnitch, MAC, opsec, web-re
 │   ├── apps/                    # Browser deps, Flatpak, Gaming (Steam/Proton/MangoHud), Syncthing
-│   ├── virtualization/          # Docker, VirtualBox, libvirt, Waydroid, nix-ld
-│   ├── observability/           # Netdata, Scrutiny (SMART), Glance dashboard, Loki log aggregation
+│   ├── virtualization/          # Docker, VirtualBox, libvirt, nix-ld
+│   ├── observability/           # Netdata, Scrutiny, Glance, Loki, monitoring
 │   ├── performance/             # Boot optimization
-│   └── maintenance/             # Cleanup timers, Restic backup, nh helper
+│   ├── maintenance/             # Cleanup timers, Restic backup, nh helper
+│   └── helpers/                 # Shared module helpers (systemd service hardening, timer factories)
 ├── home/                        # Home-Manager user-space configuration
 │   ├── home.nix                 # Entry point → core, programs, scripts, desktop, themes
 │   ├── core/                    # User account, session vars, GTK/dconf, activation scripts, desktop entries
-│   ├── packages/                # 14 package lists: cli, applications, development, multimedia, privacy, wayland, etc.
+│   ├── packages/                # 13 package lists: cli, applications, development, multimedia, privacy, wayland, etc.
 │   ├── programs/
 │   │   ├── terminal/            # Zsh, Alacritty, Zellij, 20+ CLI tools (fzf, bat, eza, yazi, starship, etc.)
 │   │   ├── ai-agents/           # Claude Code, Codex, Forge, OpenCode, Pi wrappers + config + services
@@ -45,13 +47,14 @@ System/
 │   │   ├── zen-browser/         # Zen Browser multi-profile with per-profile Mullvad SOCKS5 proxies
 │   │   ├── languages/           # Go, Python, JS/Node, LSP servers, mise version manager
 │   │   ├── isolation/           # Wayland browser sandbox wrappers
-│   │   └── *.nix                # brave, discord (nixcord), gpg, obs, spicetify, ssh, tailscale, thunar, etc.
+│   │   └── *.nix                # brave, discord (nixcord), gpg, obs, spicetify, ssh, tailscale, thunar, activitywatch, t3code, etc.
 │   ├── desktop/                 # Niri config (bindings/layout/rules/animations/idle/lock), Noctalia shell, MIME, Qt, udiskie
 │   ├── themes/                  # Stylix engine, Catppuccin Mocha palette, theme options
 │   └── scripts/                 # User-level scripts (nerdfont-fzf, build helpers)
 ├── scripts/
 │   ├── ai/                      # Agent launcher, iter, log analyzer, dashboard, inventory, registry, skills-sync
-│   │   └── android-re/          # Full Android RE toolkit: AVD mgmt, Frida hooks, mitmproxy, static analysis
+│   │   ├── android-re/          # Full Android RE toolkit: AVD mgmt, Frida hooks, mitmproxy, static analysis
+│   │   └── web-re/              # Web RE toolkit: Chrome DevTools, mitmproxy, TOTP generation
 │   ├── apps/                    # Desktop wrappers: browser-select, youtube-mpv, xdg-open, playwright-mcp
 │   ├── build/                   # Quality gates: modules-check, packages-check, pre-commit/push hooks, shellcheck-nix-inline
 │   ├── hardware/                # nvidia-fans control
@@ -78,6 +81,9 @@ System/
 | `home/desktop/niri/` | Niri compositor config split: bindings, layout, rules, animations, idle, lock, input |
 | `scripts/ai/_agent-registry.sh` | SSOT for all AI agent aliases, command mappings, and workflow suffixes |
 | `scripts/build/modules-check.sh` | Validates every .nix file is imported by its parent default.nix |
+| `home/programs/activitywatch.nix` | ActivityWatch time tracking for Wayland |
+| `home/programs/t3code.nix` | T3 Code AI editor (ghgrab-managed release) |
+| `shared/_hm-systemd-helpers.nix` | Shared HM timer helpers (mkPersistentTimer, mkWeeklyTimer) |
 
 ## Module Map
 
@@ -88,13 +94,13 @@ All NixOS modules use `options.mySystem.<module>` for per-host enablement. Impor
 | Category | Modules | Scope |
 |----------|---------|-------|
 | `core/` | bootloader, nix daemon, users, sops, timezone, i18n, environment, stability (earlyoom/BBR/inotify), validation | Always active |
-| `hardware/` | PipeWire audio, Bluetooth (opt-in), NVIDIA proprietary + VA-API, libinput, upower, thermald | Always active except Bluetooth |
+| `hardware/` | PipeWire audio, Android (ADB), Bluetooth (opt-in), NVIDIA proprietary + VA-API, libinput, upower, thermald | Always active except Bluetooth |
 | `desktop/` | Niri scrollable-tiling, SDDM Wayland, X11 disabled, XDG portals | Always active |
 | `network/` | NetworkManager + resolved, DNSCrypt (opt-in), Mullvad VPN lockdown (opt-in), Tailscale, Tor (opt-in) | Mixed |
-| `security-stack/` | Kernel/sysctl hardening, nftables firewall, AIDE, AppArmor, Firejail (opt-in), OpenSnitch (opt-in), MAC randomization (opt-in) | Mixed |
+| `security-stack/` | Kernel/sysctl hardening, nftables firewall, AIDE, AppArmor, Firejail (opt-in), OpenSnitch (opt-in), MAC randomization (opt-in), opsec (session lock, zram), web-re (opt-in) | Mixed |
 | `apps/` | Browser deps (Widevine), Flatpak (opt-in), Gaming/Steam/Proton (opt-in), Syncthing (opt-in) | Mixed |
 | `virtualization/` | Docker/VBox/libvirt (opt-in), nix-ld (always) | Mixed |
-| `observability/` | Netdata (opt-in), Scrutiny SMART (opt-in), Glance dashboard (opt-in), Loki log aggregation | All opt-in |
+| `observability/` | Netdata (opt-in), Scrutiny SMART (opt-in), Glance dashboard (opt-in), Loki log aggregation, monitoring (base tools) | All opt-in |
 | `performance/` | Boot optimization | Always active |
 | `maintenance/` | Cleanup timers (opt-in), Restic backup (opt-in), nh helper | Mixed |
 
@@ -103,14 +109,14 @@ All NixOS modules use `options.mySystem.<module>` for per-host enablement. Impor
 | Category | Contents |
 |----------|----------|
 | `core/` | User account, session vars, GTK/dconf, activation, desktop entries |
-| `packages/` | 14 package category files (cli, applications, development, multimedia, privacy, wayland, etc.) |
+ `packages/` | 13 package category files (cli, applications, development, multimedia, privacy, wayland, etc.) |
 | `programs/terminal/` | Zsh (aliases/functions/config), Alacritty, Zellij, 20+ CLI tools (fzf, bat, eza, yazi, starship, etc.) |
 | `programs/ai-agents/` | Multi-provider AI agent orchestration: config, helpers, services, activation, log analysis |
 | `programs/nvf/` | Neovim via NVF framework |
 | `programs/zen-browser/` | Multi-profile Zen Browser with per-profile Mullvad SOCKS5 proxy |
 | `programs/languages/` | Go, Python, JS/Node, LSP servers, mise version manager |
 | `programs/isolation/` | Wayland browser sandbox wrappers |
-| `desktop/` | Niri (7 sub-modules), Noctalia shell/bar/plugins, MIME, Qt, udiskie |
+ `desktop/` | Niri (8 sub-modules incl. _auth-float), Noctalia shell/bar/plugins, MIME, Qt, udiskie |
 | `themes/` | Stylix engine, Catppuccin Mocha palette, theme options |
 
 ### Host-Specific Overrides
@@ -189,7 +195,7 @@ scripts/ai/_agent-registry.sh (alias → command mapping)
 flake.nix
   ├── shared/constants.nix (used everywhere via specialArgs)
   ├── shared/option-helpers.nix (used by nixos/modules/*.nix for option definitions)
-  ├── shared/secret-loader.nix (used by terminal/zsh + ai-agents)
+  ├── home/_helpers/_secret-loader.nix (used by terminal/zsh + ai-agents)
   ├── shared/alias-helpers.nix (used by terminal/zsh)
   │
   ├── hosts/_inventory.nix → hosts/<name>/configuration.nix
@@ -197,7 +203,7 @@ flake.nix
   │     └── ./modules → host-specific hardware/power overrides
   │
   └── home/home.nix → core, programs (16 subdirs), desktop, themes
-        └── programs/ai-agents → references scripts/ai/*, shared/secret-loader.nix
+      └── programs/ai-agents → references scripts/ai/*, home/_helpers/_secret-loader.nix
 ```
 
 ### Script Dependency Graph
@@ -247,6 +253,13 @@ just home               # nh home switch
 just all                # Full pipeline: modules + lint + format + security + check + nixos + home
 just hardening          # systemd-analyze security report
 just perf               # Boot/session performance diagnostics
+just clean              # Clean build artifacts and caches
+just update             # Update all flake inputs
+just update-pkgs        # Update nixpkgs unstable
+just update-pkgs-stable # Update nixpkgs stable
+just sops-key           # Generate SOPS age key
+just sops-view          # View decrypted secrets
+just secrets-add <key>  # Add a new secret
 ```
 
 **Shell tests**: `bash scripts/build/modules-check-test.sh`, `bash scripts/ai/agent-launcher-test.sh`, etc.
@@ -263,6 +276,8 @@ just perf               # Boot/session performance diagnostics
 8. **Pre-commit hook** hardcodes deadnix exclude for `zellij/layouts.nix`.
 9. **Secret decryption** — `just sops-edit` writes decrypted file to `$XDG_RUNTIME_DIR` (tmpfs). If interrupted, OS reclaims automatically.
 10. **Desktop vs thinkpad differences** — thinkpad has no gaming/virtualization/Mullvad; desktop has no Bluetooth/TLP/NVIDIA-dGPU-specific modules.
+
+11. **Orphaned modules** — `fwupd.nix`, `printing.nix`, `secure-boot.nix`, `vnc.nix`, `yggdrasil.nix`, `i2pd.nix` exist in `nixos/modules/` but are not imported by any category `default.nix`. They will not be included in any build until wired up.
 
 ## Security Considerations
 
