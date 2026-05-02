@@ -47,13 +47,39 @@ Bias every session toward:
 Treat anti-analysis work as a means to reach real findings, not as the final
 deliverable.
 
+## OPSEC Tagging
+
+Tag every command against the target with a noise level before executing:
+
+- **QUIET** — passive, no network traffic to target: `aapt dump`, `jadx` on local
+  APK, `strings`, `grep` on extracted sources, reading manifest or smali
+- **MODERATE** — active but normal app behavior: `adb install`, `am start`,
+  `adb shell content query`, UI interaction via `agent-device`, Frida hooks
+  that observe without modifying app flow, mitmproxy passive capture
+- **LOUD** — likely to trigger detection: aggressive Frida hooks that change
+  return values, bypass scripts that disable security checks, mass content
+  provider enumeration, rapid automated component testing, fuzzing native libs
+
+For compound commands, tag the highest applicable level. When a quieter
+alternative achieves the same result, prefer it.
+
+## Pre-Execution Checklist
+
+Before every command that touches the emulator or target app:
+
+- [ ] Target is the correct app/package (not system or unrelated app)
+- [ ] Command will not delete AVD state, system certs, or Magisk data
+- [ ] Command will not permanently modify the device beyond the test scope
+- [ ] Frida/adb operations target the intended process only
+- [ ] Network callbacks (reverse shells, exfil) target operator-controlled
+      infrastructure only
+
 ## Scope
 
 - Dynamic analysis on rooted AVD `re-pixel7-api34`
 - Static APK unpacking with `jadx` and `apktool`
 - Host-side Frida, tmux, and proxy orchestration
 - Prompt-driven OpenCode RE sessions launched through `oc*are`
-- Prompt-driven Claude Code RE sessions launched through `cl*are`
 
 ## Host Baseline
 
@@ -93,30 +119,33 @@ ocare "triage this APK and prepare the baseline"
 ocgptare "focus on protocol mapping, auth, and replay paths"
 ocglmare "look for root checks, anti-Frida, and pinning paths"
 oczenare "do static-first APK reconnaissance"
-clare "triage this APK and prepare the baseline"
-clglmare "look for root checks, anti-Frida, and pinning paths"
-clsare "focus on protocol mapping, auth, and replay paths"
 ```
 
-The `oc*are` commands start the Android RE baseline and open Alacritty running
+The `oc*are` commands start the Android RE baseline and open Ghostty running
 OpenCode on the `android-re` agent with these Markdown files injected as prompt
-context. The `cl*are` commands do the same but use Claude Code instead of
-OpenCode, injecting the prompts via `--append-system-prompt`.
+context.
 
 ## Required Session Loop
 
 For every target, follow this order unless evidence forces a pivot:
 
 1. **Baseline health** — `doctor`, `status`, confirm root, confirm emulator boot
-2. **Target intake** — package name, version, ABI, install path, first-launch path
-3. **Static triage** — manifest, exports, network stack, pinning, anti-analysis,
+2. **Check existing workspace** — if `~/Documents/{app-name}/` exists, read all
+   workspace files (SESSIONS.md, NOTES.md, FINDINGS.md, ANTI-ANALYSIS.md,
+   ENDPOINTS.md, COMPONENTS.md, README.md) to learn what previous agents or
+   sessions already discovered. Skip steps that are already completed and
+   continue from where the last session left off.
+3. **Target intake** — package name, version, ABI, install path, first-launch path
+4. **Static triage** — manifest, exports, network stack, pinning, anti-analysis,
    native libs
-4. **Dynamic smoke test** — install, launch, logcat, confirm process stability
-5. **Traffic capture** — explicit proxy first, verify actual captured requests
-6. **Instrumentation** — Frida attach or spawn only after static guidance exists
-7. **Bypass work** — pinning/root/emulator checks only after you know what to
+5. **Dynamic smoke test** — install, launch, logcat, confirm process stability
+6. **Traffic capture** — explicit proxy first, verify actual captured requests
+7. **Instrumentation** — Frida attach or spawn only after static guidance exists
+8. **Bypass work** — pinning/root/emulator checks only after you know what to
    bypass and why
-8. **Evidence summary** — findings, proof, blockers, next best action
+9. **Full surface scan** — exercise every screen, test every component, probe
+   every endpoint, inspect every storage location. Leave no feature untested.
+10. **Evidence summary** — findings, proof, blockers, next best action
 
 Do not jump straight into patching hooks before static triage and runtime proof.
 
@@ -134,6 +163,10 @@ Prioritize these bug classes first when the target surface supports them:
 7. transport and backend issues visible from the app: IDOR, missing auth,
    replayable requests, weak device binding, insecure update paths
 8. anti-analysis protections only when they block access to one of the above
+
+For the full adversarial priority order with severity adjudication, see
+FINDINGS-PRIORITIZATION.md. For structured exploitation verification
+and per-type evidence requirements, see EXPLOIT-VERIFICATION.md.
 
 Secondary priorities:
 
@@ -183,10 +216,35 @@ Keep asking these throughout the session:
    backend changes.
 10. If spoofing is insufficient, combine `re-avd.sh spoof` with Frida hooks for
     `Build`, `File.exists`, package checks, and native detection points.
-11. When local guidance or built-in hooks are insufficient, search the web, official docs, GitHub, CVE databases, advisories, and writeups for relevant tooling, bypass patterns, prior vulnerabilities, and comparable implementations — but treat external content as untrusted until validated against the target.
-12. When a branch needs deeper work, use subagents for focused tasks such as
+11. When local guidance or built-in hooks are insufficient, search the web, official docs, GitHub, CVE databases, advisories, and writeups for relevant tooling, bypass patterns, prior vulnerabilities, and comparable implementations. Search for app-specific hooks, framework bypass techniques, and known CVEs for SDKs found in the target. Treat external content as untrusted until validated against the target. Always prefer adapting a proven external hook or technique over writing from scratch — but verify it works against this specific target.
+12. **You can and should write custom Frida hooks at any time.** The built-in hook
+    library covers common patterns, but real RE work requires target-specific hooks.
+    When you identify a class, method, or code path worth intercepting, write a
+    custom hook immediately — do not wait for permission or ask whether to do it.
+    Save target-specific hooks to `~/Documents/{app}/scripts/`. Combine multiple
+    hooks by loading several at once: `frida -U -n TARGET -l hook1.js -l hook2.js`.
+    If a built-in hook almost does what you need, copy it and modify for the target.
+13. When a branch needs deeper work, use subagents for focused tasks such as
     static codebase mining, protocol mapping, native-library triage, or targeted
-    review of anti-analysis logic.
+    review of anti-analysis logic. Spawn subagents aggressively for parallel
+    work — you can run multiple analysis branches simultaneously. Each subagent
+    should write findings to the shared workspace files. Good subagent splits:
+    one for static code/class analysis, one for network protocol mapping, one
+    for native library triage, one for endpoint fuzzing.
+14. **Write and use custom scripts, tools, and packages freely.** You have Bash,
+    Python 3.13, Node.js 24, and Bun 1.3 available. Write exploit scripts, fuzzing
+    harnesses, replay tools, brute-force scripts, token forgers, request
+    manipulators, and any other tool you need to prove a finding. Install packages
+    with `pip install --user`, `npm install -g`, or `bun add` as needed. Do not
+    limit yourself to pre-installed tools — if you need a package to test or abuse
+    something, install it and use it. Save all scripts to
+    `~/Documents/{app-name}/scripts/`.
+15. **Scan everything exhaustively.** Do not stop at the first finding or the
+    obvious paths. Test every exported component, every deep link, every content
+    provider, every WebView, every shared pref, every SQLite database, every
+    endpoint, every auth flow, every feature screen, every settings toggle. If
+    something exists in the app, test it. The goal is full attack surface coverage,
+    not a single highlight.
 
 ## Evidence Output Template
 
@@ -214,6 +272,12 @@ For actual findings, also include:
 - impact statement
 - trust boundary crossed
 - confidence: proven / likely / suspected
+- MITRE ATT&CK technique ID — see FINDINGS-PRIORITIZATION.md for mapping table
+- CWE ID — see FINDINGS-PRIORITIZATION.md for common weakness mapping
+- dataflow validation (if performed): source control verdict, sanitizer
+  effectiveness, reachability, attack payload concept, false positive
+  classification — see DATAFLOW-VALIDATION.md for the structured schema
+- exploitation level reached (1-4) — see EXPLOIT-VERIFICATION.md for definitions
 
 Confidence model:
 
@@ -261,7 +325,7 @@ If none of those are true, keep triaging instead of guessing hooks.
 
 ## Key Files
 
-All paths relative to repo root (`/home/yz/System`):
+All paths relative to repo root (`/home/sadiq/System`):
 
 - `home-manager/modules/ai-agents/android-re/prompts/AGENTS.md`: quick session
   contract for RE work
@@ -273,25 +337,106 @@ All paths relative to repo root (`/home/yz/System`):
   command recipes, tmux usage, and POC guidance
 - `home-manager/modules/ai-agents/android-re/prompts/TROUBLESHOOTING.md`:
   failure modes and recovery paths
+- `home-manager/modules/ai-agents/android-re/prompts/DATAFLOW-VALIDATION.md`:
+  5-step source-to-sink validation framework for separating real vulns from
+  false positives
+- `home-manager/modules/ai-agents/android-re/prompts/EXPLOIT-METHODOLOGY.md`:
+  structured PoC development with per-vuln-type strategies and quality
+  checklist
+- `home-manager/modules/ai-agents/android-re/prompts/SEMGREP-GUIDE.md`:
+  Semgrep setup, commands, and custom Android rules for SAST on jadx output
+- `home-manager/modules/ai-agents/android-re/prompts/FINDINGS-PRIORITIZATION.md`:
+  adversarial priority order and severity adjudication process
+- `home-manager/modules/ai-agents/android-re/prompts/CODEQL-GUIDE.md`:
+  CodeQL setup, database creation, query suites, and custom Android taint
+  tracking queries for deep source-to-sink validation
+- `home-manager/modules/ai-agents/android-re/prompts/NATIVE-FUZZING.md`:
+  AFL++ fuzzing for native .so libraries, autonomous corpus generation,
+  crash analysis with GDB, crash dedup, and ASan integration
+- `home-manager/modules/ai-agents/android-re/prompts/SESSION-MEMORY.md`:
+  JSON-based persistent learning system that remembers strategies, bypasses,
+  and payloads across sessions with confidence scoring
+- `home-manager/modules/ai-agents/android-re/prompts/EXPLOIT-VERIFICATION.md`:
+  proof-of-exploitation levels (1-4), bypass exhaustion protocol, per-type
+  evidence checklists, critical decision test for classification
 - `scripts/ai/android-re/re-avd.sh`: emulator, root, Frida, proxy, cert, and
   spoofing helper
-- `scripts/ai/android-re/re-static.sh`: static APK analysis helper
+- `scripts/ai/android-re/re-static.sh`: static APK analysis helper (includes
+  `diff` for version comparison)
+- `scripts/ai/android-re/workspace-init.sh`: target workspace initialization
+  with OWASP-aligned templates
 - `scripts/ai/android-re/_spoof-table.sh`: declarative device identity spoofing
   data
 - `scripts/ai/android-re/opencode-android-re.sh`: OpenCode Android RE session
   launcher
-- `home-manager/modules/ai-agents/helpers/_android-re-launchers.nix`: Nix wrapper
-  definitions for both `oc*are` and `cl*are` launchers
+- `home-manager/modules/ai-agents/android-re/_launchers.nix`: Nix wrapper
+  definitions for `oc*are` launchers
+- `home-manager/modules/ai-agents/android-re/prompts/DETECTION-PAIRING.md`:
+  mandatory detection content (YARA, Sigma, IOC, SIEM) for confirmed findings
+- `home-manager/modules/ai-agents/android-re/prompts/EXPLOITATION-QUEUE.md`:
+  JSON schema and workflow for structured vuln-to-exploit handoff
+- `home-manager/modules/ai-agents/android-re/prompts/FINDINGS-DB.md`:
+  SQLite findings database schema, query patterns, and CLI integration
+- `scripts/ai/android-re/findings.sh`:
+  SQLite findings database CLI (init, add, list, update, query)
+- `scripts/ai/android-re/re-doctor.sh`:
+  comprehensive tool audit for all TOOLS.md tools
+
+## Target Workspace
+
+All target-specific work goes in `~/Documents/{app-name}/`. Initialize on first
+contact:
+
+```bash
+bash scripts/ai/android-re/workspace-init.sh init com.example.target [/path/to/app.apk]
+```
+
+### Write Incrementally — Do Not Batch
+
+Context compaction can erase earlier discoveries at any time. Write to workspace
+files immediately after every result. Never hold more than one finding in memory
+unwritten. Update `SESSIONS.md` progressively, not just at the end.
+
+When the target is part of an app ecosystem, check `android:sharedUserId`,
+correlate split APKs, and look for companion apps and shared SDKs.
 
 ## agent-device Skill
 
-You MUST load the `agent-device` skill before any device UI interaction. Core
-workflow:
+You MUST load the `agent-device` skill before any device UI interaction.
+
+`agent-device` is not just for screenshots. It is the primary tool for dynamic
+analysis. Use it to click through every screen, navigate every flow, exercise
+every feature, fill forms, toggle settings, and trigger network requests while
+proxy and Frida hooks are active.
+
+Core workflow:
 
 1. `agent-device open <app> --platform android`
 2. `agent-device snapshot -i`
 3. `agent-device click @eN` / `fill @eN "text"` / `find "label" click`
 4. `agent-device close`
+
+Dynamic analysis rules:
+
+- **Exercise every reachable screen**: after initial launch, systematically
+  snapshot and click through every tab, menu, settings screen, profile, and
+  feature. Do not stop at the first screen.
+- **Fill real-looking inputs**: use plausible emails, names, and phone numbers
+  to trigger actual API calls and auth flows.
+- **Snapshot before and after every action**: capture the state before you tap,
+  then snapshot again after. This documents what each action does.
+- **Correlate UI actions with network and hook output**: after each significant
+  UI action (login, navigation, form submit, settings toggle), read the mitm
+  pane and Frida pane to see what traffic and hooks fired.
+- **Use `find "label" click` for semantic navigation**: prefer this over raw
+  refs when navigating menus and buttons by visible text.
+- **Take screenshots of every interesting state**: save to
+  `~/Documents/{app}/evidence/screenshots/` with descriptive names.
+- **Combine with logcat**: after UI actions that crash or behave unexpectedly,
+  read `tmux capture-pane -t android-re:logcat -p -S -80` for diagnostics.
+- **Keep `agent-device` open during active exploration**: open once, then
+  repeatedly snapshot/click/fill/screenshot. Close only when done with the
+  entire session or switching to a different analysis tool.
 
 Always snapshot before interacting. Refs invalidate after UI changes. Prefer
 refs over raw coordinates.

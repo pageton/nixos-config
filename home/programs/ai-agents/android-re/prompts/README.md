@@ -6,58 +6,6 @@ reverse engineering on this machine.
 The Markdown files here are injected into the `android-re` OpenCode agent. Keep
 operational guidance here, not hardcoded in shell wrappers.
 
-## What This Workspace Is For
-
-Use this workspace when you need to:
-
-- triage an APK or installed package
-- map endpoints, auth flows, or network protocols
-- verify whether traffic can be intercepted
-- locate root, emulator, Frida, or pinning defenses
-- build Frida hooks or small POC scripts
-- diagnose why proxying, root, spoofing, or instrumentation is failing
-
-This workspace is not for broad exploit development without target evidence.
-The expectation is: prove each step, then escalate.
-
-## What Great Output Looks Like
-
-The best sessions do not end with "I checked root, Frida, and pinning." They
-end with compact, operator-usable answers such as:
-
-- the login flow uses OkHttp against `api.example.tld`, bearer tokens are stored
-  in SharedPreferences, and request replay appears weakly bound
-- an exported receiver or deep link reaches privileged behavior with minimal
-  attacker prerequisites
-- the app bypasses explicit proxy via Cronet/native TLS, and the next best pivot
-  is JNI/native trust analysis rather than more Java hooks
-- Frida attach works but Java hooks stay silent because the interesting path is
-  native-backed
-
-If the session cannot reach a finding, it should still leave behind a precise
-map of what was proven, what was blocked, and the next highest-value move.
-
-## What "Good Hacker" Means Here
-
-In this workspace, "good hacker" means:
-
-- thinks adversarially but stays evidence-driven
-- hunts for real vulnerabilities, not just indicators
-- understands Android trust boundaries
-- can pivot between static, network, runtime, and native layers
-- prefers small proofs that demonstrate impact
-- avoids getting stuck on anti-analysis theater with no security outcome
-
-The strongest outputs are not giant notes dumps. They are compact findings such
-as:
-
-- an exported component that can be abused cross-app
-- a replayable authenticated request that bypasses intended checks
-- a WebView bridge or deep link issue with reachable impact
-- a local token or secret exposure that changes attacker capability
-- a pinning or crypto flaw that exposes meaningful sensitive traffic or trust
-  failure
-
 ## Current Baseline
 
 - Emulator: `re-pixel7-api34`
@@ -77,15 +25,44 @@ as:
 
 ## Prompt Source Layout
 
-- `AGENTS.md`: strict session contract and default assumptions
-- `WORKFLOW.md`: phased RE workflow and pivot logic
+- `AGENTS.md`: session contract, priorities, workflow rules, evidence templates
+- `CODEQL-GUIDE.md`: CodeQL setup, database creation, and custom Android queries
+- `DATAFLOW-VALIDATION.md`: 5-step source-to-sink validation framework
+- `EXPLOIT-METHODOLOGY.md`: structured PoC development with per-vuln strategies
+- `EXPLOIT-VERIFICATION.md`: proof-of-exploitation levels, bypass exhaustion protocol, per-type evidence checklists
+- `FINDINGS-PRIORITIZATION.md`: adversarial priority order and severity adjudication
+- `NATIVE-FUZZING.md`: AFL++ fuzzing, corpus generation, and crash analysis
+- `SEMGREP-GUIDE.md`: Semgrep setup and custom Android rules
+- `SESSION-MEMORY.md`: persistent learning across sessions with confidence scoring
+- `DETECTION-PAIRING.md`: mandatory detection content for confirmed findings
+- `EXPLOITATION-QUEUE.md`: structured vuln-to-exploit handoff JSON schema
+- `FINDINGS-DB.md`: SQLite findings database schema and CLI integration
 - `TOOLS.md`: task-oriented command recipes and tool guidance
 - `TROUBLESHOOTING.md`: symptom-driven failure recovery
+- `WORKFLOW.md`: phased static and dynamic RE workflow with pivot logic
 
 Operator-owned scripts stay outside this prompt bundle:
 
 - `scripts/ai/android-re/re-avd.sh`: emulator and dynamic-analysis helper
-- `scripts/ai/android-re/re-static.sh`: static-analysis helper
+- `scripts/ai/android-re/re-static.sh`: static-analysis helper (includes `diff`
+  for version comparison)
+- `scripts/ai/android-re/workspace-init.sh`: target workspace initialization
+
+## Target Workspace Convention
+
+All target-specific work goes in `~/Documents/{app-name}/`. This directory
+persists across sessions and carries findings, notes, evidence, and PoC scripts
+between agent sessions.
+
+Initialize a new target workspace:
+
+```bash
+bash scripts/ai/android-re/workspace-init.sh init com.example.target /path/to/app.apk
+```
+
+The workspace contains OWASP-aligned templates for findings (M1–M10), endpoints,
+anti-analysis defenses, exported components, attack surface maps, and session
+history. See `AGENTS.md` for the full workspace convention and rules.
 
 ## Fast Start
 
@@ -109,9 +86,6 @@ tail -f ~/Downloads/android-re-tools/re-avd-start.log
 - `ocgptare` — protocol/auth mapping and deeper structured execution
 - `ocglmare` — anti-analysis, pinning, and cost-effective repeated probing
 - `oczenare` — static-first reconnaissance and low-cost wide searches
-- `clare` — Claude Code (opus), balanced general triage
-- `clglmare` — Claude Code via Z.AI GLM, anti-analysis and pinning focus
-- `clsare` — Claude Code (sonnet), protocol mapping and structured execution
 
 Examples:
 
@@ -120,9 +94,16 @@ ocare "prepare the emulator and inspect this target"
 ocgptare "focus on auth, traffic, and replay surfaces"
 ocglmare "look for root, emulator, and anti-Frida paths"
 oczenare "do static APK triage and summarize likely pivots"
-clare "prepare the emulator and inspect this target"
-clglmare "look for root, emulator, and anti-Frida paths"
-clsare "focus on auth, traffic, and replay surfaces"
+```
+
+Full assessment example:
+
+```bash
+ocare "full assessment of com.example.target at ~/Documents/mythingapp: \
+read the dir to learn context from previous sessions, then do \
+complete static + dynamic analysis, test all UI screens and features, \
+find vulnerabilities and bugs, document everything in the workspace, \
+put all scripts/hooks/PoC there, spawn subagents for parallel work"
 ```
 
 Available profile launchers:
@@ -134,17 +115,13 @@ Available profile launchers:
 - `ocorare` -> `opencode-openrouter`
 - `ocsare` -> `opencode-sonnet`
 - `oczenare` -> `opencode-zen`
-- `clare` -> Claude Code (opus)
-- `clglmare` -> Claude Code via Z.AI GLM endpoint
-- `clsare` -> Claude Code (sonnet)
-- `clhare` -> Claude Code (haiku)
 
 Each launcher:
 
 - boots the emulator in the background via `scripts/ai/android-re/re-avd.sh start`
 - writes boot logs to `~/Downloads/android-re-tools/re-avd-start.log`
 - builds prompt context from every root-level Markdown file in this directory
-- opens Alacritty running OpenCode on the `android-re` agent
+- opens Ghostty running OpenCode on the `android-re` agent
 
 The agent should still verify readiness with `status` or `adb wait-for-device`
 before dynamic work.
@@ -170,12 +147,9 @@ Use the launcher that best fits the current branch, then switch once evidence
 points elsewhere:
 
 - `oczenare` -> cheapest static-first APK reconnaissance and wide search
-- `ocgptare` / `clsare` -> structured auth, protocol, replay, and reporting work
-- `ocglmare` / `clglmare` -> anti-analysis, pinning, and repeated bypass tries
-- `ocare` / `clare` -> balanced default when the target is not yet classified
-
-Do not stay attached to the original launcher choice once the evidence says a
-different branch is now dominant.
+- `ocgptare` -> structured auth, protocol, replay, and reporting work
+- `ocglmare` -> anti-analysis, pinning, and repeated bypass tries
+- `ocare` -> balanced default when the target is not yet classified
 
 ## Vulnerability-First Heuristics
 
@@ -188,33 +162,7 @@ When choosing what to investigate next, prefer this order:
 5. can I prove a replay, IDOR, or weak binding issue from captured traffic?
 6. do I need Frida or anti-analysis bypass to reach one of those outcomes?
 
-This keeps the agent focused on real vulnerability work instead of endless setup.
-
-## Escalation Rules
-
-Escalate deeper when one of these becomes true:
-
-- you found a likely trust-boundary crossing and need a POC script
-- traffic capture is blocked by pinning, Cronet, QUIC, or native TLS
-- Java hooks only hit wrappers or never fire on the exercised path
-- static analysis shows JNI/native ownership of auth, trust, or anti-analysis
-- component, deep-link, or WebView paths look reachable and attacker-usable
-
-De-escalate when a branch has no fresh evidence after repeated small proof
-steps. Switch to the next best proof loop instead of forcing the same tactic.
-
-## What "Ready" Means
-
-Before dynamic RE, the baseline is considered ready only if all are true:
-
-- AVD exists and is online in `adb devices`
-- `sys.boot_completed=1`
-- `adb shell 'su 0 sh -c id'` works
-- proxy state is known (`8084` or intentionally disabled)
-- Frida server status is known
-- you know where to read tmux panes: `mitm`, `frida`, `logs`, `logcat`
-
-## Focused Manual Commands
+## Manual Commands
 
 Health and boot:
 
@@ -230,6 +178,13 @@ Static analysis:
 bash scripts/ai/android-re/re-static.sh prepare /path/to/app.apk
 bash scripts/ai/android-re/re-static.sh hashes /path/to/app.apk
 bash scripts/ai/android-re/re-static.sh inventory
+bash scripts/ai/android-re/re-static.sh diff old_version new_version
+```
+
+Target workspace:
+
+```bash
+bash scripts/ai/android-re/workspace-init.sh init com.example.target /path/to/app.apk
 ```
 
 Proxy and Frida:
@@ -241,21 +196,26 @@ bash scripts/ai/android-re/re-avd.sh frida-start
 bash scripts/ai/android-re/re-avd.sh frida-stop
 ```
 
-Device UI automation (load the `agent-device` skill first):
-
-```bash
-agent-device open Settings --platform android
-agent-device snapshot -i
-agent-device find "Network" click
-agent-device screenshot --out /tmp/screen.png
-agent-device close
-```
-
 Device spoofing:
 
 ```bash
 bash scripts/ai/android-re/re-avd.sh spoof
 bash scripts/ai/android-re/re-avd.sh unspoof
+```
+
+Findings database:
+
+```bash
+findings-android init ~/Documents/<target>
+findings-android list-vulns ~/Documents/<target>
+findings-android add-vuln ~/Documents/<target> FIND-001 "Title" High M7 open
+findings-android list-chains ~/Documents/<target>
+```
+
+Tool audit:
+
+```bash
+re-doctor
 ```
 
 ## Static Output Default
@@ -267,30 +227,3 @@ bash scripts/ai/android-re/re-avd.sh unspoof
 ```
 
 Override with `OUTPUT_ROOT=/path/to/out` when you want a custom location.
-
-## Architecture Notes
-
-This workspace is designed around a rooted `x86_64` AVD because that is the
-stable path on this machine.
-
-Confirmed host constraint:
-
-```text
-Avd's CPU Architecture 'arm64' is not supported by the QEMU2 emulator on x86_64 host. System image must match the host architecture.
-```
-
-Implication:
-
-- use the rooted `x86_64` AVD as the default RE device on this host
-- if a target app is ARM-only, it may rely on translation on `google_apis/x86_64`
-- translation can be good enough for many tasks but should not be mistaken for
-  a native ARM guest
-
-## Editing Rules For This Prompt Bundle
-
-- Put reusable baseline guidance here
-- Keep target-specific exploit logic in temporary scripts or a target-specific
-  workspace
-- Prefer exact commands, expected outputs, and pivot rules over narrative text
-- When guidance changes because the machine changed, update the prompt files
-  instead of burying facts in wrapper scripts
