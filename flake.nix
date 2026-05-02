@@ -76,6 +76,8 @@
       homeStateVersion = "25.11";
       user = "sadiq";
       constants = import ./shared/constants.nix;
+      secretLoader = import ./home/_helpers/_secret-loader.nix;
+      hmSystemdHelpers = import ./shared/_hm-systemd-helpers.nix { inherit (nixpkgs) lib; };
       nixpkgsConfig = {
         allowUnfree = true; # Allow proprietary packages
         allowBroken = false; # Don't allow broken packages
@@ -149,6 +151,8 @@
               system
               hostname
               constants
+              hmSystemdHelpers
+              secretLoader
               ;
           };
           modules = [
