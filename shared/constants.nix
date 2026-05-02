@@ -8,6 +8,23 @@
 # Usage (in Home Manager modules):
 #   { constants, ... }:
 #   { config.programs.alacritty.settings.font.normal.family = constants.font.monoNerd; }
+
+let
+  localhost = "127.0.0.1";
+
+  # Service ports — single source of truth for localhost services.
+  # Referenced by NixOS modules and Home Manager modules.
+  ports = {
+    tor-socks = 9050; # Tor SOCKS5 proxy
+    tor-dns = 9053; # Tor DNS port
+    socks = 1080; # Default SOCKS5 proxy port
+    i2pd-socks = 4447; # I2P SOCKS proxy port
+    glance = 8082; # Glance dashboard
+    activitywatch = 5600;
+    vnc = 5900;
+    vnc-web = 6080;
+  };
+in
 {
   # User Identity (Git, GitHub, Contact)
   user = {
@@ -108,19 +125,15 @@
     i2pd = "127.0.0.1"; # Local I2P daemon
   };
 
-  localhost = "127.0.0.1";
+  # Loopback address — single source of truth for localhost-only service bindings.
+  inherit localhost;
 
   # Service ports — single source of truth for localhost services.
-  ports = {
-    tor-socks = 9050; # Tor SOCKS5 proxy
-    tor-dns = 9053; # Tor DNS port
-    socks = 1080; # Default SOCKS5 proxy port
-    i2pd-socks = 4447; # I2P SOCKS proxy port
-    glance = 8082; # Glance dashboard
-    activitywatch = 5600;
-    vnc = 5900;
-    vnc-web = 6080;
-  };
+  inherit ports;
+
+  # Localhost service URLs — auto-derived from ports + localhost.
+  # Used by monitoring modules (prometheus-grafana, glance, system-report).
+  urls = builtins.mapAttrs (_name: port: "http://${localhost}:${toString port}") ports;
 
   # Paths relative to HOME for repo-local resources.
   paths = {
@@ -128,6 +141,7 @@
     screens = "Screens";
     opencodeLogDir = ".local/share/opencode/log";
     codexLogDir = ".codex/log";
+    aiAgentsLogDir = ".local/share/ai-agents/logs";
   };
 
   # External service API endpoints.

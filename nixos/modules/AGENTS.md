@@ -18,7 +18,7 @@ nixos/modules/
 ├── performance/             # Boot optimization
 ├── maintenance/             # Cleanup timers, Restic backup, nh
 ├── glance/                  # Glance dashboard widget configs (RSS, bookmarks, etc.)
-├── helpers/                 # Shared module helper expressions
+├── helpers/                 # Shared module helper expressions (systemd factories, hardening wrappers)
 └── *.nix                    # ~50 flat module files
 ```
 
@@ -30,10 +30,10 @@ nixos/modules/
 | `hardware/` | audio (PipeWire), android (ADB), bluetooth, graphics (NVIDIA), libinput, upower, thermal | Always active except bluetooth |
 | `desktop/` | niri, sddm, xserver (disabled), xdg-desktop-portal | Always active |
 | `network/` | networking (NM+resolved), dnscrypt-proxy, mullvad, tailscale, tor | Mixed opt-in |
-| `security-stack/` | security (kernel/sysctl/nftables/AIDE/AppArmor), opsec, sandboxing (Firejail), opensnitch, macchanger | Mixed opt-in |
+| `security-stack/` | security (kernel/sysctl/nftables/AIDE/AppArmor), opsec (session lock, zram, NTS chrony), sandboxing (Firejail), opensnitch, macchanger, web-re (opt-in) | Mixed opt-in |
 | `apps/` | browser-deps, flatpak, gaming (Steam/Proton/MangoHud), syncthing | Mixed opt-in |
 | `virtualization/` | virtualisation (Docker/VBox/libvirt), nix-ld | Mixed opt-in |
-| `observability/` | monitoring, netdata, scrutiny, glance, loki | All opt-in |
+| `observability/` | monitoring (base tools), netdata, scrutiny, glance, loki | All opt-in |
 | `performance/` | boot-optimization | Always active |
 | `maintenance/` | cleanup, backup (Restic), nh | Mixed opt-in |
 
@@ -48,6 +48,10 @@ nixos/modules/
 | `cleanup.nix` | Scheduled cleanup timers for downloads, caches, Docker |
 | `sandboxing.nix` | Firejail wrapped binaries with per-app profiles |
 | `glance/default.nix` | Glance dashboard (localhost:8082) with widgets |
+| `android.nix` | Android ADB, fastboot, SDK emulator support |
+| `web-re.nix` | Web RE and security assessment tools (opt-in) |
+| `monitoring.nix` | Base hardware sensor monitoring and resource tools |
+| `helpers/_systemd-helpers.nix` | Systemd hardening, persistent timers, oneshot service factories |
 
 ## Conventions
 
@@ -62,6 +66,7 @@ nixos/modules/
 2. **Two-level imports** — flat files must be imported from the correct category `default.nix`; run `just modules` to verify
 3. **Cross-module assertions** — `validation.nix` will fail the build if conflicting modules are enabled simultaneously
 4. **security-stack contains opsec.nix** — it's a subdirectory file (`security-stack/opsec.nix`), not a flat file at this level
+5. **Orphaned modules** — `fwupd.nix`, `printing.nix`, `secure-boot.nix`, `vnc.nix`, `yggdrasil.nix`, `i2pd.nix` exist here but are not imported by any category `default.nix`. They will not be included in any build until wired up.
 
 ## Dependencies
 

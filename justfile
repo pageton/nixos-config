@@ -203,7 +203,3 @@ sops-key:
         echo "No age key found. Run 'just sops-setup' to create one."; \
     fi
 
-# Sync skills from GitHub to ~/.local/share/skills/
-skills-sync:
-    @echo -e "\n➤ Syncing skills from GitHub…"
-    @./scripts/ai/skills-sync.sh

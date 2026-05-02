@@ -9,14 +9,16 @@ Cross-boundary Nix expressions used by both NixOS system modules and Home-Manage
 | `constants.nix` | SSOT: user identity, fonts, Catppuccin Mocha colors, keyboard layout, service ports, proxy endpoints, paths |
 | `option-helpers.nix` | Typed NixOS option constructors: `mkBoolOption`, `mkStrOption`, `mkIntOption`, `mkEnumOption` |
 | `alias-helpers.nix` | Shared shell alias definitions injected into both zsh and bash configs |
-| `secret-loader.nix` | Bash function `_load_secret()` to read SOPS-decrypted secrets from `/run/secrets/` |
+ `_hm-systemd-helpers.nix` | Shared Home-Manager systemd timer helpers: `mkPersistentTimer`, `mkWeeklyTimer` |
+ `secret-loader.nix` | *(moved to `home/_helpers/_secret-loader.nix`)* |
 
 ## Conventions
 
 - `constants.nix` is the single source of truth — never hardcode values that belong here
 - Passed to all modules via `specialArgs.constants` (set in `flake.nix`)
-- `secret-loader.nix` is a bash file sourced by zsh config and ai-agent scripts
+- `secret-loader.nix` was moved to `home/_helpers/` — it is only used by HM modules
 - `option-helpers.nix` reduces boilerplate in NixOS module option definitions
+- `_hm-systemd-helpers.nix` is imported directly by `flake.nix` (not via specialArgs) and provides timer factories for HM service modules
 
 ## Dependencies
 

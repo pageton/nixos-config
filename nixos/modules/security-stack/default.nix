@@ -6,5 +6,6 @@
     ../sandboxing.nix # Firejail wrapped binaries with per-app profiles (opt-in)
     ../opensnitch.nix # Per-app network firewall with eBPF monitoring (opt-in)
     ../macchanger.nix # MAC address randomization on boot (opt-in)
+    ../web-re.nix # Web RE and security assessment tools (opt-in)
   ];
 }
