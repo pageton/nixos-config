@@ -26,8 +26,8 @@ else
   print_warning "Using fallback model defaults — run 'just home' to generate $_ai_models_sh"
   # Fallback defaults — kept in sync with _models.nix and constants.nix.
   # These are overridden by the generated config after 'just home'.
-  AI_MODEL_GPT_LOW="${AI_MODEL_GPT_LOW:-openai/gpt-5.4-spark}"
-  AI_MODEL_GPT_DEFAULT="${AI_MODEL_GPT_DEFAULT:-openai/gpt-5.4}"
+  AI_MODEL_GPT_LOW="${AI_MODEL_GPT_LOW:-openai/gpt-5.5-spark}"
+  AI_MODEL_GPT_DEFAULT="${AI_MODEL_GPT_DEFAULT:-openai/gpt-5.5}"
   AI_MODEL_GPT_XHIGH="${AI_MODEL_GPT_XHIGH:-openai/gpt-5.1-codex-max}"
   ZAI_API_ROOT="${ZAI_API_ROOT:-https://api.z.ai/api}"
   ZAI_TIMEOUT="${ZAI_TIMEOUT:-3000000}"
@@ -107,7 +107,7 @@ _def mcx   -    "codex --no-alt-screen --dangerously-bypass-approvals-and-sandbo
 _def hcx   -    "codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort=\"high\"'"       "codex exec --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort=\"high\"'"
 _def xcx   -    "codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort=\"xhigh\"'"      "codex exec --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort=\"xhigh\"'"
 
-# OpenCode (default and profiles)
+# OpenCode (default and profiles — short aliases = raw profiles)
 _def oc      -                                      "opencode"                       "opencode run"
 _def ocor    "OPENROUTER"                           "opencode"                       "opencode run"
 _def ocglm   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-glm"     "opencode"         "opencode run"
@@ -117,12 +117,27 @@ _def locgpt  "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-gpt"    "opencode --mod
 _def mocgpt  "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-gpt"    "opencode --model ${AI_MODEL_GPT_DEFAULT}" "opencode run --model ${AI_MODEL_GPT_DEFAULT}"
 _def xocgpt  "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-gpt"    "opencode --model ${AI_MODEL_GPT_XHIGH}"   "opencode run --model ${AI_MODEL_GPT_XHIGH}"
 _def ocs     "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-sonnet" "opencode"         "opencode run"
-_def oczen   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-zen"    "opencode"         "opencode run"
+_def oco    "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-openrouter" "opencode" "opencode run"
+
+
+# OpenCode persona profiles (short aliases — raw profile config dirs)_def ocsis   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-sisyphus" "opencode" "opencode run"
+_def ochep   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-hephaestus" "opencode" "opencode run"
+_def ocpro   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-prometheus" "opencode" "opencode run"
+_def ocatl   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-atlas" "opencode" "opencode run"
+_def ocora   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-oracle" "opencode" "opencode run"
+_def oclib   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-librarian" "opencode" "opencode run"
+_def ocexp   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-explore" "opencode" "opencode run"
+_def ocmet   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-metis" "opencode" "opencode run"
+_def ocmom   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-momus" "opencode" "opencode run"
+_def ocmulti "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-multimodal" "opencode" "opencode run"
 
 # Gemini
 _def gem   -    "gemini --approval-mode=yolo"         "gemini --approval-mode=yolo --prompt"
 
-# Oh My Pi — omp prefix (explicit)
+# oh-my-pi
+_def opi   ZAI_OMP  "omp"    "omp --prompt"
+
+# Oh My Pi — omp prefix (can1357/oh-my-pi)
 # OMP uses PI_CODING_AGENT_DIR env var for profile switching (no native config-dir flag).
 _def omp    "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp"                                "omp"           "omp -p"
 _def omps   "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-sonnet"                         "omp"           "omp -p"
@@ -133,17 +148,21 @@ _def ompgpt "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-gpt"                   
 _def ompor  "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-openrouter"                     "omp"           "omp -p"
 _def ompzen "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-zen"                            "omp"           "omp -p"
 
-# Oh My Pi — pi prefix (shorter)
-_def pi     "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp"                                "omp"           "omp -p"
-_def pis    "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-sonnet"                         "omp"           "omp -p"
-_def piop   "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-opus"                           "omp"           "omp -p"
-_def piglm  "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-glm"                            "omp --model zai/glm-5.1"  "omp -p"
-_def pigem  "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-gemini"                         "omp"           "omp -p"
-_def pigpt  "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-gpt"                            "omp"           "omp -p"
-_def pior   "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-openrouter"                     "omp"           "omp -p"
-_def pizen  "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-zen"                            "omp"           "omp -p"
+# Pi — pi prefix (badlogic/pi-mono)
+_def pi     "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi"                                  "pi"            "pi -p"
+_def pis    "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-sonnet"                            "pi"            "pi -p"
+_def piop   "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-opus"                             "pi"            "pi -p"
+_def piglm  "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-glm"                              "pi --model zai/glm-5.1"   "pi -p"
+_def pigem  "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-gemini"                           "pi"            "pi -p"
+_def pigpt  "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-gpt"                              "pi"            "pi -p"
+_def pior   "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-openrouter"                       "pi"            "pi -p"
+_def pizen  "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-zen"                              "pi"            "pi -p"
+
+is_supported_base_alias() {
   [[ -v AGENT_REGISTRY[$1] ]]
 }
+
+SUPPORTED_TOOLS=(claude opencode codex gemini omp)
 
 # Z.AI API key resolution.
 zai_key_path() {
@@ -198,6 +217,11 @@ openrouter_opencode_env() {
   key="$(openrouter_key)"
   printf '%s\n' "OPENROUTER_API_KEY=${key}"
   printf '%s\n' "OPENCODE_CONFIG_DIR=${HOME}/.config/opencode-openrouter"
+
+zai_omp_env() {
+  local key
+  key="$(zai_key)"
+  printf '%s\n' "ZAI_API_KEY=${key}"
 }
 
 # --- Workflow suffix resolution ---
@@ -226,6 +250,7 @@ resolve_env_marker() {
 	case "$env_marker" in
 	"-") ;;
 	"ZAI") zai_claude_env | tr '\n' ' ' ;;
+	"ZAI_OMP") zai_omp_env | tr '\n' ' ' ;;
 	"OPENROUTER") openrouter_opencode_env | tr '\n' ' ' ;;
 	*) printf '%s' "$env_marker" ;;
 	esac
