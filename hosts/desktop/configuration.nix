@@ -60,6 +60,9 @@
     mullvadVpn = {
       enable = true;
     };
+    webRe = {
+      enable = true;
+    };
   };
 
   environment.systemPackages = with pkgs; [ home-manager ];
