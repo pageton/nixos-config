@@ -15,6 +15,15 @@ let
   # LD_LIBRARY_PATH from the system gcc lib output.
   gccLib = pkgs.stdenv.cc.cc.lib;
 
+  # Ghidra requires java on PATH — uvx launches in a minimal env without it.
+  jdkBin = "${pkgs.jdk}/bin";
+
+  # Wrapper that prepends the JDK to PATH so pyghidra can find java.
+  pyghidraMcpWrapper = pkgs.writeShellScriptBin "pyghidra-mcp" ''
+    export PATH="${jdkBin}:$PATH"
+    exec uvx pyghidra-mcp "$@"
+  '';
+
   mkZaiRemoteMcp = path: {
     enable = true;
     type = "remote";
@@ -66,8 +75,11 @@ in
 
       pyghidra-mcp = {
         enable = true;
-        command = "uvx";
-        args = [ "pyghidra-mcp" ];
+        command = "${pyghidraMcpWrapper}/bin/pyghidra-mcp";
+        args = [
+          "--project-path"
+          "${config.xdg.dataHome}/pyghidra-mcp/claude"
+        ];
         env = {
           GHIDRA_INSTALL_DIR = "${pkgs.ghidra-bin}/lib/ghidra";
           LD_LIBRARY_PATH = "${gccLib}/lib";
