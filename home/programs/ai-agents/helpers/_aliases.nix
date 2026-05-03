@@ -313,42 +313,42 @@ let
     {
       alias = "pi";
       command = "pi";
-      workflowPromptMode = "flag";
+      workflowPromptMode = "positional";
     }
     {
       alias = "pis";
       command = "pi_sonnet";
-      workflowPromptMode = "flag";
+      workflowPromptMode = "positional";
     }
     {
       alias = "piop";
       command = "pi_opus";
-      workflowPromptMode = "flag";
+      workflowPromptMode = "positional";
     }
     {
       alias = "piglm";
       command = "pi_glm";
-      workflowPromptMode = "flag";
+      workflowPromptMode = "positional";
     }
     {
       alias = "pigem";
       command = "pi_gemini";
-      workflowPromptMode = "flag";
+      workflowPromptMode = "positional";
     }
     {
       alias = "pigpt";
       command = "pi_gpt";
-      workflowPromptMode = "flag";
+      workflowPromptMode = "positional";
     }
     {
       alias = "pior";
       command = "pi_openrouter";
-      workflowPromptMode = "flag";
+      workflowPromptMode = "positional";
     }
     {
       alias = "pizen";
       command = "pi_zen";
-      workflowPromptMode = "flag";
+      workflowPromptMode = "positional";
     }
   ];
 
