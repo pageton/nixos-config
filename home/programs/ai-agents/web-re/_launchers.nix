@@ -55,26 +55,26 @@ map mkWebReLauncher [
   }
   {
     name = "ocoglmwre";
-    profile = "glm";
+    profile = "omo-glm";
   }
   {
     name = "ocogemwre";
-    profile = "gemini";
+    profile = "omo-gemini";
   }
   {
     name = "ocogptwre";
-    profile = "gpt";
+    profile = "omo-gpt";
   }
   {
     name = "ocoorwre";
-    profile = "openrouter";
+    profile = "omo-openrouter";
   }
   {
     name = "ocoswre";
-    profile = "sonnet";
+    profile = "omo-sonnet";
   }
   {
     name = "ocozenwre";
-    profile = "zen";
+    profile = "omo-zen";
   }
 ]
