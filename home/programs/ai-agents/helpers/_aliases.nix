@@ -147,7 +147,7 @@ let
     }
     {
       alias = "oczen";
-      command = "opencode_zen";
+      command = "opencode_omo_zen";
       workflowPromptMode = "flag";
     }
     # Oh My OpenAgent — oco prefix (code-yeongyu/oh-my-openagent)

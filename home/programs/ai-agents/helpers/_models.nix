@@ -23,8 +23,8 @@
   gpt-low-raw = "gpt-5.5-spark";
 
   # Provider-specific aliases
-  openrouter = "openrouter/tencent/hun3-review:free";
-  openrouter-raw = "openrouter/tencent/hun3-review:free";
+  openrouter = "openrouter/tencent/hy3-preview:free";
+  openrouter-raw = "openrouter/tencent/hy3-preview:free";
 
   # ZAI / other
   glm = "zai-coding-plan/glm-5.1";

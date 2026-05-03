@@ -83,8 +83,6 @@ let
     )
   );
 
-
-
   opencodeImpeccableCommandFiles =
     if cfg.impeccable.enable then
       builtins.listToAttrs (
@@ -221,7 +219,7 @@ let
           let
             src = pkgs.fetchFromGitHub {
               inherit owner repo rev;
-              hash = "sha256-IHHPdoPH44sHDfV7c7RVr+S/CpayTk4j/3QHEIiab0k=";
+              hash = "sha256-BrRDo7tDagCNIXtZfh7zMKo6b16pSdh7Bu/gixEjVaA=";
             };
             entries = builtins.readDir src;
           in
@@ -315,7 +313,7 @@ let
           let
             src = pkgs.fetchFromGitHub {
               inherit owner repo rev;
-              hash = "sha256-IHHPdoPH44sHDfV7c7RVr+S/CpayTk4j/3QHEIiab0k=";
+              hash = "sha256-BrRDo7tDagCNIXtZfh7zMKo6b16pSdh7Bu/gixEjVaA=";
             };
             entries = builtins.readDir src;
           in
@@ -381,12 +379,16 @@ in
       (lib.mkIf cfg.forge.enable forgeProfileConfigFiles)
 
       # === Oh My Pi (omp) Profile Configs & Skills ===
-      (lib.mkIf cfg.omp.enable (ompProfileConfigFiles // ompSharedSkillFiles // {
-        ".omp/agent/mcp.json" = {
-          text = toJSON ompSettings;
-          force = true;
-        };
-      }))
+      (lib.mkIf cfg.omp.enable (
+        ompProfileConfigFiles
+        // ompSharedSkillFiles
+        // {
+          ".omp/agent/mcp.json" = {
+            text = toJSON ompSettings;
+            force = true;
+          };
+        }
+      ))
 
       # === Pi (badlogic/pi-mono) Profile Configs & Skills ===
       (lib.mkIf cfg.pi.enable (piProfileConfigFiles // piSharedSkillFiles))
@@ -414,7 +416,9 @@ in
           force = true;
         };
       })
-      (lib.mkIf cfg.opencode.enable (opencodeConfigFiles // opencodeImpeccableCommandFiles // omoConfigFiles))
+      (lib.mkIf cfg.opencode.enable (
+        opencodeConfigFiles // opencodeImpeccableCommandFiles // omoConfigFiles
+      ))
     ];
   };
 }
