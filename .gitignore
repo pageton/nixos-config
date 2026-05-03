@@ -17,3 +17,6 @@ home/secrets/secrets-decrypted.yaml
 .env.*
 id_rsa
 id_ed25519
+
+.opencode/
+pyghidra_mcp_projects/
