@@ -3,7 +3,7 @@
 # Called by oc*wre wrappers.
 # Env vars set by the Nix wrapper:
 #   WEB_RE_OPENCODE_PROFILE   - opencode profile name (default, glm, gemini, gpt, openrouter, sonnet, zen)
-#
+#                         or omo profile name (omo-glm, omo-gemini, omo-gpt, omo-openrouter, omo-sonnet, omo-zen)
 # The web-re agent's system prompt already contains the full RE prompt bundle
 # (AGENTS.md, WORKFLOW.md, TOOLS.md, TROUBLESHOOTING.md, README.md) injected at Nix eval time.
 # No need to pass them again via --prompt.
@@ -68,9 +68,12 @@ if [[ -d "${BASE_OPENCODE_CONFIG_DIR}" ]]; then
 fi
 
 if [[ -f "${RUNTIME_CONFIG_DIR}/opencode.json" ]] && command -v jq >/dev/null 2>&1; then
-	# Pin default agent to web-re
-	jq '.default_agent = "web-re"' "${RUNTIME_CONFIG_DIR}/opencode.json" >"${RUNTIME_CONFIG_DIR}/opencode.json.tmp"
-	mv -f "${RUNTIME_CONFIG_DIR}/opencode.json.tmp" "${RUNTIME_CONFIG_DIR}/opencode.json"
+	# Only pin web-re agent for non-omo profiles.
+	# Omo profiles keep their sisyphus default so oh-my-openagent stays active.
+	if [[ "${PROFILE}" != *"omo-"* ]]; then
+		jq '.default_agent = "web-re"' "${RUNTIME_CONFIG_DIR}/opencode.json" >"${RUNTIME_CONFIG_DIR}/opencode.json.tmp"
+		mv -f "${RUNTIME_CONFIG_DIR}/opencode.json.tmp" "${RUNTIME_CONFIG_DIR}/opencode.json"
+	fi
 
 	# Merge web-re-specific MCP servers into runtime config.
 	# These are NOT in the shared profile -- they only appear in the web-re overlay.
