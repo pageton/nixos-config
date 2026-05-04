@@ -18,7 +18,7 @@
       extensions.markview-nvim.enable = true;
       extraDiagnostics.enable = true;
     };
-    ts = {
+    typescript = {
       enable = true;
       extensions.ts-error-translator.enable = true;
     };
