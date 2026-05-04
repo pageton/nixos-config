@@ -1,7 +1,4 @@
 _: {
-  xdg.autostart.entries.remmina-applet = {
-    enable = false;
-  };
 
   xdg.configFile = {
     "electron-flags.conf".text = ''
