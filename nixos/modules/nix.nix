@@ -3,6 +3,21 @@
 # for performance, storage management, and development workflow.
 { inputs, ... }:
 {
+  # Overlays applied to the NixOS nixpkgs (including pkgsi686Linux for 32-bit deps).
+  # These apply to ALL package sets in the NixOS build, unlike overlays in flake.nix
+  # which only affect the pkgs set passed to Home-Manager.
+  nixpkgs.overlays = [
+    inputs.niri.overlays.niri
+    (final: prev: {
+      # OpenLDAP: test017-syncreplication-refresh is a known flaky test that
+      # fails intermittently due to timing in sync replication checks.
+      # Pulled in as a transitive dependency by lutris (via wine → 32-bit openldap).
+      openldap = prev.openldap.overrideAttrs (_: {
+        doCheck = false;
+      });
+    })
+  ];
+
   nix = {
     # Define channels for legacy nix commands
     nixPath = [

@@ -90,15 +90,22 @@
         overlays = [
           inputs.niri.overlays.niri
           (final: prev: {
-            # Disable tests for font-related Python packages that fail on NixOS.
-            # These packages have network-based or font-rendering tests that don't
-            # work in the Nix build sandbox. The packages themselves are fine.
+            # Disable tests for packages with known flaky/sandbox-incompatible test suites.
             #
+            # Python font packages: network-based or font-rendering tests don't work
+            # in the Nix build sandbox. The packages themselves are fine.
             # TODO: Track upstream fixes and remove overrides when tests pass.
             #   - picosvg: https://github.com/google/picosvg/issues
             #   - nanoemoji: https://github.com/googlefonts/nanoemoji/issues
             #   - gftools: https://github.com/googlefonts/gftools/issues
             # Review periodically (e.g. on each nixpkgs update).
+            #
+            # OpenLDAP: test017-syncreplication-refresh is a known flaky test that
+            # fails intermittently due to timing in sync replication checks.
+            # Pulled in by lutris as a transitive dependency.
+            openldap = prev.openldap.overrideAttrs (_: {
+              doCheck = false;
+            });
             python3Packages = prev.python3Packages.overrideScope (
               pyFinal: pyPrev: {
                 picosvg = pyPrev.picosvg.overridePythonAttrs (_: {
