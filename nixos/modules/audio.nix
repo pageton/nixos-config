@@ -31,6 +31,7 @@ in
           "context.modules" = [
             {
               name = "libpipewire-module-filter-chain";
+              flags = [ "ifexists" ];
               args = {
                 "node.description" = "Noise Cancelling Source";
                 "media.name" = "Noise Cancelling Source";
