@@ -1,38 +1,25 @@
+# Glance dashboard service health check endpoints.
+# Port numbers are injected from constants.ports to avoid drift.
+
+{ constants }:
+
 let
-  mkSite =
-    {
-      title,
-      url,
-      icon,
-    }:
-    {
-      inherit title url icon;
-    };
+  inherit (constants) urls;
 in
-map mkSite [
+[
   {
     title = "Glance";
-    url = "http://localhost:8082";
+    url = urls.glance;
     icon = "mdi:view-dashboard-outline";
   }
   {
-    title = "Netdata";
-    url = "http://localhost:19999";
-    icon = "si:netdata";
-  }
-  {
-    title = "Bitwarden";
-    url = "https://vault.sadiq.lol";
-    icon = "si:bitwarden";
-  }
-  {
     title = "Scrutiny";
-    url = "http://localhost:8080";
+    url = urls.scrutiny;
     icon = "mdi:harddisk";
   }
   {
     title = "Syncthing";
-    url = "http://localhost:8384";
+    url = "http://${constants.localhost}:8384";
     icon = "si:syncthing";
   }
 ]
