@@ -1,9 +1,7 @@
 # Android RE agent-specific MCP servers.
 # These are only loaded into the android-re agent's runtime config,
 # not shared with other agents (build, plan, review, etc.).
-
-{ config, pkgs, ... }:
-
+{ pkgs, ... }:
 let
   # jpype (used by pyghidra) needs libstdc++.so.6 at runtime.
   # On NixOS the FHS path is not available to uvx, so we inject
@@ -16,11 +14,7 @@ in
       pyghidra-mcp = {
         enable = true;
         command = "uvx";
-        args = [
-          "pyghidra-mcp"
-          "--project-path"
-          "${config.xdg.dataHome}/pyghidra-mcp/android-re"
-        ];
+        args = [ "pyghidra-mcp" ];
         env = {
           GHIDRA_INSTALL_DIR = "${pkgs.ghidra-bin}/lib/ghidra";
           LD_LIBRARY_PATH = "${gccLib}/lib";

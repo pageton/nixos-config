@@ -178,7 +178,14 @@ run_simple_mode() {
 run_sectioned_mode() {
 	local provider_choice profile_choice mode_choice agent_alias
 
-	provider_choice="$(pick "Select Provider" "OpenCode" "Claude Code" "Codex" "Gemini" "Oh My Pi")"
+	# Build provider menu from generated PROVIDER_ORDER and PROVIDER_LABELS
+	local -a provider_menu=()
+	local tool
+	for tool in "${PROVIDER_ORDER[@]}"; do
+		provider_menu+=("${PROVIDER_LABELS[$tool]}")
+	done
+
+	provider_choice="$(pick "Select Provider" "${provider_menu[@]}")"
 	if [[ -z "${provider_choice:-}" ]]; then
 		return 1
 	fi

@@ -69,6 +69,14 @@ let
       alias = "ompzen";
       contextWindow = 1048576;
     }
+    {
+      name = "omp-deepseek";
+      provider = "deepseek";
+      model = models.deepseek-pro-raw;
+      alias = "ompds";
+      contextWindow = 1000000;
+      thinkingLevel = "high";
+    }
   ];
 
   zaiProfiles = builtins.filter (p: p.zaiKey or false) profiles;

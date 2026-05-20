@@ -6,37 +6,11 @@
   hmSystemdHelpers,
   logCleanupCommand,
   mkCliAutoupdateScript,
+  autoUpdateTools,
 }:
 let
   inherit (hmSystemdHelpers) mkWeeklyTimer;
-  autoUpdateTools = [
-    {
-      binary = "claude";
-      npmPackage = "@anthropic-ai/claude-code";
-      label = "Claude Code CLI";
-    }
-    {
-      binary = "codex";
-      npmPackage = "@openai/codex";
-      label = "Codex CLI";
-    }
-    {
-      binary = "gemini";
-      npmPackage = "@google/gemini-cli";
-      label = "Gemini CLI";
-    }
-    {
-      binary = "omp";
-      npmPackage = "@oh-my-pi/pi-coding-agent";
-      label = "Oh My Pi CLI";
-    }
-    {
-      binary = "pi";
-      npmPackage = "@mariozechner/pi-coding-agent";
-      label = "Pi CLI";
-    }
-  ];
-
+  agentmemoryRuntime = import ./_agentmemory-runtime.nix { inherit pkgs; };
   mkAutoUpdateService =
     {
       binary,
@@ -52,6 +26,30 @@ let
     };
 in
 lib.mkMerge [
+  (lib.mkIf cfg.agentmemory.enable {
+    services.agentmemory = {
+      Unit = {
+        Description = "Shared persistent memory server for AI agents";
+        After = [ "network-online.target" ];
+      };
+      Service = {
+        Type = "simple";
+        WorkingDirectory = "%h";
+        Environment = [
+          "AGENTMEMORY_URL=${cfg.agentmemory.url}"
+          "CI=1"
+          "NPM_CONFIG_CACHE=%h/.cache/npm"
+          "PATH=${agentmemoryRuntime.iiiEngine}/bin:${pkgs.nodejs}/bin:/run/current-system/sw/bin"
+        ];
+        ExecStart = "${pkgs.nodejs}/bin/npx -y @agentmemory/agentmemory@${cfg.agentmemory.version}";
+        Restart = "always";
+        RestartSec = "10s";
+        TimeoutStartSec = "300";
+        TimeoutStopSec = "30";
+      };
+      Install.WantedBy = [ "default.target" ];
+    };
+  })
   # ── AI agents resource slice (always active when agents enabled) ──
   # Caps collective memory of all agent processes so they cannot starve
   # the compositor, terminal, or browser during large output generation.

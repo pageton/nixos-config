@@ -24,9 +24,7 @@ let
         v: depth:
         if builtins.isAttrs v then
           let
-            entries = lib.mapAttrsToList (k: valAt: {
-              inherit k valAt;
-            }) v;
+            entries = lib.mapAttrsToList (k: valAt: { inherit k valAt; }) v;
           in
           if entries == [ ] then
             "{}"
@@ -137,11 +135,51 @@ let
           }
         ];
       };
+      deepseekProvider = {
+        baseUrl = "https://api.deepseek.com";
+        api = "openai-completions";
+        apiKey = "__DEEPSEEK_API_KEY_PLACEHOLDER__";
+        authHeader = true;
+        models = [
+          {
+            id = "deepseek-v4-pro";
+            name = "DeepSeek V4 Pro";
+            reasoning = true;
+            thinking = {
+              minLevel = "high";
+              maxLevel = "xhigh";
+              mode = "effort";
+            };
+            input = [ "text" ];
+            contextWindow = 1000000;
+            maxTokens = 384000;
+            compat = {
+              supportsDeveloperRole = false;
+              supportsReasoningEffort = true;
+              maxTokensField = "max_tokens";
+              reasoningEffortMap = {
+                high = "high";
+                xhigh = "max";
+              };
+              supportsToolChoice = false;
+              requiresReasoningContentForToolCalls = true;
+              requiresAssistantContentForToolCalls = true;
+              extraBody = {
+                thinking = {
+                  type = "enabled";
+                };
+              };
+            };
+          }
+        ];
+      };
     in
     if provider == "openrouter" then
       toYaml { providers.openrouter = openrouterProvider; }
     else if provider == "minimax" then
       toYaml { providers.minimax = minimaxProvider; }
+    else if provider == "deepseek" then
+      toYaml { providers.deepseek = deepseekProvider; }
     else
       "";
 

@@ -12,5 +12,6 @@ let
   preToolUse = import ./_hooks-pre-tool-use.nix { inherit mkBashHook; };
   postToolUse = import ./_hooks-post-tool-use.nix { inherit mkFormatterHook formatterRegistry; };
   session = import ./_hooks-session.nix { inherit mkPassthroughHook; };
+  herdr = import ./_hooks-herdr.nix { };
 in
-preToolUse // postToolUse // session
+preToolUse // postToolUse // session // herdr

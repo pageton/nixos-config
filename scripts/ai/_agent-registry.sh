@@ -3,13 +3,8 @@
 # launcher (interactive) and iter (headless) modes, workflow suffix resolution,
 # ZAI key handling.
 #
-# Single source of truth for all agent aliases.  Adding a new alias only
-# requires editing the _def calls below (plus any fzf picker menus in
-# agent-launcher.sh).
-#
-# NOTE: Agent aliases are also defined in
-# home-manager/modules/ai-agents/helpers/_aliases.nix for zsh alias generation.
-# Adding or renaming an alias requires updating both files.
+# Alias data is auto-generated from Nix (helpers/_aliases.nix) and placed at
+# ~/.config/ai-agents/aliases.sh. Run 'just home' to regenerate.
 #
 # Source this file from agent-launcher.sh and agent-iter.sh.
 # Requires: logging.sh sourced before this file.
@@ -25,7 +20,6 @@ if [[ -f "$_ai_models_sh" ]]; then
 else
   print_warning "Using fallback model defaults — run 'just home' to generate $_ai_models_sh"
   # Fallback defaults — kept in sync with _models.nix and constants.nix.
-  # These are overridden by the generated config after 'just home'.
   AI_MODEL_GPT_LOW="${AI_MODEL_GPT_LOW:-openai/gpt-5.5-spark}"
   AI_MODEL_GPT_DEFAULT="${AI_MODEL_GPT_DEFAULT:-openai/gpt-5.5}"
   AI_MODEL_GPT_XHIGH="${AI_MODEL_GPT_XHIGH:-openai/gpt-5.1-codex-max}"
@@ -45,28 +39,6 @@ DEPENDENCY_UPGRADE_PROMPT="${DEPENDENCY_UPGRADE_PROMPT:-}"
 BUILD_PERFORMANCE_PROMPT="${BUILD_PERFORMANCE_PROMPT:-}"
 RUNTIME_PERFORMANCE_PROMPT="${RUNTIME_PERFORMANCE_PROMPT:-}"
 MARKDOWN_SYNC_PROMPT="${MARKDOWN_SYNC_PROMPT:-}"
-
-# All recognized workflow suffixes.
-WORKFLOW_SUFFIXES=(cm rf fx sa du bp rp md)
-
-# Workflow metadata: suffix -> "label|env_var"
-declare -A WORKFLOW_MAP=(
-  [cm]="commit split (cm) — Splits working tree into logical commits with validated, minimal staging.|COMMIT_SPLIT_PROMPT"
-  [rf]="refactor maintainability (rf) — Improves structure and clarity without changing behavior, APIs, or workflows.|REFACTOR_MAINTAINABILITY_PROMPT"
-  [fx]="bugfix root cause (fx) — Reproduces bugs, proves root cause, fixes minimally, validates regressions afterward.|BUGFIX_ROOT_CAUSE_PROMPT"
-  [sa]="security audit (sa) — Finds evidence-backed security weaknesses across code, configs, dependencies, infrastructure surfaces.|SECURITY_AUDIT_PROMPT"
-  [du]="dependency upgrade (du) — Upgrades dependencies safely, handles breaking changes, validates compatibility, reports blockers.|DEPENDENCY_UPGRADE_PROMPT"
-  [bp]="build performance (bp) — Measures bottlenecks, applies low-risk optimizations, compares before-and-after performance evidence clearly.|BUILD_PERFORMANCE_PROMPT"
-  [rp]="runtime performance (rp) — Measures real code-path bottlenecks, applies low-risk optimizations, and verifies before-and-after latency, throughput, or memory gains.|RUNTIME_PERFORMANCE_PROMPT"
-  [md]="markdown sync (md) — Synchronizes documentation with repository reality, removing drift, ambiguity, stale instructions.|MARKDOWN_SYNC_PROMPT"
-)
-
-# Human-readable labels for workflow suffixes.
-workflow_label() {
-  local entry="${WORKFLOW_MAP[$1]:-}"
-  [[ -n "$entry" ]] || return 1
-  echo "${entry%%|*}"
-}
 
 # --- Agent registries --------------------------------------------------------
 #
@@ -93,76 +65,19 @@ declare -A AGENT_REGISTRY=()
 # shellcheck disable=SC2034
 declare -A AGENT_ITER_REGISTRY=()
 
-# Claude Code
-_def cl    -    "claude --dangerously-skip-permissions"                          "claude --print"
-_def clu   -    "claude --dangerously-skip-permissions"                          "claude --dangerously-skip-permissions --print"
-_def ocl   -    "claude --dangerously-skip-permissions --model opus"             "claude --model opus --print"
-_def hcl   -    "claude --dangerously-skip-permissions --model haiku"            "claude --model haiku --print"
-_def clglm ZAI  "claude --dangerously-skip-permissions"                          "claude --dangerously-skip-permissions --print"
-
-# Codex
-_def cx    -    "codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox"                                            "codex exec --dangerously-bypass-approvals-and-sandbox"
-_def lcx   -    "codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort=\"low\"'"       "codex exec --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort=\"low\"'"
-_def mcx   -    "codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort=\"medium\"'"     "codex exec --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort=\"medium\"'"
-_def hcx   -    "codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort=\"high\"'"       "codex exec --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort=\"high\"'"
-_def xcx   -    "codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort=\"xhigh\"'"      "codex exec --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort=\"xhigh\"'"
-
-# OpenCode (default and profiles — short aliases = raw profiles)
-_def oc      -                                      "opencode"                       "opencode run"
-_def ocor    "OPENROUTER"                           "opencode"                       "opencode run"
-_def ocglm   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-glm"     "opencode"         "opencode run"
-_def ocgem   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-gemini"  "opencode"         "opencode run"
-_def ocgpt   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-gpt"    "opencode"         "opencode run"
-_def locgpt  "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-gpt"    "opencode --model ${AI_MODEL_GPT_LOW}"     "opencode run --model ${AI_MODEL_GPT_LOW}"
-_def mocgpt  "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-gpt"    "opencode --model ${AI_MODEL_GPT_DEFAULT}" "opencode run --model ${AI_MODEL_GPT_DEFAULT}"
-_def xocgpt  "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-gpt"    "opencode --model ${AI_MODEL_GPT_XHIGH}"   "opencode run --model ${AI_MODEL_GPT_XHIGH}"
-_def ocs     "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-sonnet" "opencode"         "opencode run"
-_def oco    "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-openrouter" "opencode" "opencode run"
-
-
-# OpenCode persona profiles (short aliases — raw profile config dirs)_def ocsis   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-sisyphus" "opencode" "opencode run"
-_def ochep   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-hephaestus" "opencode" "opencode run"
-_def ocpro   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-prometheus" "opencode" "opencode run"
-_def ocatl   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-atlas" "opencode" "opencode run"
-_def ocora   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-oracle" "opencode" "opencode run"
-_def oclib   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-librarian" "opencode" "opencode run"
-_def ocexp   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-explore" "opencode" "opencode run"
-_def ocmet   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-metis" "opencode" "opencode run"
-_def ocmom   "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-momus" "opencode" "opencode run"
-_def ocmulti "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-multimodal" "opencode" "opencode run"
-
-# Gemini
-_def gem   -    "gemini --approval-mode=yolo"         "gemini --approval-mode=yolo --prompt"
-
-# oh-my-pi
-_def opi   ZAI_OMP  "omp"    "omp --prompt"
-
-# Oh My Pi — omp prefix (can1357/oh-my-pi)
-# OMP uses PI_CODING_AGENT_DIR env var for profile switching (no native config-dir flag).
-_def omp    "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp"                                "omp"           "omp -p"
-_def omps   "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-sonnet"                         "omp"           "omp -p"
-_def ompop  "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-opus"                           "omp"           "omp -p"
-_def ompglm "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-glm"                            "omp --model zai/glm-5.1"  "omp -p"
-_def ompgem "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-gemini"                         "omp"           "omp -p"
-_def ompgpt "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-gpt"                            "omp"           "omp -p"
-_def ompor  "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-openrouter"                     "omp"           "omp -p"
-_def ompzen "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-zen"                            "omp"           "omp -p"
-
-# Pi — pi prefix (badlogic/pi-mono)
-_def pi     "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi"                                  "pi"            "pi -p"
-_def pis    "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-sonnet"                            "pi"            "pi -p"
-_def piop   "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-opus"                             "pi"            "pi -p"
-_def piglm  "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-glm"                              "pi --model zai/glm-5.1"   "pi -p"
-_def pigem  "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-gemini"                           "pi"            "pi -p"
-_def pigpt  "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-gpt"                              "pi"            "pi -p"
-_def pior   "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-openrouter"                       "pi"            "pi -p"
-_def pizen  "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-zen"                              "pi"            "pi -p"
+# --- Load generated alias data from Nix ---
+_aliases_sh="${XDG_CONFIG_HOME:-$HOME/.config}/ai-agents/aliases.sh"
+if [[ -f "$_aliases_sh" ]]; then
+  # shellcheck source=/dev/null
+  source "$_aliases_sh"
+else
+  print_error "Alias registry not found at $_aliases_sh — run 'just home' to generate"
+  exit 1
+fi
 
 is_supported_base_alias() {
   [[ -v AGENT_REGISTRY[$1] ]]
 }
-
-SUPPORTED_TOOLS=(claude opencode codex gemini omp)
 
 # Z.AI API key resolution.
 zai_key_path() {
@@ -187,7 +102,6 @@ zai_key() {
 
 # Common Z.AI environment variables for claude --dangerously-skip-permissions.
 # Outputs KEY=VAL lines (one per line) for consumption by env.
-# Values sourced from Nix-generated config (or fallback defaults above).
 zai_claude_env() {
   local key
   key="$(zai_key)"
@@ -217,6 +131,7 @@ openrouter_opencode_env() {
   key="$(openrouter_key)"
   printf '%s\n' "OPENROUTER_API_KEY=${key}"
   printf '%s\n' "OPENCODE_CONFIG_DIR=${HOME}/.config/opencode-openrouter"
+}
 
 zai_omp_env() {
   local key
@@ -225,6 +140,12 @@ zai_omp_env() {
 }
 
 # --- Workflow suffix resolution ---
+
+workflow_label() {
+  local entry="${WORKFLOW_MAP[$1]:-}"
+  [[ -n "$entry" ]] || return 1
+  echo "${entry%%|*}"
+}
 
 resolve_workflow_prompt() {
   local entry="${WORKFLOW_MAP[$1]:-}"

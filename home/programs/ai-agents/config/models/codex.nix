@@ -2,47 +2,46 @@
 
 { config, ... }:
 
-let
-  models = import ../../helpers/_models.nix;
-in
 {
   programs.aiAgents.codex = {
     enable = true;
-    model = models.gpt-default;
-    sandboxMode = "workspace-write";
+    model = "gpt-5.5";
+    sandboxMode = "danger-full-access";
     enableSearch = false;
     personality = "pragmatic";
     reasoningEffort = "medium";
-    approvalPolicy = "on-request";
+    approvalPolicy = "never";
     features = {
       apps = false;
       child_agents_md = true;
+      hooks = true;
       multi_agent = true;
       plugins = true;
       shell_snapshot = true;
       tool_suggest = true;
       unified_exec = true;
     };
-    trustedProjects = [
-      "${config.home.homeDirectory}/System"
-    ];
+    trustedProjects = [ "${config.home.homeDirectory}/System" ];
     profiles = {
       quick = {
         reasoningEffort = "low";
+        approvalPolicy = "never";
+        sandboxMode = "danger-full-access";
       };
       deep = {
         reasoningEffort = "xhigh";
-        approvalPolicy = "on-request";
-        sandboxMode = "workspace-write";
+        approvalPolicy = "never";
+        sandboxMode = "danger-full-access";
       };
       safe = {
-        approvalPolicy = "untrusted";
-        sandboxMode = "read-only";
+        approvalPolicy = "never";
+        sandboxMode = "danger-full-access";
       };
       review = {
         personality = "pragmatic";
         reasoningEffort = "high";
-        approvalPolicy = "on-request";
+        approvalPolicy = "never";
+        sandboxMode = "danger-full-access";
         developerInstructions = ''
           Run in review mode. Prioritize bugs, regressions, security issues, and missing tests.
           Findings come first with exact file and line references when available.
@@ -53,8 +52,8 @@ in
       reviewer = {
         description = "Review-focused agent for bugs, regressions, security issues, and missing tests.";
         reasoningEffort = "high";
-        approvalPolicy = "on-request";
-        sandboxMode = "read-only";
+        approvalPolicy = "never";
+        sandboxMode = "danger-full-access";
         developerInstructions = ''
           Perform code review only. Do not implement changes.
           Prioritize correctness, behavior drift, security issues, and test gaps.
@@ -64,8 +63,8 @@ in
       recon = {
         description = "Read-heavy reverse-engineering triage agent for static inspection and evidence gathering.";
         reasoningEffort = "high";
-        approvalPolicy = "on-request";
-        sandboxMode = "read-only";
+        approvalPolicy = "never";
+        sandboxMode = "danger-full-access";
         enableSearch = true;
         developerInstructions = ''
           Focus on static triage and evidence gathering.
@@ -84,17 +83,20 @@ in
 
       [agents.explorer]
       description = "Read-only style codebase exploration, file tracing, and evidence gathering."
-      sandbox_mode = "read-only"
+      sandbox_mode = "danger-full-access"
+      approval_policy = "never"
       model_reasoning_effort = "medium"
 
       [agents.worker]
       description = "Targeted implementation and fixes after the task is understood."
-      sandbox_mode = "workspace-write"
+      sandbox_mode = "danger-full-access"
+      approval_policy = "never"
       model_reasoning_effort = "medium"
 
       [agents.monitor]
       description = "Long-running command, build, and polling monitor with concise status updates."
-      sandbox_mode = "workspace-write"
+      sandbox_mode = "danger-full-access"
+      approval_policy = "never"
       model_reasoning_effort = "low"
     '';
   };

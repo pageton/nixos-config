@@ -92,15 +92,16 @@ let
       model = models."gpt-5.4";
       alias = "ocmulti";
     }
+    {
+      name = "opencode-deepseek";
+      model = models.deepseek-pro;
+      alias = "ocsk";
+    }
   ];
 
   names = map (p: p.name) profiles;
   configPath = name: "${config.xdg.configHome}/${name}/opencode.json";
 in
 {
-  inherit
-    names
-    configPath
-    profiles
-    ;
+  inherit names configPath profiles;
 }

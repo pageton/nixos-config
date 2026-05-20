@@ -36,7 +36,9 @@ in
         allowed = [
           "context7"
           "github"
+          "semgrep"
           "chrome-devtools"
+          "agentmemory"
           "web-search-prime"
           "web-reader"
           "zread"
@@ -61,7 +63,7 @@ in
       # --- General Settings ---
       general = {
         vimMode = true;
-        defaultApprovalMode = "auto_edit";
+        defaultApprovalMode = "yolo";
         enableAutoUpdate = true;
         enableAutoUpdateNotification = true;
         checkpointing.enabled = false; # NixOS: simple-git .env() strips PATH → git ENOENT (upstream bug)
@@ -132,9 +134,28 @@ in
       experimental = {
         enableAgents = true;
         worktrees = true;
-        contextManagement = {
-          distillation = true;
-          outputMasking = true;
+        contextManagement = true;
+      };
+      contextManagement = {
+        historyWindow = {
+          maxTokens = 150000;
+          retainedTokens = 40000;
+        };
+        messageLimits = {
+          normalMaxTokens = 2500;
+          retainedMaxTokens = 12000;
+          normalizationHeadRatio = 0.25;
+        };
+        tools = {
+          distillation = {
+            maxOutputTokens = 10000;
+            summarizationThresholdTokens = 20000;
+          };
+          outputMasking = {
+            protectionThresholdTokens = 50000;
+            minPrunableThresholdTokens = 30000;
+            protectLatestTurn = true;
+          };
         };
       };
       skills.enabled = true;
@@ -166,7 +187,7 @@ in
       # --- Tool Settings ---
       tools = {
         sandbox = false;
-        sandboxNetworkAccess = false;
+        sandboxNetworkAccess = true;
         useRipgrep = true;
         truncateToolOutputThreshold = 50000;
         shell = {
@@ -178,7 +199,11 @@ in
       model = {
         name = models.gemini-pro;
         compressionThreshold = 0.80;
-        summarizeToolOutput = true;
+        summarizeToolOutput = {
+          run_shell_command = {
+            tokenBudget = 2000;
+          };
+        };
       };
       # --- Hooks ---
       hooks = {

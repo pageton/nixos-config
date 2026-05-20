@@ -49,22 +49,7 @@ let
       ;
   };
 
-  webReLaunchers = import ./web-re/_launchers.nix {
-    inherit
-      lib
-      pkgs
-      scriptsDir
-      ;
-  };
-
-  omoProfiles = import ./helpers/_omo-profiles.nix { inherit config; };
-  omoWrappers = map (profile:
-    pkgs.writeShellScriptBin (builtins.replaceStrings ["-"] ["_"] profile.name) ''
-      OPENCODE_CONFIG_DIR="${config.xdg.configHome}/${profile.name}" \
-        exec opencode --log-level WARN "$@"
-    ''
-  ) omoProfiles.profiles;
-
+  webReLaunchers = import ./web-re/_launchers.nix { inherit lib pkgs scriptsDir; };
 
   aliasLib = import ./helpers/_aliases.nix {
     inherit
@@ -75,10 +60,111 @@ let
       ;
   };
   inherit (aliasLib) aiAliases aiAgentLauncher aiAgentInventory;
+  agentmemoryRuntime = import ./helpers/_agentmemory-runtime.nix { inherit pkgs; };
   mkCliAutoupdateScript = import ./helpers/_mk-cli-autoupdate-script.nix { inherit pkgs; };
   shellAliases = import ./helpers/_services-shell-aliases.nix { inherit cfg aiAliases constants; };
 
+  autoUpdateTools = [
+    {
+      binary = "claude";
+      npmPackage = "@anthropic-ai/claude-code";
+      label = "Claude Code CLI";
+    }
+    {
+      binary = "opencode";
+      npmPackage = "opencode-ai";
+      label = "OpenCode CLI";
+    }
+    {
+      binary = "codex";
+      npmPackage = "@openai/codex";
+      label = "Codex CLI";
+    }
+    {
+      binary = "gemini";
+      npmPackage = "@google/gemini-cli";
+      label = "Gemini CLI";
+    }
+    {
+      binary = "omp";
+      npmPackage = "@oh-my-pi/pi-coding-agent";
+      label = "Oh My Pi CLI";
+    }
+    {
+      binary = "pi";
+      npmPackage = "@mariozechner/pi-coding-agent";
+      label = "Pi CLI";
+    }
+  ];
+
+  autoUpdateAllScript = pkgs.writeShellScript "update-ai-agents" (
+    lib.concatMapStringsSep "\n" (tool: toString (mkCliAutoupdateScript tool)) autoUpdateTools
+  );
+
   forgePkg = inputs.forgecode.packages.${pkgs.stdenv.hostPlatform.system}.default;
+
+  herdr = pkgs.stdenvNoCC.mkDerivation {
+    pname = "herdr";
+    version = cfg.herdr.version;
+
+    src = pkgs.fetchurl {
+      url = "https://github.com/ogulcancelik/herdr/releases/download/v${cfg.herdr.version}/herdr-linux-${pkgs.stdenv.hostPlatform.linuxArch}";
+      sha256 =
+        {
+          x86_64 = "sha256-EWxwbvUHGOhZ1Uj9mm9tI1p9zmFJXMi0ZX+FX7GE1I4=";
+          aarch64 = "sha256-0000000000000000000000000000000000000000000=";
+        }
+        .${pkgs.stdenv.hostPlatform.linuxArch};
+    };
+
+    dontUnpack = true;
+    installPhase = ''
+      runHook preInstall
+      mkdir -p "$out/bin"
+      cp "$src" "$out/bin/herdr"
+      chmod +x "$out/bin/herdr"
+      runHook postInstall
+    '';
+
+    meta = with lib; {
+      description = "Agent multiplexer that lives in your terminal";
+      homepage = "https://github.com/ogulcancelik/herdr";
+      license = licenses.agpl3Only;
+      sourceProvenance = with sourceTypes; [ binaryNativeCode ];
+      platforms = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
+      mainProgram = "herdr";
+    };
+  };
+
+  droid = pkgs.writeShellScriptBin "droid" ''
+    exec ${pkgs.bun}/bin/bun x droid@${cfg.droid.version} "$@"
+  '';
+
+  terax = pkgs.appimageTools.wrapType2 rec {
+    pname = "terax";
+    version = "0.6.6";
+
+    src = pkgs.fetchurl {
+      url = "https://github.com/crynta/terax-ai/releases/download/v${version}/Terax_${version}_amd64.AppImage";
+      sha256 = "sha256-4Ns4tz/SjExIKUTP/Uo74JwyE5fEBRF9pHDzAjzDVL4=";
+    };
+
+    profile = lib.optionalString cfg.terax.disableDmabufRenderer ''
+      export WEBKIT_DISABLE_DMABUF_RENDERER=1
+    '';
+
+    meta = with lib; {
+      description = "AI-native terminal emulator built with Tauri";
+      homepage = "https://terax.app";
+      license = licenses.asl20;
+      sourceProvenance = with sourceTypes; [ binaryNativeCode ];
+      platforms = [ pkgs.stdenv.hostPlatform.system ];
+      mainProgram = "terax";
+    };
+  };
 
   logCleanupCommand = ''
     find "${cfg.logging.directory}" -name "*.log" -mtime +${toString cfg.logging.retentionDays} -delete
@@ -95,6 +181,7 @@ let
       hmSystemdHelpers
       logCleanupCommand
       mkCliAutoupdateScript
+      autoUpdateTools
       ;
   };
 in
@@ -113,10 +200,13 @@ in
       reDoctor
       webReDoctor
     ]
+    ++ (lib.optional cfg.agentmemory.enable agentmemoryRuntime.iiiEngine)
+    ++ (lib.optional cfg.herdr.enable herdr)
+    ++ (lib.optional cfg.droid.enable droid)
+    ++ (lib.optional cfg.terax.enable terax)
     ++ (lib.optional cfg.forge.enable forgePkg)
     ++ androidReLaunchers
     ++ webReLaunchers
-    ++ omoWrappers
     ++ (lib.optional cfg.logging.enable (
       pkgs.writeShellScriptBin "ai-agent-log-cleanup" ''
         ${logCleanupCommand}
@@ -124,9 +214,27 @@ in
       ''
     ));
 
-    home.sessionVariables = lib.mkIf cfg.opencode.enable { OPENCODE_EXPERIMENTAL_LSP_TOOL = "true"; };
+    home.sessionVariables = lib.mkMerge [
+      (lib.mkIf cfg.opencode.enable { OPENCODE_EXPERIMENTAL_LSP_TOOL = "true"; })
+    ];
+
+    home.file = lib.mkIf cfg.terax.enable {
+      ".local/share/applications/terax.desktop".text = ''
+        [Desktop Entry]
+        Type=Application
+        Name=Terax
+        Exec=terax %U
+        Icon=utilities-terminal
+        Comment=AI-native terminal emulator
+        Categories=Development;TerminalEmulator;
+      '';
+    };
 
     programs = import ../../../shared/alias-helpers.nix { inherit shellAliases; };
+
+    home.activation.updateAiAgentCLIs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      ${autoUpdateAllScript}
+    '';
 
     systemd.user = aiSystemdUser;
   };

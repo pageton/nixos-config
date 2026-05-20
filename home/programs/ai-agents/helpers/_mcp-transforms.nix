@@ -3,11 +3,7 @@
 { cfg, lib }:
 
 let
-  inherit (cfg)
-    mcpServers
-    androidReMcpServers
-    webReMcpServers
-    ;
+  inherit (cfg) mcpServers androidReMcpServers webReMcpServers;
   sharedMcpServers = mcpServers;
 
   # Headers are shared across all remote transforms — apply once in the factory.

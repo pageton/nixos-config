@@ -18,13 +18,19 @@ let
   impeccable = import ./helpers/_impeccable-commands.nix;
   models = import ./helpers/_models.nix;
   agentEnvContent = import ./helpers/_agent-env.nix { inherit constants; };
+  aliasLib = import ./helpers/_aliases.nix {
+    inherit
+      config
+      constants
+      lib
+      pkgs
+      ;
+  };
   settingsBuilders = import ./helpers/_settings-builders.nix { inherit cfg config lib; };
   inherit (settingsBuilders)
     geminiSettings
     ompSettings
     opencodeSettingsByProfile
-    omoOpencodeSettingsByProfile
-    omoConfigsByProfile
     opencodeAndroidReMcpServers
     opencodeWebReMcpServers
     forgeTomlByProfile
@@ -51,35 +57,6 @@ let
           };
         }
       ]) opencodeProfileNames
-    )
-  );
-
-  omoProfiles = import ./helpers/_omo-profiles.nix { inherit config; };
-  omoConfigFiles = builtins.listToAttrs (
-    lib.flatten (
-      map (name: [
-        {
-          name = "${name}/opencode.json";
-          value = {
-            text = toJSON omoOpencodeSettingsByProfile.${name};
-            force = true;
-          };
-        }
-        {
-          name = "${name}/oh-my-openagent.json";
-          value = {
-            text = toJSON omoConfigsByProfile.${name};
-            force = true;
-          };
-        }
-        {
-          name = "${name}/tui.json";
-          value = {
-            text = toJSON { theme = "catppuccin-macchiato"; };
-            force = true;
-          };
-        }
-      ]) omoProfiles.names
     )
   );
 
@@ -219,7 +196,7 @@ let
           let
             src = pkgs.fetchFromGitHub {
               inherit owner repo rev;
-              hash = "sha256-BrRDo7tDagCNIXtZfh7zMKo6b16pSdh7Bu/gixEjVaA=";
+              hash = "sha256-nd0T2duTdX2CUfmqD5OiHgl7SNqjR6k5+0TvE6eig5A=";
             };
             entries = builtins.readDir src;
           in
@@ -243,13 +220,7 @@ let
 
   # Pi (badlogic/pi-mono) profile config files: config.yml, models.yml per profile.
   piProfiles = import ./helpers/_pi-profiles.nix { inherit config; };
-  piSettingsBuilders = import ./helpers/_pi-settings-builder.nix {
-    inherit
-      cfg
-      config
-      lib
-      ;
-  };
+  piSettingsBuilders = import ./helpers/_pi-settings-builder.nix { inherit cfg config lib; };
   inherit (piSettingsBuilders) piConfigsByProfile piModelsByProfile;
 
   piProfileConfigFiles = builtins.listToAttrs (
@@ -313,7 +284,7 @@ let
           let
             src = pkgs.fetchFromGitHub {
               inherit owner repo rev;
-              hash = "sha256-BrRDo7tDagCNIXtZfh7zMKo6b16pSdh7Bu/gixEjVaA=";
+              hash = "sha256-nd0T2duTdX2CUfmqD5OiHgl7SNqjR6k5+0TvE6eig5A=";
             };
             entries = builtins.readDir src;
           in
@@ -341,6 +312,62 @@ in
       # === Claude Agent Definitions ===
       (lib.mkIf cfg.claude.enable (mkTextFiles ".claude/agents" fileTemplates.claudeAgents))
 
+      # === agentmemory Bootstrap ===
+      (lib.mkIf cfg.agentmemory.enable {
+        ".agentmemory/preferences.json" = {
+          text = toJSON {
+            schemaVersion = 1;
+            lastAgent = null;
+            lastAgents = [ ];
+            lastProvider = null;
+            skipSplash = true;
+            skipNpxHint = true;
+            skipGlobalInstall = true;
+            skipConsoleInstall = true;
+            firstRunAt = "1970-01-01T00:00:00.000Z";
+          };
+          force = true;
+        };
+      })
+
+      # === herdr Agent State Integrations ===
+      (lib.mkIf cfg.herdr.enable {
+        ".pi/agent/extensions/herdr-agent-state.ts" = {
+          source = pkgs.fetchurl {
+            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${cfg.herdr.version}/src/integration/assets/pi/herdr-agent-state.ts";
+            sha256 = "sha256-cI++/hXltICQIUB04UuUfj4wvzTazShjLRLbPzjCOQ8=";
+          };
+          force = true;
+        };
+        ".claude/hooks/herdr-agent-state.sh" = {
+          source = pkgs.fetchurl {
+            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${cfg.herdr.version}/src/integration/assets/claude/herdr-agent-state.sh";
+            sha256 = "sha256-A0+Pts72O8bJKF5NbiOHVoNMjgVLeCt32CZdU/yZTmI=";
+          };
+          executable = true;
+          force = true;
+        };
+        ".codex/herdr-agent-state.sh" = {
+          source = pkgs.fetchurl {
+            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${cfg.herdr.version}/src/integration/assets/codex/herdr-agent-state.sh";
+            sha256 = "sha256-0yvuNKLXrw98ImuXzaeffBrQg4R7JCcG4N1ADQICQ9E=";
+          };
+          executable = true;
+          force = true;
+        };
+        ".codex/hooks.json" = {
+          text = toJSON {
+            hooks = {
+              SessionStart = [ { command = "~/.codex/herdr-agent-state.sh idle"; } ];
+              UserPromptSubmit = [ { command = "~/.codex/herdr-agent-state.sh working"; } ];
+              PreToolUse = [ { command = "~/.codex/herdr-agent-state.sh working"; } ];
+              Stop = [ { command = "~/.codex/herdr-agent-state.sh idle"; } ];
+            };
+          };
+          force = true;
+        };
+      })
+
       # === Aider Configuration (independent of any agent enable gate) ===
       {
         ".aider.conf.yml".text = builtins.toJSON {
@@ -362,6 +389,49 @@ in
           suggest-shell-commands = false;
         };
       }
+
+      # === Droid (Factory AI) Settings ===
+      (lib.mkIf cfg.droid.enable {
+        ".factory/settings.json" = {
+          text = toJSON {
+            customModels = [
+              {
+                displayName = "GLM-5.1 [Z.AI] - Anthropic";
+                model = "glm-5.1";
+                baseUrl = "https://api.z.ai/api/anthropic";
+                apiKey = "__DROID_ZAI_API_KEY_PLACEHOLDER__";
+                provider = "anthropic";
+                maxOutputTokens = 131072;
+              }
+              {
+                displayName = "GLM-5 Turbo [Z.AI] - Anthropic";
+                model = "glm-5-turbo";
+                baseUrl = "https://api.z.ai/api/anthropic";
+                apiKey = "__DROID_ZAI_API_KEY_PLACEHOLDER__";
+                provider = "anthropic";
+                maxOutputTokens = 131072;
+              }
+              {
+                displayName = "DeepSeek V4 Pro - Anthropic";
+                model = "deepseek-v4-pro";
+                baseUrl = "https://api.deepseek.com/anthropic";
+                apiKey = "__DROID_DEEPSEEK_API_KEY_PLACEHOLDER__";
+                provider = "anthropic";
+                maxOutputTokens = 131072;
+              }
+              {
+                displayName = "DeepSeek V4 Flash - Anthropic";
+                model = "deepseek-v4-flash";
+                baseUrl = "https://api.deepseek.com/anthropic";
+                apiKey = "__DROID_DEEPSEEK_API_KEY_PLACEHOLDER__";
+                provider = "anthropic";
+                maxOutputTokens = 131072;
+              }
+            ];
+          };
+          force = true;
+        };
+      })
 
       # === Gemini Files (Settings, Commands, Policies) ===
       (lib.mkIf cfg.gemini.enable (
@@ -401,6 +471,10 @@ in
           text = agentEnvContent;
           force = true;
         };
+        "ai-agents/aliases.sh" = {
+          text = aliasLib.generatedBashRegistry;
+          force = true;
+        };
       })
       # Android RE agent-specific MCP server fragment (merged into runtime config by launcher)
       (lib.mkIf cfg.enable {
@@ -416,9 +490,17 @@ in
           force = true;
         };
       })
-      (lib.mkIf cfg.opencode.enable (
-        opencodeConfigFiles // opencodeImpeccableCommandFiles // omoConfigFiles
-      ))
+      (lib.mkIf cfg.opencode.enable (opencodeConfigFiles // opencodeImpeccableCommandFiles))
+      # herdr agent state plugin for OpenCode (auto-discovered from plugins/ dir)
+      (lib.mkIf (cfg.herdr.enable && cfg.opencode.enable) {
+        "opencode/plugins/herdr-agent-state.js" = {
+          source = pkgs.fetchurl {
+            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${cfg.herdr.version}/src/integration/assets/opencode/herdr-agent-state.js";
+            sha256 = "sha256-t3LNyyhbRnU7yUBA/hPlLW9IUPhJU5neQcud0IZQFqQ=";
+          };
+          force = true;
+        };
+      })
     ];
   };
 }

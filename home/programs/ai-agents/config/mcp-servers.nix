@@ -3,11 +3,13 @@
 {
   config,
   constants,
+  lib,
   pkgs,
   ...
 }:
 
 let
+  cfg = config.programs.aiAgents;
   zai = import ../helpers/_zai-services.nix { inherit constants; };
 
   # jpype (used by pyghidra) needs libstdc++.so.6 at runtime.
@@ -21,6 +23,8 @@ let
   # Wrapper that prepends the JDK to PATH so pyghidra can find java.
   pyghidraMcpWrapper = pkgs.writeShellScriptBin "pyghidra-mcp" ''
     export PATH="${jdkBin}:$PATH"
+    export GHIDRA_INSTALL_DIR="${pkgs.ghidra-bin}/lib/ghidra"
+    export LD_LIBRARY_PATH="${gccLib}/lib''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
     exec uvx pyghidra-mcp "$@"
   '';
 
@@ -43,50 +47,74 @@ let
 in
 {
   programs.aiAgents = {
-    mcpServers = zaiMcpServers // {
-      context7 = {
-        enable = true;
-        command = "bunx";
-        args = [
-          "@upstash/context7-mcp@2.1.2"
-          "--api-key"
-          "__CONTEXT7_API_KEY_PLACEHOLDER__"
-        ];
-      };
+    mcpServers =
+      zaiMcpServers
+      // {
+        context7 = {
+          enable = true;
+          command = "bunx";
+          args = [
+            "@upstash/context7-mcp@2.1.2"
+            "--api-key"
+            "__CONTEXT7_API_KEY_PLACEHOLDER__"
+          ];
+        };
 
-      github = {
-        enable = true;
-        command = "bunx";
-        args = [ "@modelcontextprotocol/server-github@2025.4.8" ];
-        env = {
-          GITHUB_PERSONAL_ACCESS_TOKEN = "__GITHUB_TOKEN_PLACEHOLDER__"; # patched at activation via gh auth token
+        github = {
+          enable = true;
+          command = "github-mcp-server";
+          args = [
+            "stdio"
+            "--toolsets=default,actions,code_security,dependabot,secret_protection"
+          ];
+          env = {
+            GITHUB_PERSONAL_ACCESS_TOKEN = "__GITHUB_TOKEN_PLACEHOLDER__"; # patched at activation via gh auth token
+          };
+        };
+
+        semgrep = {
+          enable = true;
+          command = "semgrep";
+          args = [ "mcp" ];
+        };
+
+        chrome-devtools = {
+          enable = true;
+          command = "npx";
+          args = [
+            "-y"
+            "chrome-devtools-mcp@latest"
+            "--autoConnect"
+          ];
+        };
+
+        pyghidra-mcp = {
+          enable = true;
+          command = "${pyghidraMcpWrapper}/bin/pyghidra-mcp";
+          args = [
+            "--project-path"
+            "${config.xdg.dataHome}/pyghidra-mcp/claude"
+          ];
+          env = {
+            GHIDRA_INSTALL_DIR = "${pkgs.ghidra-bin}/lib/ghidra";
+            LD_LIBRARY_PATH = "${gccLib}/lib";
+          };
+        };
+
+      }
+      // lib.optionalAttrs cfg.agentmemory.enable {
+        agentmemory = {
+          enable = true;
+          command = "bunx";
+          args = [
+            "--silent"
+            "@agentmemory/mcp@${cfg.agentmemory.version}"
+          ];
+          env = {
+            AGENTMEMORY_URL = cfg.agentmemory.url;
+          };
         };
       };
-
-      chrome-devtools = {
-        enable = true;
-        command = "npx";
-        args = [
-          "-y"
-          "chrome-devtools-mcp@latest"
-          "--autoConnect"
-        ];
-      };
-
-      pyghidra-mcp = {
-        enable = true;
-        command = "${pyghidraMcpWrapper}/bin/pyghidra-mcp";
-        args = [
-          "--project-path"
-          "${config.xdg.dataHome}/pyghidra-mcp/claude"
-        ];
-        env = {
-          GHIDRA_INSTALL_DIR = "${pkgs.ghidra-bin}/lib/ghidra";
-          LD_LIBRARY_PATH = "${gccLib}/lib";
-        };
-      };
-
-    };
 
     logging = {
       enable = true;

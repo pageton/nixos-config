@@ -21,9 +21,7 @@ let
         v: depth:
         if builtins.isAttrs v then
           let
-            entries = lib.mapAttrsToList (k: valAt: {
-              inherit k valAt;
-            }) v;
+            entries = lib.mapAttrsToList (k: valAt: { inherit k valAt; }) v;
           in
           if entries == [ ] then
             "{}"
@@ -51,11 +49,7 @@ let
 
   piBaseSettings =
     let
-      inherit (cfg.pi)
-        compaction
-        retry
-        skills
-        ;
+      inherit (cfg.pi) compaction retry skills;
     in
     {
       defaultThinkingLevel = cfg.pi.thinkingLevel;

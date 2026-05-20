@@ -1,6 +1,6 @@
 # AI Agents Infrastructure
 
-High-density orchestration for Claude Code, OpenCode, Codex CLI, Gemini CLI, and Oh My Pi (omp). This module manages dynamic provider switching and secure secret injection.
+High-density orchestration for Claude Code, OpenCode, Codex CLI, Gemini CLI, Oh My ClaudeCode (OMC), and Oh My Pi (omp). This module manages dynamic provider switching and secure secret injection.
 
 ---
 
@@ -22,6 +22,10 @@ The system follows a strict unidirectional flow:
 6. **Services** (`services.nix`): Packages, zsh aliases, and systemd user services/timers.
 7. **Log Analyzer** (`log-analyzer.nix`): AI agent log analysis and dashboard.
 
+### Oh My ClaudeCode (OMC)
+
+OMC is a Claude Code marketplace plugin that provides multi-agent orchestration. Its installation is managed by Claude Code's plugin system. This Nix module manages OMC's **runtime configuration** (`~/.config/claude-omc/config.jsonc`) and **environment variables** for model routing, features, permissions, and team settings. Plugin installation/removal stays with Claude Code's marketplace.
+
 ### Profile-Driven Polymorphism
 
 OpenCode profiles switch the primary model across all OpenCode config directories. Each profile re-maps the model field via `helpers/_settings-builders.nix`, allowing instant provider migration with zero configuration redundancy.
@@ -38,29 +42,18 @@ Seven OpenCode profiles are defined in `helpers/_opencode-profiles.nix`:
 | `opencode-sonnet`     | Anthropic Claude Sonnet 4.6                       |
 | `opencode-zen`        | MiniMax M2.5 Free                                 |
 
-Six Oh My OpenAgent (omo) profiles are defined in `helpers/_omo-profiles.nix`. Omo profiles add the `oh-my-openagent` plugin to OpenCode, enabling Sisyphus orchestration, discipline agents, and ultrawork. The `oco` alias prefix = opencode + omo:
-
-| Profile Directory        | Provider/Model              | Alias    |
-| ------------------------ | --------------------------- | -------- |
-| `opencode-omo-glm`       | Z.AI GLM-5.1               | `ocoglm` |
-| `opencode-omo-gemini`    | Google Gemini 3 Pro Preview| `ocogem` |
-| `opencode-omo-gpt`       | OpenAI GPT-5.4             | `ocogpt` |
-| `opencode-omo-openrouter`| OpenRouter Hunter Alpha    | `ocoor`  |
-| `opencode-omo-sonnet`    | Anthropic Claude Sonnet 4.6| `ocos`   |
-| `opencode-omo-zen`       | MiniMax M2.5 Free          | `ocozen` |
-
 Eight Oh My Pi (omp) profiles are defined in `helpers/_pi-profiles.nix`. OMP uses `PI_CODING_AGENT_DIR` env var for profile switching:
 
-| Profile Directory       | Provider/Model                                    | Alias  |
-| ----------------------- | ------------------------------------------------- | ------ |
-| `pi`                    | Z.AI GLM-5.1                                      | `pi`   |
-| `pi-sonnet`             | Anthropic Claude Sonnet (direct)                  | `pis`  |
-| `pi-opus`               | Anthropic Claude Opus (direct)                    | `piop` |
-| `pi-glm`                | Z.AI GLM-5.1                                      | `piglm`|
-| `pi-gemini`             | Google Gemini                                     | `pigem`|
-| `pi-gpt`                | OpenAI GPT                                        | `pigpt`|
-| `pi-openrouter`         | OpenRouter                                        | `pior` |
-| `pi-zen`                | MiniMax M2.5 Free                                 | `pizen`|
+| Profile Directory | Provider/Model                   | Alias   |
+| ----------------- | -------------------------------- | ------- |
+| `pi`              | Z.AI GLM-5.1                     | `pi`    |
+| `pi-sonnet`       | Anthropic Claude Sonnet (direct) | `pis`   |
+| `pi-opus`         | Anthropic Claude Opus (direct)   | `piop`  |
+| `pi-glm`          | Z.AI GLM-5.1                     | `piglm` |
+| `pi-gemini`       | Google Gemini                    | `pigem` |
+| `pi-gpt`          | OpenAI GPT                       | `pigpt` |
+| `pi-openrouter`   | OpenRouter                       | `pior`  |
+| `pi-zen`          | MiniMax M2.5 Free                | `pizen` |
 
 ---
 
@@ -77,7 +70,6 @@ ai-agents/
 │   ├── _settings-builders.nix   # Per-agent settings + profile variant overrides
 │   ├── _mcp-transforms.nix      # Unified MCP abstraction (shared → agent-specific schemas)
 │   ├── _opencode-profiles.nix   # OpenCode profile names and config paths
-│   ├── _omo-profiles.nix        # Six Oh My OpenAgent profile definitions (oco prefix)
 │   ├── _aliases.nix             # Zsh alias generation for agent launchers/workflows
 │   ├── _destructive-rules.nix   # Destructive action allow/deny rules per agent
 │   ├── _file-templates.nix      # Config file templates
@@ -105,6 +97,7 @@ ai-agents/
 │   ├── _plugin-impeccable.nix # Impeccable skill install
 │   ├── _plugin-agency-agents.nix # Agency agents install
 │   ├── _plugin-everything-claude-code.nix # ECC skill install
+│   ├── _plugin-oh-my-claudecode.nix # OMC config generation (jq merge)
 │   ├── _cleanup-agency-agents.nix # Agency agents cleanup on disable
 │   ├── _cleanup-everything-claude-code.nix # ECC cleanup on disable
 │   └── skills.nix           # Skill installations and omissions

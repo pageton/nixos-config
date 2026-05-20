@@ -33,10 +33,36 @@ in
   else
     { }
 )
+// (
+  if cfg.agentmemory.enable then
+    {
+      "mem-start" = "systemctl --user start agentmemory.service";
+      "mem-stop" = "systemctl --user stop agentmemory.service";
+      "mem-status" = "systemctl --user status agentmemory.service";
+      "mem-health" = "curl -fsS ${cfg.agentmemory.url}/agentmemory/health";
+      "mem-view" = "xdg-open ${cfg.agentmemory.viewerUrl}";
+    }
+  else
+    { }
+)
+// (
+  if cfg.herdr.enable then
+    {
+      "hd" = "herdr";
+      "hd-pi" = "herdr integration install pi";
+      "hd-claude" = "herdr integration install claude";
+      "hd-codex" = "herdr integration install codex";
+      "hd-opencode" = "herdr integration install opencode";
+      "hd-all" =
+        "herdr integration install pi && herdr integration install claude && herdr integration install codex && herdr integration install opencode";
+    }
+  else
+    { }
+)
 // aiAliases
 // {
   "ai-mcp-scan" =
     "echo 'mcp-scan package is unavailable; running health checks instead' && ai-mcp-health";
   "ai-mcp-health" =
-    "(command -v node >/dev/null && command -v bun >/dev/null && command -v bunx >/dev/null && command -v uvx >/dev/null && gh auth status >/dev/null 2>&1 && [ -f ~/.mcp.json ] && jq -e . ~/.mcp.json >/dev/null && ! grep -q '__GITHUB_TOKEN_PLACEHOLDER__' ~/.mcp.json && echo 'MCP health: ok') || (echo 'MCP health: check failed' && false)";
+    "(command -v node >/dev/null && command -v bun >/dev/null && command -v bunx >/dev/null && command -v uvx >/dev/null && command -v github-mcp-server >/dev/null && command -v semgrep >/dev/null && gh auth status >/dev/null 2>&1 && [ -f ~/.mcp.json ] && jq -e . ~/.mcp.json >/dev/null && ! grep -q '__GITHUB_TOKEN_PLACEHOLDER__' ~/.mcp.json && echo 'MCP health: ok') || (echo 'MCP health: check failed' && false)";
 }

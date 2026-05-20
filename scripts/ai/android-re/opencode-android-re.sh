@@ -54,8 +54,7 @@ fi
 
 # OpenCode TUI currently rejects custom agents passed via top-level --agent in this flow.
 # Use a runtime config overlay that preserves the profile's default agent.
-# For raw opencode profiles (oc*are), we pin default_agent=android-re.
-# For omo profiles (oco*are), we keep sisyphus so oh-my-openagent stays active.
+# For opencode profiles (oc*are), we pin default_agent=android-re.
 RUNTIME_CONFIG_PARENT="${XDG_CACHE_HOME:-${HOME}/.cache}/opencode-android-re"
 mkdir -p "${RUNTIME_CONFIG_PARENT}"
 RUNTIME_CONFIG_DIR="$(mktemp -d "${RUNTIME_CONFIG_PARENT}/${PROFILE}.XXXXXX")"
@@ -66,12 +65,8 @@ if [[ -d "${BASE_OPENCODE_CONFIG_DIR}" ]]; then
 fi
 
 if [[ -f "${RUNTIME_CONFIG_DIR}/opencode.json" ]] && command -v jq >/dev/null 2>&1; then
-	# Only pin android-re agent for non-omo profiles.
-	# Omo profiles keep their sisyphus default so oh-my-openagent stays active.
-	if [[ "${PROFILE}" != *"omo-"* ]]; then
-		jq '.default_agent = "android-re"' "${RUNTIME_CONFIG_DIR}/opencode.json" >"${RUNTIME_CONFIG_DIR}/opencode.json.tmp"
-		mv -f "${RUNTIME_CONFIG_DIR}/opencode.json.tmp" "${RUNTIME_CONFIG_DIR}/opencode.json"
-	fi
+	jq '.default_agent = "android-re"' "${RUNTIME_CONFIG_DIR}/opencode.json" >"${RUNTIME_CONFIG_DIR}/opencode.json.tmp"
+	mv -f "${RUNTIME_CONFIG_DIR}/opencode.json.tmp" "${RUNTIME_CONFIG_DIR}/opencode.json"
 
 	# Merge android-re-specific MCP servers (Ghidra, JADX, apktool) into runtime config.
 	# These are NOT in the shared profile — they only appear in the android-re overlay.

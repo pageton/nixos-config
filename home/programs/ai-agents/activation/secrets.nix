@@ -130,6 +130,13 @@ lib.hm.dag.entryAfter
           echo "✓ Patched .omp/agent/mcp.json with Z.AI API key + remote MCPs"
         fi
 
+        # Droid CLI ~/.factory/settings.json
+        if [[ -f "$HOME/.factory/settings.json" ]]; then
+          escaped_zai="$(escape_sed_replacement "$ZAI_KEY")"
+          ${pkgs.gnused}/bin/sed -i "s/__DROID_ZAI_API_KEY_PLACEHOLDER__/$escaped_zai/g" "$HOME/.factory/settings.json"
+          echo "✓ Patched .factory/settings.json with Z.AI API key for Droid"
+        fi
+
         unset ZAI_KEY
       else
         echo "⚠ ${cfg.secrets.zaiApiKeyFile} not found - run 'just nixos' first"
@@ -240,6 +247,49 @@ lib.hm.dag.entryAfter
           fi
         done
         unset OPENROUTER_KEY
+      fi
+    fi
+
+    # --- DeepSeek ---
+    if [[ -n "${cfg.secrets.deepseekApiKeyFile or ""}" ]]; then
+      if [[ -f "${cfg.secrets.deepseekApiKeyFile}" ]]; then
+        DEEPSEEK_KEY="$(cat "${cfg.secrets.deepseekApiKeyFile}")"
+        escaped_deepseek="$(escape_sed_replacement "$DEEPSEEK_KEY")"
+
+        # OpenCode configs (providers.deepseek.options.apiKey)
+        for OPENCODE_CFG in ${opencodeConfigPathList}; do
+          if [[ -f "$OPENCODE_CFG" ]]; then
+            ${pkgs.gnused}/bin/sed -i "s/__DEEPSEEK_API_KEY_PLACEHOLDER__/$escaped_deepseek/g" "$OPENCODE_CFG"
+            echo "✓ Patched $(basename "$(dirname "$OPENCODE_CFG")")/opencode.json with DeepSeek key"
+          fi
+        done
+
+        # Droid CLI ~/.factory/settings.json
+        if [[ -f "$HOME/.factory/settings.json" ]]; then
+          ${pkgs.gnused}/bin/sed -i "s/__DROID_DEEPSEEK_API_KEY_PLACEHOLDER__/$escaped_deepseek/g" "$HOME/.factory/settings.json"
+          echo "✓ Patched .factory/settings.json with DeepSeek API key for Droid"
+        fi
+
+        # OMP profile models.yml
+        if [[ -n "${lib.optionalString cfg.omp.enable "true"}" ]]; then
+          for OMP_MODELS in ${ompModelsPathList}; do
+            if [[ -f "$OMP_MODELS" ]]; then
+              ${pkgs.gnused}/bin/sed -i "s|__DEEPSEEK_API_KEY_PLACEHOLDER__|$escaped_deepseek|g" "$OMP_MODELS"
+              echo "✓ Patched $(dirname "$OMP_MODELS" | xargs basename)/models.yml with DeepSeek key"
+            fi
+          done
+        fi
+
+        # Forge DeepSeek credentials
+        if [[ -d "$HOME/.forge-deepseek" ]]; then
+          printf '[{"id":"generic-chat-completion-api","auth_details":{"api_key":"%s","base_url":"https://api.deepseek.com"}}]' "$DEEPSEEK_KEY" > "$HOME/.forge-deepseek/.credentials.json"
+          chmod 600 "$HOME/.forge-deepseek/.credentials.json"
+          echo "✓ Wrote forge-deepseek/.credentials.json with DeepSeek key"
+        fi
+
+        unset DEEPSEEK_KEY escaped_deepseek
+      else
+        echo "⚠ ${cfg.secrets.deepseekApiKeyFile} not found - run 'just nixos' first"
       fi
     fi
 

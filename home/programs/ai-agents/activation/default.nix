@@ -20,10 +20,8 @@ let
   inherit (settingsBuilders) claudeSettings;
 
   opencodeProfiles = import ../helpers/_opencode-profiles.nix { inherit config; };
-  omoProfiles = import ../helpers/_omo-profiles.nix { inherit config; };
   opencodeConfigPaths = map opencodeProfiles.configPath opencodeProfiles.names;
-  omoConfigPaths = map omoProfiles.configPath omoProfiles.names;
-  opencodeConfigPathList = lib.concatMapStringsSep " " lib.escapeShellArg (opencodeConfigPaths ++ omoConfigPaths);
+  opencodeConfigPathList = lib.concatMapStringsSep " " lib.escapeShellArg opencodeConfigPaths;
 
   zaiFilters = import ../helpers/_zai-filters.nix { inherit lib constants; };
   inherit (zaiFilters)
@@ -93,7 +91,10 @@ let
       config
       ;
   };
-  opencodeProfileNames = opencodeProfiles.names ++ omoProfiles.names;
+  opencodeProfileNames = opencodeProfiles.names;
+
+  piProfiles = import ../helpers/_pi-profiles.nix { inherit config; };
+  ompProfiles = import ../helpers/_omp-profiles.nix { inherit config; };
 
   pluginInstalls = import ./plugins.nix {
     inherit
@@ -112,6 +113,9 @@ let
       toJSON
       opencodeProfileNames
       ;
+    forgeProfileNames = forgeProfiles.names;
+    piProfileNames = piProfiles.names;
+    ompProfileNames = ompProfiles.names;
   };
 in
 {

@@ -1,7 +1,4 @@
-{
-  lib,
-  homeDir,
-}:
+{ lib, homeDir }:
 
 let
   # Read files from the Nix store copy (needed for builtins.readFile)

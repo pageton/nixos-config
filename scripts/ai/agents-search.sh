@@ -117,12 +117,17 @@ enumerate_dirs() {
 has_parent_guide() {
 	local rel_dir="$1"
 	local path="$rel_dir"
+	# Check each ancestor directory from rel_dir up to (but not including) root
 	while [[ "$path" == */* ]]; do
 		path="${path%/*}"
 		if [[ -f "$SCAN_PATH/$path/$GUIDE_NAME" ]]; then
 			return 0
 		fi
 	done
+	# Also check root level (path is now a single component like "home" or "scripts")
+	if [[ -f "$SCAN_PATH/$GUIDE_NAME" ]]; then
+		return 0
+	fi
 	return 1
 }
 

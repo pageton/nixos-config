@@ -47,33 +47,3 @@ map mkAndroidReLauncher [
     profile = "zen";
   }
 ]
-++ map mkAndroidReLauncher [
-  {
-    name = "ocoare";
-    profile = "default";
-  }
-  {
-    name = "ocoglmare";
-    profile = "omo-glm";
-  }
-  {
-    name = "ocogemare";
-    profile = "omo-gemini";
-  }
-  {
-    name = "ocogptare";
-    profile = "omo-gpt";
-  }
-  {
-    name = "ocoorare";
-    profile = "omo-openrouter";
-  }
-  {
-    name = "ocosare";
-    profile = "omo-sonnet";
-  }
-  {
-    name = "ocozenare";
-    profile = "omo-zen";
-  }
-]

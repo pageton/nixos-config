@@ -8,10 +8,7 @@ let
   launcherScript = "${scriptsDir}/ai/web-re/opencode-web-re.sh";
 
   mkWebReLauncher =
-    {
-      name,
-      profile,
-    }:
+    { name, profile }:
     pkgs.writeShellScriptBin name ''
       WEB_RE_OPENCODE_PROFILE=${lib.escapeShellArg profile} \
         exec ${launcherScript} "$@"
@@ -46,35 +43,5 @@ map mkWebReLauncher [
   {
     name = "oczenwre";
     profile = "zen";
-  }
-]
-++ map mkWebReLauncher [
-  {
-    name = "ocowre";
-    profile = "default";
-  }
-  {
-    name = "ocoglmwre";
-    profile = "omo-glm";
-  }
-  {
-    name = "ocogemwre";
-    profile = "omo-gemini";
-  }
-  {
-    name = "ocogptwre";
-    profile = "omo-gpt";
-  }
-  {
-    name = "ocoorwre";
-    profile = "omo-openrouter";
-  }
-  {
-    name = "ocoswre";
-    profile = "omo-sonnet";
-  }
-  {
-    name = "ocozenwre";
-    profile = "omo-zen";
   }
 ]

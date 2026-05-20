@@ -23,9 +23,7 @@ in
     defaultAgent = "build";
     permission = opencodeAgents.yoloPermission;
 
-    plugins = [
-      "opencode-gemini-auth@latest"
-    ];
+    plugins = [ "opencode-gemini-auth@latest" ];
 
     command = opencodeCommands;
 
@@ -50,6 +48,11 @@ in
       openrouter = {
         options = {
           apiKey = "__OPENROUTER_API_KEY_PLACEHOLDER__";
+        };
+      };
+      deepseek = {
+        options = {
+          apiKey = "__DEEPSEEK_API_KEY_PLACEHOLDER__";
         };
       };
     };

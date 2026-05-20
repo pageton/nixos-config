@@ -21,6 +21,14 @@
 - Prefer existing repo scripts and wrappers over ad-hoc commands.
 - Preserve momentum: if you can unblock yourself with local inspection or narrow validation, do that before asking the user.
 
+## Context and state discipline
+
+- Treat the context window as lossy. For long tasks, keep a small active ledger of goal, current hypothesis, evidence, blockers, and next step.
+- Write durable state immediately after each evidence-producing step. Do not rely on end-of-session summaries for discoveries, decisions, test results, or blockers.
+- When the repo provides a structured store, updating that store is part of the work. If the store update fails, record the failure and the exact command needed to retry.
+- Before any pivot, compaction recovery, subagent handoff, or session close, clear write debt: current findings, notes, session state, and structured records must be updated or explicitly marked blocked.
+- Keep prompts and plans scoped to the next proof loop. Load large guides progressively when the task needs them instead of trying to keep every detail active at once.
+
 ## Evidence-driven workflow
 
 - Verify assumptions from source code, docs, or tool output before acting.
@@ -30,6 +38,12 @@
 - For agent/tooling questions, verify the local binary surface (`--help`, `--version`, generated config) before relying on older docs or memory.
 - If information might have changed recently, verify it with current docs, official sites, or live command output before relying on it.
 - Separate verified facts from inference. If you infer, state that clearly.
+
+## Memory Discipline
+
+- If `agentmemory` is available in the current agent, check it before re-deriving repo conventions, prior decisions, or long-running task context.
+- Use it again after major decisions, fixes, or investigations so the next session can pick up the result without replaying the whole conversation.
+- Store durable facts, file paths, commands, and rationale; do not store secrets or noisy transcripts.
 
 ## Testing and validation
 

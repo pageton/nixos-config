@@ -11,8 +11,14 @@ let
   formatterRegistry = import ./_formatters.nix;
   opencodeProfiles = import ./_opencode-profiles.nix { inherit config; };
   forgeProfiles = import ./_forge-profiles.nix { inherit config; };
-  omoProfiles = import ./_omo-profiles.nix { inherit config; };
-  inherit (mcpTransforms) opencodeMcpServers geminiMcpServers forgeMcpServers ompMcpServers opencodeAndroidReMcpServers opencodeWebReMcpServers;
+  inherit (mcpTransforms)
+    opencodeMcpServers
+    geminiMcpServers
+    forgeMcpServers
+    ompMcpServers
+    opencodeAndroidReMcpServers
+    opencodeWebReMcpServers
+    ;
   opencodeFormatterSettings = builtins.listToAttrs (
     map (formatter: {
       name = formatter.tool;
@@ -58,9 +64,13 @@ let
     compaction = {
       auto = true;
       prune = true;
-      reserved = 10000;
-      tail_turns = 3;
-      preserve_recent_tokens = 8000;
+      reserved = 12000;
+      tail_turns = 4;
+      preserve_recent_tokens = 12000;
+    };
+    tool_output = {
+      max_bytes = 50000;
+      max_lines = 2000;
     };
     watcher.ignore = [
       "node_modules/**"
@@ -134,52 +144,6 @@ let
     ) opencodeProfiles.profiles
   );
 
-  # Oh My OpenAgent (omo) profile settings.
-  # Each omo profile gets opencode.json with the oh-my-openagent plugin, plus
-  # a separate oh-my-openagent.json with sisyphus model override.
-  omoOpencodeSettingsByProfile = builtins.listToAttrs (
-    map (
-      { name, model, ... }:
-      {
-        inherit name;
-        value =
-          opencodeSettings
-          // {
-            inherit model;
-            plugin = (opencodeSettings.plugin or [ ]) ++ [ "oh-my-openagent@latest" ];
-            default_agent = "sisyphus";
-          }
-          // (lib.optionalAttrs (opencodeSettings ? agent) {
-            agent = overrideAgentModels model opencodeSettings.agent;
-          });
-      }
-    ) omoProfiles.profiles
-  );
-
-  mkOmoConfig = model: {
-    "$schema" = "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json";
-    agents = {
-      sisyphus = { inherit model; };
-    };
-    experimental = {
-      aggressive_truncation = true;
-      task_system = true;
-    };
-  };
-
-  omoConfigsByProfile = builtins.listToAttrs (
-    map (
-      { name, model, ... }:
-      {
-        inherit name;
-        value = mkOmoConfig model;
-      }
-    ) omoProfiles.profiles
-  );
-
-
-
-
   # Forge TOML config generation per profile.
   # Forge uses TOML with [session] provider_id/model_id for model selection.
   mkForgeToml =
@@ -252,8 +216,6 @@ in
     geminiSettings
     ompSettings
     opencodeSettingsByProfile
-    omoOpencodeSettingsByProfile
-    omoConfigsByProfile
     opencodeAndroidReMcpServers
     opencodeWebReMcpServers
     forgeTomlByProfile

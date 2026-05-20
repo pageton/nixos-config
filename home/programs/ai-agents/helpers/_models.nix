@@ -44,6 +44,12 @@
   "minimax-m2.7-highspeed" = "opencode/minimax-m2.7-highspeed";
   grok-code-fast-1 = "xai/grok-code-fast-1";
 
+  # DeepSeek models
+  deepseek-pro-raw = "deepseek/deepseek-v4-pro";
+  deepseek-flash-raw = "deepseek/deepseek-v4-flash";
+  deepseek-pro = "deepseek/deepseek-v4-pro";
+  deepseek-flash = "deepseek/deepseek-v4-flash";
+
   # Aider (uses Anthropic model IDs without provider prefix)
   aider-model = "claude-sonnet-4-7";
   aider-editor = "claude-haiku-4-5";

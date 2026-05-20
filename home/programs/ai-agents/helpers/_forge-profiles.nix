@@ -48,6 +48,12 @@ let
       model_id = "minimax-m2.5-free";
       alias = "fgzen";
     }
+    {
+      name = "forge-deepseek";
+      provider_id = "generic-chat-completion-api";
+      model_id = "deepseek-v4-pro";
+      alias = "fgds";
+    }
   ];
 
   zaiProfiles = builtins.filter (p: p.zaiKey or false) profiles;

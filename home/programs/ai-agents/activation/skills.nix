@@ -8,45 +8,60 @@
   pkgs,
   toJSON,
   opencodeProfileNames,
+  forgeProfileNames,
+  piProfileNames,
+  ompProfileNames,
 }:
 
 let
   normalizedSkills = lib.unique cfg.skills;
+  repoLevelSkills = builtins.filter builtins.isString normalizedSkills;
+  individualSkills = builtins.filter (s: !(builtins.isString s)) normalizedSkills;
+  individualSkillsByRepo = builtins.foldl' (
+    acc: s: acc // { ${s.repo} = (acc.${s.repo} or [ ]) ++ [ s.skill ]; }
+  ) { } individualSkills;
   desiredSkillStateJson = toJSON normalizedSkills;
-  # Pre-generate install commands at Nix eval time
-  skillCommands = map (
-    s:
-    if builtins.isString s then
-      # Repo-level: skills add "owner/repo" --global --yes
-      ''
-        processed_entries=$((processed_entries + 1))
-        echo "  [$processed_entries/$configured_entries] ${s}"
-        echo "  → ${s}"
-        total_attempts=$((total_attempts + 1))
-        if ! attempt_cmd "install ${s}" "$SKILLS_BIN" add "${s}" --global --yes; then
-          echo "❌ Failed to install ${s}"
-          failed_installs=$((failed_installs + 1))
-        else
-          echo "✔ Installed ${s}"
-          successful_installs=$((successful_installs + 1))
-        fi
-      ''
+  repoLevelSkillCommands = map (repo: ''
+    processed_groups=$((processed_groups + 1))
+    echo "  [$processed_groups/$configured_groups] ${repo}"
+    echo "  → ${repo}"
+    echo "  [AI] starting install for ${repo} at $(date +'%F %T')"
+    total_attempts=$((total_attempts + 1))
+    if ! attempt_cmd "install ${repo}" "$SKILLS_BIN" add "${repo}" --global --yes; then
+      echo "❌ Failed to install ${repo}"
+      failed_installs=$((failed_installs + 1))
     else
-      # Individual: skills add https://github.com/owner/repo --skill name --global --yes
-      ''
-        processed_entries=$((processed_entries + 1))
-        echo "  [$processed_entries/$configured_entries] ${s.repo}#${s.skill}"
-        echo "  → ${s.repo}#${s.skill}"
-        total_attempts=$((total_attempts + 1))
-        if ! attempt_cmd "install ${s.repo}#${s.skill}" "$SKILLS_BIN" add "https://github.com/${s.repo}" --skill "${s.skill}" --global --yes; then
-          echo "❌ Failed to install ${s.repo}#${s.skill}"
-          failed_installs=$((failed_installs + 1))
-        else
-          echo "✔ Installed ${s.repo}#${s.skill}"
-          successful_installs=$((successful_installs + 1))
-        fi
-      ''
-  ) normalizedSkills;
+      echo "✔ Installed ${repo}"
+      successful_installs=$((successful_installs + 1))
+    fi
+  '') repoLevelSkills;
+  individualSkillCommands = lib.mapAttrsToList (
+    repo: skills:
+    let
+      uniqueSkills = lib.unique skills;
+      skillFlags = lib.concatMapStringsSep " " (
+        skill: "--skill ${lib.escapeShellArg skill}"
+      ) uniqueSkills;
+      skillList = lib.concatStringsSep ", " uniqueSkills;
+    in
+    ''
+      processed_groups=$((processed_groups + 1))
+      echo "  [$processed_groups/$configured_groups] ${repo} (${toString (builtins.length uniqueSkills)} skill(s))"
+      echo "  → ${repo}: ${skillList}"
+      echo "  [AI] starting batched install for ${repo} at $(date +'%F %T')"
+      total_attempts=$((total_attempts + 1))
+      if ! attempt_cmd "install ${repo} (${skillList})" "$SKILLS_BIN" add "https://github.com/${repo}" ${skillFlags} --global --yes; then
+        echo "❌ Failed to install ${repo}: ${skillList}"
+        failed_installs=$((failed_installs + 1))
+      else
+        echo "✔ Installed ${repo}: ${skillList}"
+        successful_installs=$((successful_installs + 1))
+      fi
+    ''
+  ) individualSkillsByRepo;
+  skillCommands = repoLevelSkillCommands ++ individualSkillCommands;
+  installGroupCount =
+    builtins.length repoLevelSkillCommands + builtins.length individualSkillCommands;
 in
 lib.mkIf (cfg.skills != [ ]) (
   lib.hm.dag.entryAfter [ "writeBoundary" "createJSWorkspace" ] ''
@@ -83,7 +98,7 @@ lib.mkIf (cfg.skills != [ ]) (
 
     desired_skill_state_json=${lib.escapeShellArg desiredSkillStateJson}
     # Include a version marker so cache invalidates when install flags change
-    desired_skill_state_hash=$(printf '%s:v3' "$desired_skill_state_json" | ${pkgs.coreutils}/bin/sha256sum | cut -d' ' -f1)
+    desired_skill_state_hash=$(printf '%s:v4' "$desired_skill_state_json" | ${pkgs.coreutils}/bin/sha256sum | cut -d' ' -f1)
     skill_state_cache_dir="$HOME/.cache/ai-agents"
     skill_state_cache_file="$skill_state_cache_dir/skills-state.sha256"
     skill_lock_file="$HOME/.agents/.skill-lock.json"
@@ -98,11 +113,10 @@ lib.mkIf (cfg.skills != [ ]) (
     fi
 
     if [[ "$skip_skill_install" -eq 0 ]]; then
-      # Remove all existing global skills before reinstall to prevent stale accumulation
+      # Remove all existing global skills before reinstall to prevent stale accumulation.
+      # skills CLI has no non-interactive bulk remove, so wipe directories directly.
       echo "🧹 Removing all existing global skills before reinstall..."
-      "$SKILLS_BIN" remove --global --yes 2>/dev/null || true
-      # Clean all skill storage locations (skills.sh stores in ~/.agents/skills/,
-      # symlinks into ~/.claude/skills/; OpenCode reads from both)
+      "$SKILLS_BIN" remove --global --all --yes 2>/dev/null || true
       rm -rf "$HOME/.agents/skills"/* 2>/dev/null || true
       rm -rf "$HOME/.agents/.skill-lock.json" 2>/dev/null || true
       rm -rf "$HOME/.claude/skills"/* 2>/dev/null || true
@@ -126,16 +140,17 @@ lib.mkIf (cfg.skills != [ ]) (
       successful_installs=0
       skipped_installs=0
       total_attempts=0
-      processed_entries=0
+      processed_groups=0
       configured_entries=${toString (builtins.length normalizedSkills)}
+      configured_groups=${toString installGroupCount}
       install_started_epoch=$(date +%s)
-      echo "📦 Installing agent skills from skills.sh (${toString (builtins.length normalizedSkills)} configured entries)..."
-      echo "ℹ Running installs sequentially to avoid skills lock contention in global state"
+      echo "📦 Installing agent skills from skills.sh ($configured_entries configured entries, $configured_groups repo batch(es))..."
+      echo "ℹ Running repo batches sequentially to avoid skills lock contention in global state"
       ${lib.concatStringsSep "" skillCommands}
 
       install_duration_seconds=$(( $(date +%s) - install_started_epoch ))
 
-      echo "🧠 Skills summary: configured=$configured_entries processed=$processed_entries attempted=$total_attempts success=$successful_installs skipped=$skipped_installs failures=$failed_installs duration=''${install_duration_seconds}s"
+      echo "🧠 Skills summary: configured=$configured_entries batches=$processed_groups attempted=$total_attempts success=$successful_installs skipped=$skipped_installs failures=$failed_installs duration=''${install_duration_seconds}s"
 
       if [[ "$failed_installs" -gt 0 ]]; then
         echo "⚠ Skills installation finished with $failed_installs failures"
@@ -148,27 +163,68 @@ lib.mkIf (cfg.skills != [ ]) (
       echo "✓ Skills installation complete"
     fi
 
-    # Mirror Claude skills to all OpenCode profiles.
-    # skills.sh only installs to the default opencode profile,
-    # so we symlink from ~/.claude/skills into every profile's skills dir.
+    # Mirror Claude skills to all agent skill directories.
+    # skills.sh installs to ~/.claude/skills; we symlink into every other agent's skills dir.
     if [[ -d "$HOME/.claude/skills" ]]; then
-      for profile in ${lib.concatStringsSep " " (map lib.escapeShellArg opencodeProfileNames)}; do
-        profile_skills="$HOME/.config/$profile/skills"
-        mkdir -p "$profile_skills"
-        # Remove stale dead symlinks first
-        find "$profile_skills" -maxdepth 1 -type l ! -exec test -e {} \; -delete 2>/dev/null || true
+      mirror_skills_to() {
+        local target_dir="$1"
+        mkdir -p "$target_dir"
+        find "$target_dir" -maxdepth 1 -type l ! -exec test -e {} \; -delete 2>/dev/null || true
         shopt -s nullglob
         for skill_dir in "$HOME/.claude/skills"/*; do
           [[ -d "$skill_dir" ]] || continue
           skill_name="$(basename "$skill_dir")"
-          link="$profile_skills/$skill_name"
+          link="$target_dir/$skill_name"
           if [[ ! -e "$link" ]]; then
             ln -sfn "$skill_dir" "$link"
           fi
         done
         shopt -u nullglob
+      }
+
+      mirror_count=0
+
+      # OpenCode profiles
+      for profile in ${lib.concatStringsSep " " (map lib.escapeShellArg opencodeProfileNames)}; do
+        mirror_skills_to "$HOME/.config/$profile/skills"
+        mirror_count=$((mirror_count + 1))
       done
-      echo "✓ Mirrored skills to ${toString (builtins.length opencodeProfileNames)} OpenCode profiles"
+
+      # Codex
+      mirror_skills_to "$HOME/.codex/skills"
+      mirror_count=$((mirror_count + 1))
+
+      # Forge profiles
+      for forge_profile in ${lib.concatStringsSep " " (map lib.escapeShellArg forgeProfileNames)}; do
+        mirror_skills_to "$HOME/.$forge_profile/skills"
+        mirror_count=$((mirror_count + 1))
+      done
+
+      # Gemini
+      mirror_skills_to "$HOME/.gemini/skills"
+      mirror_count=$((mirror_count + 1))
+
+      # Droid (Factory AI)
+      mirror_skills_to "$HOME/.factory/skills"
+      mirror_count=$((mirror_count + 1))
+
+      # Oh My Pi
+      mirror_skills_to "$HOME/.omp/agent/skills"
+      mirror_count=$((mirror_count + 1))
+
+      # Oh My Pi profiles
+      for omp_profile in ${lib.concatStringsSep " " (map lib.escapeShellArg ompProfileNames)}; do
+        mirror_skills_to "$HOME/.omp/profiles/$omp_profile/skills"
+        mirror_count=$((mirror_count + 1))
+      done
+
+      # Pi profiles
+      for pi_profile in ${lib.concatStringsSep " " (map lib.escapeShellArg piProfileNames)}; do
+        mirror_skills_to "$HOME/.pi/profiles/$pi_profile/skills"
+        mirror_count=$((mirror_count + 1))
+      done
+
+      echo "✓ Mirrored skills to $mirror_count agent directories"
     fi
   ''
 )
