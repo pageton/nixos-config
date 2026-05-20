@@ -16,8 +16,8 @@
 
     # Privacy-conscious history
     history = {
-      size = 10000;
-      save = 10000;
+      size = 1000000;
+      save = 1000000;
       path = "${config.xdg.dataHome}/zsh/history";
       ignoreDups = true;
       ignoreSpace = true;

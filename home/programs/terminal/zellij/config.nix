@@ -5,7 +5,93 @@
   pkgs,
   ...
 }:
+
+let
+  zellijAiPanel = pkgs.writeShellScriptBin "zellij-ai-panel" ''
+    set -euo pipefail
+
+    if [[ -z "''${ZELLIJ:-}" ]]; then
+      echo "zellij-ai-panel must be run inside Zellij" >&2
+      exit 1
+    fi
+
+    zellij=${pkgs.zellij}/bin/zellij
+    zsh=${pkgs.zsh}/bin/zsh
+    fzf=${pkgs.fzf}/bin/fzf
+
+    choice="$(
+      printf '%s\n' \
+        "Claude Code" \
+        "Claude GLM" \
+        "OpenCode" \
+        "OpenCode GPT" \
+        "OpenCode Sonnet" \
+        "OpenCode Gemini" \
+        "OpenCode OpenRouter" \
+        "Codex High" \
+        "Codex XHigh" \
+        "Gemini" \
+        "oh-my-pi GLM" \
+        "AI Council" \
+        "AI Logs" \
+        "Agent Inventory" \
+      | "$fzf" \
+          --prompt='agent > ' \
+          --height=45% \
+          --layout=reverse \
+          --border \
+          --cycle
+    )" || exit 0
+
+    case "$choice" in
+      "Claude Code")
+        exec "$zellij" action new-tab --name "󰚩 cl" -- "$zsh" -ic "cl"
+        ;;
+      "Claude GLM")
+        exec "$zellij" action new-tab --name "󰚩 clglm" -- "$zsh" -ic "clglm"
+        ;;
+      "OpenCode")
+        exec "$zellij" action new-tab --name " oc" -- "$zsh" -ic "oc"
+        ;;
+      "OpenCode GPT")
+        exec "$zellij" action new-tab --name " ocgpt" -- "$zsh" -ic "ocgpt"
+        ;;
+      "OpenCode Sonnet")
+        exec "$zellij" action new-tab --name " ocs" -- "$zsh" -ic "ocs"
+        ;;
+      "OpenCode Gemini")
+        exec "$zellij" action new-tab --name " ocgem" -- "$zsh" -ic "ocgem"
+        ;;
+      "OpenCode OpenRouter")
+        exec "$zellij" action new-tab --name " ocor" -- "$zsh" -ic "ocor"
+        ;;
+      "Codex High")
+        exec "$zellij" action new-tab --name "󱤚 hcx" -- "$zsh" -ic "hcx"
+        ;;
+      "Codex XHigh")
+        exec "$zellij" action new-tab --name "󱤚 xcx" -- "$zsh" -ic "xcx"
+        ;;
+      "Gemini")
+        exec "$zellij" action new-tab --name "󰊭 gem" -- "$zsh" -ic "gem"
+        ;;
+      "oh-my-pi GLM")
+        exec "$zellij" action new-tab --name "󰐻 opi" -- "$zsh" -ic "opi"
+        ;;
+      "AI Council")
+        exec "$zellij" action new-tab --name "󰚩 council" --layout "$HOME/.config/zellij/layouts/ai-council.kdl"
+        ;;
+      "AI Logs")
+        exec "$zellij" action new-tab --name "󰙨 ai-logs" --layout "$HOME/.config/zellij/layouts/ai-observe.kdl"
+        ;;
+      "Agent Inventory")
+        exec "$zellij" action new-tab --name "󰒋 agents" -- "$zsh" -ic "ai-agent-inventory; exec zsh"
+        ;;
+    esac
+  '';
+in
 {
+  home.packages = [ zellijAiPanel ];
+
   programs.zellij = {
     enable = true;
     # HM's zellij attach -c breaks with multiple sessions; auto-start is in zsh initContent
@@ -16,17 +102,24 @@
       default_shell = "${pkgs.zsh}/bin/zsh";
       default_layout = "default";
       default_cwd = config.home.homeDirectory;
+      default_mode = "normal";
+      layout_dir = "${config.home.homeDirectory}/.config/zellij/layouts";
+      theme_dir = "${config.home.homeDirectory}/.config/zellij/themes";
 
       pane_frames = false;
       simplified_ui = false;
       styled_underlines = true;
       auto_layout = true;
       mouse_mode = true;
+      advanced_mouse_actions = true;
       focus_follows_mouse = true;
       visual_bell = true;
 
       copy_command = "${pkgs.wl-clipboard}/bin/wl-copy";
+      copy_clipboard = "system";
       copy_on_select = true;
+      web_server_ip = "127.0.0.1";
+      web_server_port = constants.ports.zellij-web;
 
       scroll_buffer_size = 50000;
       scrollback_editor = "nvim";
@@ -42,9 +135,15 @@
       on_force_close = "detach";
       show_startup_tips = false;
       show_release_notes = false;
+      stacked_resize = true;
+      web_sharing = "disabled";
     };
 
     extraConfig = ''
+      load_plugins {
+        "file:~/.config/zellij/plugins/zellij-attention.wasm"
+      }
+
       themes {
         catppuccin-mocha-custom {
           fg "#${config.lib.stylix.colors.base05}"
@@ -143,6 +242,7 @@
           bind "Alt n" { NewPane; }
           bind "Alt s" { NewPane "Down"; SwitchToMode "Normal"; }
           bind "Alt v" { NewPane "Right"; SwitchToMode "Normal"; }
+          bind "Alt S" { NewPane "stacked"; SwitchToMode "Normal"; }
           bind "Alt x" { CloseFocus; SwitchToMode "Normal"; }
           bind "Alt z" { ToggleFocusFullscreen; SwitchToMode "Normal"; }
           bind "Alt w" { ToggleFloatingPanes; SwitchToMode "Normal"; }
@@ -161,9 +261,37 @@
           bind "Alt ]" { NextSwapLayout; }
 
           bind "Alt e" { EditScrollback; SwitchToMode "Normal"; }
+          bind "Alt a" {
+            Run "${zellijAiPanel}/bin/zellij-ai-panel" {
+              floating true
+              width "60%"
+              height "50%"
+              close_on_exit true
+            }
+          }
+          bind "Alt A" {
+            NewTab {
+              name "󰚩 council"
+              layout "${config.home.homeDirectory}/.config/zellij/layouts/ai-council.kdl"
+            }
+            SwitchToMode "Normal";
+          }
+          bind "Alt L" {
+            NewTab {
+              name "󰙨 ai-logs"
+              layout "${config.home.homeDirectory}/.config/zellij/layouts/ai-observe.kdl"
+            }
+            SwitchToMode "Normal";
+          }
 
           bind "Alt o" {
             LaunchOrFocusPlugin "zellij:session-manager" {
+              floating true
+              move_to_focused_tab true
+            }
+          }
+          bind "Alt O" {
+            LaunchOrFocusPlugin "zellij:layout-manager" {
               floating true
               move_to_focused_tab true
             }
@@ -172,6 +300,18 @@
           bind "Alt p" {
             LaunchOrFocusPlugin "file:~/.config/zellij/plugins/monocle.wasm" {
               floating true
+            }
+          }
+          bind "Alt P" {
+            LaunchOrFocusPlugin "zellij:plugin-manager" {
+              floating true
+              move_to_focused_tab true
+            }
+          }
+          bind "Alt C" {
+            LaunchOrFocusPlugin "configuration" {
+              floating true
+              move_to_focused_tab true
             }
           }
           bind "Alt r" {

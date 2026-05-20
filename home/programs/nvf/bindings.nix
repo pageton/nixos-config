@@ -76,6 +76,13 @@
         action = "<cmd>bdelete<cr>";
         desc = "Delete Buffer";
       }
+      {
+        key = "<C-w>";
+        mode = "n";
+        silent = true;
+        action = "<cmd>bdelete<cr>";
+        desc = "Delete Buffer";
+      }
 
       {
         key = "<C-[>";
@@ -284,7 +291,7 @@
               client:stop()
             end
             vim.defer_fn(function()
-              vim.cmd("edit")
+              vim.cmd("edit!")
             end, 200)
           end
         '';

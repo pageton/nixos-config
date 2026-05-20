@@ -125,10 +125,9 @@ let
 
     j = "just";
   };
+
+  mkShellAliasPrograms = import ../../../_helpers/_shell-alias-programs.nix;
 in
 {
-  programs = {
-    zsh.shellAliases = lib.mkMerge [ shellAliases ];
-    bash.shellAliases = lib.mkMerge [ shellAliases ];
-  };
+  programs = mkShellAliasPrograms { shellAliases = lib.mkMerge [ shellAliases ]; };
 }

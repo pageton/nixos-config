@@ -17,6 +17,7 @@
       tabstop = 2;
       softtabstop = 2;
       wrap = false;
+      completeopt = "menu,menuone,noselect";
     };
     globals = {
       navic_silence = true; # suppress navic multi-LSP attach warnings

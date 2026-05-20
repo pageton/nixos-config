@@ -1,13 +1,30 @@
 # Development tools and programming languages for software development,
 # debugging, database management, and reverse engineering.
-{ pkgs, pkgsStable }:
+{
+  pkgs,
+  pkgsStable,
+  constants,
+}:
+let
+  zedNvidiaXwayland = pkgs.symlinkJoin {
+    name = "zed-editor-nvidia-xwayland";
+    paths = [ pkgsStable.zed-editor ];
+    buildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/zeditor \
+        --set WAYLAND_DISPLAY "" \
+        --set ZED_DEVICE_ID 0x2484 \
+        --set VK_LOADER_LAYERS_DISABLE "~implicit~explicit"
+    '';
+  };
+in
 with pkgs;
 with pkgsStable;
 [
   # === Integrated Development Environments ===
-  vscode # Visual Studio Code editor
+  vscode-fhs # Visual Studio Code editor (FHS wrapper for extension compatibility)
   code-cursor-fhs # Cursor IDE (FHS wrapper)
-  zed-editor # Zed editor
+  zedNvidiaXwayland # Zed editor, forced away from unstable NVIDIA Wayland path
   sqlitebrowser # SQLite database browser GUI
   redisinsight # Redis GUI
 

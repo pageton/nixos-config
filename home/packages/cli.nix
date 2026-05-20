@@ -80,6 +80,7 @@ with pkgsStable;
   jq # JSON processor and query tool
   ripgrep # Fast grep replacement with modern features
   sd # Modern sed replacement
+  github-mcp-server # GitHub's official MCP Server
   semgrep # Semantic code analysis and search
   yq # YAML processor similar to jq
 

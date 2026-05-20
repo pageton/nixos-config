@@ -69,6 +69,7 @@ in
     _load_gemini_key() { _load_secret gemini_api_key; }
     _load_zai_key() { _load_secret zai_api_key; }
     _load_openrouter_key() { _load_secret openrouter_api_key; }
+    _load_deepseek_key() { _load_secret deepseek_api_key; }
 
     # Export Gemini key for gemini CLI (non-fatal — CLI is optional)
     if _gemini_key="$(_load_gemini_key 2>/dev/null)" && [[ -n "$_gemini_key" ]]; then
@@ -82,6 +83,10 @@ in
 
     # === AI agent wrappers ===
     _ai_tab_icon() {
+      if [[ -n "''${ZELLIJ_MOBILE:-}" ]]; then
+        return 0
+      fi
+
       case "$1" in
         cl*|ocl*|hcl*) printf '\uf1b0 ' ;;                   #  Claude — cl, clu, clglm, ocl, hcl + all workflow suffixes
         oc*|locgpt*|mocgpt*|xocgpt*) printf '\ue7a4 ' ;;     #  OpenCode — oc, ocglm, ocgem, ocgpt, ocs, oczen + all workflow suffixes
@@ -91,6 +96,7 @@ in
         omp*) printf '\uf1b2 ' ;;                              #  OMP — omp, omps, ompop, ompglm, ompgem, ompgpt, ompor, ompzen + all workflow suffixes
         pi*) printf '\uf1b2 ' ;;                              #  Pi — pi, pis, piop, piglm, pigem, pigpt, pior, pizen + all workflow suffixes
         opi*) printf '\uf135 ' ;;                              #  oh-my-pi — opi + all workflow suffixes
+        dr*) printf '\ue7b8 ' ;;                              #  Droid — dr, drglm, drgem, drgpt, dror, drs, drzen + all workflow suffixes
         *) ;;
       esac
     }
@@ -138,10 +144,36 @@ in
       claude --dangerously-skip-permissions --debug-file "$debug_dir/claude-debug-$(date +%Y-%m-%d).log" "$@"
     }
 
+    claude_seek() {
+      local key; key="$(_load_deepseek_key)" || return 1
+      _zellij_rename_tab "clsk"
+      local debug_dir="''${AI_AGENT_LOG_DIR:-$HOME/.local/share/ai-agents/logs}"
+      mkdir -p "$debug_dir"
+      ANTHROPIC_AUTH_TOKEN="$key" \
+      ANTHROPIC_BASE_URL="https://api.deepseek.com/anthropic" \
+      ANTHROPIC_DEFAULT_OPUS_MODEL="deepseek-v4-pro[1m]" \
+      ANTHROPIC_DEFAULT_SONNET_MODEL="deepseek-v4-pro[1m]" \
+      ANTHROPIC_DEFAULT_HAIKU_MODEL="deepseek-v4-flash[1m]" \
+      CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 \
+      CLAUDE_CODE_EFFORT_LEVEL=max \
+      claude --dangerously-skip-permissions --debug-file "$debug_dir/claude-debug-$(date +%Y-%m-%d).log" "$@"
+    }
+
+    droid_seek() {
+      _zellij_rename_tab "drsk"
+      droid -m deepseek-v4-pro "$@"
+    }
+
     omp_glm() {
       local key; key="$(_load_zai_key)" || return 1
       _zellij_rename_tab "opi"
       ZAI_API_KEY="$key" omp "$@"
+    }
+
+    omp_seek() {
+      local key; key="$(_load_deepseek_key)" || return 1
+      _zellij_rename_tab "ompds"
+      DEEPSEEK_API_KEY="$key" omp "$@"
     }
 
     _opencode_profile() {
@@ -165,62 +197,75 @@ in
       OPENROUTER_API_KEY="$key" _opencode_profile "openrouter" "ocor" "$@"
     }
 
-
-    # === Forge profile wrappers ===
-    _forge_profile() {
-      local profile="$1"
-      local tab_name="$2"
-      shift 2
-      _zellij_rename_tab "$tab_name"
-      FORGE_CONFIG="$HOME/.''${profile}" forge "$@"
+    za() {
+      if [[ -n "''${ZELLIJ:-}" ]]; then
+        zellij-ai-panel "$@"
+      else
+        zellij --layout ai
+      fi
     }
 
-    ${lib.concatStringsSep "\n\n" (
-      map (p: ''
-        forge_${forgeProfileSuffix p}() {
-          _forge_profile "${p.name}" "${p.alias}" "$@"
-        }
-      '') simpleForgeProfiles
-    )}
-
-    forge_openrouter() {
-      local key; key="$(_load_openrouter_key)" || return 1
-      OPENROUTER_API_KEY="$key" _forge_profile "forge-openrouter" "fgor" "$@"
+    zac() {
+      if [[ -n "''${ZELLIJ:-}" ]]; then
+        if [[ -n "''${ZELLIJ_MOBILE:-}" ]]; then
+          zellij action new-tab --name "council" --layout "$HOME/.config/zellij/layouts/ai-council.kdl"
+        else
+          zellij action new-tab --name "󰚩 council" --layout "$HOME/.config/zellij/layouts/ai-council.kdl"
+        fi
+      else
+        zellij --layout ai-council
+      fi
     }
 
-    # === Oh My Pi (omp) profile wrappers ===
-    _omp_profile() {
-      local profile="$1"
-      local tab_name="$2"
-      shift 2
-      _zellij_rename_tab "$tab_name"
-      PI_CODING_AGENT_DIR="$HOME/.omp/profiles/$profile" omp "$@"
+    zalogs() {
+      if [[ -n "''${ZELLIJ:-}" ]]; then
+        if [[ -n "''${ZELLIJ_MOBILE:-}" ]]; then
+          zellij action new-tab --name "ai-logs" --layout "$HOME/.config/zellij/layouts/ai-observe.kdl"
+        else
+          zellij action new-tab --name "󰙨 ai-logs" --layout "$HOME/.config/zellij/layouts/ai-observe.kdl"
+        fi
+      else
+        zellij --layout ai-observe
+      fi
     }
 
-    ${lib.concatStringsSep "\n\n" (
-      map (p: ''
-        omp_${ompProfileSuffix p}() {
-          _omp_profile "${p.name}" "${p.alias}" --model ${p.model} "$@"
-        }
-      '') simpleOmpProfiles
-    )}
-
-    # === Pi (badlogic/pi-mono) profile wrappers ===
-    _pi_profile() {
-      local profile="$1"
-      local tab_name="$2"
-      shift 2
-      _zellij_rename_tab "$tab_name"
-      PI_CODING_AGENT_DIR="$HOME/.pi/profiles/$profile" pi "$@"
+    zm() {
+      zellij-mobile "$@"
     }
 
-    ${lib.concatStringsSep "\n\n" (
-      map (p: ''
-        pi_${piProfileSuffix p}() {
-          _pi_profile "${p.name}" "${p.alias}" --model ${p.model} "$@"
-        }
-      '') simplePiProfiles
-    )}
+    zp() {
+      if [[ -n "''${ZELLIJ:-}" ]]; then
+        zellij action new-pane "$@"
+      else
+        echo "zp must be run inside Zellij" >&2
+        return 1
+      fi
+    }
+
+    zpr() {
+      if [[ -n "''${ZELLIJ:-}" ]]; then
+        zellij action new-pane --direction right "$@"
+      else
+        echo "zpr must be run inside Zellij" >&2
+        return 1
+      fi
+    }
+
+    zpd() {
+      if [[ -n "''${ZELLIJ:-}" ]]; then
+        zellij action new-pane --direction down "$@"
+      else
+        echo "zpd must be run inside Zellij" >&2
+        return 1
+      fi
+    }
+
+    droid_glm() { _zellij_rename_tab "drglm"; ZAI_API_KEY="$(_load_zai_key)" droid "$@"; }
+    droid_gemini() { _zellij_rename_tab "drgem"; droid "$@"; }
+    droid_gpt() { _zellij_rename_tab "drgpt"; droid "$@"; }
+    droid_openrouter() { _zellij_rename_tab "dror"; OPENROUTER_API_KEY="$(_load_openrouter_key)" droid "$@"; }
+    droid_sonnet() { _zellij_rename_tab "drs"; droid "$@"; }
+    droid_zen() { _zellij_rename_tab "drzen"; droid "$@"; }
 
     # === AI multi-pane launcher ===
     # Launch multiple AI agents side-by-side in Zellij panes
@@ -310,11 +355,43 @@ in
 
     # === Zellij auto-rename tab ===
     if [[ -n "''${ZELLIJ:-}" ]]; then
+      _zellij_tab_name_for_command() {
+        local raw="$1"
+        local cmd="''${raw%% *}"
+        cmd="''${cmd:t}"
+        case "$raw" in
+          just\ check*) printf "󱓞 check" ;;
+          just\ lint*) printf "󰁨 lint" ;;
+          just\ test*) printf "󰙨 test" ;;
+          just\ home*) printf "󱄅 home" ;;
+          just\ nixos*) printf "󱄅 nixos" ;;
+          just*) printf "just" ;;
+          nix\ build*) printf "󱄅 nix build" ;;
+          nix\ flake*) printf "󱄅 flake" ;;
+          home-manager*) printf "󱄅 home" ;;
+          nvim*|vim*|vi*) printf " edit" ;;
+          lazygit*|git*) printf " git" ;;
+          btop*|nvtop*|htop*) printf "󰍛 monitor" ;;
+          docker*|podman*) printf "󰡨 containers" ;;
+          pnpm\ dev*|npm\ run\ dev*|bun\ run\ dev*) printf "󰜎 dev" ;;
+          pnpm*|npm*|bun*) printf "󰎙 js" ;;
+          cargo\ test*) printf "󱘗 rs test" ;;
+          cargo*) printf "󱘗 rust" ;;
+          python*|uv*) printf " py" ;;
+          cl*|claude*) printf "$(_ai_tab_icon cl)cl" ;;
+          oc*|opencode*) printf "$(_ai_tab_icon oc)oc" ;;
+          cx*|codex*) printf "$(_ai_tab_icon cx)cx" ;;
+          gem*|gemini*) printf "$(_ai_tab_icon gem)gem" ;;
+          za|zac|zalogs|aip*) printf "󰚩 ai" ;;
+          *) printf "%s" "$cmd" ;;
+        esac
+      }
+
       _zellij_auto_tab_preexec() {
-        local name="''${2%% *}"
-        name="''${name:t}"
+        local name
+        name="$(_zellij_tab_name_for_command "$2")"
         case "$name" in
-          cd|ls|ll|la|l|clear|cls|exit|source|.|zellij) return 0 ;;
+          cd|ls|ll|la|l|clear|cls|exit|source|\.|zellij|"") return 0 ;;
         esac
         command zellij action rename-tab "$name" >/dev/null 2>&1 || true
       }

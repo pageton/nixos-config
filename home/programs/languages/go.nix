@@ -1,43 +1,54 @@
 # Go development environment (gopls, delve, golangci-lint, etc).
 
-{ config, pkgs, ... }:
-
 {
-  programs = {
-    go = {
-      enable = true;
-      package = pkgs.go;
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
-      env = {
-        GOPATH = "${config.home.homeDirectory}/go";
-        GOBIN = "${config.home.homeDirectory}/go/bin";
-        GOPRIVATE = [ ];
+let
+  mkShellAliasPrograms = import ../../_helpers/_shell-alias-programs.nix;
+in
+{
+  programs = lib.mkMerge [
+    (mkShellAliasPrograms {
+      shellAliases = {
+        gorun = "go run";
+        gobuild = "go build";
+        gotest = "go test -v";
+        gomod = "go mod";
+        gofmt = "gofumpt -w";
+        golint = "golangci-lint run";
+        goair = "air";
+        godebug = "dlv debug";
+        gotrace = "dlv trace";
       };
-    };
+    })
+    {
+      go = {
+        enable = true;
+        package = pkgs.go;
 
-    zsh.shellAliases = {
-      gorun = "go run";
-      gobuild = "go build";
-      gotest = "go test -v";
-      gomod = "go mod";
-      gofmt = "gofumpt -w";
-      golint = "golangci-lint run";
-      goair = "air";
-      godebug = "dlv debug";
-      gotrace = "dlv trace";
-    };
+        env = {
+          GOPATH = "${config.home.homeDirectory}/go";
+          GOBIN = "${config.home.homeDirectory}/go/bin";
+          GOPRIVATE = [ ];
+        };
+      };
 
-    git.ignores = [
-      "*.exe"
-      "*.exe~"
-      "*.dll"
-      "*.so"
-      "*.dylib"
-      "*.test"
-      "go.work"
-      "go.work.sum"
-    ];
-  };
+      git.ignores = [
+        "*.exe"
+        "*.exe~"
+        "*.dll"
+        "*.so"
+        "*.dylib"
+        "*.test"
+        "go.work"
+        "go.work.sum"
+      ];
+    }
+  ];
 
   home = {
     packages = with pkgs; [

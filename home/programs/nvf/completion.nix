@@ -38,7 +38,7 @@
         '';
       };
       completion = {
-        completeopt = "menu,menuone,preview,noselect";
+        completeopt = "menu,menuone,noselect";
       };
     };
 
@@ -55,9 +55,9 @@
     require("luasnip.loaders.from_vscode").lazy_load()
 
     -- Setup command-line completion after cmp is fully loaded.
-    -- Uses VeryLazy autocmd instead of a fragile timer.
-    vim.api.nvim_create_autocmd("User", {
-      pattern = "LazyDone",
+    -- Uses InsertEnter trigger: by the time we first enter insert mode,
+    -- lz.n will have loaded nvim-cmp (its event = InsertEnter|CmdlineEnter).
+    vim.api.nvim_create_autocmd("CmdlineEnter", {
       once = true,
       callback = function()
         local ok, cmp = pcall(require, "cmp")

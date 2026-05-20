@@ -77,11 +77,8 @@
         callback = function()
           local ok, _ = pcall(vim.fn.expand, "%:p")
           if not ok then return end
-          -- Save cursor position
           local saved = vim.fn.winsaveview()
-          -- Trim trailing whitespace
           vim.cmd([[%s/\s\+$//e]])
-          -- Trim trailing blank lines at end of file
           vim.cmd([[%s/\n\+\%$//e]])
           vim.fn.winrestview(saved)
         end,

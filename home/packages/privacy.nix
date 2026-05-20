@@ -1,26 +1,22 @@
 # Privacy and opsec tools for anonymous browsing, secure communication,
 # metadata removal, and network privacy.
-{ pkgs, pkgsStable }:
+{
+  pkgs,
+  pkgsStable,
+  constants,
+}:
+
 let
-  mesaEglVendorFile = "/run/opengl-driver/share/glvnd/egl_vendor.d/50_mesa.json";
-  wrapWithMesaEgl =
-    name: pkg:
-    pkgs.symlinkJoin {
-      inherit name;
-      paths = [ pkg ];
-      buildInputs = [ pkgs.makeWrapper ];
-      postBuild = ''
-        wrapProgram $out/bin/${name} \
-          --set __EGL_VENDOR_LIBRARY_FILENAMES ${mesaEglVendorFile}
-      '';
-    };
+  eglWrap = import ../_helpers/_egl-wrap.nix { inherit pkgs constants; };
+  inherit (eglWrap) wrapWithMesaEgl;
 in
 with pkgsStable;
 [
   # === Privacy-Focused Browsers (Mesa EGL wrapped for NVIDIA) ===
-  # Zen Browser is managed by programs.zen-browser module (home/programs/zen-browser/)
+  # LibreWolf is managed by programs.librewolf module (home/programs/librewolf/)
   pkgs.tor # Tor client and service
   (wrapWithMesaEgl "tor-browser" tor-browser)
+
   # === DNS Privacy ===
   dnscrypt-proxy # Encrypted DNS client
   unbound # Validating recursive DNS resolver
