@@ -126,6 +126,11 @@ update-pkgs-stable:
     @echo -e "\n➤ Updating Nixpkgs-stable…"
     nix flake update nixpkgs-stable
 
+# Update AppImage packages (opencode-desktop, t3code) to latest GitHub releases
+update-apps:
+    @echo -e "\n➤ Updating AppImage packages…"
+    bash ./scripts/build/update-appimage-packages.sh
+
 # Clean up build artifacts and caches
 clean:
     @echo -e "\n➤ Cleaning up build artifacts and caches…"

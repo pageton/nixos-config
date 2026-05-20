@@ -32,7 +32,7 @@ in
           title = "^Picture-in-Picture$";
         }
         {
-          app-id = "^zen$";
+          app-id = "^librewolf$";
           title = "^Picture-in-Picture$";
         }
       ];
@@ -59,10 +59,13 @@ in
       open-floating = true;
     }
 
-    # Floating: Brave extension popups (Bitwarden, etc.)
-    # app-id format: brave-<extension_id>-<Profile>
+    # Floating: browser extension popups (Bitwarden, etc.)
+    # app-id format: brave-<extension_id>-<Profile> or librewolf-<extension_id>-<Profile>
     {
-      matches = [ { app-id = "^brave-[a-z]{32}"; } ];
+      matches = [
+        { app-id = "^brave-[a-z]{32}"; }
+        { app-id = "^librewolf-[a-z]{32}"; }
+      ];
       open-floating = true;
       default-floating-position = {
         x = -0.5;
@@ -129,7 +132,7 @@ in
 
     # Browser transparency
     {
-      matches = [ { app-id = "^zen$"; } ];
+      matches = [ { app-id = "^librewolf$"; } ];
       opacity = 0.95;
     }
 

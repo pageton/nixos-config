@@ -4,6 +4,7 @@
   pkgs,
   pkgsStable,
   inputs,
+  constants,
   ...
 }:
 {
@@ -17,7 +18,7 @@
 
   home.packages =
     let
-      Pkgs = import ../packages { inherit pkgs pkgsStable; };
+      Pkgs = import ../packages { inherit pkgs pkgsStable constants; };
     in
     Pkgs
     ++ [

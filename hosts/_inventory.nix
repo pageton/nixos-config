@@ -4,10 +4,10 @@
 [
   {
     hostname = "desktop";
-    stateVersion = "25.11";
+    stateVersion = "26.05";
   }
   {
     hostname = "thinkpad";
-    stateVersion = "25.11";
+    stateVersion = "26.05";
   }
 ]

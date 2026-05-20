@@ -5,7 +5,7 @@
 # shellcheck disable=SC2034
 NETDATA_URL="http://127.0.0.1:19999"
 LOKI_URL="http://127.0.0.1:3100"
-SCRUTINY_URL="http://127.0.0.1:8080"
+SCRUTINY_URL="http://127.0.0.1:8010"
 
 section() { printf '\n## %s\n\n' "$1"; }
 

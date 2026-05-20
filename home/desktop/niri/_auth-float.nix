@@ -48,7 +48,7 @@
 
         # Browser auth popups — only process browser app_ids
         case "$app_id" in
-          *brave*|*firefox*|*zen*|*chromium*|*chrome*) ;;
+          *brave*|*firefox*|*librewolf*|*chromium*|*chrome*) ;;
           *) return 0 ;;
         esac
 

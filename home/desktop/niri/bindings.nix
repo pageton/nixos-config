@@ -31,7 +31,7 @@ in
       "zellij-tui"
     ];
     "Mod+E".action = spawn "thunar";
-    "Mod+B".action = spawn "brave";
+    "Mod+B".action = spawn "librewolf-personal";
 
     # ── Window management ───────────────────────────────────────
     "Mod+Q".action = close-window;

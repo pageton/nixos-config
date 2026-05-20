@@ -1,7 +1,7 @@
 { pkgs, ... }:
 {
   home.packages = with pkgs; [
-    networkmanagerapplet
+    # networkmanagerapplet
     tesseract
     zbar
     translate-shell

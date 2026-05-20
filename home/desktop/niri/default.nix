@@ -1,14 +1,5 @@
 # Niri scrollable-tiling Wayland compositor — Home Manager configuration.
-{
-  config,
-  constants,
-  hostname,
-  pkgs,
-  ...
-}:
-let
-  isThinkpad = hostname == "thinkpad";
-in
+{ config, pkgs, ... }:
 {
   imports = [
     ./animations.nix
@@ -23,11 +14,39 @@ in
 
   services.playerctld.enable = true;
 
-  home.packages = [ pkgs.xwayland-satellite ];
-
   programs.niri.settings = {
+    outputs = {
+      "DP-4" = {
+        mode = {
+          width = 1920;
+          height = 1080;
+          refresh = 143.976;
+        };
+        transform.rotation = 90;
+        position = {
+          x = 2560;
+          y = 0;
+        };
+        scale = 1;
+      };
+
+      "DP-5" = {
+        mode = {
+          width = 2560;
+          height = 1440;
+          refresh = 164.835;
+        };
+        position = {
+          x = 0;
+          y = 0;
+        };
+        scale = 1;
+        focus-at-startup = true;
+      };
+    };
+
     prefer-no-csd = true;
-    screenshot-path = "~/Pictures/Screenshots/screenshot-%Y-%m-%d-%H-%M-%S.png";
+    screenshot-path = "~/Screens/screenshot-%Y-%m-%d-%H-%M-%S.png";
     hotkey-overlay.skip-at-startup = true;
 
     cursor = {
@@ -36,21 +55,26 @@ in
     };
 
     environment = {
-      DISPLAY = ":0";
-      _JAVA_AWT_WM_NONREPARENTING = "1";
-      IN_NIX_SHELL = null; # unset — prevents GUI apps from thinking they're in a nix-shell
-      NIXOS_OZONE_WL = "1";
-      MOZ_ENABLE_WAYLAND = "1";
-      QT_QPA_PLATFORM = "wayland;xcb";
-      QT_AUTO_SCREEN_SCALE_FACTOR = "1";
-      QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
       ELECTRON_OZONE_PLATFORM_HINT = "auto";
-      XDG_SESSION_TYPE = "wayland";
-      XDG_CURRENT_DESKTOP = "niri";
-      CLUTTER_BACKEND = "wayland";
-      ANKI_WAYLAND = "1";
-      XCURSOR_SIZE = if isThinkpad then "20" else "24";
+      # Prevent Electron/Chromium GPU sandbox contention with niri under load
+      ELECTRON_EXTRA_LAUNCH_FLAGS = "--disable-gpu-sandbox";
+      # QT_QPA_PLATFORM is set globally in home.nix sessionVariables
+      QT_STYLE_OVERRIDE = "kvantum";
+      XDG_SCREENSHOTS_DIR = "$HOME/Screens";
     };
+
+    # environment = {
+    #   _JAVA_AWT_WM_NONREPARENTING = "1";
+    #   IN_NIX_SHELL = null;
+    #   QT_QPA_PLATFORM = "wayland;xcb";
+    #   QT_AUTO_SCREEN_SCALE_FACTOR = "1";
+    #   QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
+    #   ELECTRON_OZONE_PLATFORM_HINT = "x11";
+    #   ELECTRON_EXTRA_LAUNCH_FLAGS = "--disable-gpu-sandbox";
+    #   XDG_SESSION_TYPE = "wayland";
+    #   XDG_CURRENT_DESKTOP = "niri";
+    #   XCURSOR_SIZE = if isThinkpad then "20" else "24";
+    # };
 
     spawn-at-startup = [
       {
@@ -60,27 +84,7 @@ in
           "pgrep -f 'niri-auth-float' > /dev/null || exec ${config.home.profileDirectory}/.local/bin/niri-auth-float"
         ];
       }
-      {
-        command = [
-          "dbus-update-activation-environment"
-          "--systemd"
-          "DISPLAY"
-          "WAYLAND_DISPLAY"
-          "XDG_CURRENT_DESKTOP"
-          "XDG_SESSION_TYPE"
-          "XDG_SESSION_DESKTOP"
-          "DBUS_SESSION_BUS_ADDRESS"
-          "XDG_RUNTIME_DIR"
-        ];
-      }
-      {
-        command = [
-          "${pkgs.bash}/bin/bash"
-          "-c"
-          "pgrep -x quickshell > /dev/null || exec ${config.home.profileDirectory}/bin/noctalia-shell"
-        ];
-      }
-      { command = [ "xwayland-satellite" ]; }
+      { argv = [ "${config.home.profileDirectory}/bin/noctalia-shell" ]; }
       {
         command = [
           "wl-paste"
@@ -131,8 +135,6 @@ in
     # (e.g. "disable-direct-scanout" not "disable-direct-scanout true").
     debug = {
       honor-xdg-activation-with-invalid-serial = { };
-      wait-for-frame-completion-before-queueing = { };
-      disable-direct-scanout = { };
     };
   };
 }
