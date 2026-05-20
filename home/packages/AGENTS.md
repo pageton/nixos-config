@@ -19,6 +19,25 @@ Declarative package lists split into categorized chunk files. Each chunk receive
 | `system-monitoring.nix` | System monitoring tools |
 | `productivity.nix` | Productivity applications |
 | `cool.nix` | Miscellaneous/niche tools |
+## Directory Structure
+
+```
+home/packages/
+├── default.nix    # Aggregator: imports all chunks
+├── cli.nix        # Core CLI utilities
+├── applications.nix # Desktop applications
+├── development.nix # Development tools
+├── multimedia.nix  # Audio/video/image tools
+├── networking.nix  # Network utilities
+├── utilities.nix   # General-purpose utilities
+├── wayland.nix     # Wayland-specific tools
+├── privacy.nix     # Privacy and security tools
+├── linting.nix     # Linters and formatters
+├── system-monitoring.nix # System monitoring tools
+├── productivity.nix # Productivity applications
+└── cool.nix        # Miscellaneous/niche tools
+```
+
 
 ## Conventions
 

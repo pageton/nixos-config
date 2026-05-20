@@ -12,6 +12,18 @@ User-level build and audit helper scripts installed via Home-Manager. Wraps the 
 | `modules-check.nix` | Verify all .nix files are imported by parent default.nix |
 | `performance-audit.nix` | Boot/session performance diagnostics |
 | `security-audit.nix` | Security-focused repository checks |
+## Directory Structure
+
+```
+home/scripts/build/
+├── default.nix           # Import hub
+├── eval-audit.nix       # Nix evaluation timing audit
+├── hardening-audit.nix   # Systemd service hardening report
+├── modules-check.nix     # Verify .nix file imports
+├── performance-audit.nix # Boot/session performance diagnostics
+└── security-audit.nix    # Security-focused repository checks
+```
+
 
 ## Conventions
 

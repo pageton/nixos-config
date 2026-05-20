@@ -2,7 +2,7 @@
 
 System-level NixOS modules using a two-level import pattern: flat `.nix` files at this level, organized into category subdirectories via `default.nix`. All modules expose `mySystem.<module>.enable` for per-host opt-in.
 
-## Architecture
+## Directory Structure
 
 ```
 nixos/modules/
@@ -19,9 +19,66 @@ nixos/modules/
 ├── maintenance/             # Cleanup timers, Restic backup, nh
 ├── glance/                  # Glance dashboard widget configs (RSS, bookmarks, etc.)
 ├── helpers/                 # Shared module helper expressions (systemd factories, hardening wrappers)
-└── *.nix                    # ~50 flat module files
+├── bootloader.nix
+├── nix.nix
+├── users.nix
+├── sops.nix
+├── timezone.nix
+├── i18n.nix
+├── environment.nix
+├── stability.nix
+├── validation.nix
+├── audio.nix
+├── android.nix
+├── bluetooth.nix
+├── graphics.nix
+├── libinput.nix
+├── upower.nix
+├── thermal.nix
+├── niri.nix
+├── sddm.nix
+├── xserver.nix
+├── xdg-desktop-portal.nix
+├── networking.nix
+├── dnscrypt-proxy.nix
+├── mullvad.nix
+├── tailscale.nix
+├── tor.nix
+├── security.nix
+├── firewall.nix
+├── aide.nix
+├── apparmor.nix
+├── opensnitch.nix
+├── macchanger.nix
+├── opsec.nix
+├── sandboxing.nix
+├── web-re.nix
+├── browser-deps.nix
+├── flatpak.nix
+├── gaming.nix
+├── syncthing.nix
+├── virtualization.nix
+├── docker.nix
+├── virtualbox.nix
+├── libvirt.nix
+├── nix-ld.nix
+├── netdata.nix
+├── scrutiny.nix
+├── glance.nix
+├── loki.nix
+├── monitoring.nix
+├── boot-optimization.nix
+├── cleanup.nix
+├── backup.nix
+├── nh.nix
+├── android.nix
+├── fwupd.nix
+├── printing.nix
+├── secure-boot.nix
+├── vnc.nix
+├── yggdrasil.nix
+└── i2pd.nix
 ```
-
 ## Module Map
 
 | Category | Modules | Scope |

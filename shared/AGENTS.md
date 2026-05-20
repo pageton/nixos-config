@@ -9,8 +9,16 @@ Cross-boundary Nix expressions used by both NixOS system modules and Home-Manage
 | `constants.nix` | SSOT: user identity, fonts, Catppuccin Mocha colors, keyboard layout, service ports, proxy endpoints, paths |
 | `option-helpers.nix` | Typed NixOS option constructors: `mkBoolOption`, `mkStrOption`, `mkIntOption`, `mkEnumOption` |
 | `alias-helpers.nix` | Shared shell alias definitions injected into both zsh and bash configs |
- `_hm-systemd-helpers.nix` | Shared Home-Manager systemd timer helpers: `mkPersistentTimer`, `mkWeeklyTimer` |
- `secret-loader.nix` | *(moved to `home/_helpers/_secret-loader.nix`)* |
+| `_hm-systemd-helpers.nix` | Shared Home-Manager systemd timer helpers: `mkHmTimer`, `mkWeeklyTimer` |
+## Directory Structure
+
+```
+shared/
+├── constants.nix      # SSOT: user, fonts, colors, keyboard, ports, proxies
+├── option-helpers.nix # Typed NixOS option constructors
+├── alias-helpers.nix  # Shared shell alias injection (zsh + bash)
+└── _hm-systemd-helpers.nix # Shared HM systemd timer helpers
+```
 
 ## Conventions
 

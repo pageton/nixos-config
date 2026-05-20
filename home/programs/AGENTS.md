@@ -5,16 +5,21 @@ Top-level Home-Manager program configuration hub. Contains standalone `.nix` fil
 ## Architecture
 
 ```
+```
 home/programs/
 ├── default.nix          # Imports all subdirectories and standalone .nix files
 ├── ai-agents/           # AI agent orchestration (has AGENTS.md)
 ├── terminal/            # Shell, terminal, CLI tools (has AGENTS.md)
-├── nvf/                 # Neovim via NVF framework
-├── zen-browser/         # Multi-profile browser with SOCKS5 proxies
-├── languages/           # Go, Python, JS/Node, LSP servers, mise
-├── isolation/           # Wayland browser sandbox wrappers
+├── nvf/                 # Neovim via NVF framework (has AGENTS.md)
+├── zen-browser/         # Multi-profile browser with SOCKS5 proxies (has AGENTS.md)
+├── languages/           # Go, Python, JS/Node, LSP servers, mise (has AGENTS.md)
+├── isolation/           # Wayland browser sandbox wrappers (has AGENTS.md)
+├── packages/            # Categorized package lists (has AGENTS.md)
+├── themes/              # Stylix theming, Catppuccin Mocha (has AGENTS.md)
+├── core/                # User account, session vars, GTK, activation (has AGENTS.md)
+├── scripts/             # User-level scripts (has AGENTS.md)
 ├── brave.nix            # Brave browser with proxy
-├── discord.nix          # Discord/Vesktop theming (nixcord)
+├── discord.nix          # Discord/Desktop theming (nixcord)
 ├── gpg.nix              # GPG key management and agent
 ├── obs.nix              # OBS Studio configuration
 ├── spicetify.nix        # Spotify customization (spicetify-nix)

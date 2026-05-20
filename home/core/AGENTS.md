@@ -12,6 +12,18 @@ Base Home-Manager modules for user identity, session environment, desktop integr
 | `desktop-entries.nix` | Custom `.desktop` files for firejail-wrapped apps |
 | `gtk-dconf.nix` | Dark theme preference, privacy settings (no recent files tracking) |
 | `activation.nix` | Custom HM activation script (nix profile management) |
+## Directory Structure
+
+```
+home/core/
+├── default.nix         # Import hub for core sub-modules
+├── user.nix           # Username, homeDirectory, stateVersion, base packages
+├── session.nix        # Session variables (Qt/GTK/Wayland), telemetry opt-out
+├── desktop-entries.nix # Custom .desktop files for sandboxed apps
+├── gtk-dconf.nix      # GTK dconf settings, dark theme, privacy
+└── activation.nix      # Custom HM activation script
+```
+
 
 ## Conventions
 

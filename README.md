@@ -81,7 +81,7 @@ Open `hosts/_inventory.nix` and append your new host:
 ```nix
 {
   hostname = "myhost";
-  stateVersion = "25.11";
+  stateVersion = "26.05";
 }
 ```
 

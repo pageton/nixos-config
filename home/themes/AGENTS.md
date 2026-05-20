@@ -11,6 +11,16 @@ System-wide theming via Stylix engine with Catppuccin Mocha palette. Controls fo
 | `palette.nix` | Catppuccin Mocha color palette attrset (plain Nix, not a module) |
 | `stylix.nix` | Stylix config: fonts, cursor, icons, wallpaper, per-app targets |
 
+## Directory Structure
+
+```
+home/themes/
+├── default.nix    # Import hub (options + stylix modules)
+├── options.nix    # Theme submodule options (rounding, gaps, opacity)
+├── palette.nix    # Catppuccin Mocha color palette attrset
+└── stylix.nix     # Stylix config: fonts, cursor, icons, wallpaper, targets
+```
+
 ## Conventions
 
 - `palette.nix` is a plain attrset imported directly by `stylix.nix` — not a NixOS/HM module
