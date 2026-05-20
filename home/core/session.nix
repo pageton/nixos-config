@@ -1,14 +1,4 @@
 _: {
-
-  xdg.configFile = {
-    "electron-flags.conf".text = ''
-      --enable-features=UseOzonePlatform,WaylandWindowDecorations,VaapiVideoDecodeLinuxGL
-      --ozone-platform-hint=auto
-      --disable-gpu-shader-disk-cache
-      --enable-zero-copy
-    '';
-  };
-
   home.sessionVariables = {
     QT_QPA_PLATFORM = "wayland;xcb";
     DISABLE_QT5_COMPAT = "0";
@@ -36,7 +26,9 @@ _: {
     SAM_CLI_TELEMETRY = "0";
     SENTRY_DSN = "";
     STRIPE_CLI_TELEMETRY_OPTOUT = "1";
-  };
 
-  services.network-manager-applet.enable = true;
+    # Development
+    RUSTC_WRAPPER = "sccache"; # Use sccache for faster Rust/C++ rebuilds
+    DOCKER_CONTENT_TRUST = "1"; # Enforce signed Docker images
+  };
 }
