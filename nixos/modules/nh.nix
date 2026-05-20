@@ -38,6 +38,7 @@ in
     # Set FLAKE environment variable using user from flake
     sessionVariables = {
       NH_FLAKE = "/home/${user}/System";
+      NH_SHOW_ACTIVATION_LOGS = "1";
     };
   };
 

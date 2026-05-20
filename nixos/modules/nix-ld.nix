@@ -26,6 +26,7 @@
       libxcb
 
       # X11 and graphics
+      libxcb
       libx11
       libxext
       libxi
@@ -34,6 +35,13 @@
       libxcursor
       libxrandr
       libxinerama
+      libxcomposite
+      libxdamage
+      libxfixes
+      libxscrnsaver
+      libxtst
+      libxkbfile
+      libxshmfence
       libGL
 
       # Additional X11 libraries for Chrome/Chromium

@@ -11,6 +11,8 @@
     # Enable Flatpak service
     services.flatpak.enable = true;
 
+    mySystem.mullvadVpn.lanServices = [ "flatpak" ];
+
     # Configure Flatpak to use Flathub as the default remote
     systemd.services.add-flathub = {
       description = "Add Flathub remote";

@@ -1,22 +1,9 @@
 # Defer non-critical services from blocking boot (reduces I/O contention by ~10-15s).
+# Modules register their services via mySystem.boot.deferServices.
 { config, lib, ... }:
 
 let
-  cfg = config.mySystem;
-
-  # Services to defer from multi-user.target to a post-boot timer.
-  # These are monitoring/observability services that compete for I/O during boot
-  # but don't block the login prompt. Deferring them reduces boot contention.
-  deferredServices =
-    lib.optionals cfg.netdata.enable [ "netdata" ]
-    ++ lib.optionals cfg.loki.enable [
-      "loki"
-      "promtail"
-    ]
-    ++ lib.optionals cfg.scrutiny.enable [
-      "scrutiny"
-      "influxdb2"
-    ];
+  deferredServices = config.mySystem.boot.deferServices;
 
   # Generate wantedBy overrides: remove each service from multi-user.target
   serviceOverrides = builtins.listToAttrs (
@@ -52,6 +39,17 @@ let
   );
 in
 {
-  systemd.services = serviceOverrides;
-  systemd.timers = timerEntries;
+  options.mySystem.boot.deferServices = lib.mkOption {
+    type = lib.types.listOf lib.types.str;
+    default = [ ];
+    description = ''
+      Services to defer from multi-user.target to a post-boot timer.
+      Written by: netdata.nix, scrutiny.nix, loki.nix.
+    '';
+  };
+
+  config = {
+    systemd.services = serviceOverrides;
+    systemd.timers = timerEntries;
+  };
 }

@@ -1,11 +1,8 @@
-# X11 is intentionally disabled (Wayland-only niri stack).
+# X server for XWayland compatibility on Niri.
+{ constants, ... }:
 {
   services.xserver = {
-    enable = false;
-
-    xkb = {
-      layout = "us";
-      variant = "";
-    };
+    enable = true;
+    xkb = { inherit (constants.keyboard) layout variant options; };
   };
 }

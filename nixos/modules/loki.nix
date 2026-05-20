@@ -1,5 +1,10 @@
-# Loki log aggregation with Promtail (localhost:3100).
-{ config, lib, ... }:
+# Loki log aggregation with Grafana Alloy (replaces Promtail, removed in 26.05).
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 {
   options.mySystem.loki = {
     enable = lib.mkEnableOption "Loki log aggregation";
@@ -64,51 +69,54 @@
       };
     };
 
-    services.promtail = {
+    # Grafana Alloy ships journald logs to Loki (successor to Promtail).
+    services.alloy = {
       enable = true;
 
-      configuration = {
-        server = {
-          http_listen_port = 9080;
-          http_listen_address = "127.0.0.1";
-          grpc_listen_port = 0;
-        };
+      configPath = pkgs.writeText "alloy-config.alloy" ''
+        loki.relabel "journal" {
+          forward_to = []
 
-        positions = {
-          filename = "/var/lib/promtail/positions.yaml";
-        };
-
-        clients = [ { url = "http://127.0.0.1:3100/loki/api/v1/push"; } ];
-
-        scrape_configs = [
-          {
-            job_name = "journal";
-            journal = {
-              max_age = "12h";
-              labels = {
-                job = "systemd-journal";
-              };
-            };
-            relabel_configs = [
-              {
-                source_labels = [ "__journal__systemd_unit" ];
-                target_label = "unit";
-              }
-              {
-                source_labels = [ "__journal__hostname" ];
-                target_label = "hostname";
-              }
-              {
-                source_labels = [ "__journal_priority_keyword" ];
-                target_label = "level";
-              }
-            ];
+          rule {
+            source_labels = ["__journal__systemd_unit"]
+            target_label  = "unit"
           }
-        ];
-      };
+
+          rule {
+            source_labels = ["__journal__hostname"]
+            target_label  = "hostname"
+          }
+
+          rule {
+            source_labels = ["__journal_priority_keyword"]
+            target_label  = "level"
+          }
+        }
+
+        loki.source.journal "read" {
+          forward_to    = [loki.write.local.receiver]
+          relabel_rules = loki.relabel.journal.rules
+          max_age       = "12h"
+          labels        = {
+            job = "systemd-journal",
+          }
+        }
+
+        loki.write "local" {
+          endpoint {
+            url = "http://127.0.0.1:3100/loki/api/v1/push"
+          }
+        }
+      '';
     };
 
-    users.users.promtail.extraGroups = [ "systemd-journal" ];
+    # Alloy needs journal access
+    users.users.alloy.extraGroups = [ "systemd-journal" ];
+
+    mySystem.boot.deferServices = lib.mkIf config.mySystem.loki.enable [
+      "loki"
+      "alloy"
+    ];
 
     # SECURITY: Systemd hardening directives + resource limits
     systemd = {
@@ -126,7 +134,7 @@
           ReadWritePaths = [ "/var/lib/loki" ];
         };
 
-        promtail.serviceConfig = {
+        alloy.serviceConfig = {
           MemoryMax = "128M";
           MemoryHigh = "64M";
           PrivateTmp = lib.mkForce true;
@@ -136,11 +144,12 @@
           ProtectKernelTunables = lib.mkForce true;
           ProtectControlGroups = lib.mkForce true;
           RestrictSUIDSGID = lib.mkForce true;
-          ReadWritePaths = [ "/var/lib/promtail" ];
+          ReadWritePaths = [
+            "/var/lib/alloy"
+            "/var/log/journal"
+          ];
         };
       };
-
-      tmpfiles.rules = [ "d /var/lib/promtail 0750 promtail promtail -" ];
     };
   };
 }

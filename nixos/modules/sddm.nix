@@ -36,13 +36,17 @@ in
   services.displayManager = {
     sddm = {
       package = pkgs.kdePackages.sddm;
-      extraPackages = [ sddm-astronaut ];
+      extraPackages = [
+        sddm-astronaut
+        pkgs.bibata-cursors
+      ];
       enable = true;
       wayland.enable = true;
       # NVIDIA + weston can crash greeter; use kwin as SDDM compositor.
       wayland.compositor = "kwin";
       theme = "sddm-astronaut-theme";
       settings = {
+        Theme.CursorTheme = "Bibata-Modern-Ice";
         Wayland.SessionDir = "${pkgs.niri-stable}/share/wayland-sessions";
       };
     };

@@ -15,6 +15,17 @@
       openldap = prev.openldap.overrideAttrs (_: {
         doCheck = false;
       });
+
+      # Valkey (python client): test_bgsave races against itself — fires a second
+      # BGSAVE before the first completes on busy builders. Transitive dep of
+      # onionshare-cli → firejail-wrapped-binaries.
+      python3Packages = prev.python3Packages.overrideScope (
+        pyFinal: pyPrev: {
+          valkey = pyPrev.valkey.overridePythonAttrs (_: {
+            doCheck = false;
+          });
+        }
+      );
     })
   ];
 
@@ -34,9 +45,11 @@
       # Automatic store optimization
       auto-optimise-store = true; # Deduplicate identical files
 
-      # Performance optimizations
-      max-jobs = "auto"; # Use all available CPU cores
-      cores = 0; # Use all available cores per job
+      # Build parallelism
+      max-jobs = "auto"; # Up to 12 parallel derivations on 7600X
+      cores = 4; # Cap per-derivation threads (was 0 = unlimited)
+      # VirtualBox kBuild, LLVM, etc. would eat all 12 threads with cores=0.
+      # 4 keeps builds fast while leaving headroom for the desktop.
 
       # Storage optimization thresholds
       min-free = 128000000; # 128MB - Start optimizing when free space is low

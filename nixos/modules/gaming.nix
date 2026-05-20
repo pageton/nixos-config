@@ -27,20 +27,31 @@
           proton-ge-bin # Proton-GE for better game compatibility
         ];
       };
+
+      gamescope = lib.mkIf config.mySystem.gaming.enableGamescope {
+        enable = true;
+        capSysNice = true;
+      };
     };
 
     # Environment variables for Steam and compatibility tools
-    environment.sessionVariables = {
-      STEAM_EXTRA_COMPAT_TOOLS_PATHS = "\${HOME}/.steam/root/compatibilitytools.d"; # Proton compatibility tools path
-    };
+    environment = {
+      sessionVariables = {
+        # Standard Steam path for third-party compatibility tools (Proton-GE, etc.)
+        STEAM_EXTRA_COMPAT_TOOLS_PATHS = "\${HOME}/.steam/root/compatibilitytools.d";
+        # MangoHud default overlay config
+        MANGOHUD_CONFIG = "fps,frametime,gpu_stats,gpu_temp,cpu_stats,cpu_temp,ram,vram";
+      };
 
-    # Gaming-related system packages
-    environment.systemPackages = with pkgs; [
-      mangohud # Vulkan overlay for performance monitoring
-      protonup-ng # Tool for managing Proton compatibility layers
-      lutris # Open gaming platform for managing multiple game sources
-      wine # Compatibility layer for running Windows programs
-      winetricks # Helper for configuring Wine
-    ];
+      systemPackages = with pkgs; [
+        mangohud # Vulkan/OpenGL overlay for FPS, frame timing, GPU stats
+        protonup-ng # Proton-GE version manager
+        lutris # Multi-platform game launcher
+        steam-run # FHS environment for running non-Nix Linux games
+        wine # Windows compatibility layer
+        winetricks # Wine configuration helper
+        libunwind # Stack unwinding library required by some Proton games
+      ];
+    };
   };
 }

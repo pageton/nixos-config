@@ -1,28 +1,36 @@
 # Environment variables and session settings.
-{ user, constants, ... }:
+{ constants, ... }:
+let
+  xdgBinHome = "$HOME/.local/bin";
+  xdgDataDirs = [
+    "/var/lib/flatpak/exports/share"
+    "$HOME/.local/share/flatpak/exports/share"
+    "/run/current-system/sw/share"
+  ];
+  inherit (constants) terminal editor;
+in
 {
-  environment.sessionVariables = rec {
+  environment.sessionVariables = {
     # Default terminal emulator for applications that need one
-    TERMINAL = constants.terminal;
+    TERMINAL = terminal;
 
-    # Default text editor for applications that need one
-    EDITOR = constants.editor;
-
-    # Fix Java Swing/AWT applications (e.g. BurpSuite) on Wayland
     _JAVA_AWT_WM_NONREPARENTING = "1";
 
+    # Default text editor for applications that need one
+    EDITOR = editor;
+
     # XDG Base Directory specification for user binaries
-    XDG_BIN_HOME = "$HOME/.local/bin";
+    XDG_BIN_HOME = xdgBinHome;
 
     # XDG data directories - include Flatpak exports for app launchers
     # This ensures wofi and other launchers can find Flatpak applications
-    XDG_DATA_DIRS = [
-      "/var/lib/flatpak/exports/share"
-      "/home/${user}/.local/share/flatpak/exports/share"
-      "/run/current-system/sw/share"
-    ];
+    XDG_DATA_DIRS = xdgDataDirs;
 
     # System PATH with additional directories
-    PATH = [ "${XDG_BIN_HOME}" ];
+    PATH = [ xdgBinHome ];
+
+    # SQLite performance and concurrency settings
+    SQLITE_BUSY_TIMEOUT = "10000";
+    SQLITE_RETRY_DELAY = "100";
   };
 }

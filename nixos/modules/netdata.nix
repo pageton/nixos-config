@@ -62,5 +62,7 @@
     };
 
     environment.systemPackages = [ pkgsStable.smartmontools ];
+
+    mySystem.boot.deferServices = lib.mkIf config.mySystem.netdata.enable [ "netdata" ];
   };
 }

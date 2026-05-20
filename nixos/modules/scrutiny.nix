@@ -1,6 +1,7 @@
-# Scrutiny SMART disk health monitoring (localhost:8080).
+# Scrutiny SMART disk health monitoring (localhost:8010).
 {
   config,
+  constants,
   lib,
   pkgs,
   ...
@@ -19,7 +20,7 @@
         settings = {
           web.listen = {
             host = "127.0.0.1";
-            port = 8080;
+            port = constants.ports.scrutiny;
           };
           log.level = "INFO";
         };
@@ -39,7 +40,7 @@
         let
           waitScript = pkgs.writeShellScript "wait-for-scrutiny" ''
             for i in $(seq 1 30); do
-              ${pkgs.curl}/bin/curl -sf http://127.0.0.1:8080/api/summary >/dev/null 2>&1 && exit 0
+              ${pkgs.curl}/bin/curl -sf ${constants.urls.scrutiny}/api/summary >/dev/null 2>&1 && exit 0
               sleep 2
             done
             echo "Scrutiny API not ready after 60s"
@@ -106,5 +107,10 @@
         };
       };
     };
+
+    mySystem.boot.deferServices = lib.mkIf config.mySystem.scrutiny.enable [
+      "scrutiny"
+      "influxdb2"
+    ];
   };
 }

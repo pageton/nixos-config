@@ -3,8 +3,8 @@
 # monitoring system resources, temperatures, and performance metrics.
 { pkgsStable, ... }:
 {
-  # Intel thermal daemon - CRITICAL for ThinkPad thermal management
-  services.thermald.enable = true;
+  # thermald is managed per-host in thermal.nix (desktop) or
+  # thinkpad-specific modules. Do not enable here to avoid conflicts.
 
   # System monitoring and diagnostic tools
   environment.systemPackages = with pkgsStable; [
