@@ -60,6 +60,9 @@
     mullvadVpn = {
       enable = true;
     };
+    tailscale = {
+      enable = true;
+    };
     webRe = {
       enable = true;
     };
