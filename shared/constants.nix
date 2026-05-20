@@ -19,7 +19,9 @@ let
     tor-dns = 9053; # Tor DNS port
     socks = 1080; # Default SOCKS5 proxy port
     i2pd-socks = 4447; # I2P SOCKS proxy port
+    scrutiny = 8010; # Scrutiny SMART disk monitoring
     glance = 8082; # Glance dashboard
+    zellij-web = 8083; # Zellij web terminal server
     activitywatch = 5600;
     vnc = 5900;
     vnc-web = 6080;
@@ -115,7 +117,7 @@ in
       shopping = "ro-buh-wg-socks5-001.relays.mullvad.net"; # Romania
       illegal = "ch-zur-wg-socks5-001.relays.mullvad.net"; # Switzerland
     };
-    zen-browser = {
+    librewolf = {
       personal = "se-sto-wg-socks5-001.relays.mullvad.net"; # Sweden
       work = "de-fra-wg-socks5-001.relays.mullvad.net"; # Germany
       banking = "nl-ams-wg-socks5-001.relays.mullvad.net"; # Netherlands
@@ -135,13 +137,13 @@ in
   # Used by monitoring modules (prometheus-grafana, glance, system-report).
   urls = builtins.mapAttrs (_name: port: "http://${localhost}:${toString port}") ports;
 
-  # Paths relative to HOME for repo-local resources.
   paths = {
     scripts = "System/scripts";
     screens = "Screens";
     opencodeLogDir = ".local/share/opencode/log";
     codexLogDir = ".codex/log";
     aiAgentsLogDir = ".local/share/ai-agents/logs";
+    eglVendorFile = "/run/opengl-driver/share/glvnd/egl_vendor.d/50_mesa.json";
   };
 
   # External service API endpoints.
@@ -153,6 +155,14 @@ in
         haiku = "glm-5-turbo";
         sonnet = "glm-5.1";
         opus = "glm-5.1";
+      };
+    };
+    deepseek = {
+      apiRoot = "https://api.deepseek.com";
+      anthropicRoot = "https://api.deepseek.com/anthropic";
+      models = {
+        pro = "deepseek-v4-pro";
+        flash = "deepseek-v4-flash";
       };
     };
   };

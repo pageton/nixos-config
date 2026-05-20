@@ -3,11 +3,10 @@
 #
 # Tor browser scripts share common logic extracted into `let` bindings:
 #   - torCheckPort:    detects running Tor SOCKS proxy (port 9150 or 9050)
-#   - torUserJs:       Firefox/Zen Browser preferences for Tor proxy hardening
-#   - torLaunchZen:    launches Zen Browser with a given profile directory
-{ inputs, pkgs, ... }:
+#   - torUserJs:       LibreWolf/Firefox preferences for Tor proxy hardening
+#   - torLaunchLW:     launches LibreWolf with a given profile directory
+{ pkgs, pkgsStable, ... }:
 let
-  zenBin = "${inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.beta}/bin/zen-beta";
   mkPersistentProfile = profileName: ''
     PROFILE_DIR="$HOME/${profileName}"
     mkdir -p "$PROFILE_DIR"
@@ -38,7 +37,7 @@ let
     fi
   '';
 
-  # Shared Firefox/Zen Browser preferences for Tor proxy hardening.
+  # Shared LibreWolf/Firefox preferences for Tor proxy hardening.
   # $TOR_PORT must be set before the heredoc is expanded.
   torUserJs = ''
     // Tor SOCKS5 Proxy Configuration
@@ -72,15 +71,15 @@ let
     user_pref("extensions.blocklist.enabled", true);
   '';
 
-  # Launch Zen Browser with Tor proxy settings. Expects PROFILE_DIR to be set.
-  torLaunchZen = ''
-    echo "Routing Zen Browser through Tor SOCKS proxy (127.0.0.1:$TOR_PORT)..."
+  # Launch LibreWolf with Tor proxy settings. Expects PROFILE_DIR to be set.
+  torLaunchLW = ''
+    echo "Routing LibreWolf through Tor SOCKS proxy (127.0.0.1:$TOR_PORT)..."
 
     cat > "$PROFILE_DIR/user.js" <<EOF
     ${torUserJs}
     EOF
 
-    exec ${zenBin} --profile "$PROFILE_DIR" --new-instance 2>/dev/null
+    exec ${pkgsStable.librewolf}/bin/librewolf --profile "$PROFILE_DIR" --new-instance 2>/dev/null
   '';
 in
 {
@@ -92,9 +91,9 @@ in
         # Work browser profile - isolated from personal browsing
         set -euo pipefail
 
-        ${mkPersistentProfile ".zen-work"}
+        ${mkPersistentProfile ".librewolf-work"}
 
-        exec ${zenBin} --profile "$PROFILE_DIR" --new-instance 2>/dev/null
+        exec ${pkgsStable.librewolf}/bin/librewolf --profile "$PROFILE_DIR" --new-instance 2>/dev/null
       '';
     };
 
@@ -102,14 +101,14 @@ in
       executable = true;
       text = ''
         #!/usr/bin/env bash
-        # Zen Browser routed through Tor SOCKS proxy with persistent profile
+        # LibreWolf routed through Tor SOCKS proxy with persistent profile
         set -euo pipefail
 
-        ${mkPersistentProfile ".zen-work-tor"}
+        ${mkPersistentProfile ".librewolf-work-tor"}
 
         ${torCheckPort}
 
-        ${torLaunchZen}
+        ${torLaunchLW}
       '';
     };
 
@@ -128,7 +127,7 @@ in
 
         trap "rm -rf '$PROFILE_DIR'" EXIT
 
-        ${torLaunchZen}
+        ${torLaunchLW}
       '';
     };
 
@@ -139,7 +138,7 @@ in
         Name=Browser (Work)
         Exec=browser-work
         Type=Application
-        Icon=zen-browser
+        Icon=librewolf
         Categories=Network;WebBrowser;
       '';
     };
@@ -150,7 +149,7 @@ in
         Name=Browser (Work + Tor)
         Exec=browser-work-tor
         Type=Application
-        Icon=zen-browser
+        Icon=librewolf
         Categories=Network;WebBrowser;
       '';
     };
@@ -161,7 +160,7 @@ in
         Name=Browser (Temporary + Tor)
         Exec=browser-tmp-tor
         Type=Application
-        Icon=zen-browser
+        Icon=librewolf
         Categories=Network;WebBrowser;
       '';
     };

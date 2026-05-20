@@ -1,8 +1,5 @@
 # Brave browser with Wayland wrapper and declarative extensions.
 { pkgs, ... }:
-let
-  inherit (import ./isolation/_mk-wayland-browser-wrapper.nix) mkWaylandBrowserWrapper;
-in
 {
   programs.brave = {
     enable = true;
@@ -27,5 +24,5 @@ in
     ];
   };
 
-  home.file.".local/bin/brave" = mkWaylandBrowserWrapper { bin = "${pkgs.brave}/bin/brave"; };
+  # home.file.".local/bin/brave" = mkWaylandBrowserWrapper {bin = "${pkgs.brave}/bin/brave";};
 }

@@ -1,7 +1,7 @@
-# Zen Browser with declarative baseline policies, multi-profile proxy setup, and extensions.
+# LibreWolf browser with declarative baseline policies, multi-profile proxy setup, and extensions.
 # Each profile is fully isolated with its own proxy — never mix proxies.
 {
-  pkgs,
+  pkgsStable,
   lib,
   config,
   constants,
@@ -10,13 +10,12 @@
 let
   extensionPolicies = import ./_extensions.nix;
   profileSpecs = import ./_profiles.nix { inherit constants; };
-  zenBin = "${config.programs.zen-browser.package}/bin/zen-beta";
-
   baseSettings = {
     "app.update.auto" = false;
     "browser.shell.checkDefaultBrowser" = false;
     "browser.startup.page" = 3;
     "browser.newtabpage.enabled" = true;
+    "browser.urlbar.focusOnNewTab" = false;
     "browser.privatebrowsing.autostart" = false;
     "browser.compactmode.show" = true;
     "browser.uidensity" = 1;
@@ -25,16 +24,16 @@ let
     "browser.tabs.warnOnClose" = false;
     "browser.tabs.closeWindowWithLastTab" = false;
 
-    # Theme — Catppuccin Mocha Mauve (AMO: catppuccin-mocha-mauve-git)
-    "extensions.activeThemeID" = "{76aabc99-c1a8-4c1e-832b-d4f2941d5a7a}";
-    "layout.css.prefers-color-scheme.content-override" = 2;
+    # Theme — Gruvbox Material Dark
+    "extensions.activeThemeID" = "{1e01c787-99d2-4826-86df-0003da8e88cd}";
+    "layout.css.prefers-color-scheme.content-override" = 0;
     "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
     "layout.css.moz-document.content.enabled" = true;
 
-    # Sidebar - disabled for Sidebery
-    "sidebar.revamp" = false;
-    "sidebar.verticalTabs" = false;
-    "sidebar.visibility" = "hide-sidebar";
+    # Sidebar - vertical tabs
+    "sidebar.revamp" = true;
+    "sidebar.verticalTabs" = true;
+    "sidebar.visibility" = "always-show";
 
     # Privacy
     "media.peerconnection.enabled" = false;
@@ -67,31 +66,46 @@ let
     "network.proxy.socks_version" = 5;
     "network.proxy.socks_remote_dns" = true;
 
-    # ytmpv protocol handler
+    # New Tab Override
+    "browser.newtab.extension.active" = true;
+    "newtaboverride.url.url" = "http://${constants.localhost}:${toString constants.ports.glance}/search";
     "network.protocol-handler.external.ytmpv" = true;
     "network.protocol-handler.expose.ytmpv" = false;
     "network.protocol-handler.warn-external.ytmpv" = false;
   };
 
+  # Generate launcher script for a profile.
   mkLauncher = name: profilePath: {
-    ".local/bin/zen-${name}" = {
+    ".local/bin/librewolf-${name}" = {
       executable = true;
       text = ''
         #!/usr/bin/env bash
         set -euo pipefail
+
+        PROFILE_DIR="$HOME/.librewolf/${profilePath}"
+        rm -f "$PROFILE_DIR/.parentlock" "$PROFILE_DIR/lock"
+
         if [ "$#" -gt 0 ]; then
-          exec ${zenBin} \
-            --name zen-${name} \
-            --profile "$HOME/.config/zen/${profilePath}" \
+          exec ${pkgsStable.librewolf}/bin/librewolf \
+            --name librewolf-${name} \
+            --profile "$PROFILE_DIR" \
             --new-tab "$1"
         fi
 
-        exec ${zenBin} \
+        exec ${pkgsStable.librewolf}/bin/librewolf \
           --new-instance \
-          --name zen-${name} \
-          --profile "$HOME/.config/zen/${profilePath}"
+          --name librewolf-${name} \
+          --profile "$PROFILE_DIR"
       '';
     };
+  };
+
+  # Generate chrome file symlinks for a profile.
+  mkChromeFiles = profilePath: {
+    ".librewolf/${profilePath}/chrome/userChrome.css".source =
+      ../../themes/librewolf-userChrome.css;
+    ".librewolf/${profilePath}/chrome/userContent.css".source =
+      ../../themes/librewolf-userContent.css;
   };
 
   mkProfile = spec: {
@@ -105,36 +119,15 @@ let
       // (spec.extraSettings or { });
   };
 
-  zenProfileFiles = builtins.listToAttrs (
+  librewolfProfileFiles = builtins.listToAttrs (
     lib.flatten (
       map (
-        spec: lib.mapAttrsToList (name: value: { inherit name value; }) (mkLauncher spec.name spec.path)
+        spec:
+        (lib.mapAttrsToList (name: value: { inherit name value; }) (mkLauncher spec.name spec.path))
+        ++ (lib.mapAttrsToList (name: value: { inherit name value; }) (mkChromeFiles spec.path))
       ) profileSpecs
     )
   );
-
-  zenBrowserWrapper = {
-    ".local/bin/zen-browser" = {
-      executable = true;
-      text = ''
-        #!/usr/bin/env bash
-        set -euo pipefail
-
-        firejail_bin="/run/wrappers/bin/firejail"
-        firejail_profile="/etc/firejail/zen-browser.profile"
-        mesa_egl_vendor="/run/opengl-driver/share/glvnd/egl_vendor.d/50_mesa.json"
-
-        if [ -x "$firejail_bin" ] && [ -f "$firejail_profile" ]; then
-          exec "$firejail_bin" \
-            --profile="$firejail_profile" \
-            --env=__EGL_VENDOR_LIBRARY_FILENAMES="$mesa_egl_vendor" \
-            -- ${zenBin} "$@"
-        fi
-
-        exec ${zenBin} "$@"
-      '';
-    };
-  };
 
   generatedProfiles = builtins.listToAttrs (
     map (spec: {
@@ -144,23 +137,31 @@ let
   );
 in
 {
-  home.file = zenProfileFiles // zenBrowserWrapper;
+  home.file = librewolfProfileFiles // {
+    ".librewolf/profiles.ini".force = true;
+  };
 
-  programs.zen-browser = {
+  programs.librewolf = {
     enable = true;
+    package = pkgsStable.librewolf;
 
     policies = {
       DisableTelemetry = true;
       DisableFirefoxStudies = true;
       DisablePocket = true;
       DisableFirefoxAccounts = true;
-      SearchEngines = {
-        Default = "DuckDuckGo";
-      };
       DontCheckDefaultBrowser = true;
       OfferToSaveLogins = false;
       PasswordManagerEnabled = false;
       inherit (extensionPolicies) ExtensionSettings;
+      "3rdparty" = {
+        Extensions = {
+          "newtaboverride@agenedia.com" = {
+            type = "homepage";
+            focus_website = true;
+          };
+        };
+      };
       UserMessaging = {
         ExtensionRecommendations = false;
         SkipOnboarding = true;
@@ -172,12 +173,12 @@ in
 
   xdg.desktopEntries = builtins.listToAttrs (
     map (spec: {
-      name = "zen-${spec.name}";
+      name = "librewolf-${spec.name}";
       value = {
-        name = "Zen ${spec.label}";
-        exec = "${config.home.homeDirectory}/.local/bin/zen-${spec.name} %U";
-        icon = "zen-browser";
-        comment = spec.comment;
+        name = "LibreWolf ${spec.label}";
+        exec = "${config.home.homeDirectory}/.local/bin/librewolf-${spec.name} %U";
+        icon = "librewolf";
+        inherit (spec) comment;
         categories = [ "Network" ];
         mimeType = [
           "text/html"

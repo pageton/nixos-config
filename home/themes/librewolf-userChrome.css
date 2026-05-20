@@ -1,0 +1,17 @@
+:root {
+  --librewolf-rounding: 0px;
+}
+
+*,
+*::before,
+*::after {
+  border-radius: var(--librewolf-rounding) !important;
+}
+
+#sidebar-box {
+  min-width: 280px !important;
+}
+
+#sidebar-header {
+  display: none !important;
+}

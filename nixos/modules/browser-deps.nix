@@ -17,14 +17,8 @@
 
     # Set environment variables for Chrome and Puppeteer
     environment.variables = {
-      # Disable Chrome sandbox warnings (useful in NixOS)
       CHROME_DEVEL_SANDBOX = "${pkgs.chromium}/bin/chrome-devel-sandbox";
-
-      # Set Puppeteer to use headless mode by default
       PUPPETEER_HEADLESS = "new";
-
-      # Set Chrome to use Ozone/Wayland when available
-      ELECTRON_OZONE_PLATFORM_HINT = "auto";
     };
   };
 }

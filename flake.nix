@@ -48,10 +48,6 @@
       url = "github:pageton/zellij-tui";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    zen-browser = {
-      url = "github:0xc000022070/zen-browser-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     forgecode = {
       url = "github:tailcallhq/forgecode";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -73,7 +69,7 @@
     }@inputs:
     let
       system = "x86_64-linux";
-      homeStateVersion = "25.11";
+      homeStateVersion = "26.05";
       user = "sadiq";
       constants = import ./shared/constants.nix;
       secretLoader = import ./home/_helpers/_secret-loader.nix;
@@ -167,7 +163,6 @@
             inputs.stylix.homeModules.stylix
             inputs.niri.homeModules.config
             inputs.noctalia.homeModules.default
-            inputs.zen-browser.homeModules.beta
           ];
         };
 

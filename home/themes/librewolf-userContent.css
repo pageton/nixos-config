@@ -1,0 +1,26 @@
+:root {
+  --dt-black: #0f0f0f;
+  --dt-gray-1: #1e1f1e;
+  --dt-gray-2: #272a28;
+  --dt-gray-3: #3b403c;
+  --dt-gray-6: #888e7b;
+  --dt-gray-10: #e3d6c9;
+  --dt-blue-6: #71b4d6;
+  --dt-orange-6: #ef934d;
+  --librewolf-rounding: 0px;
+}
+
+@-moz-document regexp("https?://.*") {
+  html,
+  body,
+  input,
+  textarea,
+  select,
+  button,
+  code,
+  pre,
+  dialog,
+  iframe {
+    border-radius: var(--librewolf-rounding) !important;
+  }
+}

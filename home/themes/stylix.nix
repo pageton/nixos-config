@@ -40,7 +40,7 @@ in
       alacritty.enable = true;
       waybar.enable = false;
       nixcord.enable = false;
-      zen-browser = {
+      librewolf = {
         enable = true;
         profileNames = [
           "personal"
