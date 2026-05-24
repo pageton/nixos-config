@@ -9,7 +9,7 @@ _: {
     ./isolation # Application isolation wrappers
     ./gpg.nix # GPG key management and agent
     ./obs.nix # OBS Studio configuration
-    ./brave.nix # Brave browser profile with proxy
+    ./brave # Brave browser with multi-profile proxy setup
     ./chromium.nix # Chromium launch wrapper with Wayland flags
     ./tailscale.nix # Tailscale VPN packages
     ./ssh.nix # SSH client configuration
