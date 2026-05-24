@@ -467,9 +467,7 @@ in
       columns = [
         {
           size = "full";
-          widgets = [
-            youtubeWidget
-          ];
+          widgets = [ youtubeWidget ];
         }
       ];
     }

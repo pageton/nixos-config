@@ -9,5 +9,6 @@ let
 in
 {
   inherit (timerHelpers) mkHmTimer;
-  mkWeeklyTimer = args: timerHelpers.mkHmTimer (args // { onCalendar = args.onCalendar or "weekly"; });
+  mkWeeklyTimer =
+    args: timerHelpers.mkHmTimer (args // { onCalendar = args.onCalendar or "weekly"; });
 }
