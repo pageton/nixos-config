@@ -60,6 +60,18 @@ let
     "geo.enabled" = false;
     "media.navigator.enabled" = false;
 
+    # Memory optimization
+    "dom.ipc.processCount" = 2;
+    "browser.tabs.unloadOnLowMemory" = true;
+    "browser.sessionstore.interval" = 30000;
+    "media.memory_cache_max_size" = 524288;
+    "browser.cache.memory.capacity" = 262144;
+    "browser.cache.memory.max_entry_size" = 5120;
+    "image.mem.animated.unrolling.minms" = 5000;
+    "image.mem.decode_bytes_at_a_time" = 65536;
+    "browser.sessionstore.max_tabs_undo" = 5;
+    "browser.sessionstore.max_resumed_crashes" = 1;
+
     # Proxy base config (host set per-profile)
     "network.proxy.type" = 1;
     "network.proxy.socks_port" = constants.ports.socks;
@@ -68,7 +80,8 @@ let
 
     # New Tab Override
     "browser.newtab.extension.active" = true;
-    "newtaboverride.url.url" = "http://${constants.localhost}:${toString constants.ports.glance}/search";
+    "newtaboverride.url.url" =
+      "http://${constants.localhost}:${toString constants.ports.glance}/search";
     "network.protocol-handler.external.ytmpv" = true;
     "network.protocol-handler.expose.ytmpv" = false;
     "network.protocol-handler.warn-external.ytmpv" = false;
@@ -102,10 +115,8 @@ let
 
   # Generate chrome file symlinks for a profile.
   mkChromeFiles = profilePath: {
-    ".librewolf/${profilePath}/chrome/userChrome.css".source =
-      ../../themes/librewolf-userChrome.css;
-    ".librewolf/${profilePath}/chrome/userContent.css".source =
-      ../../themes/librewolf-userContent.css;
+    ".librewolf/${profilePath}/chrome/userChrome.css".source = ../../themes/librewolf-userChrome.css;
+    ".librewolf/${profilePath}/chrome/userContent.css".source = ../../themes/librewolf-userContent.css;
   };
 
   mkProfile = spec: {
@@ -158,7 +169,6 @@ in
         Extensions = {
           "newtaboverride@agenedia.com" = {
             type = "homepage";
-            focus_website = true;
           };
         };
       };

@@ -25,6 +25,7 @@ let
     (mkExtension "{aecec67f-0d10-4fa7-b7c7-609a2db280cf}" "https://addons.mozilla.org/firefox/downloads/latest/violentmonkey/latest.xpi")
     (mkExtension "{7a7a4a92-a2a0-41d1-9fd7-1e92480d612d}" "https://addons.mozilla.org/firefox/downloads/latest/styl-us/latest.xpi")
     (mkExtension "vimium-c@gdh1995.cn" "https://addons.mozilla.org/firefox/downloads/file/4474326/vimium_c-2.12.3.xpi")
+    (mkExtension "{b6c66afb-7e3e-4f78-a741-3e3cabf90897}" "https://addons.mozilla.org/firefox/downloads/file/4045009/auto_tab_discard-0.6.7.xpi")
   ];
 in
 {
