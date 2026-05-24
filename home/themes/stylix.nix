@@ -30,6 +30,7 @@ in
   # === Stylix Configuration ===
   stylix = {
     enable = true;
+    autoEnable = false;
     enableReleaseChecks = false;
 
     targets = {
@@ -38,6 +39,8 @@ in
       neovim.enable = false;
       nvf.enable = false;
       alacritty.enable = true;
+      ghostty.enable = true;
+      zellij.enable = true;
       waybar.enable = false;
       nixcord.enable = false;
       librewolf = {
