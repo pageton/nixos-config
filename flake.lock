@@ -324,6 +324,26 @@
         "type": "github"
       }
     },
+    "herdr": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1779549136,
+        "narHash": "sha256-elI512DtpsAmzQOF2s7W63Iet8ivVRNTjoS+HaBbUBw=",
+        "owner": "ogulcancelik",
+        "repo": "herdr",
+        "rev": "7b99c3562815208bf5a354b337b26758220578c7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ogulcancelik",
+        "repo": "herdr",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -736,6 +756,7 @@
       "inputs": {
         "forgecode": "forgecode",
         "ghgrab": "ghgrab",
+        "herdr": "herdr",
         "home-manager": "home-manager",
         "niri": "niri",
         "nix-wallpaper": "nix-wallpaper",

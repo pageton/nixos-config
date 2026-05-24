@@ -114,6 +114,16 @@ in
             AGENTMEMORY_URL = cfg.agentmemory.url;
           };
         };
+      }
+      // lib.optionalAttrs cfg.codegraph.enable {
+        codegraph = {
+          enable = true;
+          command = "codegraph";
+          args = [
+            "serve"
+            "--mcp"
+          ];
+        };
       };
 
     logging = {

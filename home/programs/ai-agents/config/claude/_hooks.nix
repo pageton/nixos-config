@@ -5,13 +5,18 @@ let
   inherit (helpers)
     mkFormatterHook
     mkBashHook
+    mkCommandHook
     mkPassthroughHook
     formatterRegistry
     ;
 
   preToolUse = import ./_hooks-pre-tool-use.nix { inherit mkBashHook; };
-  postToolUse = import ./_hooks-post-tool-use.nix { inherit mkFormatterHook formatterRegistry; };
+  postToolUse = import ./_hooks-post-tool-use.nix {
+    inherit mkFormatterHook formatterRegistry mkCommandHook;
+  };
   session = import ./_hooks-session.nix { inherit mkPassthroughHook; };
   herdr = import ./_hooks-herdr.nix { };
+  security = import ./_hooks-security.nix { inherit mkCommandHook; };
+  projectGuards = import ./_hooks-project-guards.nix { inherit mkCommandHook; };
 in
-preToolUse // postToolUse // session // herdr
+preToolUse // postToolUse // session // herdr // security // projectGuards

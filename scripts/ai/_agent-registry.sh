@@ -142,12 +142,14 @@ zai_omp_env() {
 # --- Workflow suffix resolution ---
 
 workflow_label() {
+  [[ -n "$1" ]] || return 1
   local entry="${WORKFLOW_MAP[$1]:-}"
   [[ -n "$entry" ]] || return 1
   echo "${entry%%|*}"
 }
 
 resolve_workflow_prompt() {
+  [[ -n "$1" ]] || { printf '%s\n' ""; return 0; }
   local entry="${WORKFLOW_MAP[$1]:-}"
   if [[ -n "$entry" ]]; then
     local env_var="${entry##*|}"

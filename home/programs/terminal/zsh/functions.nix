@@ -91,7 +91,7 @@ in
         cl*|ocl*|hcl*) printf '\uf1b0 ' ;;                   #  Claude — cl, clu, clglm, ocl, hcl + all workflow suffixes
         oc*|locgpt*|mocgpt*|xocgpt*) printf '\ue7a4 ' ;;     #  OpenCode — oc, ocglm, ocgem, ocgpt, ocs, oczen + all workflow suffixes
         cx*|lcx*|mcx*|hcx*|xcx*) printf '\uf1c0 ' ;;         #  Codex — cx, lcx, mcx, hcx, xcx + all workflow suffixes
-        gem*) printf '\uf529 ' ;;                              #  Gemini — gem + all workflow suffixes
+        ag*|gem*) printf '\uf529 ' ;;                          #  Antigravity — ag/gem + all workflow suffixes
         fg*) printf '\uf7d9 ' ;;                               #  Forge — fg, fgglm, fggem, fggpt, fgor, fgs, fgzen + all workflow suffixes
         omp*) printf '\uf1b2 ' ;;                              #  OMP — omp, omps, ompop, ompglm, ompgem, ompgpt, ompor, ompzen + all workflow suffixes
         pi*) printf '\uf1b2 ' ;;                              #  Pi — pi, pis, piop, piglm, pigem, pigpt, pior, pizen + all workflow suffixes
@@ -269,15 +269,15 @@ in
 
     # === AI multi-pane launcher ===
     # Launch multiple AI agents side-by-side in Zellij panes
-    # Prompt injection: claude/codex/gemini use positional, opencode uses --prompt
+    # Prompt injection: claude/codex use positional; opencode/Antigravity use --prompt
     aip() {
       if [[ $# -eq 0 ]]; then
         echo "Usage: aip <agent> [agent...] [\"prompt\"]" >&2
-        echo "  Any alias or function: cl, clglm, oc, ocglm, gem, cx, omp, ompglm..." >&2
+        echo "  Any alias or function: cl, clglm, oc, ocglm, ag, cx..." >&2
         echo "  Last arg becomes the initial prompt if not a known command." >&2
         echo "Examples:" >&2
         echo "  aip oc cl                  # Two agents side-by-side" >&2
-        echo "  aip oc clglm gem           # Three agents" >&2
+        echo "  aip oc clglm ag            # Three agents" >&2
         echo '  aip oc ocglm "who are you" # With prompt injection' >&2
         return 1
       fi
@@ -321,7 +321,7 @@ in
           # Build command with prompt injection per agent family
           if [[ -n "$prompt" ]]; then
             case "$agent" in
-              oc|ocglm|ocgem|ocgpt|ocor|ocs|oczen|opi|opencode*)
+              oc|ocglm|ocgem|ocgpt|ocor|ocs|oczen|opi|opencode*|ag|ag*|agy|antigravity*|gem*)
                 cmd="$agent --prompt '$kdl_prompt'" ;;
               *)
                 cmd="$agent '$kdl_prompt'" ;;

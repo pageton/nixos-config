@@ -52,6 +52,10 @@
       url = "github:tailcallhq/forgecode";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    herdr = {
+      url = "github:ogulcancelik/herdr";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -160,6 +164,7 @@
           };
           modules = [
             ./home/home.nix
+            ./home/programs/ai-agents/herdr-module.nix
             inputs.stylix.homeModules.stylix
             inputs.niri.homeModules.config
             inputs.noctalia.homeModules.default

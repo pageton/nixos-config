@@ -342,7 +342,7 @@ in
         ".claude/hooks/herdr-agent-state.sh" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${cfg.herdr.version}/src/integration/assets/claude/herdr-agent-state.sh";
-            sha256 = "sha256-A0+Pts72O8bJKF5NbiOHVoNMjgVLeCt32CZdU/yZTmI=";
+            sha256 = "sha256-WejXy9UV7ZeoCa96C5cOGII9kYk1utUPRQDfguQUtrM=";
           };
           executable = true;
           force = true;
@@ -350,7 +350,7 @@ in
         ".codex/herdr-agent-state.sh" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${cfg.herdr.version}/src/integration/assets/codex/herdr-agent-state.sh";
-            sha256 = "sha256-0yvuNKLXrw98ImuXzaeffBrQg4R7JCcG4N1ADQICQ9E=";
+            sha256 = "sha256-5Xb1nbzIwr3T8srGBeJ7n8mH66ff8GvFURmFJQDdHeg=";
           };
           executable = true;
           force = true;

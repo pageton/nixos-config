@@ -81,11 +81,6 @@ let
       label = "Codex CLI";
     }
     {
-      binary = "gemini";
-      npmPackage = "@google/gemini-cli";
-      label = "Gemini CLI";
-    }
-    {
       binary = "omp";
       npmPackage = "@oh-my-pi/pi-coding-agent";
       label = "Oh My Pi CLI";
@@ -95,6 +90,11 @@ let
       npmPackage = "@mariozechner/pi-coding-agent";
       label = "Pi CLI";
     }
+    {
+      binary = "codegraph";
+      npmPackage = "@colbymchenry/codegraph";
+      label = "CodeGraph CLI";
+    }
   ];
 
   autoUpdateAllScript = pkgs.writeShellScript "update-ai-agents" (
@@ -102,42 +102,6 @@ let
   );
 
   forgePkg = inputs.forgecode.packages.${pkgs.stdenv.hostPlatform.system}.default;
-
-  herdr = pkgs.stdenvNoCC.mkDerivation {
-    pname = "herdr";
-    version = cfg.herdr.version;
-
-    src = pkgs.fetchurl {
-      url = "https://github.com/ogulcancelik/herdr/releases/download/v${cfg.herdr.version}/herdr-linux-${pkgs.stdenv.hostPlatform.linuxArch}";
-      sha256 =
-        {
-          x86_64 = "sha256-EWxwbvUHGOhZ1Uj9mm9tI1p9zmFJXMi0ZX+FX7GE1I4=";
-          aarch64 = "sha256-0000000000000000000000000000000000000000000=";
-        }
-        .${pkgs.stdenv.hostPlatform.linuxArch};
-    };
-
-    dontUnpack = true;
-    installPhase = ''
-      runHook preInstall
-      mkdir -p "$out/bin"
-      cp "$src" "$out/bin/herdr"
-      chmod +x "$out/bin/herdr"
-      runHook postInstall
-    '';
-
-    meta = with lib; {
-      description = "Agent multiplexer that lives in your terminal";
-      homepage = "https://github.com/ogulcancelik/herdr";
-      license = licenses.agpl3Only;
-      sourceProvenance = with sourceTypes; [ binaryNativeCode ];
-      platforms = [
-        "x86_64-linux"
-        "aarch64-linux"
-      ];
-      mainProgram = "herdr";
-    };
-  };
 
   droid = pkgs.writeShellScriptBin "droid" ''
     exec ${pkgs.bun}/bin/bun x droid@${cfg.droid.version} "$@"
@@ -201,7 +165,6 @@ in
       webReDoctor
     ]
     ++ (lib.optional cfg.agentmemory.enable agentmemoryRuntime.iiiEngine)
-    ++ (lib.optional cfg.herdr.enable herdr)
     ++ (lib.optional cfg.droid.enable droid)
     ++ (lib.optional cfg.terax.enable terax)
     ++ (lib.optional cfg.forge.enable forgePkg)

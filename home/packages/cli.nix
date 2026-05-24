@@ -94,9 +94,6 @@ with pkgsStable;
   lazydocker # Terminal UI for Docker management
   serie # Git log TUI viewer
 
-  # === Terminal Multiplexer ===
-  tmux # Terminal multiplexer for session management
-
   # === Android RE ===
   apktool
   jadx

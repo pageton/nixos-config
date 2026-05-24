@@ -160,7 +160,12 @@ in
 
     herdr = {
       enable = mkBoolOption false "Install herdr agent multiplexer";
-      version = mkStrOption "0.5.12" "herdr version";
+      version = mkStrOption "0.6.1" "herdr version (used for agent-state integration assets)";
+    };
+
+    codegraph = {
+      enable = mkBoolOption false "Enable CodeGraph pre-indexed code knowledge graph MCP server";
+      npmPackage = mkStrOption "@colbymchenry/codegraph" "CodeGraph npm package name";
     };
 
     everythingClaudeCode = {

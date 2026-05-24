@@ -19,6 +19,7 @@ let
     ./linting.nix
     ./system-monitoring.nix
     ./productivity.nix
+    ./custom/default.nix
   ];
 in
 # Import each chunk with both pkgs & pkgsStable, then flatten into one big list

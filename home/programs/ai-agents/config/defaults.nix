@@ -16,6 +16,7 @@ in
     agentmemory.enable = true;
     herdr.enable = true;
     droid.enable = true;
+    codegraph.enable = true;
 
     inherit (skillDefs) skills;
   };

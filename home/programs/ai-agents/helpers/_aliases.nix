@@ -373,16 +373,26 @@ let
       launcherSimple = true;
     }
 
-    # Gemini
+    # Antigravity CLI
+    {
+      alias = "ag";
+      command = "agy --dangerously-skip-permissions";
+      workflowPromptMode = "flag";
+      envMarker = "-";
+      interactiveCommand = "agy --dangerously-skip-permissions";
+      headlessCommand = "agy --dangerously-skip-permissions --prompt";
+      tool = "antigravity";
+      launcherSimple = true;
+    }
     {
       alias = "gem";
-      command = "gemini --approval-mode=yolo";
-      workflowPromptMode = "positional";
+      command = "agy --dangerously-skip-permissions";
+      workflowPromptMode = "flag";
       envMarker = "-";
-      interactiveCommand = "gemini --approval-mode=yolo";
-      headlessCommand = "gemini --approval-mode=yolo --prompt";
-      tool = "gemini";
-      launcherSimple = true;
+      interactiveCommand = "agy --dangerously-skip-permissions";
+      headlessCommand = "agy --dangerously-skip-permissions --prompt";
+      tool = "antigravity";
+      launcherSimple = false;
     }
 
     # oh-my-pi (opi)
@@ -880,7 +890,7 @@ let
     opencode = "OpenCode";
     claude = "Claude Code";
     codex = "Codex";
-    gemini = "Gemini";
+    antigravity = "Antigravity";
     omp = "Oh My Pi";
     droid = "Droid";
   };
@@ -890,7 +900,7 @@ let
     "opencode"
     "claude"
     "codex"
-    "gemini"
+    "antigravity"
     "omp"
     "droid"
   ];

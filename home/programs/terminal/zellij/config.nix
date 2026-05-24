@@ -30,7 +30,7 @@ let
         "OpenCode OpenRouter" \
         "Codex High" \
         "Codex XHigh" \
-        "Gemini" \
+        "Antigravity" \
         "oh-my-pi GLM" \
         "AI Council" \
         "AI Logs" \
@@ -71,8 +71,8 @@ let
       "Codex XHigh")
         exec "$zellij" action new-tab --name "󱤚 xcx" -- "$zsh" -ic "xcx"
         ;;
-      "Gemini")
-        exec "$zellij" action new-tab --name "󰊭 gem" -- "$zsh" -ic "gem"
+      "Antigravity")
+        exec "$zellij" action new-tab --name "󰊭 ag" -- "$zsh" -ic "ag"
         ;;
       "oh-my-pi GLM")
         exec "$zellij" action new-tab --name "󰐻 opi" -- "$zsh" -ic "opi"

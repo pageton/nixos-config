@@ -10,7 +10,6 @@
 let
   globalNpmPackages = [
     "@anthropic-ai/claude-code"
-    "@google/gemini-cli"
     "@openai/codex"
     "opencode-ai"
     "btca"
@@ -28,6 +27,7 @@ let
     "@z_ai/mcp-server"
     "@oh-my-pi/pi-coding-agent"
     "opensrc"
+    "@colbymchenry/codegraph"
   ];
 
   mkShellAliasPrograms = import ../../_helpers/_shell-alias-programs.nix;
@@ -169,6 +169,10 @@ in
 
       echo "📦 Managing global npm packages with bun..."
       $DRY_RUN_CMD ${pkgs.bun}/bin/bun add --global --cwd "$HOME" --no-summary ${lib.escapeShellArgs globalNpmPackages} || echo "❌ Failed to manage global npm packages"
+      # Remove retired standalone Gemini CLI; Antigravity CLI is Nix-managed as agy.
+      $DRY_RUN_CMD ${pkgs.bun}/bin/bun remove --global --cwd "$HOME" @google/gemini-cli >/dev/null 2>&1 || true
+      $DRY_RUN_CMD ${pkgs.nodejs}/bin/npm uninstall --global @google/gemini-cli >/dev/null 2>&1 || true
+      $DRY_RUN_CMD rm -f "$HOME/.npm-global/bin/gemini" "$HOME/.npm-global/bin/gemini-cli"
       echo "✔ Global packages management completed"
     '';
   };
