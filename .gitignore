@@ -20,3 +20,4 @@ id_ed25519
 
 .opencode/
 pyghidra_mcp_projects/
+.codegraph/
