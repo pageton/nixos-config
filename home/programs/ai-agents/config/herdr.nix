@@ -24,6 +24,8 @@ in
 
       ui.toast.delivery = "system";
       ui.sound.enabled = true;
+
+      experimental.pane_history = true;
     };
   };
 }

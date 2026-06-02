@@ -44,4 +44,12 @@ map mkWebReLauncher [
     name = "oczenwre";
     profile = "zen";
   }
+  {
+    name = "ocskwre";
+    profile = "deepseek";
+  }
+  {
+    name = "ocmiwre";
+    profile = "mimo";
+  }
 ]

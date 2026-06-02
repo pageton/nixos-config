@@ -46,4 +46,12 @@ map mkAndroidReLauncher [
     name = "oczenare";
     profile = "zen";
   }
+  {
+    name = "ocskare";
+    profile = "deepseek";
+  }
+  {
+    name = "ocmiare";
+    profile = "mimo";
+  }
 ]

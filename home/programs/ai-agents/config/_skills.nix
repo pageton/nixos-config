@@ -326,6 +326,12 @@
       skill = "telegram-mini-app";
     }
 
+    # ── Agent multiplexer ─────────────────────────────────────────────────
+    {
+      repo = "ogulcancelik/herdr";
+      skill = "herdr";
+    }
+
     # ── Various utilities ─────────────────────────────────────────────────
     {
       repo = "Yeachan-Heo/oh-my-claudecode";
@@ -391,5 +397,8 @@
       repo = "pageton/gotg-cli";
       skill = "tg-dev-agent";
     }
+
+    # ── Speckit spec-driven development ────────────────────────────────────
+    "dceoy/speckit-agent-skills"
   ];
 }
