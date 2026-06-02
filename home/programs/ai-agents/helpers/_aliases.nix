@@ -1,19 +1,16 @@
 # Single source of truth for all agent aliases and workflow specs.
 # Generates both Nix zsh aliases and a bash registry fragment
 # sourced by scripts/ai/_agent-registry.sh at runtime.
-
 {
   config,
   constants,
   lib,
   pkgs,
   ...
-}:
-
-let
+}: let
   scriptsDir = "${config.home.homeDirectory}/${constants.paths.scripts}";
   models = import ./_models.nix;
-  workflowPrompts = import ./_workflow-prompts.nix { };
+  workflowPrompts = import ./_workflow-prompts.nix {};
   commitSplitPrompt = workflowPrompts.commitSplit;
   refactorMaintainabilityPrompt = workflowPrompts.refactorMaintainability;
   securityAuditPrompt = workflowPrompts.securityAudit;
@@ -23,7 +20,7 @@ let
   runtimePerformancePrompt = workflowPrompts.runtimePerformance;
   markdownSyncPrompt = workflowPrompts.markdownSync;
 
-  flattenForAlias = builtins.replaceStrings [ "\n" ] [ "\\n" ];
+  flattenForAlias = builtins.replaceStrings ["\n"] ["\\n"];
 
   codexBase = "command codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox";
   codexHeadless = "codex exec --dangerously-bypass-approvals-and-sandbox";
@@ -32,13 +29,13 @@ let
   gptMedModel = models.gpt-default;
   gptXHighModel = models.gpt-xhigh;
 
-  mkAliasAttrs =
-    aliasSpecs:
+  mkAliasAttrs = aliasSpecs:
     builtins.listToAttrs (
       map (spec: {
         name = spec.alias;
         value = spec.command;
-      }) aliasSpecs
+      })
+      aliasSpecs
     );
 
   # Single source of truth for all agent aliases.
@@ -81,6 +78,16 @@ let
       command = "claude_seek";
       workflowPromptMode = "positional";
       envMarker = "DEEPSEEK";
+      interactiveCommand = "claude --dangerously-skip-permissions";
+      headlessCommand = "claude --dangerously-skip-permissions --print";
+      tool = "claude";
+      launcherSimple = true;
+    }
+    {
+      alias = "clmi";
+      command = "claude_mimo";
+      workflowPromptMode = "positional";
+      envMarker = "MIMO";
       interactiveCommand = "claude --dangerously-skip-permissions";
       headlessCommand = "claude --dangerously-skip-permissions --print";
       tool = "claude";
@@ -261,112 +268,21 @@ let
       launcherSimple = true;
     }
 
-    # OpenCode persona profiles
-    {
-      alias = "ochep";
-      command = "opencode_hephaestus";
-      workflowPromptMode = "flag";
-      envMarker = "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-hephaestus";
-      interactiveCommand = "opencode";
-      headlessCommand = "opencode run";
-      tool = "opencode";
-      launcherSimple = false;
-    }
-    {
-      alias = "ocpro";
-      command = "opencode_prometheus";
-      workflowPromptMode = "flag";
-      envMarker = "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-prometheus";
-      interactiveCommand = "opencode";
-      headlessCommand = "opencode run";
-      tool = "opencode";
-      launcherSimple = false;
-    }
-    {
-      alias = "ocsis";
-      command = "opencode_sisyphus";
-      workflowPromptMode = "flag";
-      envMarker = "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-sisyphus";
-      interactiveCommand = "opencode";
-      headlessCommand = "opencode run";
-      tool = "opencode";
-      launcherSimple = false;
-    }
-    {
-      alias = "ocatl";
-      command = "opencode_atlas";
-      workflowPromptMode = "flag";
-      envMarker = "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-atlas";
-      interactiveCommand = "opencode";
-      headlessCommand = "opencode run";
-      tool = "opencode";
-      launcherSimple = false;
-    }
-    {
-      alias = "ocora";
-      command = "opencode_oracle";
-      workflowPromptMode = "flag";
-      envMarker = "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-oracle";
-      interactiveCommand = "opencode";
-      headlessCommand = "opencode run";
-      tool = "opencode";
-      launcherSimple = false;
-    }
-    {
-      alias = "oclib";
-      command = "opencode_librarian";
-      workflowPromptMode = "flag";
-      envMarker = "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-librarian";
-      interactiveCommand = "opencode";
-      headlessCommand = "opencode run";
-      tool = "opencode";
-      launcherSimple = false;
-    }
-    {
-      alias = "ocexp";
-      command = "opencode_explore";
-      workflowPromptMode = "flag";
-      envMarker = "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-explore";
-      interactiveCommand = "opencode";
-      headlessCommand = "opencode run";
-      tool = "opencode";
-      launcherSimple = false;
-    }
-    {
-      alias = "ocmet";
-      command = "opencode_metis";
-      workflowPromptMode = "flag";
-      envMarker = "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-metis";
-      interactiveCommand = "opencode";
-      headlessCommand = "opencode run";
-      tool = "opencode";
-      launcherSimple = false;
-    }
-    {
-      alias = "ocmom";
-      command = "opencode_momus";
-      workflowPromptMode = "flag";
-      envMarker = "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-momus";
-      interactiveCommand = "opencode";
-      headlessCommand = "opencode run";
-      tool = "opencode";
-      launcherSimple = false;
-    }
-    {
-      alias = "ocmulti";
-      command = "opencode_multimodal";
-      workflowPromptMode = "flag";
-      envMarker = "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-multimodal";
-      interactiveCommand = "opencode";
-      headlessCommand = "opencode run";
-      tool = "opencode";
-      launcherSimple = false;
-    }
     {
       alias = "ocsk";
       command = "opencode_deepseek";
       workflowPromptMode = "flag";
       envMarker = "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-deepseek";
+      interactiveCommand = "opencode";
+      headlessCommand = "opencode run";
+      tool = "opencode";
+      launcherSimple = true;
+    }
+    {
+      alias = "ocmi";
+      command = "opencode_mimo";
+      workflowPromptMode = "flag";
+      envMarker = "OPENCODE_CONFIG_DIR=$HOME/.config/opencode-mimo";
       interactiveCommand = "opencode";
       headlessCommand = "opencode run";
       tool = "opencode";
@@ -395,354 +311,16 @@ let
       launcherSimple = false;
     }
 
-    # oh-my-pi (opi)
+    # GitHub Copilot CLI
     {
-      alias = "opi";
-      command = "omp_glm";
-      workflowPromptMode = "flag";
-      envMarker = "ZAI_OMP";
-      interactiveCommand = "omp";
-      headlessCommand = "omp --prompt";
-      tool = "omp";
-      launcherSimple = false;
-    }
-
-    # Oh My Pi profiles — omp prefix
-    {
-      alias = "omp";
-      command = "omp";
-      workflowPromptMode = "flag";
-      envMarker = "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp";
-      interactiveCommand = "omp";
-      headlessCommand = "omp -p";
-      tool = "omp";
-      launcherSimple = false;
-    }
-    {
-      alias = "omps";
-      command = "omp_sonnet";
-      workflowPromptMode = "flag";
-      envMarker = "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-sonnet";
-      interactiveCommand = "omp";
-      headlessCommand = "omp -p";
-      tool = "omp";
-      launcherSimple = false;
-    }
-    {
-      alias = "ompop";
-      command = "omp_opus";
-      workflowPromptMode = "flag";
-      envMarker = "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-opus";
-      interactiveCommand = "omp";
-      headlessCommand = "omp -p";
-      tool = "omp";
-      launcherSimple = false;
-    }
-    {
-      alias = "ompglm";
-      command = "omp_glm";
-      workflowPromptMode = "flag";
-      envMarker = "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-glm";
-      interactiveCommand = "omp --model zai/glm-5.1";
-      headlessCommand = "omp -p";
-      tool = "omp";
-      launcherSimple = false;
-    }
-    {
-      alias = "ompgem";
-      command = "omp_gemini";
-      workflowPromptMode = "flag";
-      envMarker = "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-gemini";
-      interactiveCommand = "omp";
-      headlessCommand = "omp -p";
-      tool = "omp";
-      launcherSimple = false;
-    }
-    {
-      alias = "ompgpt";
-      command = "omp_gpt";
-      workflowPromptMode = "flag";
-      envMarker = "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-gpt";
-      interactiveCommand = "omp";
-      headlessCommand = "omp -p";
-      tool = "omp";
-      launcherSimple = false;
-    }
-    {
-      alias = "ompor";
-      command = "omp_openrouter";
-      workflowPromptMode = "flag";
-      envMarker = "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-openrouter";
-      interactiveCommand = "omp";
-      headlessCommand = "omp -p";
-      tool = "omp";
-      launcherSimple = false;
-    }
-    {
-      alias = "ompzen";
-      command = "omp_zen";
-      workflowPromptMode = "flag";
-      envMarker = "PI_CODING_AGENT_DIR=$HOME/.omp/profiles/omp-zen";
-      interactiveCommand = "omp";
-      headlessCommand = "omp -p";
-      tool = "omp";
-      launcherSimple = false;
-    }
-    {
-      alias = "ompds";
-      command = "omp_seek";
-      workflowPromptMode = "flag";
-      envMarker = "DEEPSEEK";
-      interactiveCommand = "omp";
-      headlessCommand = "omp -p";
-      tool = "omp";
-      launcherSimple = false;
-    }
-
-    # Pi profiles — pi prefix
-    {
-      alias = "pi";
-      command = "pi";
+      alias = "cp";
+      command = "copilot";
       workflowPromptMode = "positional";
-      envMarker = "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi";
-      interactiveCommand = "pi";
-      headlessCommand = "pi -p";
-      tool = "pi";
-      launcherSimple = false;
-    }
-    {
-      alias = "pis";
-      command = "pi_sonnet";
-      workflowPromptMode = "positional";
-      envMarker = "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-sonnet";
-      interactiveCommand = "pi";
-      headlessCommand = "pi -p";
-      tool = "pi";
-      launcherSimple = false;
-    }
-    {
-      alias = "piop";
-      command = "pi_opus";
-      workflowPromptMode = "positional";
-      envMarker = "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-opus";
-      interactiveCommand = "pi";
-      headlessCommand = "pi -p";
-      tool = "pi";
-      launcherSimple = false;
-    }
-    {
-      alias = "piglm";
-      command = "pi_glm";
-      workflowPromptMode = "positional";
-      envMarker = "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-glm";
-      interactiveCommand = "pi --model zai/glm-5.1";
-      headlessCommand = "pi -p";
-      tool = "pi";
-      launcherSimple = false;
-    }
-    {
-      alias = "pigem";
-      command = "pi_gemini";
-      workflowPromptMode = "positional";
-      envMarker = "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-gemini";
-      interactiveCommand = "pi";
-      headlessCommand = "pi -p";
-      tool = "pi";
-      launcherSimple = false;
-    }
-    {
-      alias = "pigpt";
-      command = "pi_gpt";
-      workflowPromptMode = "positional";
-      envMarker = "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-gpt";
-      interactiveCommand = "pi";
-      headlessCommand = "pi -p";
-      tool = "pi";
-      launcherSimple = false;
-    }
-    {
-      alias = "pior";
-      command = "pi_openrouter";
-      workflowPromptMode = "positional";
-      envMarker = "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-openrouter";
-      interactiveCommand = "pi";
-      headlessCommand = "pi -p";
-      tool = "pi";
-      launcherSimple = false;
-    }
-    {
-      alias = "pizen";
-      command = "pi_zen";
-      workflowPromptMode = "positional";
-      envMarker = "PI_CODING_AGENT_DIR=$HOME/.pi/profiles/pi-zen";
-      interactiveCommand = "pi";
-      headlessCommand = "pi -p";
-      tool = "pi";
-      launcherSimple = false;
-    }
-
-    # Forge profiles
-    {
-      alias = "fg";
-      command = "forge";
-      workflowPromptMode = "flag";
       envMarker = "-";
-      interactiveCommand = "forge";
-      headlessCommand = "forge";
-      tool = "forge";
-      launcherSimple = false;
-    }
-    {
-      alias = "fgglm";
-      command = "forge_glm";
-      workflowPromptMode = "flag";
-      envMarker = "-";
-      interactiveCommand = "forge";
-      headlessCommand = "forge";
-      tool = "forge";
-      launcherSimple = false;
-    }
-    {
-      alias = "fggem";
-      command = "forge_gemini";
-      workflowPromptMode = "flag";
-      envMarker = "-";
-      interactiveCommand = "forge";
-      headlessCommand = "forge";
-      tool = "forge";
-      launcherSimple = false;
-    }
-    {
-      alias = "fggpt";
-      command = "forge_gpt";
-      workflowPromptMode = "flag";
-      envMarker = "-";
-      interactiveCommand = "forge";
-      headlessCommand = "forge";
-      tool = "forge";
-      launcherSimple = false;
-    }
-    {
-      alias = "fgor";
-      command = "forge_openrouter";
-      workflowPromptMode = "flag";
-      envMarker = "OPENROUTER";
-      interactiveCommand = "forge";
-      headlessCommand = "forge";
-      tool = "forge";
-      launcherSimple = false;
-    }
-    {
-      alias = "fgs";
-      command = "forge_sonnet";
-      workflowPromptMode = "flag";
-      envMarker = "-";
-      interactiveCommand = "forge";
-      headlessCommand = "forge";
-      tool = "forge";
-      launcherSimple = false;
-    }
-    {
-      alias = "fgzen";
-      command = "forge_zen";
-      workflowPromptMode = "flag";
-      envMarker = "-";
-      interactiveCommand = "forge";
-      headlessCommand = "forge";
-      tool = "forge";
-      launcherSimple = false;
-    }
-    {
-      alias = "fgds";
-      command = "forge_deepseek";
-      workflowPromptMode = "flag";
-      envMarker = "DEEPSEEK";
-      interactiveCommand = "forge";
-      headlessCommand = "forge";
-      tool = "forge";
-      launcherSimple = false;
-    }
-
-    # Factory.ai Droid
-    {
-      alias = "dr";
-      command = "droid";
-      workflowPromptMode = "flag";
-      envMarker = "-";
-      interactiveCommand = "droid";
-      headlessCommand = "droid";
-      tool = "droid";
+      interactiveCommand = "copilot";
+      headlessCommand = "copilot";
+      tool = "copilot";
       launcherSimple = true;
-    }
-    {
-      alias = "drglm";
-      command = "droid_glm";
-      workflowPromptMode = "flag";
-      envMarker = "ZAI";
-      interactiveCommand = "droid";
-      headlessCommand = "droid";
-      tool = "droid";
-      launcherSimple = true;
-    }
-    {
-      alias = "drgem";
-      command = "droid_gemini";
-      workflowPromptMode = "flag";
-      envMarker = "-";
-      interactiveCommand = "droid";
-      headlessCommand = "droid";
-      tool = "droid";
-      launcherSimple = true;
-    }
-    {
-      alias = "drgpt";
-      command = "droid_gpt";
-      workflowPromptMode = "flag";
-      envMarker = "-";
-      interactiveCommand = "droid";
-      headlessCommand = "droid";
-      tool = "droid";
-      launcherSimple = true;
-    }
-    {
-      alias = "dror";
-      command = "droid_openrouter";
-      workflowPromptMode = "flag";
-      envMarker = "OPENROUTER";
-      interactiveCommand = "droid";
-      headlessCommand = "droid";
-      tool = "droid";
-      launcherSimple = true;
-    }
-    {
-      alias = "drs";
-      command = "droid_sonnet";
-      workflowPromptMode = "flag";
-      envMarker = "-";
-      interactiveCommand = "droid";
-      headlessCommand = "droid";
-      tool = "droid";
-      launcherSimple = true;
-    }
-    {
-      alias = "drzen";
-      command = "droid_zen";
-      workflowPromptMode = "flag";
-      envMarker = "-";
-      interactiveCommand = "droid";
-      headlessCommand = "droid";
-      tool = "droid";
-      launcherSimple = true;
-    }
-    {
-      alias = "drsk";
-      command = "droid_seek";
-      workflowPromptMode = "flag";
-      envMarker = "DEEPSEEK";
-      interactiveCommand = "droid";
-      headlessCommand = "droid exec";
-      tool = "droid";
-      launcherSimple = false;
     }
   ];
 
@@ -802,53 +380,51 @@ let
 
   aiWorkflowAliasSpecs = lib.flatten (
     map (
-      workflow:
-      let
+      workflow: let
         flatPrompt = flattenForAlias workflow.prompt;
       in
-      map (agent: {
-        alias = "${agent.alias}${workflow.suffix}";
-        command =
-          if agent.workflowPromptMode == "flag" then
-            "_ai_agent_exec ${agent.alias}${workflow.suffix} -- ${agent.command} --prompt ${lib.escapeShellArg flatPrompt}"
-          else
-            "_ai_agent_exec ${agent.alias}${workflow.suffix} -- ${agent.command} ${lib.escapeShellArg flatPrompt}";
-      }) workflowAgentSpecs
-    ) workflowPromptSpecs
+        map (agent: {
+          alias = "${agent.alias}${workflow.suffix}";
+          command =
+            if agent.workflowPromptMode == "flag"
+            then "_ai_agent_exec ${agent.alias}${workflow.suffix} -- ${agent.command} --prompt ${lib.escapeShellArg flatPrompt}"
+            else "_ai_agent_exec ${agent.alias}${workflow.suffix} -- ${agent.command} ${lib.escapeShellArg flatPrompt}";
+        })
+        workflowAgentSpecs
+    )
+    workflowPromptSpecs
   );
 
-  workflowClipboardAliasSpecs = map (
-    workflow:
-    let
-      flatPrompt = flattenForAlias workflow.prompt;
-    in
-    {
-      alias = "cp${workflow.suffix}";
-      command =
-        "if command -v wl-copy >/dev/null 2>&1; then printf '%s' ${lib.escapeShellArg flatPrompt} | wl-copy; "
-        + "elif command -v xclip >/dev/null 2>&1; then printf '%s' ${lib.escapeShellArg flatPrompt} | xclip -selection clipboard; "
-        + "else echo 'Clipboard tool not found (need wl-copy or xclip)' >&2; false; fi "
-        + "&& echo 'Copied ${workflow.suffix} prompt to clipboard'";
-    }
-  ) workflowPromptSpecs;
+  workflowClipboardAliasSpecs =
+    map (
+      workflow: let
+        flatPrompt = flattenForAlias workflow.prompt;
+      in {
+        alias = "cp${workflow.suffix}";
+        command =
+          "if command -v wl-copy >/dev/null 2>&1; then printf '%s' ${lib.escapeShellArg flatPrompt} | wl-copy; "
+          + "elif command -v xclip >/dev/null 2>&1; then printf '%s' ${lib.escapeShellArg flatPrompt} | xclip -selection clipboard; "
+          + "else echo 'Clipboard tool not found (need wl-copy or xclip)' >&2; false; fi "
+          + "&& echo 'Copied ${workflow.suffix} prompt to clipboard'";
+      }
+    )
+    workflowPromptSpecs;
 
   aiAliases = mkAliasAttrs (
     (map (
-      spec: spec // { command = "_ai_agent_exec ${spec.alias} -- ${spec.command}"; }
-    ) aiAgentAliasSpecs)
+        spec: spec // {command = "_ai_agent_exec ${spec.alias} -- ${spec.command}";}
+      )
+      aiAgentAliasSpecs)
     ++ aiWorkflowAliasSpecs
     ++ workflowClipboardAliasSpecs
   );
 
-  mkWorkflowEnvVars =
-    targetScript:
-    let
-      envAssignments = map (spec: "${spec.envVar}=${lib.escapeShellArg spec.prompt}") workflowPromptSpecs;
-    in
-    ''
-      ${builtins.concatStringsSep " \\\n    " envAssignments} \
-      exec ${targetScript} "$@"
-    '';
+  mkWorkflowEnvVars = targetScript: let
+    envAssignments = map (spec: "${spec.envVar}=${lib.escapeShellArg spec.prompt}") workflowPromptSpecs;
+  in ''
+    ${builtins.concatStringsSep " \\\n    " envAssignments} \
+    exec ${targetScript} "$@"
+  '';
 
   aiAgentLauncher = pkgs.writeShellScriptBin "ai-agent-launcher" (
     mkWorkflowEnvVars "${scriptsDir}/ai/agent-launcher.sh"
@@ -856,33 +432,31 @@ let
 
   # --- Bash registry generation ---
 
-  escapeForBashDoubleQuote = s: builtins.replaceStrings [ "\\" "\"" ] [ "\\\\" "\\\"" ] s;
+  escapeForBashDoubleQuote = s: builtins.replaceStrings ["\\" "\""] ["\\\\" "\\\""] s;
 
   envMarkerNeedsQuoting = marker: builtins.match ".*\\$.*" marker != null;
 
-  mkRegistryLine =
-    spec:
-    let
-      envPart =
-        if spec.envMarker == "-" then
-          "-"
-        else if envMarkerNeedsQuoting spec.envMarker then
-          "\"${spec.envMarker}\""
-        else
-          spec.envMarker;
-      interactivePart = "\"${escapeForBashDoubleQuote spec.interactiveCommand}\"";
-      headlessPart = "\"${escapeForBashDoubleQuote spec.headlessCommand}\"";
-    in
-    "_def ${spec.alias}    ${envPart}    ${interactivePart}    ${headlessPart}";
+  mkRegistryLine = spec: let
+    envPart =
+      if spec.envMarker == "-"
+      then "-"
+      else if envMarkerNeedsQuoting spec.envMarker
+      then "\"${spec.envMarker}\""
+      else spec.envMarker;
+    interactivePart = "\"${escapeForBashDoubleQuote spec.interactiveCommand}\"";
+    headlessPart = "\"${escapeForBashDoubleQuote spec.headlessCommand}\"";
+  in "_def ${spec.alias}    ${envPart}    ${interactivePart}    ${headlessPart}";
 
   tools = lib.unique (map (spec: spec.tool) aiAgentAliasSpecs);
   simpleAliases = map (spec: spec.alias) (lib.filter (spec: spec.launcherSimple) aiAgentAliasSpecs);
   defLines = map mkRegistryLine aiAgentAliasSpecs;
   workflowSuffixes = map (spec: spec.suffix) workflowPromptSpecs;
 
-  workflowMapEntries = map (
-    spec: "  [${spec.suffix}]=\"${spec.label}|${spec.envVar}\""
-  ) workflowPromptSpecs;
+  workflowMapEntries =
+    map (
+      spec: "  [${spec.suffix}]=\"${spec.label}|${spec.envVar}\""
+    )
+    workflowPromptSpecs;
 
   aliasToolEntries = map (spec: "  [${spec.alias}]=\"${spec.tool}\"") aiAgentAliasSpecs;
 
@@ -891,8 +465,7 @@ let
     claude = "Claude Code";
     codex = "Codex";
     antigravity = "Antigravity";
-    omp = "Oh My Pi";
-    droid = "Droid";
+    copilot = "GitHub Copilot";
   };
   providerLabelEntries = lib.mapAttrsToList (tool: label: "  [${tool}]=\"${label}\"") providerLabels;
 
@@ -900,9 +473,8 @@ let
     "opencode"
     "claude"
     "codex"
+    "copilot"
     "antigravity"
-    "omp"
-    "droid"
   ];
 
   generatedBashRegistry = builtins.concatStringsSep "\n" (
@@ -944,10 +516,9 @@ let
       "declare -A WORKFLOW_MAP=("
     ]
     ++ workflowMapEntries
-    ++ [ ")" ]
+    ++ [")"]
   );
-in
-{
+in {
   inherit
     aiAliases
     aiAgentLauncher

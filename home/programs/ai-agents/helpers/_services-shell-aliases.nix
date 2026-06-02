@@ -16,8 +16,6 @@ in
       "oc-port" = "opencode --port 4096";
       "codex-log" = "ai-agent-log-wrapper codex codex";
       "ag-log" = "ai-agent-log-wrapper antigravity agy";
-      "opi-log" = "ai-agent-log-wrapper omp omp";
-      "fg-log" = "ai-agent-log-wrapper forge forge";
 
       "ai-logs" = "tail -f ${al}/*.log ${ol}/*.log ${cl}/*.log 2>/dev/null";
       "ai-errors" = "ai-agent-analyze errors";
@@ -49,12 +47,11 @@ in
   if cfg.herdr.enable then
     {
       "hd" = "herdr";
-      "hd-pi" = "herdr integration install pi";
       "hd-claude" = "herdr integration install claude";
       "hd-codex" = "herdr integration install codex";
       "hd-opencode" = "herdr integration install opencode";
       "hd-all" =
-        "herdr integration install pi && herdr integration install claude && herdr integration install codex && herdr integration install opencode";
+        "herdr integration install claude && herdr integration install codex && herdr integration install opencode";
     }
   else
     { }

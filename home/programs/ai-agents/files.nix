@@ -29,12 +29,9 @@ let
   settingsBuilders = import ./helpers/_settings-builders.nix { inherit cfg config lib; };
   inherit (settingsBuilders)
     geminiSettings
-    ompSettings
     opencodeSettingsByProfile
     opencodeAndroidReMcpServers
     opencodeWebReMcpServers
-    forgeTomlByProfile
-    forgeMcpJson
     ;
 
   opencodeProfiles = import ./helpers/_opencode-profiles.nix { inherit config; };
@@ -87,224 +84,6 @@ let
         value = { inherit text; };
       }) templates
     );
-
-  forgeProfiles = import ./helpers/_forge-profiles.nix { inherit config; };
-  forgeProfileConfigFiles =
-    let
-      agentConcepts = fileTemplates;
-    in
-    builtins.listToAttrs (
-      lib.flatten (
-        map (
-          profile:
-          let
-            profileDir = ".${profile.name}";
-          in
-          [
-            # MCP servers
-            # Global instructions via AGENTS.md
-          ]
-          ++ (lib.optional (cfg.globalInstructions != "") {
-            name = "${profileDir}/AGENTS.md";
-            value = {
-              text = cfg.globalInstructions;
-              force = true;
-            };
-          })
-          # Forge agent definitions (markdown with YAML frontmatter)
-          ++ (lib.mapAttrsToList (name: text: {
-            name = "${profileDir}/agents/${name}";
-            value = {
-              inherit text;
-              force = true;
-            };
-          }) fileTemplates.forgeAgents)
-        ) forgeProfiles.profiles
-      )
-    );
-
-  # Oh My Pi (omp) profile config files: config.yml, models.yml per profile.
-  ompProfiles = import ./helpers/_omp-profiles.nix { inherit config; };
-  ompSettingsBuilders = import ./helpers/_omp-settings-builder.nix {
-    inherit
-      cfg
-      config
-      lib
-      pkgs
-      ;
-  };
-  inherit (ompSettingsBuilders) ompConfigsByProfile ompModelsByProfile;
-
-  ompProfileConfigFiles = builtins.listToAttrs (
-    lib.flatten (
-      map (
-        profile:
-        let
-          profileDir = ".omp/profiles/${profile.name}";
-        in
-        [
-          {
-            name = "${profileDir}/config.yml";
-            value = {
-              text = ompConfigsByProfile.${profile.name};
-              force = true;
-            };
-          }
-        ]
-        ++ (lib.optional (ompModelsByProfile.${profile.name} != "") {
-          name = "${profileDir}/models.yml";
-          value = {
-            text = ompModelsByProfile.${profile.name};
-            force = true;
-          };
-        })
-        ++ (lib.optional (cfg.globalInstructions != "") {
-          name = "${profileDir}/AGENTS.md";
-          value = {
-            text = cfg.globalInstructions;
-            force = true;
-          };
-        })
-      ) ompProfiles.profiles
-    )
-  );
-
-  # Skills deployed to ~/.omp/agent/skills/.
-  ompSharedSkillFiles = builtins.listToAttrs (
-    (map (name: {
-      name = ".omp/agent/skills/${name}/SKILL.md";
-      value = {
-        source = ./helpers/pi-skills/${name}/SKILL.md;
-        force = true;
-      };
-    }) (builtins.attrNames (builtins.readDir ./helpers/pi-skills)))
-    ++ (
-      let
-        githubSkillRepos = [
-          {
-            owner = "samber";
-            repo = "cc-skills-golang";
-            rev = "main";
-          }
-        ];
-        mkGithubSkills =
-          {
-            owner,
-            repo,
-            rev,
-          }:
-          let
-            src = pkgs.fetchFromGitHub {
-              inherit owner repo rev;
-              hash = "sha256-nd0T2duTdX2CUfmqD5OiHgl7SNqjR6k5+0TvE6eig5A=";
-            };
-            entries = builtins.readDir src;
-          in
-          map
-            (name: {
-              name = ".omp/agent/skills/${name}/SKILL.md";
-              value = {
-                source = "${src}/${name}/SKILL.md";
-                force = true;
-              };
-            })
-            (
-              builtins.filter (
-                name: entries.${name} == "directory" && builtins.pathExists "${src}/${name}/SKILL.md"
-              ) (builtins.attrNames entries)
-            );
-      in
-      builtins.concatLists (map mkGithubSkills githubSkillRepos)
-    )
-  );
-
-  # Pi (badlogic/pi-mono) profile config files: config.yml, models.yml per profile.
-  piProfiles = import ./helpers/_pi-profiles.nix { inherit config; };
-  piSettingsBuilders = import ./helpers/_pi-settings-builder.nix { inherit cfg config lib; };
-  inherit (piSettingsBuilders) piConfigsByProfile piModelsByProfile;
-
-  piProfileConfigFiles = builtins.listToAttrs (
-    lib.flatten (
-      map (
-        profile:
-        let
-          profileDir = ".pi/profiles/${profile.name}";
-        in
-        [
-          {
-            name = "${profileDir}/config.yml";
-            value = {
-              text = piConfigsByProfile.${profile.name};
-              force = true;
-            };
-          }
-        ]
-        ++ (lib.optional (piModelsByProfile.${profile.name} != "") {
-          name = "${profileDir}/models.yml";
-          value = {
-            text = piModelsByProfile.${profile.name};
-            force = true;
-          };
-        })
-        ++ (lib.optional (cfg.globalInstructions != "") {
-          name = "${profileDir}/AGENTS.md";
-          value = {
-            text = cfg.globalInstructions;
-            force = true;
-          };
-        })
-      ) piProfiles.profiles
-    )
-  );
-
-  # Skills deployed to ~/.pi/agent/skills/.
-  piSharedSkillFiles = builtins.listToAttrs (
-    (map (name: {
-      name = ".pi/agent/skills/${name}/SKILL.md";
-      value = {
-        source = ./helpers/pi-skills/${name}/SKILL.md;
-        force = true;
-      };
-    }) (builtins.attrNames (builtins.readDir ./helpers/pi-skills)))
-    ++ (
-      let
-        githubSkillRepos = [
-          {
-            owner = "samber";
-            repo = "cc-skills-golang";
-            rev = "main";
-          }
-        ];
-        mkGithubSkills =
-          {
-            owner,
-            repo,
-            rev,
-          }:
-          let
-            src = pkgs.fetchFromGitHub {
-              inherit owner repo rev;
-              hash = "sha256-nd0T2duTdX2CUfmqD5OiHgl7SNqjR6k5+0TvE6eig5A=";
-            };
-            entries = builtins.readDir src;
-          in
-          map
-            (name: {
-              name = ".pi/agent/skills/${name}/SKILL.md";
-              value = {
-                source = "${src}/${name}/SKILL.md";
-                force = true;
-              };
-            })
-            (
-              builtins.filter (
-                name: entries.${name} == "directory" && builtins.pathExists "${src}/${name}/SKILL.md"
-              ) (builtins.attrNames entries)
-            );
-      in
-      builtins.concatLists (map mkGithubSkills githubSkillRepos)
-    )
-  );
 in
 {
   config = lib.mkIf cfg.enable {
@@ -332,17 +111,10 @@ in
 
       # === herdr Agent State Integrations ===
       (lib.mkIf cfg.herdr.enable {
-        ".pi/agent/extensions/herdr-agent-state.ts" = {
-          source = pkgs.fetchurl {
-            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${cfg.herdr.version}/src/integration/assets/pi/herdr-agent-state.ts";
-            sha256 = "sha256-cI++/hXltICQIUB04UuUfj4wvzTazShjLRLbPzjCOQ8=";
-          };
-          force = true;
-        };
         ".claude/hooks/herdr-agent-state.sh" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${cfg.herdr.version}/src/integration/assets/claude/herdr-agent-state.sh";
-            sha256 = "sha256-WejXy9UV7ZeoCa96C5cOGII9kYk1utUPRQDfguQUtrM=";
+            sha256 = "sha256-TYpYjXPS2SY+kYNzDp+WsssH8KmWfAbaU8G7auxJHYw=";
           };
           executable = true;
           force = true;
@@ -350,7 +122,7 @@ in
         ".codex/herdr-agent-state.sh" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${cfg.herdr.version}/src/integration/assets/codex/herdr-agent-state.sh";
-            sha256 = "sha256-5Xb1nbzIwr3T8srGBeJ7n8mH66ff8GvFURmFJQDdHeg=";
+            sha256 = "sha256-zUcs4o90Y8Clk7ChtIfqoxV0hgb9fKgVcSJ4vnzKRt0=";
           };
           executable = true;
           force = true;
@@ -390,49 +162,6 @@ in
         };
       }
 
-      # === Droid (Factory AI) Settings ===
-      (lib.mkIf cfg.droid.enable {
-        ".factory/settings.json" = {
-          text = toJSON {
-            customModels = [
-              {
-                displayName = "GLM-5.1 [Z.AI] - Anthropic";
-                model = "glm-5.1";
-                baseUrl = "https://api.z.ai/api/anthropic";
-                apiKey = "__DROID_ZAI_API_KEY_PLACEHOLDER__";
-                provider = "anthropic";
-                maxOutputTokens = 131072;
-              }
-              {
-                displayName = "GLM-5 Turbo [Z.AI] - Anthropic";
-                model = "glm-5-turbo";
-                baseUrl = "https://api.z.ai/api/anthropic";
-                apiKey = "__DROID_ZAI_API_KEY_PLACEHOLDER__";
-                provider = "anthropic";
-                maxOutputTokens = 131072;
-              }
-              {
-                displayName = "DeepSeek V4 Pro - Anthropic";
-                model = "deepseek-v4-pro";
-                baseUrl = "https://api.deepseek.com/anthropic";
-                apiKey = "__DROID_DEEPSEEK_API_KEY_PLACEHOLDER__";
-                provider = "anthropic";
-                maxOutputTokens = 131072;
-              }
-              {
-                displayName = "DeepSeek V4 Flash - Anthropic";
-                model = "deepseek-v4-flash";
-                baseUrl = "https://api.deepseek.com/anthropic";
-                apiKey = "__DROID_DEEPSEEK_API_KEY_PLACEHOLDER__";
-                provider = "anthropic";
-                maxOutputTokens = 131072;
-              }
-            ];
-          };
-          force = true;
-        };
-      })
-
       # === Gemini Files (Settings, Commands, Policies) ===
       (lib.mkIf cfg.gemini.enable (
         {
@@ -444,24 +173,6 @@ in
         // (mkTextFiles ".gemini/commands" fileTemplates.geminiCommands)
         // (mkTextFiles ".gemini/policies" geminiPolicies)
       ))
-
-      # === Forge Profile Configs (one directory per profile) ===
-      (lib.mkIf cfg.forge.enable forgeProfileConfigFiles)
-
-      # === Oh My Pi (omp) Profile Configs & Skills ===
-      (lib.mkIf cfg.omp.enable (
-        ompProfileConfigFiles
-        // ompSharedSkillFiles
-        // {
-          ".omp/agent/mcp.json" = {
-            text = toJSON ompSettings;
-            force = true;
-          };
-        }
-      ))
-
-      # === Pi (badlogic/pi-mono) Profile Configs & Skills ===
-      (lib.mkIf cfg.pi.enable (piProfileConfigFiles // piSharedSkillFiles))
     ];
 
     xdg.configFile = lib.mkMerge [
@@ -496,7 +207,7 @@ in
         "opencode/plugins/herdr-agent-state.js" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${cfg.herdr.version}/src/integration/assets/opencode/herdr-agent-state.js";
-            sha256 = "sha256-t3LNyyhbRnU7yUBA/hPlLW9IUPhJU5neQcud0IZQFqQ=";
+            sha256 = "sha256-/D4KodZ/gN0qRvCuIq+asy+DBxgGgFyio+Q5ipvdxYg=";
           };
           force = true;
         };

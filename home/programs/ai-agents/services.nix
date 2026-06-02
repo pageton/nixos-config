@@ -81,31 +81,24 @@ let
       label = "Codex CLI";
     }
     {
-      binary = "omp";
-      npmPackage = "@oh-my-pi/pi-coding-agent";
-      label = "Oh My Pi CLI";
-    }
-    {
-      binary = "pi";
-      npmPackage = "@mariozechner/pi-coding-agent";
-      label = "Pi CLI";
-    }
-    {
       binary = "codegraph";
       npmPackage = "@colbymchenry/codegraph";
       label = "CodeGraph CLI";
+    }
+    {
+      binary = "copilot";
+      npmPackage = "@github/copilot";
+      label = "GitHub Copilot CLI";
     }
   ];
 
   autoUpdateAllScript = pkgs.writeShellScript "update-ai-agents" (
     lib.concatMapStringsSep "\n" (tool: toString (mkCliAutoupdateScript tool)) autoUpdateTools
+    + lib.optionalString cfg.serena.enable ''
+
+      ${pkgs.uv}/bin/uv tool install -p 3.13 --prerelease=allow ${cfg.serena.package}@latest 2>/dev/null && echo "Updated Serena" || true
+    ''
   );
-
-  forgePkg = inputs.forgecode.packages.${pkgs.stdenv.hostPlatform.system}.default;
-
-  droid = pkgs.writeShellScriptBin "droid" ''
-    exec ${pkgs.bun}/bin/bun x droid@${cfg.droid.version} "$@"
-  '';
 
   terax = pkgs.appimageTools.wrapType2 rec {
     pname = "terax";
@@ -129,6 +122,13 @@ let
       mainProgram = "terax";
     };
   };
+
+  serena = pkgs.writeShellScriptBin "serena" ''
+    if ! ${pkgs.uv}/bin/uv tool list 2>/dev/null | ${pkgs.gnugrep}/bin/grep -q '${cfg.serena.package}'; then
+      ${pkgs.uv}/bin/uv tool install -p 3.13 --prerelease=allow ${cfg.serena.package}@latest
+    fi
+    exec ${pkgs.uv}/bin/uv tool run ${cfg.serena.package} "$@"
+  '';
 
   logCleanupCommand = ''
     find "${cfg.logging.directory}" -name "*.log" -mtime +${toString cfg.logging.retentionDays} -delete
@@ -165,9 +165,8 @@ in
       webReDoctor
     ]
     ++ (lib.optional cfg.agentmemory.enable agentmemoryRuntime.iiiEngine)
-    ++ (lib.optional cfg.droid.enable droid)
     ++ (lib.optional cfg.terax.enable terax)
-    ++ (lib.optional cfg.forge.enable forgePkg)
+    ++ (lib.optional cfg.serena.enable serena)
     ++ androidReLaunchers
     ++ webReLaunchers
     ++ (lib.optional cfg.logging.enable (

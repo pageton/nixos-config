@@ -10,33 +10,15 @@
   opencodeZaiFilter,
   claudeZaiFilter,
   geminiZaiFilter,
-  forgeZaiFilter,
-  ompZaiFilter,
   githubPlaceholderFilter,
   openrouterPlaceholderFilter,
   context7PlaceholderFilter,
-  zaiProfileNames,
 }:
 let
-  forgeProfiles = import ../helpers/_forge-profiles.nix { inherit config; };
-  forgeMcpPathList = lib.concatMapStringsSep " " (
-    name: "$HOME/.${name}/.mcp.json"
-  ) forgeProfiles.names;
-
-  piProfiles = import ../helpers/_pi-profiles.nix { inherit config; };
-  piModelsPathList = lib.concatMapStringsSep " " (
-    name: "$HOME/.pi/profiles/${name}/models.yml"
-  ) piProfiles.names;
-
-  ompProfiles = import ../helpers/_omp-profiles.nix { inherit config; };
-  ompModelsPathList = lib.concatMapStringsSep " " (
-    name: "$HOME/.omp/profiles/${name}/models.yml"
-  ) ompProfiles.names;
-
   zaiApiRoot = constants.services.zai.apiRoot;
 in
 lib.hm.dag.entryAfter
-  [ "writeBoundary" "linkGeneration" "setupCodexConfig" "setupClaudeConfig" "setupForgeConfig" ]
+  [ "writeBoundary" "linkGeneration" "setupCodexConfig" "setupClaudeConfig" ]
   ''
     patch_json_file() {
       local file="$1"
@@ -52,12 +34,11 @@ lib.hm.dag.entryAfter
     }
 
     # Patch a secret value into all agent config files.
-    # Args: secret jq_arg_name opencode_filter [claude_filter] [gemini_filter] [toml_placeholder] [toml_append_section] [label] [forge_filter]
+    # Args: secret jq_arg_name opencode_filter [claude_filter] [gemini_filter] [toml_placeholder] [toml_append_section] [label]
     patch_secret_to_all_configs() {
       local secret="$1" jq_arg="$2" opencode_filter="$3"
       local claude_filter="''${4:-}" gemini_filter="''${5:-}"
       local toml_placeholder="''${6:-}" toml_append="''${7:-}" label="''${8:-}"
-      local forge_filter="''${9:-$claude_filter}"
 
       for OPENCODE_CFG in ${opencodeConfigPathList}; do
         if [[ -f "$OPENCODE_CFG" ]]; then
@@ -85,16 +66,6 @@ lib.hm.dag.entryAfter
         patch_json_file "$HOME/.gemini/settings.json" "$jq_arg" "$secret" "$gemini_filter"
         echo "✓ Patched gemini settings.json with $label"
       fi
-
-      # Forge profile MCP configs (same JSON format as Claude .mcp.json).
-      if [[ -n "$forge_filter" ]]; then
-        for FORGE_MCP in ${forgeMcpPathList}; do
-          if [[ -f "$FORGE_MCP" ]]; then
-            patch_json_file "$FORGE_MCP" "$jq_arg" "$secret" "$forge_filter"
-            echo "✓ Patched $(basename "$(dirname "$FORGE_MCP")")/.mcp.json with $label"
-          fi
-        done
-      fi
     }
 
     # --- Z.AI ---
@@ -108,34 +79,7 @@ lib.hm.dag.entryAfter
           ${lib.escapeShellArg geminiZaiFilter} \
           "__ZAI_API_KEY_PLACEHOLDER__" \
           '\[mcp_servers.zai-mcp-server.env\]' \
-          "Z.AI API key + remote MCPs" \
-          ${lib.escapeShellArg forgeZaiFilter}
-
-        # Forge profiles using zai_coding provider need .credentials.json
-        ${lib.concatStringsSep "\n" (
-          map (profileName: ''
-            FORGE_CRED="$HOME/.${profileName}/.credentials.json"
-            if [[ -d "$HOME/.${profileName}" ]]; then
-              printf '[{"id":"zai_coding","auth_details":{"api_key":"%s"}}]' "$ZAI_KEY" > "$FORGE_CRED"
-              chmod 600 "$FORGE_CRED"
-              echo "✓ Wrote ${profileName}/.credentials.json with Z.AI key"
-            fi
-          '') zaiProfileNames
-        )}
-
-
-        # OMP agent MCP config
-        if [[ -f "$HOME/.omp/agent/mcp.json" ]]; then
-          patch_json_file "$HOME/.omp/agent/mcp.json" key "$ZAI_KEY" ${lib.escapeShellArg ompZaiFilter}
-          echo "✓ Patched .omp/agent/mcp.json with Z.AI API key + remote MCPs"
-        fi
-
-        # Droid CLI ~/.factory/settings.json
-        if [[ -f "$HOME/.factory/settings.json" ]]; then
-          escaped_zai="$(escape_sed_replacement "$ZAI_KEY")"
-          ${pkgs.gnused}/bin/sed -i "s/__DROID_ZAI_API_KEY_PLACEHOLDER__/$escaped_zai/g" "$HOME/.factory/settings.json"
-          echo "✓ Patched .factory/settings.json with Z.AI API key for Droid"
-        fi
+          "Z.AI API key + remote MCPs"
 
         unset ZAI_KEY
       else
@@ -170,11 +114,6 @@ lib.hm.dag.entryAfter
           "__CONTEXT7_API_KEY_PLACEHOLDER__" \
           "" \
           "Context7 API key"
-        # OMP agent MCP config
-        if [[ -f "$HOME/.omp/agent/mcp.json" ]]; then
-          patch_json_file "$HOME/.omp/agent/mcp.json" key "$CONTEXT7_KEY" ${lib.escapeShellArg context7PlaceholderFilter}
-          echo "✓ Patched .omp/agent/mcp.json with Context7 API key"
-        fi
 
         unset CONTEXT7_KEY
       else
@@ -194,60 +133,9 @@ lib.hm.dag.entryAfter
         "" \
         "GitHub token from gh CLI"
 
-      # OMP agent MCP config
-      if [[ -f "$HOME/.omp/agent/mcp.json" ]]; then
-        patch_json_file "$HOME/.omp/agent/mcp.json" token "$GH_TOKEN" ${lib.escapeShellArg githubPlaceholderFilter}
-        echo "✓ Patched .omp/agent/mcp.json with GitHub token"
-      fi
-
       unset GH_TOKEN
     else
       echo "⚠ gh CLI not authenticated - GitHub MCP will not work (run 'gh auth login')"
-    fi
-
-    # --- Oh My Pi (omp) Profile Secret Patching ---
-    if [[ -n "${lib.optionalString cfg.omp.enable "true"}" ]]; then
-      if [[ -n "${
-        cfg.secrets.openrouterApiKeyFile or ""
-      }" ]] && [[ -f "${cfg.secrets.openrouterApiKeyFile}" ]]; then
-        OPENROUTER_KEY="$(cat "${cfg.secrets.openrouterApiKeyFile}")"
-        for OMP_MODELS in ${ompModelsPathList}; do
-          if [[ -f "$OMP_MODELS" ]]; then
-            ${pkgs.gnused}/bin/sed -i "s|__OPENROUTER_API_KEY_PLACEHOLDER__|$OPENROUTER_KEY|g" "$OMP_MODELS"
-            echo "✓ Patched $(dirname "$OMP_MODELS" | xargs basename)/models.yml with OpenRouter key"
-          fi
-        done
-        unset OPENROUTER_KEY
-      fi
-
-      if [[ -n "${
-        cfg.secrets.minimaxApiKeyFile or ""
-      }" ]] && [[ -f "${cfg.secrets.minimaxApiKeyFile}" ]]; then
-        MINIMAX_KEY="$(cat "${cfg.secrets.minimaxApiKeyFile}")"
-        for OMP_MODELS in ${ompModelsPathList}; do
-          if [[ -f "$OMP_MODELS" ]]; then
-            ${pkgs.gnused}/bin/sed -i "s|__MINIMAX_API_KEY_PLACEHOLDER__|$MINIMAX_KEY|g" "$OMP_MODELS"
-            echo "✓ Patched $(dirname "$OMP_MODELS" | xargs basename)/models.yml with MiniMax key"
-          fi
-        done
-        unset MINIMAX_KEY
-      fi
-    fi
-
-    # --- Pi (badlogic/pi-mono) Profile Secret Patching ---
-    if [[ -n "${lib.optionalString cfg.pi.enable "true"}" ]]; then
-      if [[ -n "${
-        cfg.secrets.openrouterApiKeyFile or ""
-      }" ]] && [[ -f "${cfg.secrets.openrouterApiKeyFile}" ]]; then
-        OPENROUTER_KEY="$(cat "${cfg.secrets.openrouterApiKeyFile}")"
-        for PI_MODELS in ${piModelsPathList}; do
-          if [[ -f "$PI_MODELS" ]]; then
-            ${pkgs.gnused}/bin/sed -i "s|__OPENROUTER_API_KEY_PLACEHOLDER__|$OPENROUTER_KEY|g" "$PI_MODELS"
-            echo "✓ Patched $(dirname "$PI_MODELS" | xargs basename)/models.yml with OpenRouter key"
-          fi
-        done
-        unset OPENROUTER_KEY
-      fi
     fi
 
     # --- DeepSeek ---
@@ -264,32 +152,29 @@ lib.hm.dag.entryAfter
           fi
         done
 
-        # Droid CLI ~/.factory/settings.json
-        if [[ -f "$HOME/.factory/settings.json" ]]; then
-          ${pkgs.gnused}/bin/sed -i "s/__DROID_DEEPSEEK_API_KEY_PLACEHOLDER__/$escaped_deepseek/g" "$HOME/.factory/settings.json"
-          echo "✓ Patched .factory/settings.json with DeepSeek API key for Droid"
-        fi
-
-        # OMP profile models.yml
-        if [[ -n "${lib.optionalString cfg.omp.enable "true"}" ]]; then
-          for OMP_MODELS in ${ompModelsPathList}; do
-            if [[ -f "$OMP_MODELS" ]]; then
-              ${pkgs.gnused}/bin/sed -i "s|__DEEPSEEK_API_KEY_PLACEHOLDER__|$escaped_deepseek|g" "$OMP_MODELS"
-              echo "✓ Patched $(dirname "$OMP_MODELS" | xargs basename)/models.yml with DeepSeek key"
-            fi
-          done
-        fi
-
-        # Forge DeepSeek credentials
-        if [[ -d "$HOME/.forge-deepseek" ]]; then
-          printf '[{"id":"generic-chat-completion-api","auth_details":{"api_key":"%s","base_url":"https://api.deepseek.com"}}]' "$DEEPSEEK_KEY" > "$HOME/.forge-deepseek/.credentials.json"
-          chmod 600 "$HOME/.forge-deepseek/.credentials.json"
-          echo "✓ Wrote forge-deepseek/.credentials.json with DeepSeek key"
-        fi
-
         unset DEEPSEEK_KEY escaped_deepseek
       else
         echo "⚠ ${cfg.secrets.deepseekApiKeyFile} not found - run 'just nixos' first"
+      fi
+    fi
+
+    # --- Xiaomi MiMo ---
+    if [[ -n "${cfg.secrets.mimoApiKeyFile or ""}" ]]; then
+      if [[ -f "${cfg.secrets.mimoApiKeyFile}" ]]; then
+        MIMO_KEY="$(cat "${cfg.secrets.mimoApiKeyFile}")"
+        escaped_mimo="$(escape_sed_replacement "$MIMO_KEY")"
+
+        # OpenCode configs (providers.xiaomi-token-plan-sgp.options.apiKey)
+        for OPENCODE_CFG in ${opencodeConfigPathList}; do
+          if [[ -f "$OPENCODE_CFG" ]] && grep -q '__MIMO_API_KEY_PLACEHOLDER__' "$OPENCODE_CFG"; then
+            ${pkgs.gnused}/bin/sed -i "s/__MIMO_API_KEY_PLACEHOLDER__/$escaped_mimo/g" "$OPENCODE_CFG"
+            echo "✓ Patched $(basename "$(dirname "$OPENCODE_CFG")")/opencode.json with MiMo key"
+          fi
+        done
+
+        unset MIMO_KEY escaped_mimo
+      else
+        echo "⚠ ${cfg.secrets.mimoApiKeyFile} not found - run 'just nixos' first"
       fi
     fi
 

@@ -39,9 +39,9 @@ lib.mkMerge [
           "AGENTMEMORY_URL=${cfg.agentmemory.url}"
           "CI=1"
           "NPM_CONFIG_CACHE=%h/.cache/npm"
-          "PATH=${agentmemoryRuntime.iiiEngine}/bin:${pkgs.nodejs}/bin:/run/current-system/sw/bin"
+          "PATH=${agentmemoryRuntime.iiiEngine}/bin:${pkgs.nodejs_22}/bin:/run/current-system/sw/bin"
         ];
-        ExecStart = "${pkgs.nodejs}/bin/npx -y @agentmemory/agentmemory@${cfg.agentmemory.version}";
+        ExecStart = "${pkgs.nodejs_22}/bin/npx -y @agentmemory/agentmemory@${cfg.agentmemory.version}";
         Restart = "always";
         RestartSec = "10s";
         TimeoutStartSec = "300";

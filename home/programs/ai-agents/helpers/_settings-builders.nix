@@ -10,12 +10,9 @@ let
   mcpTransforms = import ./_mcp-transforms.nix { inherit cfg lib; };
   formatterRegistry = import ./_formatters.nix;
   opencodeProfiles = import ./_opencode-profiles.nix { inherit config; };
-  forgeProfiles = import ./_forge-profiles.nix { inherit config; };
   inherit (mcpTransforms)
     opencodeMcpServers
     geminiMcpServers
-    forgeMcpServers
-    ompMcpServers
     opencodeAndroidReMcpServers
     opencodeWebReMcpServers
     ;
@@ -107,11 +104,6 @@ let
   })
   // (lib.optionalAttrs (cfg.gemini.extraSettings != { }) cfg.gemini.extraSettings);
 
-  ompSettings = {
-    mcpServers = ompMcpServers;
-  }
-  // (lib.optionalAttrs (cfg.omp.extraSettings != { }) cfg.omp.extraSettings);
-
   # Override agent-level model fields to match the profile's top-level model.
   # OpenCode's deep merge preserves agent-level models from the global config even when
   # OPENCODE_CONFIG_DIR loads a profile config without them, so we must explicitly set
@@ -144,81 +136,14 @@ let
     ) opencodeProfiles.profiles
   );
 
-  # Forge TOML config generation per profile.
-  # Forge uses TOML with [session] provider_id/model_id for model selection.
-  mkForgeToml =
-    { provider_id, model_id, ... }:
-    let
-      inherit (cfg.forge) reasoningEffort maxTokens;
-      globalInstructions = cfg.globalInstructions;
-    in
-    ''
-      "$schema" = "https://forgecode.dev/schema.json"
-
-      max_tokens = ${toString maxTokens}
-      verify_todos = true
-      research_subagent = true
-      subagents = true
-
-      [session]
-      provider_id = "${provider_id}"
-      model_id = "${model_id}"
-
-      [reasoning]
-      enabled = true
-      effort = "${reasoningEffort}"
-
-      [compact]
-      eviction_window = 0.2
-      max_tokens = 2000
-      message_threshold = 200
-      on_turn_end = false
-      retention_window = 6
-      token_threshold = 100000
-
-      [retry]
-      backoff_factor = 2
-      initial_backoff_ms = 200
-      max_attempts = 8
-      min_delay_ms = 1000
-      suppress_errors = false
-
-      [http]
-      connect_timeout_secs = 30
-      read_timeout_secs = 900
-
-      [updates]
-      auto_update = false
-      frequency = "daily"
-    ''
-    + (lib.optionalString (globalInstructions != "") ''
-
-      # Global instructions are loaded via AGENTS.md in the forge config directory.
-    '')
-    + (lib.optionalString (cfg.forge.extraToml != "") "\n${cfg.forge.extraToml}");
-
-  forgeTomlByProfile = builtins.listToAttrs (
-    map (profile: {
-      inherit (profile) name;
-      value = mkForgeToml profile;
-    }) forgeProfiles.profiles
-  );
-
-  # Forge MCP config uses the same JSON format as Claude (.mcp.json with mcpServers key).
-  forgeMcpJson = {
-    mcpServers = forgeMcpServers;
-  };
 in
 {
   inherit
     claudeSettings
     opencodeSettings
     geminiSettings
-    ompSettings
     opencodeSettingsByProfile
     opencodeAndroidReMcpServers
     opencodeWebReMcpServers
-    forgeTomlByProfile
-    forgeMcpJson
     ;
 }

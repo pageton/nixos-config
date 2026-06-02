@@ -14,7 +14,7 @@ pkgs.writeShellScript "${binary}-autoupdate" ''
   if [[ "$binary_path" == *"/.bun/install/global/"* ]]; then
     ${pkgs.bun}/bin/bun install -g ${npmPackage}@latest
   elif [[ "$binary_path" == *"/.npm-global/"* ]]; then
-    ${pkgs.nodejs}/bin/npm install -g ${npmPackage}@latest
+    ${pkgs.nodejs_22}/bin/npm install -g ${npmPackage}@latest
   elif command -v bun >/dev/null 2>&1; then
     bun install -g ${npmPackage}@latest
   elif command -v npm >/dev/null 2>&1; then

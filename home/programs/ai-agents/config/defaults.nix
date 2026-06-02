@@ -15,8 +15,8 @@ in
     terax.enable = true;
     agentmemory.enable = true;
     herdr.enable = true;
-    droid.enable = true;
     codegraph.enable = true;
+    serena.enable = false;
 
     inherit (skillDefs) skills;
   };

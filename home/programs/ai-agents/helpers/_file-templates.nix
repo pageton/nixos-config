@@ -355,32 +355,6 @@ let
         - ${rulesText}
       '';
     };
-  # Derive Forge agent file from canonical definition.
-  # Forge agents use YAML frontmatter with id, tools, and markdown body as system prompt.
-  mkForgeAgent =
-    name: concept:
-    let
-      rulesText = builtins.concatStringsSep "\n- " concept.rules;
-      toolsList = builtins.replaceStrings [ "," ] [ "\n  - " ] concept.tools;
-    in
-    {
-      name = "${name}.md";
-      value = ''
-        ---
-        id: ${name}
-        title: "${builtins.replaceStrings [ "-" ] [ " " ] name}"
-        description: "${concept.description}"
-        tools:
-          - ${toolsList}
-        ---
-
-        ${concept.role}
-
-        Rules:
-        - ${rulesText}
-      '';
-    };
-
   # Derive Pi agent file from canonical definition.
   # Pi uses SKILL.md format for persona/instruction injection.
   # Each agent becomes a skill that can be loaded via the /agent extension command.
@@ -433,8 +407,6 @@ let
 
 in
 {
-  forgeAgents = builtins.listToAttrs (mapAttrsToList mkForgeAgent agentConcepts);
-
   piAgents = builtins.listToAttrs (mapAttrsToList mkPiAgent agentConcepts);
 
   claudeAgents = (builtins.listToAttrs (mapAttrsToList mkClaudeAgent agentConcepts)) // {

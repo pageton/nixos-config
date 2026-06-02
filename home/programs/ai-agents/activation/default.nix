@@ -28,8 +28,6 @@ let
     opencodeZaiFilter
     claudeZaiFilter
     geminiZaiFilter
-    ompZaiFilter
-    forgeZaiFilter
     ;
   githubPlaceholderFilter = ''
     walk(if type == "string" then gsub("__GITHUB_TOKEN_PLACEHOLDER__"; $token) else . end)
@@ -42,7 +40,7 @@ let
   '';
 
   # Import helper modules
-  # modules-check: manual-helper ./secrets.nix ./codex-setup.nix ./claude-setup.nix ./forge-setup.nix ./plugins.nix ./skills.nix
+  # modules-check: manual-helper ./secrets.nix ./codex-setup.nix ./claude-setup.nix ./plugins.nix ./skills.nix
   secretPatching = import ./secrets.nix {
     inherit
       cfg
@@ -54,12 +52,9 @@ let
       opencodeZaiFilter
       claudeZaiFilter
       geminiZaiFilter
-      ompZaiFilter
-      forgeZaiFilter
       githubPlaceholderFilter
       openrouterPlaceholderFilter
       context7PlaceholderFilter
-      zaiProfileNames
       ;
   };
   codexConfig = import ./codex-setup.nix {
@@ -80,21 +75,7 @@ let
       claudeMcpServers
       ;
   };
-  forgeProfiles = import ../helpers/_forge-profiles.nix { inherit config; };
-  inherit (forgeProfiles) zaiProfileNames;
-
-  forgeConfig = import ./forge-setup.nix {
-    inherit
-      cfg
-      pkgs
-      lib
-      config
-      ;
-  };
   opencodeProfileNames = opencodeProfiles.names;
-
-  piProfiles = import ../helpers/_pi-profiles.nix { inherit config; };
-  ompProfiles = import ../helpers/_omp-profiles.nix { inherit config; };
 
   pluginInstalls = import ./plugins.nix {
     inherit
@@ -113,9 +94,6 @@ let
       toJSON
       opencodeProfileNames
       ;
-    forgeProfileNames = forgeProfiles.names;
-    piProfileNames = piProfiles.names;
-    ompProfileNames = ompProfiles.names;
   };
 in
 {
@@ -157,10 +135,6 @@ in
       # === Claude Configuration ===
       # Real files (not symlinks) so plugins can modify them.
       setupClaudeConfig = claudeConfig;
-
-      # === Forge Configuration ===
-      # Real files so forge can modify them at runtime.
-      setupForgeConfig = forgeConfig;
 
       # === Plugin Installation ===
       inherit (pluginInstalls)

@@ -103,6 +103,7 @@ in
       context7ApiKeyFile = mkNullOrStrOption "/run/secrets/context7-api-key" "Path to sops-decrypted Context7 API key file";
       minimaxApiKeyFile = mkNullOrStrOption "/run/secrets/minimax_api_key" "Path to sops-decrypted MiniMax API key file";
       deepseekApiKeyFile = mkNullOrStrOption "/run/secrets/deepseek_api_key" "Path to sops-decrypted DeepSeek API key file";
+      mimoApiKeyFile = mkNullOrStrOption "/run/secrets/mimo_api_key" "Path to sops-decrypted Xiaomi MiMo API key file";
     };
 
     skills = lib.mkOption {
@@ -160,12 +161,17 @@ in
 
     herdr = {
       enable = mkBoolOption false "Install herdr agent multiplexer";
-      version = mkStrOption "0.6.1" "herdr version (used for agent-state integration assets)";
+      version = mkStrOption "0.6.6" "herdr version (used for agent-state integration assets)";
     };
 
     codegraph = {
       enable = mkBoolOption false "Enable CodeGraph pre-indexed code knowledge graph MCP server";
       npmPackage = mkStrOption "@colbymchenry/codegraph" "CodeGraph npm package name";
+    };
+
+    serena = {
+      enable = mkBoolOption false "Enable Serena MCP coding toolkit (semantic retrieval, editing, refactoring)";
+      package = mkStrOption "serena-agent" "Serena Python package name (installed via uv)";
     };
 
     everythingClaudeCode = {
@@ -307,32 +313,6 @@ in
       extraToml = mkLinesOption "" "Extra TOML lines appended to config.toml";
     };
 
-    # === Droid (Factory AI) Options ===
-    droid = {
-      enable = lib.mkEnableOption "Droid CLI (Factory AI) configuration";
-
-      model = mkStrOption "glm-5.1" "Default model for Droid CLI";
-      version = mkStrOption "0.128.0" "Droid npm package version";
-    };
-
-    # === Forge Options ===
-    forge = {
-      enable = lib.mkEnableOption "Forge (tailcallhq/forgecode) configuration";
-
-      defaultProfile = mkStrOption "forge" "Default forge profile name";
-      reasoningEffort = mkTypedOption (lib.types.enum [
-        "none"
-        "minimal"
-        "low"
-        "medium"
-        "high"
-        "xhigh"
-        "max"
-      ]) "high" "Reasoning effort level";
-      maxTokens = mkIntOption 20480 "Maximum output tokens";
-      extraToml = mkLinesOption "" "Extra TOML content appended to each profile's .forge.toml";
-    };
-
     # === Gemini Options ===
     gemini = {
       enable = lib.mkEnableOption "Gemini CLI configuration";
@@ -342,86 +322,5 @@ in
       extraSettings = mkAttrsOption { } "Additional Gemini CLI settings";
     };
 
-    # === Oh My Pi (omp) Options ===
-    omp = {
-      enable = lib.mkEnableOption "Oh My Pi coding agent (@oh-my-pi/pi-coding-agent) configuration";
-
-      model = mkStrOption "claude-sonnet-4-20250514" "Default model ID for omp";
-      provider = mkStrOption "anthropic" "Default provider for omp";
-      thinkingLevel = mkTypedOption (lib.types.enum [
-        "off"
-        "minimal"
-        "low"
-        "medium"
-        "high"
-        "xhigh"
-      ]) "medium" "Default thinking level";
-      theme = mkStrOption "dark" "OMP TUI theme";
-      sessionDir = mkStrOption "" "Custom session directory (empty = omp default)";
-
-      extensions = mkStrListOption [ ] "Extension file paths or directories to load";
-      skills = mkStrListOption [ ] "Skill file paths or directories to load";
-      packages = mkStrListOption [ ] "npm/git packages to load resources from";
-
-      defaultModel = mkStrOption "zai/glm-5.1" "Default model for oh-my-pi";
-      planModel = mkStrOption "zai/glm-5.1" "Model for planning tasks";
-      smolModel = mkStrOption "zai/glm-5-turbo" "Lightweight model for simple tasks";
-
-      compaction = mkAttrsOption {
-        enabled = true;
-        reserveTokens = 16384;
-        keepRecentTokens = 20000;
-      } "Compaction settings";
-
-      retry = mkAttrsOption {
-        enabled = true;
-        maxRetries = 3;
-        baseDelayMs = 2000;
-      } "Retry settings";
-
-      enabledModels = mkStrListOption [ ] "Model patterns for Ctrl+P cycling";
-
-      gitCheckpoint = {
-        enable = mkBoolOption true "Install git checkpoint extension (stash per turn for easy restoration)";
-      };
-
-      extraSettings = mkAttrsOption { } "Additional omp settings overrides";
-    };
-
-    # === Pi (badlogic/pi-mono) Options ===
-    pi = {
-      enable = lib.mkEnableOption "Pi coding agent (@mariozechner/pi-coding-agent) configuration";
-
-      model = mkStrOption "claude-sonnet-4-20250514" "Default model ID for pi";
-      provider = mkStrOption "anthropic" "Default provider for pi";
-      thinkingLevel = mkTypedOption (lib.types.enum [
-        "off"
-        "minimal"
-        "low"
-        "medium"
-        "high"
-        "xhigh"
-      ]) "medium" "Default thinking level";
-      theme = mkStrOption "dark" "Pi TUI theme";
-      sessionDir = mkStrOption "" "Custom session directory (empty = pi default)";
-
-      skills = mkStrListOption [ ] "Skill file paths or directories to load";
-
-      compaction = mkAttrsOption {
-        enabled = true;
-        reserveTokens = 16384;
-        keepRecentTokens = 20000;
-      } "Compaction settings";
-
-      retry = mkAttrsOption {
-        enabled = true;
-        maxRetries = 3;
-        baseDelayMs = 2000;
-      } "Retry settings";
-
-      enabledModels = mkStrListOption [ ] "Model patterns for Ctrl+P cycling";
-
-      extraSettings = mkAttrsOption { } "Additional pi settings overrides";
-    };
   };
 }

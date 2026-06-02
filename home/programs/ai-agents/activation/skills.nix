@@ -8,9 +8,6 @@
   pkgs,
   toJSON,
   opencodeProfileNames,
-  forgeProfileNames,
-  piProfileNames,
-  ompProfileNames,
 }:
 
 let
@@ -66,7 +63,7 @@ in
 lib.mkIf (cfg.skills != [ ]) (
   lib.hm.dag.entryAfter [ "writeBoundary" "createJSWorkspace" ] ''
     export BUN_INSTALL="$HOME/.bun"
-    export PATH="${pkgs.git}/bin:${pkgs.nodejs}/bin:${pkgs.bun}/bin:$BUN_INSTALL/bin:$PATH"
+    export PATH="${pkgs.git}/bin:${pkgs.nodejs_22}/bin:${pkgs.bun}/bin:$BUN_INSTALL/bin:$PATH"
 
     SKILLS_BIN="$BUN_INSTALL/bin/skills"
     if [[ ! -x "$SKILLS_BIN" ]]; then
@@ -194,35 +191,9 @@ lib.mkIf (cfg.skills != [ ]) (
       mirror_skills_to "$HOME/.codex/skills"
       mirror_count=$((mirror_count + 1))
 
-      # Forge profiles
-      for forge_profile in ${lib.concatStringsSep " " (map lib.escapeShellArg forgeProfileNames)}; do
-        mirror_skills_to "$HOME/.$forge_profile/skills"
-        mirror_count=$((mirror_count + 1))
-      done
-
       # Gemini
       mirror_skills_to "$HOME/.gemini/skills"
       mirror_count=$((mirror_count + 1))
-
-      # Droid (Factory AI)
-      mirror_skills_to "$HOME/.factory/skills"
-      mirror_count=$((mirror_count + 1))
-
-      # Oh My Pi
-      mirror_skills_to "$HOME/.omp/agent/skills"
-      mirror_count=$((mirror_count + 1))
-
-      # Oh My Pi profiles
-      for omp_profile in ${lib.concatStringsSep " " (map lib.escapeShellArg ompProfileNames)}; do
-        mirror_skills_to "$HOME/.omp/profiles/$omp_profile/skills"
-        mirror_count=$((mirror_count + 1))
-      done
-
-      # Pi profiles
-      for pi_profile in ${lib.concatStringsSep " " (map lib.escapeShellArg piProfileNames)}; do
-        mirror_skills_to "$HOME/.pi/profiles/$pi_profile/skills"
-        mirror_count=$((mirror_count + 1))
-      done
 
       echo "✓ Mirrored skills to $mirror_count agent directories"
     fi
