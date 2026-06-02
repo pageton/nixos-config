@@ -105,55 +105,5 @@
       ];
     };
 
-    "libreoffice-startcenter" = {
-      name = "LibreOffice";
-      exec = "/run/current-system/sw/bin/libreoffice %U";
-      icon = "libreoffice-startcenter";
-      comment = "Office suite (firejail-wrapped)";
-      categories = [ "Office" ];
-      mimeType = [
-        "application/vnd.oasis.opendocument.text"
-        "application/vnd.oasis.opendocument.spreadsheet"
-        "application/vnd.oasis.opendocument.presentation"
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-        "application/msword"
-        "application/vnd.ms-excel"
-        "application/vnd.ms-powerpoint"
-        "application/rtf"
-      ];
-    };
-
-    "gg.pingdot.t3code" = {
-      name = "T3 Code";
-      exec = "t3-code %U";
-      icon = "t3-code";
-      comment = "AI-powered code editor";
-      categories = [
-        "Development"
-        "IDE"
-      ];
-      mimeType = [
-        "text/plain"
-        "text/x-makefile"
-        "text/x-c++src"
-        "text/x-csrc"
-        "text/x-java"
-        "text/x-python"
-        "text/javascript"
-        "text/typescript"
-        "text/x-rust"
-        "text/x-go"
-        "application/json"
-        "text/markdown"
-        "text/html"
-        "text/css"
-      ];
-      settings = {
-        StartupWMClass = "t3-code";
-        Keywords = "code;editor;ide;ai;development;";
-      };
-    };
   };
 }
