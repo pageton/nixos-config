@@ -26,7 +26,6 @@ home/programs/
 ├── ssh.nix              # SSH client configuration
 ├── tailscale.nix        # Tailscale VPN packages
 ├── thunar.nix           # Thunar file manager custom actions
-├── t3code.nix           # T3 Code AI editor
 └── activitywatch.nix    # ActivityWatch time tracking
 ```
 

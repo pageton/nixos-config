@@ -46,7 +46,7 @@ System/
 │   ├── packages/                # 13 package lists: cli, applications, development, multimedia, privacy, wayland, etc.
 │   ├── programs/
 │   │   ├── terminal/            # Zsh, Alacritty, Zellij, 20+ CLI tools (fzf, bat, eza, yazi, starship, etc.)
-│   │   ├── ai-agents/           # Claude Code, Codex, Forge, OpenCode, Pi wrappers + config + services
+│   │   ├── ai-agents/           # Claude Code, Codex, OpenCode, Pi wrappers + config + services
 │   │   ├── nvf/                 # Neovim via NVF framework
 │   │   ├── zen-browser/         # Zen Browser multi-profile with per-profile Mullvad SOCKS5 proxies
 │   │   ├── languages/           # Go, Python, JS/Node, LSP servers, mise version manager
@@ -80,7 +80,7 @@ System/
 | `nixos/modules/default.nix`       | Root loader importing 10 category directories                                                           |
 | `nixos/modules/validation.nix`    | Cross-module conflict assertions (audio, GPU, VPN, firewall, sandboxing, display manager)               |
 | `nixos/modules/security.nix`      | Kernel hardening, sysctl, nftables firewall, AIDE, AppArmor, journald config                            |
-| `home/programs/ai-agents/`        | AI agent wrappers for Claude Code, Codex, Forge, OpenCode, Pi — config, helpers, services, activation   |
+| `home/programs/ai-agents/`        | AI agent wrappers for Claude Code, Codex, OpenCode, Pi — config, helpers, services, activation          |
 | `home/programs/zen-browser/`      | Multi-profile browser with per-profile Mullvad SOCKS5 proxy routing                                     |
 | `home/desktop/niri/`              | Niri compositor config split: bindings, layout, rules, animations, idle, lock, input                    |
 | `scripts/ai/_agent-registry.sh`   | SSOT for all AI agent aliases, command mappings, and workflow suffixes                                  |
@@ -191,7 +191,6 @@ scripts/ai/_agent-registry.sh (alias → command mapping)
 | `ghgrab`         | latest   | GitHub release downloader                                  |
 | `zellij-tui`     | latest   | Zellij TUI extension                                       |
 | `zen-browser`    | latest   | Zen Browser flake (beta channel)                           |
-| `forgecode`      | latest   | Forge AI coding agent                                      |
 
 ### Internal Dependency Graph
 
@@ -221,6 +220,27 @@ scripts/lib/require.sh ← sourced by android-re helpers
 scripts/lib/awk-utils.awk + extract-nix-shell.awk ← composed by shellcheck-nix-inline.sh
 scripts/ai/_agent-registry.sh ← sourced by agent-launcher.sh, agent-iter.sh
 ```
+
+## CodeGraph
+
+This project has `.codegraph/` initialized. **Always use CodeGraph MCP tools as the primary exploration mechanism** before falling back to grep/glob/Read.
+
+**Answer directly with CodeGraph — don't delegate exploration to a file-reading sub-agent or a grep/read loop.** CodeGraph is the pre-built search index; re-deriving its answers with grep + Read repeats work it already did and costs more for the same result. For "how does X work?", architecture, trace, or where-is-X questions, answer in a handful of CodeGraph calls and stop — typically with **zero file reads**. The returned source is complete and authoritative: treat it as already read and do not re-open those files. Reach for raw Read/Grep only to confirm a specific detail CodeGraph didn't cover.
+
+**Tool selection by intent:**
+
+| Tool | Use For |
+|------|---------|
+| `codegraph_context` | Map a task / feature / area first — composes search + node + callers + callees in one call |
+| `codegraph_trace` | "How does X reach Y" — the call path, each hop's body inline (follows dynamic-dispatch hops grep can't) |
+| `codegraph_explore` | Survey several related symbols' source in ONE budget-capped call |
+| `codegraph_search` | Find a symbol by name |
+| `codegraph_callers` / `codegraph_callees` | Walk call flow one hop at a time |
+| `codegraph_impact` | Check what's affected before editing |
+| `codegraph_node` | Get a single symbol's source / signature |
+| `codegraph_files` | Project file structure from the index (faster than Glob/filesystem scanning) |
+
+A direct CodeGraph answer is a handful of calls; a grep/read exploration is dozens.
 
 ## Conventions
 

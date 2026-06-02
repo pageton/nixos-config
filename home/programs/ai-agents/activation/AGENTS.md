@@ -38,7 +38,7 @@ Parent: `home-manager/modules/ai-agents/AGENTS.md`
 
 - `secrets.nix` placeholder strings (`__GITHUB_TOKEN_PLACEHOLDER__`, etc.) must match exactly what `files.nix` and model configs write.
 - Pi models.json uses `__ZAI_API_ROOT__` and `__ZAI_API_KEY_FILE__` placeholders — patched by `secrets.nix` using `sed` (not jq walk filters) since the file is generated fresh each activation.
-- `skills.nix` mirrors Claude skills into `~/.pi/agent/skills/` via symlinks (same pattern as forge profiles).
+- `skills.nix` mirrors Claude skills into `~/.pi/agent/skills/` via symlinks.
 - `skills.nix` intentionally disables `~/.agents/skills` (moves to `.disabled-by-home-manager`) to prevent OpenCode duplicate-skill spam.
 - `codex-setup.nix` deletes non-ECC custom agents on each activation (`find ... ! -name 'ecc-*.toml' -delete`).
 - `claude-setup.nix` writes CLAUDE.md from `cfg.globalInstructions` — same content injected into Codex and OpenCode via their own paths.

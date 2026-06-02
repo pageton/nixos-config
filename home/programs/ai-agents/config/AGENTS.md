@@ -39,7 +39,6 @@ config/
 └── models/                       # Model/provider registries
     ├── default.nix              # Import hub + shared toggles
     ├── codex.nix                # Codex CLI configuration
-    ├── forge.nix                # Forge (tailcallhq/forgecode) configuration
     ├── gemini.nix               # Gemini CLI configuration
     ├── opencode.nix             # OpenCode configuration (agents, LSP, providers)
     ├── omp.nix                  # Oh My Pi configuration

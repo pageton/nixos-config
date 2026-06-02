@@ -6,13 +6,12 @@ This guide covers the AI coding agents available in your workflow — configurat
 
 ## Overview
 
-Five CLI tools for AI-assisted development, all configured declaratively via `home/programs/ai-agents/`:
+Four CLI tools for AI-assisted development, all configured declaratively via `home/programs/ai-agents/`:
 
 | Agent           | Binary     | Config Location                           | Format |
 | --------------- | ---------- | ----------------------------------------- | ------ |
 | **Claude Code** | `claude`   | `~/.claude/settings.json` + `~/.mcp.json` | JSON   |
 | **OpenCode**    | `opencode` | `~/.config/opencode/opencode.json`        | JSON   |
-| **Forge**       | `forge`    | `~/forge/.forge.toml` (CLI-driven)        | TOML   |
 | **Gemini CLI**  | `gemini`   | `~/.gemini/settings.json`                 | JSON   |
 | **Codex**       | `codex`    | `~/.codex/config.toml`                    | TOML   |
 
@@ -45,7 +44,6 @@ Primary catalog (full matrix): [`AI-AGENTS-RESOURCE-INDEX.md`](./AI-AGENTS-RESOU
 | ----------------- | --------------------------------------------------------- | ------------------------------------------------------- |
 | Claude Code       | <https://docs.anthropic.com/en/docs/claude-code/overview> | <https://github.com/anthropics/claude-code>             |
 | OpenCode          | <https://opencode.ai/docs>                                | <https://github.com/anomalyco/opencode>                 |
-| Forge             | <https://forgecode.dev>                                   | <https://github.com/nicepkg/forge>                      |
 | Codex CLI         | <https://platform.openai.com/docs/codex>                  | <https://github.com/openai/codex>                       |
 | Gemini CLI        | <https://ai.google.dev/gemini-api/docs>                   | <https://github.com/google-gemini/gemini-cli>           |
 | MCP Specification | <https://modelcontextprotocol.io/introduction>            | <https://github.com/modelcontextprotocol/specification> |
@@ -123,7 +121,6 @@ btca ask --resource <name> --question "Summarize setup, auth, and latest breakin
 | `gem`                       | `gemini --yolo`                                                    | Gemini CLI YOLO (default)                                            |
 | `cx`                        | `codex --no-alt-screen`                                            | Codex safe default                                                   |
 | `cxu`                       | `codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox` | Codex YOLO (unsafe explicit)                                         |
-| `fg`                        | `forge`                                                            | Forge CLI (default model/provider)                                   |
 | `aip`                       | AI Panes — multi-agent side-by-side in Zellij                      | Function: `aip cl oc gem "prompt"` opens 3 panes with prompt         |
 | `claude_glm` (`clglm`)      | Claude Code via Z.AI GLM-5 proxy                                   | Function: sets ANTHROPIC base URL + GLM model env vars               |
 | `opencode_glm` (`ocglm`)    | OpenCode with GLM-5 profile                                        | Function: sets `OPENCODE_CONFIG_DIR=~/.config/opencode-glm/`         |
@@ -131,15 +128,10 @@ btca ask --resource <name> --question "Summarize setup, auth, and latest breakin
 | `opencode_gpt` (`ocgpt`)    | OpenCode with GPT profile                                          | Function: sets `OPENCODE_CONFIG_DIR=~/.config/opencode-gpt/`         |
 | `opencode_zen` (`oczen`)    | OpenCode with Zen profile (free models)                            | Function: sets `OPENCODE_CONFIG_DIR=~/.config/opencode-zen/`         |
 | `occm`                      | `opencode --prompt '<review/split/sign prompt>'`                   | Review current git changes and commit logically with `git commit -S` |
-| `fgcm`                      | `forge --prompt '<review/split/sign prompt>'`                      | Forge: review current git changes and commit logically               |
-| `fgrf`                      | `forge --prompt '<refactor/maintainability prompt>'`               | Forge: refactor for maintainability                                  |
-| `fgsa`                      | `forge --prompt '<security audit prompt>'`                         | Forge: security audit                                                |
-| `fgbp`                      | `forge --prompt '<build performance prompt>'`                      | Forge: build performance analysis                                    |
-| `fgmd`                      | `forge --prompt '<markdown sync prompt>'`                          | Forge: sync markdown docs                                            |
 
 ### Aliases vs Functions
 
-- **Aliases** (`cl`, `clglm`, `oc`, `ocglm`, `ocgem`, `ocgpt`, `gem`, `cx`, `fg`, `occm`, `fgcm`, etc.) are defined in `home/programs/ai-agents/services.nix`. Workflow aliases (`*cm`, `*rf`, `*sa`, `*md`) are generated automatically from the base agent alias list.
+- **Aliases** (`cl`, `clglm`, `oc`, `ocglm`, `ocgem`, `ocgpt`, `gem`, `cx`, `occm`, etc.) are defined in `home/programs/ai-agents/services.nix`. Workflow aliases (`*cm`, `*rf`, `*sa`, `*md`) are generated automatically from the base agent alias list.
 - **Functions** (`claude_glm`, `opencode_glm`, `opencode_gemini`, `opencode_gpt`, `aip`) are defined in `home/programs/terminal/zsh/functions.nix` for env var injection, sops key loading, or multi-line logic.
 
 ---
@@ -153,7 +145,6 @@ ai-agents/
 ├── _mcp-transforms.nix      # MCP server transform helpers (imported by builders)
 ├── _settings-builders.nix   # Per-agent settings builders (imported by files.nix)
 ├── _opencode-profiles.nix   # OpenCode profile names and config paths
-├── _forge-config.nix        # Forge CLI activation (config set + MCP import)
 ├── activation.nix           # Activation scripts (secret patching, config setup, plugin installs)
 ├── files.nix                # home.file + xdg.configFile declarations
 ├── services.nix             # Packages, zsh aliases, systemd user services/timers
@@ -163,7 +154,7 @@ ai-agents/
 │   ├── agents.nix           # Oh-My-OpenCode agent definitions
 │   ├── instructions.nix     # Global instructions + skills
 │   ├── mcp-servers.nix      # MCP server definitions + logging
-│   ├── models.nix           # Model/provider registries (OpenCode, Codex, Forge, Gemini, Goose)
+│   ├── models.nix           # Model/provider registries (OpenCode, Codex, Gemini, Goose)
 │   └── permissions.nix      # Claude permissions, hooks, settings
 └── log-analyzer.nix         # Log analysis tools and dashboard
 ```
@@ -172,9 +163,8 @@ ai-agents/
 
 1. **Nix generates** base configs from `config.nix` values
 2. **Activation scripts** write configs as real files (not symlinks, so plugins can modify)
-3. **`setupForgeConfig`** configures Forge via CLI (`forge config set`) and imports local MCP servers
-4. **`patchAiAgentSecrets`** injects the Z.AI API key into all agents + all OpenCode profiles from sops, and imports Z.AI remote MCP servers into Forge
-5. Agents read their native config files at runtime
+3. **`patchAiAgentSecrets`** injects the Z.AI API key into all agents + all OpenCode profiles from sops
+4. Agents read their native config files at runtime
 
 ---
 
@@ -236,20 +226,6 @@ Permissions allow: `git`, `gh`, `npm run`, `pnpm`, `bun`, `just`, `nix`, `cargo`
 | Shell env policy         | `core`                         | Exclude secrets/tokens from env                     |
 
 Trusted projects: `~/System`.
-
-### Forge
-
-| Setting             | Value                           | Why                                |
-| ------------------- | ------------------------------- | ---------------------------------- |
-| Model               | `glm-5.1`                       | Cost-effective primary model       |
-| Provider            | `zai_coding`                    | Z.AI coding provider               |
-| Reasoning effort    | `high`                          | Better reasoning for complex tasks |
-| Config method       | CLI (`forge config set`)        | Native workflow, not static files  |
-| MCP import          | `forge mcp import --scope user` | Two-phase: local + remote          |
-| Skills              | Built-in (`forge://skills/`)    | No external skills.sh needed       |
-| Global instructions | `~/forge/AGENTS.md`             | Shared instructions file           |
-
-Forge uses a CLI-driven config approach instead of writing static config files. Local MCP servers (context7, github, chrome-devtools) are imported during `setupForgeConfig`, while Z.AI remote servers (web-search-prime, web-reader, zread) are imported during `patchAiAgentSecrets` when the API key is available. Forge has its own built-in skills system and does not use the skills.sh ecosystem.
 
 ## GLM-5 Profile (`opencode_glm` / `claude_glm`)
 
@@ -422,7 +398,7 @@ Installed automatically via activation script. Provides multi-agent orchestratio
 
 ## MCP Servers
 
-Defined in `home-manager/modules/ai-agents/config/mcp-servers.nix`, then transformed per-agent and shared across Claude Code, OpenCode, Gemini CLI, Codex, and Forge.
+Defined in `home-manager/modules/ai-agents/config/mcp-servers.nix`, then transformed per-agent and shared across Claude Code, OpenCode, Gemini CLI, and Codex.
 
 | Server           | Purpose                               | Status                                       |
 | ---------------- | ------------------------------------- | -------------------------------------------- |
@@ -434,7 +410,7 @@ Defined in `home-manager/modules/ai-agents/config/mcp-servers.nix`, then transfo
 | web-reader       | Read web pages via Z.AI               | Injected at activation                       |
 | zread            | Document reader via Z.AI              | Injected (Claude/OpenCode/Gemini)            |
 
-Remote MCP servers are injected into all 5 agents by `patchAiAgentSecrets` using the sops-decrypted Z.AI API key. Forge receives its remote MCP servers via `forge mcp import --scope user` during the secret patching phase.
+Remote MCP servers are injected into all configured agents by `patchAiAgentSecrets` using the sops-decrypted Z.AI API key.
 
 ### playwright-cli (Browser CLI Skill)
 
@@ -592,7 +568,6 @@ All sops functions use `_load_zai_key()` which reads `~/.config/sops-nix/secrets
 6. `~/.codex/config.toml` — MCP server env
 7. `~/.gemini/settings.json` — MCP server env + remote MCPs
 8. `~/.gemini/settings.json` — MCP server env + remote MCPs
-9. Forge — remote MCP servers imported via `forge mcp import --scope user`
 
 ---
 
@@ -606,7 +581,6 @@ All sops functions use `_load_zai_key()` which reads `~/.config/sops-nix/secrets
 | Codex       | `~/.codex/log/codex-tui.log`              |
 | Claude Code | Enable with `ANTHROPIC_LOG=debug` env var |
 | Gemini CLI  | No persistent logs by default             |
-| Forge       | Managed internally by Forge runtime       |
 
 ### Commands
 
@@ -631,7 +605,6 @@ Use `*-log` aliases for explicit logged sessions through the wrapper:
 | `oc-log`     | `ai-agent-log-wrapper opencode opencode` |
 | `codex-log`  | `ai-agent-log-wrapper codex codex`       |
 | `gemini-log` | `ai-agent-log-wrapper gemini gemini`     |
-| `forge-log`  | `ai-agent-log-wrapper forge forge`       |
 
 Wrapper logs go to `~/.local/share/ai-agents/logs/`. Log cleanup runs weekly (30-day retention) via systemd user timer.
 
@@ -665,7 +638,6 @@ GLM-5 coding          -> ocglm or clglm
 Gemini coding         -> ocgem
 GPT coding            -> ocgpt
 Quick prototype       -> cx (codex)
-Forge session         -> fg (forge with GLM-5.1)
 Research + docs       -> gem (search grounding) or librarian agent
 Multi-file refactor   -> cl with oh-my-claudecode ultrawork mode
 Multi-agent parallel  -> aip cl oc gem "your task" (side-by-side in Zellij)

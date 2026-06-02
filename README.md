@@ -209,7 +209,7 @@ This configuration uses the following flakes:
 | Flake | Purpose |
 |-------|---------|
 | **nixpkgs** | NixOS unstable packages |
-| **nixpkgs-stable** | NixOS 25.11 stable packages |
+| **nixpkgs-stable** | NixOS 26.05 stable packages |
 | **home-manager** | User environment management |
 | **sops-nix** | Secret management with age encryption |
 | **stylix** | System theming (Catppuccin Mocha theme) |
