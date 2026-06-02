@@ -313,7 +313,7 @@
 
     # GitHub Copilot CLI
     {
-      alias = "cp";
+      alias = "cop";
       command = "copilot";
       workflowPromptMode = "positional";
       envMarker = "-";

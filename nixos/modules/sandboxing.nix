@@ -5,12 +5,10 @@
   pkgs,
   pkgsStable,
   ...
-}:
-let
+}: let
   mesaEglVendorFile = "/run/opengl-driver/share/glvnd/egl_vendor.d/50_mesa.json";
   mesaEglFirejailArg = "--env=__EGL_VENDOR_LIBRARY_FILENAMES=${mesaEglVendorFile}";
-in
-{
+in {
   options.mySystem.sandboxing = {
     enable = lib.mkEnableOption "application sandboxing with Firejail and bubblewrap";
 
@@ -44,7 +42,7 @@ in
         brave = {
           executable = "${pkgs.lib.getBin pkgs.brave}/bin/brave";
           profile = "${pkgs.firejail}/etc/firejail/brave.profile";
-          extraArgs = [ mesaEglFirejailArg ];
+          extraArgs = [mesaEglFirejailArg];
         };
 
         # LibreWolf (Firefox-based) — custom profile extends firefox-common
@@ -54,7 +52,7 @@ in
         librewolf = {
           executable = "${pkgs.lib.getBin pkgsStable.librewolf}/bin/librewolf";
           profile = "${pkgs.firejail}/etc/firejail/librewolf.profile";
-          extraArgs = [ mesaEglFirejailArg ];
+          extraArgs = [mesaEglFirejailArg];
         };
 
         # Messaging — use upstream profiles
@@ -116,10 +114,10 @@ in
         };
 
         # Office suite
-        libreoffice = {
-          executable = "${pkgs.lib.getBin pkgsStable.libreoffice-qt6-fresh}/bin/libreoffice";
-          profile = "${pkgs.firejail}/etc/firejail/libreoffice.profile";
-        };
+        # libreoffice = {
+        #   executable = "${pkgs.lib.getBin pkgsStable.libreoffice-qt6-fresh}/bin/libreoffice";
+        #   profile = "${pkgs.firejail}/etc/firejail/libreoffice.profile";
+        # };
 
         # File sharing over Tor
         onionshare-cli = {

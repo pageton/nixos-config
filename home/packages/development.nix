@@ -23,10 +23,9 @@ with pkgsStable;
 [
   # === Integrated Development Environments ===
   vscode-fhs # Visual Studio Code editor (FHS wrapper for extension compatibility)
-  code-cursor-fhs # Cursor IDE (FHS wrapper)
   zedNvidiaXwayland # Zed editor, forced away from unstable NVIDIA Wayland path
   sqlitebrowser # SQLite database browser GUI
-  redisinsight # Redis GUI
+  pkgs.redisinsight # Redis GUI
 
   # === API Development and Testing ===
   burpsuite # Web application security testing tool
@@ -53,7 +52,6 @@ with pkgsStable;
   just # Modern command runner
 
   # === Version Control ===
-  cursor-cli # Cursor command-line interface
   git-lfs # Git Large File Storage
 
   # === Container and Orchestration ===

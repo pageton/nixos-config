@@ -5,11 +5,9 @@
   inputs,
   system,
   ...
-}:
-let
+}: let
   palette = import ./palette.nix;
-in
-{
+in {
   # === Font Packages ===
   # Consolidated here so fonts live alongside the theme that selects them.
   home.packages = with pkgs; [
@@ -43,6 +41,7 @@ in
       zellij.enable = true;
       waybar.enable = false;
       nixcord.enable = false;
+      noctalia-shell.enable = true;
       librewolf = {
         enable = true;
         profileNames = [

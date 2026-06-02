@@ -43,9 +43,9 @@ let
     # === Relay Selection ===
     # Prefer the currently reliable nearby region instead of `location any`.
     # Random far-away relays caused repeated WireGuard timeout/obfuscation
-    # loops during boot before eventually landing on Israel anyway.
+    # loops during boot before eventually landing on Netherlands anyway.
     ${mullvad} relay set multihop off
-    ${mullvad} relay set location il
+    ${mullvad} relay set location nl
 
     # === Tunnel Hardening ===
     # Quantum-resistant key exchange (post-quantum crypto on top of WireGuard)

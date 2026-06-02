@@ -18,25 +18,24 @@ with pkgsStable;
   # === Productivity and Knowledge Management ===
   anki-bin # Spaced repetition flashcard system
   obsidian # Knowledge base and note-taking application
-  libreoffice-qt6-fresh # Full office suite with Qt6 interface
 
   # === AI and Development Tools ===
-  antigravity-fhs # AI-powered agentic IDE
+  pkgs.antigravity-fhs # AI-powered agentic IDE
 
   # === Gaming and Compatibility ===
   (bottles.override { removeWarningPopup = true; }) # Run Windows applications on Linux
 
   # === Music and Media ===
-  youtube-music # YouTube Music desktop client
+  pear-desktop # YouTube Music desktop client
 
   # === Desktop Theming ===
   gnome-themes-extra # Additional GTK themes and base themes
 
   # === VPN Services ===
-  protonvpn-gui # ProtonVPN graphical client
+  proton-vpn # ProtonVPN graphical client
 
   # === Windows Compatibility & File Sharing ===
-  wineWowPackages.stagingFull # Wine with WoW64 and staging patches
+  wineWow64Packages.stagingFull # Wine with WoW64 and staging patches
   samba # SMB/CIFS file sharing
 
   # === KDE Utilities ===

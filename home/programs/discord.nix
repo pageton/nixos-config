@@ -54,7 +54,7 @@ in
   programs.nixcord = {
     enable = true;
 
-    discord.enable = false; # Vesktop replaces bare Discord
+    discord.enable = true;
     vesktop.enable = true;
 
     config = {

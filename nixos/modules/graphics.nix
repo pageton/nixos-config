@@ -1,12 +1,14 @@
 # NVIDIA GPU drivers, CUDA, and Wayland integration.
-{ config, pkgs, ... }:
-let
-  nvidiaDriverChannel = config.boot.kernelPackages.nvidiaPackages.stable;
-in
 {
-  services.xserver.videoDrivers = [ "nvidia" ];
+  config,
+  pkgs,
+  ...
+}: let
+  nvidiaDriverChannel = config.boot.kernelPackages.nvidiaPackages.stable;
+in {
+  services.xserver.videoDrivers = ["nvidia"];
 
-  boot.blacklistedKernelModules = [ "nouveau" ];
+  boot.blacklistedKernelModules = ["nouveau"];
 
   environment.variables = {
     LIBVA_DRIVER_NAME = "nvidia";
@@ -32,7 +34,7 @@ in
 
   hardware = {
     nvidia = {
-      open = false;
+      open = true;
       nvidiaSettings = true;
       modesetting.enable = true; # Required for Wayland compositors
       package = nvidiaDriverChannel;

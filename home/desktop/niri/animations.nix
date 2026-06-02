@@ -59,10 +59,9 @@ in
       epsilon = 0.0001;
     };
 
-    window-resize.kind.spring = {
-      damping-ratio = 1.0;
-      stiffness = springStiffness;
-      epsilon = 0.0001;
+    window-resize.kind.easing = {
+      duration-ms = openDuration;
+      curve = "ease-out-expo";
     };
 
     config-notification-open-close.kind.spring = {

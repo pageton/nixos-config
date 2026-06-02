@@ -1,6 +1,13 @@
 # Noctalia — sleek, minimal Quickshell-based desktop shell for niri.
 # Replaces waybar, swaync, fuzzel, swaylock, and power menu.
 { config, lib, ... }:
+let
+  animationSpeedMap = {
+    fast = 1.5;
+    medium = 1.0;
+    slow = 0.6;
+  };
+in
 {
   imports = [
     ./bar.nix
@@ -22,9 +29,9 @@
       settingsVersion = 46;
 
       general = {
-        radiusRatio = 1.2;
-        animationSpeed = 1.0;
-        dimDesktop = true;
+        radiusRatio = config.theme.rounding / 12.5;
+        animationSpeed = animationSpeedMap.${config.theme.animation-speed};
+        dimDesktop = config.theme.blur;
         lockOnSuspend = true;
       };
 
