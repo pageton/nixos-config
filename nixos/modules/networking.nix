@@ -1,6 +1,6 @@
 # Networking configuration module.
 # NOTE: Firewall rules live in security.nix to keep all hardening in one place.
-{ lib, pkgs, ... }:
+{ lib, pkgs, constants, ... }:
 {
   # NetworkManager for GUI networking
   networking.networkmanager.enable = lib.mkDefault true;
@@ -17,6 +17,9 @@
     ExecStart = lib.mkForce "${pkgs.networkmanager}/bin/nm-online -q --timeout=15";
     TimeoutStartSec = lib.mkForce "20s";
   };
+
+  # Tailscale peer hostnames — derived from constants.tailscaleHosts.
+  networking.hosts = lib.mapAttrs' (_: h: lib.nameValuePair h.ip [ h.fqdn ]) constants.tailscaleHosts;
 
   # SSH server — key-only auth, password disabled
   # Access control: firewall (security.nix) + Tailscale ACLs

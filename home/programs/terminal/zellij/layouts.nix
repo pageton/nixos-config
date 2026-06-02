@@ -20,7 +20,7 @@ let
 
         border_enabled  "false"
 
-        hide_frame_for_single_pane "true"
+        hide_frame_for_single_pane "false"
 
         mode_normal        ""
         mode_locked        "#[bg=${constants.color.yellow_dim},fg=${constants.color.bg_hard},bold]  LOCKED #[bg=${constants.color.bg_soft},fg=${constants.color.yellow_dim}]"

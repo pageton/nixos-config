@@ -241,7 +241,7 @@ in
 
           bind "Alt n" { NewPane; }
           bind "Alt s" { NewPane "Down"; SwitchToMode "Normal"; }
-          bind "Alt v" { NewPane "Right"; SwitchToMode "Normal"; }
+          bind "Alt v" { NewPane "Right"; SwitchToMode "Normal"; MoveFocus "Right"; MoveFocus "Left"; }
           bind "Alt S" { NewPane "stacked"; SwitchToMode "Normal"; }
           bind "Alt x" { CloseFocus; SwitchToMode "Normal"; }
           bind "Alt z" { ToggleFocusFullscreen; SwitchToMode "Normal"; }

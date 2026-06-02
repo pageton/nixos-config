@@ -127,6 +127,17 @@ in
     i2pd = "127.0.0.1"; # Local I2P daemon
   };
 
+  # Tailscale mesh hosts — SSOT for Tailscale peer hostnames and IPs.
+  # Used by: networking.nix (hosts entries), ssh.nix (matchBlocks)
+  tailscaleHosts = {
+    ads = { ip = "100.64.178.113"; fqdn = "ads.tail12fed2.ts.net"; };
+    server = { ip = "100.72.20.126"; fqdn = "server.tail12fed2.ts.net"; };
+    mail = { ip = "100.111.223.67"; fqdn = "mail.tail12fed2.ts.net"; };
+  };
+
+  # Tailscale MagicDNS resolver — used for split DNS routing.
+  tailscaleDns = "100.100.100.100";
+
   # Loopback address — single source of truth for localhost-only service bindings.
   inherit localhost;
 

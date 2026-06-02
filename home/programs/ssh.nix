@@ -1,7 +1,11 @@
 # SSH client hardening (algorithms, forwarding, host key verification).
 
-_:
+{ constants, ... }:
 
+let
+  # Build SSH matchBlocks for Tailscale peers from constants.
+  tsHosts = constants.tailscaleHosts;
+in
 {
   programs.ssh = {
     enable = true;
@@ -54,22 +58,33 @@ _:
         };
       };
 
+      # Tailscale peer aliases — auto-generated from constants.tailscaleHosts.
+      # ProxyCommand routes through tailscale nc, bypassing Mullvad lockdown.
       "web" = {
-        hostname = "ads.tail12fed2.ts.net";
+        hostname = tsHosts.ads.fqdn;
         user = "root";
-        extraOptions.ForwardAgent = "yes";
+        extraOptions = {
+          ForwardAgent = "yes";
+          ProxyCommand = "/run/current-system/sw/bin/tailscale nc %h %p";
+        };
       };
 
       "server" = {
-        hostname = "server.tail12fed2.ts.net";
+        hostname = tsHosts.server.fqdn;
         user = "root";
-        extraOptions.ForwardAgent = "yes";
+        extraOptions = {
+          ForwardAgent = "yes";
+          ProxyCommand = "/run/current-system/sw/bin/tailscale nc %h %p";
+        };
       };
 
       "devrio" = {
-        hostname = "mail.tail12fed2.ts.net";
+        hostname = tsHosts.mail.fqdn;
         user = "root";
-        extraOptions.ForwardAgent = "yes";
+        extraOptions = {
+          ForwardAgent = "yes";
+          ProxyCommand = "/run/current-system/sw/bin/tailscale nc %h %p";
+        };
       };
     };
   };
