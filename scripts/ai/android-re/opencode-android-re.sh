@@ -79,6 +79,10 @@ if [[ -f "${RUNTIME_CONFIG_DIR}/opencode.json" ]] && command -v jq >/dev/null 2>
 	fi
 fi
 
+if open_herdr_space "android-re${PROFILE:+ (${PROFILE})}" "OPENCODE_CONFIG_DIR=${RUNTIME_CONFIG_DIR} exec opencode $*"; then
+	exit 0
+fi
+
 if command -v alacritty >/dev/null 2>&1; then
 	title="android-re"
 	if [[ "${PROFILE}" != "default" ]]; then

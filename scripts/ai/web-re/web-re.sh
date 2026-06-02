@@ -37,7 +37,7 @@ start_re() {
 		log_warning "mitmproxy setup skipped — tmux session still available"
 	fi
 
-	# ── Phase 4: Open Ghostty terminal on web-re workspace ──
+	# ── Phase 4: Open herdr space for tmux session ──
 	open_re_terminal
 
 	# ── Phase 5: Final health report ──

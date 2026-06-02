@@ -53,7 +53,7 @@ start_re() {
 	# ── Phase 3: Set up tmux + mitmproxy ──
 	start_mitm_tmux
 
-	# ── Phase 4: Open Alacritty terminal on android workspace ──
+	# ── Phase 4: Open herdr space for tmux session ──
 	open_re_terminal
 
 	# ── Phase 5: Root + SELinux ──

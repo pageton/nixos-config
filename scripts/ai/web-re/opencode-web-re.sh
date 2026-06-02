@@ -81,8 +81,13 @@ if [[ -f "${RUNTIME_CONFIG_DIR}/opencode.json" ]] && command -v jq >/dev/null 2>
 	fi
 fi
 
-# Spawn a separate alacritty terminal for the tmux session (non-blocking).
+# Spawn a herdr space for the tmux session (non-blocking).
 open_re_terminal
+
+# Open opencode in herdr space (preferred) or Alacritty fallback.
+if open_herdr_space "web-re${PROFILE:+ (${PROFILE})}" "OPENCODE_CONFIG_DIR=${RUNTIME_CONFIG_DIR} exec opencode $*"; then
+	exit 0
+fi
 
 if command -v alacritty >/dev/null 2>&1; then
 	title="web-re"

@@ -26,6 +26,11 @@ focus_re_workspace() {
 open_re_terminal() {
 	local title="android-re"
 
+	if open_herdr_space "${title}" "${SCRIPT_DIR}/re-avd.sh attach"; then
+		log_success "opened herdr space ${title} for tmux session ${TMUX_SESSION}"
+		return 0
+	fi
+
 	if ! command -v alacritty >/dev/null 2>&1; then
 		return 0
 	fi
