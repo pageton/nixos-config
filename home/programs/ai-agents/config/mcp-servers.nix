@@ -124,6 +124,18 @@ in
             "--mcp"
           ];
         };
+      }
+      // lib.optionalAttrs cfg.serena.enable {
+        serena = {
+          enable = true;
+          command = "serena";
+          args = [
+            "start-mcp-server"
+            "--context"
+            "claude-code"
+            "--project-from-cwd"
+          ];
+        };
       };
 
     logging = {

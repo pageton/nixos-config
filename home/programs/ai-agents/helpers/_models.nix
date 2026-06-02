@@ -50,12 +50,16 @@
   deepseek-pro = "deepseek/deepseek-v4-pro";
   deepseek-flash = "deepseek/deepseek-v4-flash";
 
+  # Xiaomi MiMo models (OpenCode uses xiaomi-token-plan-sgp provider from models.dev)
+  mimo-pro = "xiaomi-token-plan-sgp/mimo-v2.5-pro";
+  mimo-default = "xiaomi-token-plan-sgp/mimo-v2.5-pro";
+  mimo-lite = "xiaomi-token-plan-sgp/mimo-v2.5";
+  mimo-flash = "xiaomi-token-plan-sgp/mimo-v2-flash";
+  # Claude Code uses bare model names with the Anthropic-compatible endpoint
+  mimo-cc-pro = "mimo-v2.5-pro";
+  mimo-cc-lite = "mimo-v2.5";
+
   # Aider (uses Anthropic model IDs without provider prefix)
   aider-model = "claude-sonnet-4-7";
   aider-editor = "claude-haiku-4-5";
-
-  # oh-my-pi (provider-prefixed IDs match models.yml provider definitions)
-  omp-default = "zai/glm-5.1";
-  omp-plan = "zai/glm-5.1";
-  omp-smol = "zai/glm-5-turbo";
 }

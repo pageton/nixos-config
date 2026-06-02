@@ -55,6 +55,11 @@ in
           apiKey = "__DEEPSEEK_API_KEY_PLACEHOLDER__";
         };
       };
+      xiaomi-token-plan-sgp = {
+        options = {
+          apiKey = "__MIMO_API_KEY_PLACEHOLDER__";
+        };
+      };
     };
   };
 }

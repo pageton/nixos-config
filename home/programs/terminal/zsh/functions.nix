@@ -15,24 +15,12 @@ let
   # Derive OpenCode wrapper functions from profile definitions.
   # Single source: home/programs/ai-agents/helpers/_opencode-profiles.nix.
   opencodeProfiles = import ../../ai-agents/helpers/_opencode-profiles.nix { inherit config; };
-  # Derive Forge wrapper functions from profile definitions.
-  # Single source: home/programs/ai-agents/helpers/_forge-profiles.nix.
-  forgeProfiles = import ../../ai-agents/helpers/_forge-profiles.nix { inherit config; };
 
-  # Profiles that get a simple wrapper (excludes default "opencode" and
-  # "opencode-openrouter" which needs secret loading).
   simpleWrapperProfiles = builtins.filter (
     p: p.alias != "oc" && p.name != "opencode-openrouter"
   ) opencodeProfiles.profiles;
 
   profileSuffix = p: builtins.replaceStrings [ "opencode-" ] [ "" ] p.name;
-
-  # Forge: simple wrappers (excludes default "forge" and "forge-openrouter" which needs secret loading).
-  simpleForgeProfiles = builtins.filter (
-    p: p.alias != "fg" && p.name != "forge-openrouter"
-  ) forgeProfiles.profiles;
-
-  forgeProfileSuffix = p: builtins.replaceStrings [ "forge-" ] [ "" ] p.name;
 
   # Oh My Pi (omp) profile definitions for wrapper functions.
   ompProfiles = import ../../ai-agents/helpers/_omp-profiles.nix { inherit config; };
@@ -70,6 +58,7 @@ in
     _load_zai_key() { _load_secret zai_api_key; }
     _load_openrouter_key() { _load_secret openrouter_api_key; }
     _load_deepseek_key() { _load_secret deepseek_api_key; }
+    _load_mimo_key() { _load_secret mimo_api_key; }
 
     # Export Gemini key for gemini CLI (non-fatal — CLI is optional)
     if _gemini_key="$(_load_gemini_key 2>/dev/null)" && [[ -n "$_gemini_key" ]]; then
@@ -92,11 +81,8 @@ in
         oc*|locgpt*|mocgpt*|xocgpt*) printf '\ue7a4 ' ;;     #  OpenCode — oc, ocglm, ocgem, ocgpt, ocs, oczen + all workflow suffixes
         cx*|lcx*|mcx*|hcx*|xcx*) printf '\uf1c0 ' ;;         #  Codex — cx, lcx, mcx, hcx, xcx + all workflow suffixes
         ag*|gem*) printf '\uf529 ' ;;                          #  Antigravity — ag/gem + all workflow suffixes
-        fg*) printf '\uf7d9 ' ;;                               #  Forge — fg, fgglm, fggem, fggpt, fgor, fgs, fgzen + all workflow suffixes
         omp*) printf '\uf1b2 ' ;;                              #  OMP — omp, omps, ompop, ompglm, ompgem, ompgpt, ompor, ompzen + all workflow suffixes
         pi*) printf '\uf1b2 ' ;;                              #  Pi — pi, pis, piop, piglm, pigem, pigpt, pior, pizen + all workflow suffixes
-        opi*) printf '\uf135 ' ;;                              #  oh-my-pi — opi + all workflow suffixes
-        dr*) printf '\ue7b8 ' ;;                              #  Droid — dr, drglm, drgem, drgpt, dror, drs, drzen + all workflow suffixes
         *) ;;
       esac
     }
@@ -159,9 +145,17 @@ in
       claude --dangerously-skip-permissions --debug-file "$debug_dir/claude-debug-$(date +%Y-%m-%d).log" "$@"
     }
 
-    droid_seek() {
-      _zellij_rename_tab "drsk"
-      droid -m deepseek-v4-pro "$@"
+    claude_mimo() {
+      local key; key="$(_load_mimo_key)" || return 1
+      _zellij_rename_tab "clmi"
+      local debug_dir="''${AI_AGENT_LOG_DIR:-$HOME/.local/share/ai-agents/logs}"
+      mkdir -p "$debug_dir"
+      ANTHROPIC_AUTH_TOKEN="$key" \
+      ANTHROPIC_BASE_URL="https://token-plan-sgp.xiaomimimo.com/anthropic" \
+      ANTHROPIC_DEFAULT_OPUS_MODEL="mimo-v2.5-pro" \
+      ANTHROPIC_DEFAULT_SONNET_MODEL="mimo-v2.5-pro" \
+      ANTHROPIC_DEFAULT_HAIKU_MODEL="mimo-v2.5" \
+      claude --dangerously-skip-permissions --debug-file "$debug_dir/claude-debug-$(date +%Y-%m-%d).log" "$@"
     }
 
     omp_glm() {
@@ -260,12 +254,6 @@ in
       fi
     }
 
-    droid_glm() { _zellij_rename_tab "drglm"; ZAI_API_KEY="$(_load_zai_key)" droid "$@"; }
-    droid_gemini() { _zellij_rename_tab "drgem"; droid "$@"; }
-    droid_gpt() { _zellij_rename_tab "drgpt"; droid "$@"; }
-    droid_openrouter() { _zellij_rename_tab "dror"; OPENROUTER_API_KEY="$(_load_openrouter_key)" droid "$@"; }
-    droid_sonnet() { _zellij_rename_tab "drs"; droid "$@"; }
-    droid_zen() { _zellij_rename_tab "drzen"; droid "$@"; }
 
     # === AI multi-pane launcher ===
     # Launch multiple AI agents side-by-side in Zellij panes

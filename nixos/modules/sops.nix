@@ -53,6 +53,10 @@
         owner = user;
         mode = "0400";
       };
+      mimo_api_key = {
+        owner = user;
+        mode = "0400";
+      };
     };
   };
 }
