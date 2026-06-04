@@ -71,6 +71,11 @@ with pkgsStable;
 
   # === Reverse Engineering and Dynamic Analysis ===
   frida-tools # Dynamic instrumentation toolkit for reverse engineering
+  ghidra-bin # NSA reverse engineering framework (GUI + headless)
+  radare2 # CLI reverse engineering framework
+  cutter # radare2 GUI frontend
+  binwalk # Firmware/blob analysis and extraction tool
+  scrcpy # Screen mirroring for Android devices (ADB-based)
 
   # Security and pattern analysis
   yara # Pattern matching engine for malware/rules detection
