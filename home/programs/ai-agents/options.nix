@@ -161,7 +161,6 @@ in
 
     herdr = {
       enable = mkBoolOption false "Install herdr agent multiplexer";
-      version = mkStrOption "0.6.6" "herdr version (used for agent-state integration assets)";
     };
 
     codegraph = {

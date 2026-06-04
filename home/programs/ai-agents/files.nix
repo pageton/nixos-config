@@ -11,6 +11,8 @@
 let
   cfg = config.programs.aiAgents;
 
+  herdrPkgVersion = config.programs.herdr.package.version;
+
   inherit (builtins) toJSON;
 
   fileTemplates = import ./helpers/_file-templates.nix;
@@ -113,16 +115,16 @@ in
       (lib.mkIf cfg.herdr.enable {
         ".claude/hooks/herdr-agent-state.sh" = {
           source = pkgs.fetchurl {
-            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${cfg.herdr.version}/src/integration/assets/claude/herdr-agent-state.sh";
-            sha256 = "sha256-TYpYjXPS2SY+kYNzDp+WsssH8KmWfAbaU8G7auxJHYw=";
+            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/claude/herdr-agent-state.sh";
+            sha256 = "sha256-Xcm2blVZtLANU/5EnDazpU2txU4/x8rZgX1oGdRuahQ=";
           };
           executable = true;
           force = true;
         };
         ".codex/herdr-agent-state.sh" = {
           source = pkgs.fetchurl {
-            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${cfg.herdr.version}/src/integration/assets/codex/herdr-agent-state.sh";
-            sha256 = "sha256-zUcs4o90Y8Clk7ChtIfqoxV0hgb9fKgVcSJ4vnzKRt0=";
+            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/codex/herdr-agent-state.sh";
+            sha256 = "sha256-0P36pgmDS/1aP9HqFLWl0LvDBdczXmoCL9KI1vdlB4M=";
           };
           executable = true;
           force = true;
@@ -136,6 +138,14 @@ in
               Stop = [ { command = "~/.codex/herdr-agent-state.sh idle"; } ];
             };
           };
+          force = true;
+        };
+        ".copilot/herdr-agent-state.sh" = {
+          source = pkgs.fetchurl {
+            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/copilot/herdr-agent-state.sh";
+            sha256 = "sha256-agjXmq5AemY0nyDEBfNwqgG6Ai+yuFx5YFbLJSecsg0=";
+          };
+          executable = true;
           force = true;
         };
       })
@@ -206,8 +216,8 @@ in
       (lib.mkIf (cfg.herdr.enable && cfg.opencode.enable) {
         "opencode/plugins/herdr-agent-state.js" = {
           source = pkgs.fetchurl {
-            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${cfg.herdr.version}/src/integration/assets/opencode/herdr-agent-state.js";
-            sha256 = "sha256-/D4KodZ/gN0qRvCuIq+asy+DBxgGgFyio+Q5ipvdxYg=";
+            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/opencode/herdr-agent-state.js";
+            sha256 = "sha256-HArg4268ARsVZNAx5hZzWQhn+x9xzHuUzVoueWVnDc4=";
           };
           force = true;
         };
