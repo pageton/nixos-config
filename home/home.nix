@@ -1,7 +1,8 @@
 # Home-Manager entry point — imports all sub-modules.
 # Actual packages are set by core.nix via home.packages.
-{ ... }:
-{
+{ ... }: {
+  nixpkgs.config.permittedInsecurePackages = [ "nodejs-slim-20.20.2" ];
+
   imports = [
     ./core
     ./programs
