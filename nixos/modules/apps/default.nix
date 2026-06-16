@@ -5,5 +5,6 @@
     ../flatpak.nix # Flatpak with Flathub remote (opt-in via mySystem.flatpak)
     ../gaming.nix # Steam, Proton-GE, MangoHud, Lutris (opt-in via mySystem.gaming)
     ../syncthing.nix # Syncthing continuous file sync (opt-in via mySystem.syncthing)
+    ../ollama.nix # Ollama local LLM inference server (opt-in via mySystem.ollama)
   ];
 }

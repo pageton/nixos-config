@@ -66,6 +66,9 @@
     webRe = {
       enable = true;
     };
+    ollama = {
+      enable = true;
+    };
   };
 
   environment.systemPackages = with pkgs; [ home-manager ];
