@@ -1,94 +1,25 @@
-# herdr agent state hooks for Claude Code.
-# Reports working/blocked/idle/release to herdr's socket API.
+# herdr agent session hook for Claude Code.
+# Reports the active Claude session identity to herdr's socket API on session
+# start so herdr can restore it and track working/idle state via PTY monitoring.
+#
+# herdr v0.7.0 (HERDR_INTEGRATION_VERSION=6) replaced the previous state-based
+# hook model (working/blocked/idle/release on every event) with a single
+# SessionStart hook that reports the session id + transcript path. Working/idle
+# state is now derived from pane process monitoring, not hooks.
 { }:
 
 let
   herdrHookScript = "$HOME/.claude/hooks/herdr-agent-state.sh";
 in
 {
-  UserPromptSubmit = [
+  SessionStart = [
     {
+      matcher = "*";
       hooks = [
         {
           type = "command";
-          command = "${herdrHookScript} working";
-        }
-      ];
-    }
-  ];
-
-  PreToolUse = [
-    {
-      hooks = [
-        {
-          type = "command";
-          command = "${herdrHookScript} working";
-        }
-      ];
-    }
-  ];
-
-  PermissionRequest = [
-    {
-      hooks = [
-        {
-          type = "command";
-          command = "${herdrHookScript} blocked";
-        }
-      ];
-    }
-  ];
-
-  PostToolUse = [
-    {
-      hooks = [
-        {
-          type = "command";
-          command = "${herdrHookScript} working";
-        }
-      ];
-    }
-  ];
-
-  PostToolUseFailure = [
-    {
-      hooks = [
-        {
-          type = "command";
-          command = "${herdrHookScript} working";
-        }
-      ];
-    }
-  ];
-
-  SubagentStop = [
-    {
-      hooks = [
-        {
-          type = "command";
-          command = "${herdrHookScript} working";
-        }
-      ];
-    }
-  ];
-
-  Stop = [
-    {
-      hooks = [
-        {
-          type = "command";
-          command = "${herdrHookScript} idle";
-        }
-      ];
-    }
-  ];
-
-  SessionEnd = [
-    {
-      hooks = [
-        {
-          type = "command";
-          command = "${herdrHookScript} release";
+          command = "${herdrHookScript} session";
+          timeout = 10;
         }
       ];
     }

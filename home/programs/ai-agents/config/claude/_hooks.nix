@@ -18,5 +18,12 @@ let
   herdr = import ./_hooks-herdr.nix { };
   security = import ./_hooks-security.nix { inherit mkCommandHook; };
   projectGuards = import ./_hooks-project-guards.nix { inherit mkCommandHook; };
+
+  # Both session and herdr register SessionStart hooks — concatenate the lists
+  # so the AGENTS.md context loader and herdr's session reporter both fire.
+  # (Plain // would let herdr clobber session's SessionStart entries.)
+  sessionStartMerged = {
+    SessionStart = (session.SessionStart or [ ]) ++ (herdr.SessionStart or [ ]);
+  };
 in
-preToolUse // postToolUse // session // herdr // security // projectGuards
+preToolUse // postToolUse // session // sessionStartMerged // security // projectGuards

@@ -118,7 +118,7 @@ in
         ".claude/hooks/herdr-agent-state.sh" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/claude/herdr-agent-state.sh";
-            sha256 = "sha256-Xcm2blVZtLANU/5EnDazpU2txU4/x8rZgX1oGdRuahQ=";
+            sha256 = "sha256-QF2vfsCCXpwy8Vg7k0BNGHiN1ueMhs7lrxU+PzIO/jw=";
           };
           executable = true;
           force = true;
@@ -134,10 +134,17 @@ in
         ".codex/hooks.json" = {
           text = toJSON {
             hooks = {
-              SessionStart = [ { command = "~/.codex/herdr-agent-state.sh idle"; } ];
-              UserPromptSubmit = [ { command = "~/.codex/herdr-agent-state.sh working"; } ];
-              PreToolUse = [ { command = "~/.codex/herdr-agent-state.sh working"; } ];
-              Stop = [ { command = "~/.codex/herdr-agent-state.sh idle"; } ];
+              SessionStart = [
+                {
+                  hooks = [
+                    {
+                      type = "command";
+                      command = "~/.codex/herdr-agent-state.sh session";
+                      timeout = 10;
+                    }
+                  ];
+                }
+              ];
             };
           };
           force = true;
@@ -145,7 +152,7 @@ in
         ".copilot/herdr-agent-state.sh" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/copilot/herdr-agent-state.sh";
-            sha256 = "sha256-agjXmq5AemY0nyDEBfNwqgG6Ai+yuFx5YFbLJSecsg0=";
+            sha256 = "sha256-Lgl/11kpgPrzpVfTmTLi9Qi7OZl3I3Rx1cyDaXY+99A=";
           };
           executable = true;
           force = true;
