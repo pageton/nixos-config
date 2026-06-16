@@ -6,7 +6,7 @@
   claude-sonnet = "opencode/claude-sonnet-4-7";
   claude-haiku = "opencode/claude-haiku-4-5";
 
-  # Anthropic Claude models (raw IDs for pi and other agents)
+  # Anthropic Claude models (raw IDs for agents that need them)
   claude-opus-raw = "claude-opus-4-7";
   claude-sonnet-raw = "claude-sonnet-4-7";
   claude-haiku-raw = "claude-haiku-4-5";
@@ -27,13 +27,12 @@
   openrouter-raw = "openrouter/tencent/hy3-preview:free";
 
   # ZAI / other
-  glm = "zai-coding-plan/glm-5.1";
+  glm = "zai-coding-plan/glm-5.2";
   "glm-5" = "zai-coding-plan/glm-5";
-  glm-raw = "zai/glm-5.1";
+  glm-raw = "zai/glm-5.2";
   gemini = "google/gemini-3-pro-preview";
   gemini-raw = "google/gemini-3-pro-preview";
   zen = "opencode/minimax-m2.5-free";
-  zen-pi = "minimax-m2.5-free";
   zen-raw = "opencode-zen/minimax-m2.5-free";
   gemini-pro = "gemini-3-pro-preview";
   gemini-flash = "gemini-2.5-flash";

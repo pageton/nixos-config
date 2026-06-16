@@ -174,8 +174,8 @@ in
       timeout = 3000000; # API timeout in ms
       models = {
         haiku = "glm-5-turbo";
-        sonnet = "glm-5.1";
-        opus = "glm-5.1";
+        sonnet = "glm-5.2";
+        opus = "glm-5.2";
       };
     };
     deepseek = {
