@@ -10,11 +10,9 @@ Parent: `home-manager/modules/ai-agents/AGENTS.md`
 
 | File                | Purpose                                                                                     |
 | ------------------- | ------------------------------------------------------------------------------------------- |
-| `default.nix`       | Import hub: imports codex, gemini, opencode                                                 |
+| `default.nix`       | Import hub: imports codex, opencode                                                |
 | `codex.nix`         | Codex CLI: model (gpt-5.5), profiles, custom agents, features                               |
-| `gemini.nix`        | Gemini CLI: theme (Gruvbox), model aliases, auto-format hooks, security, experimental flags |
 | `opencode.nix`      | OpenCode: model (claude-opus-4-6), 7 agents, 6 commands, LSP, permissions                   |
-| `omp.nix`                  | OMP CLI: model configuration                                                                |
 | `_opencode-lsp.nix` | Plain attrset (not a module): LSP server definitions for 9 languages                        |
 | `_opencode-web-re.nix`     | OpenCode Web RE agent definition (imports `../../web-re/_prompt.nix`)                       |
 
@@ -34,7 +32,6 @@ Parent: `home-manager/modules/ai-agents/AGENTS.md`
 
 - `gemini.nix` is the largest file (~207 lines) with extensive theme/hook/model alias config.
 - `opencode.nix` imports `../../android-re/_prompt.nix` — creates a dependency on the `android-re/` directory.
-- `gemini.nix` references `constants.color.*` for theming — from flake-level constants, not options.
 - `codex.nix` sets `trustedProjects` to the System directory path from `config.home.homeDirectory`.
 - `_opencode-lsp.nix` is the only non-module file — imported directly by `opencode.nix` as the `lsp` option value.
 - Gemini auto-format hooks use inline Bash via string interpolation; formatter branches come from `_formatters.nix`.

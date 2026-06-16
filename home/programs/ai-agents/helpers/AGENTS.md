@@ -17,7 +17,7 @@ Parent: `home-manager/modules/ai-agents/AGENTS.md`
 | `_destructive-rules.nix`        | Canonical destructive command list + generators for deny rules                     |
 | `_gemini-policies.nix`          | Gemini CLI TOML safety policies (allow research, deny destructive)                 |
 | `_opencode-profiles.nix`        | Seven OpenCode profile names and their XDG config paths                            |
-| `_opencode-gruvbox-theme.nix`   | Gruvbox Dark theme definition for OpenCode TUI                                     |
+| `_opencode-theme.nix`             | Catppuccin Mocha theme definition for OpenCode TUI                                |
 | `_aliases.nix`                  | Zsh alias generation for agent launchers and workflow combos                       |
 | `_workflow-prompts.nix`         | Workflow prompt constants (commitSplit, securityAudit, etc.)                       |
 | `_file-templates.nix`           | Static agent/skill/definition templates for Claude and Gemini                      |
@@ -29,16 +29,6 @@ Parent: `home-manager/modules/ai-agents/AGENTS.md`
 | `_zai-filters.nix`              | Agent-specific jq filters for Z.AI MCP secret injection                            |
 | `_git-clone-update.nix`         | Generates Bash snippet for git clone/update under `~/.local/share/`                |
 | `_android-re-launchers.nix`     | *(moved to `android-re/_launchers.nix`)*                                           |
-| `_pi-profiles.nix`              | Eight Pi profile definitions (provider, model, zaiKey flags)                       |
-| `_pi-settings-builder.nix`      | Pi settings.json, models.json, auth.json generation per profile                    |
-
-### TypeScript Extensions (`pi-extensions/`)
-
-| File                    | Purpose                                                                                       |
-| ----------------------- | --------------------------------------------------------------------------------------------- |
-| `mcp-bridge.ts`         | MCP bridge: reads manifest, spawns MCP servers, translates MCP ↔ pi tool calls via stdio/JSON-RPC |
-| `subagent.ts`           | `delegate_task` tool: spawns headless `pi -p` for isolated subtask execution                  |
-| `git-checkpoint.ts`     | Git checkpoint tools: create, list, restore tags with auto-checkpoint on session start        |
 
 ---
 
@@ -57,6 +47,4 @@ Parent: `home-manager/modules/ai-agents/AGENTS.md`
 - `_zai-filters.nix` imports `_zai-services.nix` directly; both must stay in sync.
 - `_gemini-policies.nix` imports `_destructive-rules.nix` directly.
 - `_aliases.nix` and `android-re/_launchers.nix` both import `_models.nix`.
-- `_pi-settings-builder.nix` uses `__ZAI_API_ROOT__` and `__ZAI_API_KEY_FILE__` placeholders in models.json — patched by `activation/secrets.nix`.
-- `_pi-profiles.nix` references raw model IDs from `_models.nix` (unprefixed, since pi uses provider + model separately).
 - `toHookPattern` in `_destructive-rules.nix` has special-case regex escaping for `rm -rf /`, `rm -rf ~`, `dd` — consider grep regex safety when adding commands.
