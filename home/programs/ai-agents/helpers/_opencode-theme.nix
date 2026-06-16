@@ -1,4 +1,4 @@
-# Gruvbox Dark theme definition for OpenCode TUI.
+# Catppuccin Mocha theme definition for OpenCode TUI.
 # Used by files.nix to generate per-profile theme files.
 
 { color }:

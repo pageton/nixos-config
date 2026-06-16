@@ -31,15 +31,26 @@ let
       opencodeProfileNames
       ;
   };
+  specKit = import ./_plugin-spec-kit.nix {
+    inherit
+      cfg
+      pkgs
+      lib
+      opencodeProfileNames
+      ;
+  };
   cleanupAgencyAgents = import ./_cleanup-agency-agents.nix {
     inherit cfg lib preservedClaudeAgents;
   };
   cleanupEverythingClaudeCode = import ./_cleanup-everything-claude-code.nix {
     inherit cfg lib opencodeProfileNames;
   };
+  cleanupSpecKit = import ./_cleanup-spec-kit.nix { inherit cfg lib opencodeProfileNames; };
 in
 impeccable
 // agencyAgents
 // everythingClaudeCode
+// specKit
 // cleanupAgencyAgents
 // cleanupEverythingClaudeCode
+// cleanupSpecKit

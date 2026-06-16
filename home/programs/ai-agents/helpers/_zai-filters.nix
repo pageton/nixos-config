@@ -3,7 +3,7 @@
 # Each agent uses a different JSON key path and schema variant:
 #   - opencode: .mcp["<key>"], type "remote"
 #   - claude:   .mcpServers["<key>"], type "http"
-#   - gemini:   .mcpServers["<key>"], type "http", extra command/args fields
+#   - antigravity:   .mcpServers["<key>"], type "http", extra command/args fields
 
 { lib, constants }:
 
@@ -68,7 +68,7 @@ in
     type = "http";
   };
 
-  geminiZaiFilter = mkZaiFilter {
+  antigravityZaiFilter = mkZaiFilter {
     mcpRoot = "mcpServers";
     nativeKey = "zai-mcp-server";
     type = "http";

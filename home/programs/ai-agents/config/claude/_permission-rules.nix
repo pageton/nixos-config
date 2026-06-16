@@ -48,13 +48,16 @@ in
     "mcp__codegraph__codegraph_status"
   ];
 
-  deny = destructiveRules.mkClaudeDenyRules destructiveRules.systemCommands ++ [
-    # File read restrictions (not shell commands — Claude-specific)
-    "Read(.env)"
-    "Read(.env.*)"
-    "Read(./secrets/**)"
-    "Read(.ssh/*)"
-    "Read(**/id_rsa*)"
-    "Read(**/id_ed25519*)"
-  ];
+  deny =
+    destructiveRules.mkClaudeDenyRules destructiveRules.systemCommands
+    ++ destructiveRules.mkClaudeDenyRules destructiveRules.gitCommands
+    ++ [
+      # File read restrictions (not shell commands — Claude-specific)
+      "Read(.env)"
+      "Read(.env.*)"
+      "Read(./secrets/**)"
+      "Read(.ssh/*)"
+      "Read(**/id_rsa*)"
+      "Read(**/id_ed25519*)"
+    ];
 }

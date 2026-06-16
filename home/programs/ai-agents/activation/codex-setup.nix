@@ -141,6 +141,7 @@ lib.mkIf cfg.codex.enable (
   in
   lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     mkdir -p "$HOME/.codex" "$HOME/.codex/agents"
+    find "$HOME/.codex" -maxdepth 1 -name 'cx*.config.toml' -delete 2>/dev/null
     cat > "$HOME/.codex/config.toml" << 'CODEX_EOF'
     personality = "${cfg.codex.personality}"
     model = "${cfg.codex.model}"

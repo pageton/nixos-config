@@ -28,6 +28,7 @@ let
     "@z_ai/mcp-server"
     "opensrc"
     "@colbymchenry/codegraph"
+    "@mimo-ai/cli"
   ];
 
   mkShellAliasPrograms = import ../../_helpers/_shell-alias-programs.nix;

@@ -17,6 +17,7 @@ let
 
   fileTemplates = import ./helpers/_file-templates.nix;
   geminiPolicies = import ./helpers/_gemini-policies.nix;
+  herdrMimoPlugin = import ./helpers/_herdr-mimo-plugin.nix;
   impeccable = import ./helpers/_impeccable-commands.nix;
   models = import ./helpers/_models.nix;
   agentEnvContent = import ./helpers/_agent-env.nix { inherit constants; };
@@ -30,10 +31,11 @@ let
   };
   settingsBuilders = import ./helpers/_settings-builders.nix { inherit cfg config lib; };
   inherit (settingsBuilders)
-    geminiSettings
+    antigravitySettings
     opencodeSettingsByProfile
     opencodeAndroidReMcpServers
     opencodeWebReMcpServers
+    mimoSettings
     ;
 
   opencodeProfiles = import ./helpers/_opencode-profiles.nix { inherit config; };
@@ -172,15 +174,15 @@ in
         };
       }
 
-      # === Gemini Files (Settings, Commands, Policies) ===
-      (lib.mkIf cfg.gemini.enable (
+      # === Antigravity Files (Settings, Commands, Policies) ===
+      (lib.mkIf cfg.antigravity.enable (
         {
           ".gemini/settings.json" = {
-            text = toJSON geminiSettings;
+            text = toJSON antigravitySettings;
             force = true;
           };
         }
-        // (mkTextFiles ".gemini/commands" fileTemplates.geminiCommands)
+        // (mkTextFiles ".gemini/commands" fileTemplates.antigravityCommands)
         // (mkTextFiles ".gemini/policies" geminiPolicies)
       ))
     ];
@@ -212,13 +214,27 @@ in
         };
       })
       (lib.mkIf cfg.opencode.enable (opencodeConfigFiles // opencodeImpeccableCommandFiles))
+      # MiMoCode config (MCP servers, shared with OpenCode format)
+      (lib.mkIf cfg.enable {
+        "mimocode/config.json" = {
+          text = toJSON mimoSettings;
+          force = true;
+        };
+      })
       # herdr agent state plugin for OpenCode (auto-discovered from plugins/ dir)
       (lib.mkIf (cfg.herdr.enable && cfg.opencode.enable) {
         "opencode/plugins/herdr-agent-state.js" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/opencode/herdr-agent-state.js";
-            sha256 = "sha256-HArg4268ARsVZNAx5hZzWQhn+x9xzHuUzVoueWVnDc4=";
+            sha256 = "sha256-JxMEoRD06Qx0IZ/Xt75tzuRY6xyaiL5PSli5v1YHB4Y=";
           };
+          force = true;
+        };
+      })
+      # herdr agent state plugin for MiMoCode (same OpenCode plugin API, placed in mimo config dir)
+      (lib.mkIf cfg.herdr.enable {
+        "mimocode/plugins/herdr-agent-state.js" = {
+          text = herdrMimoPlugin.pluginJs;
           force = true;
         };
       })

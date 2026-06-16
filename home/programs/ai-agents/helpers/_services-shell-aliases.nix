@@ -16,6 +16,7 @@ in
       "oc-port" = "opencode --port 4096";
       "codex-log" = "ai-agent-log-wrapper codex codex";
       "ag-log" = "ai-agent-log-wrapper antigravity agy";
+      "mi-log" = "ai-agent-log-wrapper mimo mimo";
 
       "ai-logs" = "tail -f ${al}/*.log ${ol}/*.log ${cl}/*.log 2>/dev/null";
       "ai-errors" = "ai-agent-analyze errors";

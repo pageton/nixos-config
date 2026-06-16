@@ -24,11 +24,7 @@ let
   opencodeConfigPathList = lib.concatMapStringsSep " " lib.escapeShellArg opencodeConfigPaths;
 
   zaiFilters = import ../helpers/_zai-filters.nix { inherit lib constants; };
-  inherit (zaiFilters)
-    opencodeZaiFilter
-    claudeZaiFilter
-    geminiZaiFilter
-    ;
+  inherit (zaiFilters) opencodeZaiFilter claudeZaiFilter antigravityZaiFilter;
   githubPlaceholderFilter = ''
     walk(if type == "string" then gsub("__GITHUB_TOKEN_PLACEHOLDER__"; $token) else . end)
   '';
@@ -51,7 +47,7 @@ let
       opencodeConfigPathList
       opencodeZaiFilter
       claudeZaiFilter
-      geminiZaiFilter
+      antigravityZaiFilter
       githubPlaceholderFilter
       openrouterPlaceholderFilter
       context7PlaceholderFilter
@@ -103,15 +99,16 @@ in
       # Runs after all config writers so keys can be injected last.
       patchAiAgentSecrets = secretPatching;
 
-      cleanupRetiredGeminiCli = lib.mkIf (!cfg.gemini.enable) (
+      cleanupRetiredAntigravityCli = lib.mkIf (!cfg.antigravity.enable) (
         lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-          gemini_cfg="$HOME/.gemini/settings.json"
-          if [[ -f "$gemini_cfg" ]] && ${pkgs.jq}/bin/jq -e '
+          agy_cfg="$HOME/.gemini/settings.json"
+          if [[ -f "$agy_cfg" ]] && ${pkgs.jq}/bin/jq -e '
             (.policyPaths // []) == ["$HOME/.gemini/policies"]
             or (.ui.customThemes.Gruvbox.name // "") == "Gruvbox"
-          ' "$gemini_cfg" >/dev/null 2>&1; then
-            rm -f "$gemini_cfg"
-            echo "✓ Removed retired Gemini CLI settings"
+            or (.ui.customThemes.Catppuccin-Mocha.name // "") == "Catppuccin Mocha"
+          ' "$agy_cfg" >/dev/null 2>&1; then
+            rm -f "$agy_cfg"
+            echo "✓ Removed retired Antigravity CLI settings"
           fi
         ''
       );
@@ -141,8 +138,10 @@ in
         installImpeccable
         installAgencyAgents
         installEverythingClaudeCode
+        installSpecKit
         cleanupDisabledAgencyAgents
         cleanupDisabledEverythingClaudeCode
+        cleanupDisabledSpecKit
         ;
     };
   };

@@ -90,6 +90,11 @@ let
       npmPackage = "@github/copilot";
       label = "GitHub Copilot CLI";
     }
+    {
+      binary = "mimo";
+      npmPackage = "@mimo-ai/cli";
+      label = "MiMoCode CLI";
+    }
   ];
 
   autoUpdateAllScript = pkgs.writeShellScript "update-ai-agents" (
@@ -99,29 +104,6 @@ let
       ${pkgs.uv}/bin/uv tool install -p 3.13 --prerelease=allow ${cfg.serena.package}@latest 2>/dev/null && echo "Updated Serena" || true
     ''
   );
-
-  terax = pkgs.appimageTools.wrapType2 rec {
-    pname = "terax";
-    version = "0.6.6";
-
-    src = pkgs.fetchurl {
-      url = "https://github.com/crynta/terax-ai/releases/download/v${version}/Terax_${version}_amd64.AppImage";
-      sha256 = "sha256-4Ns4tz/SjExIKUTP/Uo74JwyE5fEBRF9pHDzAjzDVL4=";
-    };
-
-    profile = lib.optionalString cfg.terax.disableDmabufRenderer ''
-      export WEBKIT_DISABLE_DMABUF_RENDERER=1
-    '';
-
-    meta = with lib; {
-      description = "AI-native terminal emulator built with Tauri";
-      homepage = "https://terax.app";
-      license = licenses.asl20;
-      sourceProvenance = with sourceTypes; [ binaryNativeCode ];
-      platforms = [ pkgs.stdenv.hostPlatform.system ];
-      mainProgram = "terax";
-    };
-  };
 
   serena = pkgs.writeShellScriptBin "serena" ''
     if ! ${pkgs.uv}/bin/uv tool list 2>/dev/null | ${pkgs.gnugrep}/bin/grep -q '${cfg.serena.package}'; then
@@ -165,8 +147,8 @@ in
       webReDoctor
     ]
     ++ (lib.optional cfg.agentmemory.enable agentmemoryRuntime.iiiEngine)
-    ++ (lib.optional cfg.terax.enable terax)
     ++ (lib.optional cfg.serena.enable serena)
+    ++ (lib.optional cfg.speckit.enable pkgs.spec-kit)
     ++ androidReLaunchers
     ++ webReLaunchers
     ++ (lib.optional cfg.logging.enable (
@@ -180,23 +162,11 @@ in
       (lib.mkIf cfg.opencode.enable { OPENCODE_EXPERIMENTAL_LSP_TOOL = "true"; })
     ];
 
-    home.file = lib.mkIf cfg.terax.enable {
-      ".local/share/applications/terax.desktop".text = ''
-        [Desktop Entry]
-        Type=Application
-        Name=Terax
-        Exec=terax %U
-        Icon=utilities-terminal
-        Comment=AI-native terminal emulator
-        Categories=Development;TerminalEmulator;
-      '';
-    };
-
-    programs = import ../../../shared/alias-helpers.nix { inherit shellAliases; };
-
     home.activation.updateAiAgentCLIs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       ${autoUpdateAllScript}
     '';
+
+    programs.zsh.shellAliases = shellAliases;
 
     systemd.user = aiSystemdUser;
   };

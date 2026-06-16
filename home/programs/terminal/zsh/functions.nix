@@ -152,9 +152,9 @@ in
       mkdir -p "$debug_dir"
       ANTHROPIC_AUTH_TOKEN="$key" \
       ANTHROPIC_BASE_URL="https://token-plan-sgp.xiaomimimo.com/anthropic" \
-      ANTHROPIC_DEFAULT_OPUS_MODEL="mimo-v2.5-pro" \
-      ANTHROPIC_DEFAULT_SONNET_MODEL="mimo-v2.5-pro" \
-      ANTHROPIC_DEFAULT_HAIKU_MODEL="mimo-v2.5" \
+      ANTHROPIC_DEFAULT_OPUS_MODEL="mimo-v2.5-pro[1m]" \
+      ANTHROPIC_DEFAULT_SONNET_MODEL="mimo-v2.5-pro[1m]" \
+      ANTHROPIC_DEFAULT_HAIKU_MODEL="mimo-v2.5[1m]" \
       claude --dangerously-skip-permissions --debug-file "$debug_dir/claude-debug-$(date +%Y-%m-%d).log" "$@"
     }
 
@@ -189,6 +189,21 @@ in
     opencode_openrouter() {
       local key; key="$(_load_openrouter_key)" || return 1
       OPENROUTER_API_KEY="$key" _opencode_profile "openrouter" "ocor" "$@"
+    }
+
+    mimo_glm() {
+      _zellij_rename_tab "miglm"
+      mimo -m zai-coding-plan/glm-5.1 "$@"
+    }
+
+    mimo_seek() {
+      _zellij_rename_tab "miseek"
+      mimo -m deepseek/deepseek-v4-pro "$@"
+    }
+
+    mimo_gpt() {
+      _zellij_rename_tab "migpt"
+      mimo -m openai/gpt-5.4 "$@"
     }
 
     za() {

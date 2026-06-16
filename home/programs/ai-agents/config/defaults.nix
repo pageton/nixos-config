@@ -10,11 +10,12 @@ in
     enable = true;
     globalInstructions = builtins.readFile ./global-instructions.md;
     everythingClaudeCode.enable = true;
+    speckit.enable = true;
     agencyAgents.enable = false;
     impeccable.enable = true;
-    terax.enable = true;
     agentmemory.enable = true;
     herdr.enable = true;
+    antigravity.enable = true;
     codegraph.enable = true;
     serena.enable = false;
 

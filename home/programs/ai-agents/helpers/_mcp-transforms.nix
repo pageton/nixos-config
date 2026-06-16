@@ -59,7 +59,7 @@ let
     envKey = "environment";
   };
 
-  geminiMcpServers = mkMcpTransform {
+  antigravityMcpServers = mkMcpTransform {
     localAttrs = server: {
       inherit (server) command;
       args = server.args or [ ];
@@ -92,6 +92,9 @@ let
     envKey = "environment";
     servers = webReMcpServers;
   };
+
+  # MiMo uses the same MCP format as OpenCode (shared codebase).
+  mimoMcpServers = opencodeMcpServers;
 in
 
 {
@@ -99,8 +102,9 @@ in
     sharedMcpServers
     claudeMcpServers
     opencodeMcpServers
-    geminiMcpServers
+    antigravityMcpServers
     opencodeAndroidReMcpServers
     opencodeWebReMcpServers
+    mimoMcpServers
     ;
 }

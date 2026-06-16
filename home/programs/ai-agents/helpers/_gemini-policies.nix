@@ -1,4 +1,5 @@
-# Gemini CLI policy rules (TOML format).
+# Antigravity CLI (agy) policy rules (TOML format).
+# Consumed via ~/.gemini/policies/ — agy inherits the Gemini CLI config layout.
 # Destructive deny rules are generated from helpers/_destructive-rules.nix.
 
 let

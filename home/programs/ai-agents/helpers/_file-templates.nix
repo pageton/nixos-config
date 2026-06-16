@@ -1,7 +1,7 @@
 # Static file templates for AI agent support files.
 #
 # Agent concepts are defined once as canonical records and derived into
-# Claude agent files and Gemini commands.
+# Claude agent files and Antigravity commands.
 let
   # Canonical agent concept definitions — single source of truth.
   agentConcepts = {
@@ -355,60 +355,8 @@ let
         - ${rulesText}
       '';
     };
-  # Derive Pi agent file from canonical definition.
-  # Pi uses SKILL.md format for persona/instruction injection.
-  # Each agent becomes a skill that can be loaded via the /agent extension command.
-  mkPiAgent =
-    name: concept:
-    let
-      rulesLines = map (r: "- ${r}") concept.rules;
-      titles = {
-        implementation-engineer = "Implementation Engineer";
-        static-recon = "Static Recon";
-        protocol-triage = "Protocol Triage";
-        security-reviewer = "Security Reviewer";
-        planning-engineer = "Planning Engineer";
-        architect = "Architect";
-        tracer = "Tracer";
-        critic = "Critic";
-        verifier = "Verifier";
-        code-reviewer = "Code Reviewer";
-        git-master = "Git Master";
-        android-re = "Android RE";
-        oracle = "Oracle";
-        librarian = "Librarian";
-        security-audit = "Security Audit";
-        build-performance = "Build Performance";
-        markdown-sync = "Markdown Sync";
-        commit-split = "Commit Split";
-        refactor-maintainability = "Refactor Maintainability";
-        bugfix-root-cause = "Bugfix Root Cause";
-        dependency-upgrade = "Dependency Upgrade";
-        runtime-performance = "Runtime Performance";
-      };
-      title = titles.${name} or (builtins.replaceStrings [ "-" ] [ " " ] name);
-    in
-    {
-      name = "${name}/SKILL.md";
-      value = ''
-        ---
-        name: ${name}
-        description: ${concept.description} ${concept.skillContext}
-        ---
-
-        # ${title}
-
-        ${concept.role}
-
-        Rules:
-        ${builtins.concatStringsSep "\n" rulesLines}
-      '';
-    };
-
 in
 {
-  piAgents = builtins.listToAttrs (mapAttrsToList mkPiAgent agentConcepts);
-
   claudeAgents = (builtins.listToAttrs (mapAttrsToList mkClaudeAgent agentConcepts)) // {
     "release-notes.md" = ''
       ---
@@ -426,7 +374,7 @@ in
     '';
   };
 
-  geminiCommands = {
+  antigravityCommands = {
     "review-staged.toml" = ''
       description = "Review staged git changes"
       prompt = """

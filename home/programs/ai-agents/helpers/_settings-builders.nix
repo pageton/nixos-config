@@ -12,9 +12,10 @@ let
   opencodeProfiles = import ./_opencode-profiles.nix { inherit config; };
   inherit (mcpTransforms)
     opencodeMcpServers
-    geminiMcpServers
+    antigravityMcpServers
     opencodeAndroidReMcpServers
     opencodeWebReMcpServers
+    mimoMcpServers
     ;
   opencodeFormatterSettings = builtins.listToAttrs (
     map (formatter: {
@@ -96,13 +97,13 @@ let
   // (lib.optionalAttrs (cfg.globalInstructions != "") { instructions = [ cfg.globalInstructions ]; })
   // (lib.optionalAttrs (cfg.opencode.extraSettings != { }) cfg.opencode.extraSettings);
 
-  geminiSettings = {
-    mcpServers = geminiMcpServers;
+  antigravitySettings = {
+    mcpServers = antigravityMcpServers;
   }
   // (lib.optionalAttrs (cfg.globalInstructions != "") {
     systemInstruction = cfg.globalInstructions;
   })
-  // (lib.optionalAttrs (cfg.gemini.extraSettings != { }) cfg.gemini.extraSettings);
+  // (lib.optionalAttrs (cfg.antigravity.extraSettings != { }) cfg.antigravity.extraSettings);
 
   # Override agent-level model fields to match the profile's top-level model.
   # OpenCode's deep merge preserves agent-level models from the global config even when
@@ -117,33 +118,35 @@ let
 
   # Derived from _opencode-profiles.nix — single source of truth for profile→model mapping.
   opencodeSettingsByProfile = builtins.listToAttrs (
-    map (
-      { name, model, ... }:
-      {
-        inherit name;
-        value =
-          if model == null then
-            opencodeSettings
-          else
-            opencodeSettings
-            // {
-              inherit model;
-            }
-            // (lib.optionalAttrs (opencodeSettings ? agent) {
-              agent = overrideAgentModels model opencodeSettings.agent;
-            });
-      }
-    ) opencodeProfiles.profiles
+    map ({ name, model, ... }: {
+      inherit name;
+      value =
+        if model == null then
+          opencodeSettings
+        else
+          opencodeSettings
+          // {
+            inherit model;
+          }
+          // (lib.optionalAttrs (opencodeSettings ? agent) {
+            agent = overrideAgentModels model opencodeSettings.agent;
+          });
+    }) opencodeProfiles.profiles
   );
+
+  mimoSettings = {
+    mcp = mimoMcpServers;
+  };
 
 in
 {
   inherit
     claudeSettings
     opencodeSettings
-    geminiSettings
+    antigravitySettings
     opencodeSettingsByProfile
     opencodeAndroidReMcpServers
     opencodeWebReMcpServers
+    mimoSettings
     ;
 }

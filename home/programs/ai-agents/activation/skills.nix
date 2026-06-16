@@ -191,7 +191,7 @@ lib.mkIf (cfg.skills != [ ]) (
       mirror_skills_to "$HOME/.codex/skills"
       mirror_count=$((mirror_count + 1))
 
-      # Gemini
+      # Antigravity (agy reads from ~/.gemini/skills)
       mirror_skills_to "$HOME/.gemini/skills"
       mirror_count=$((mirror_count + 1))
 

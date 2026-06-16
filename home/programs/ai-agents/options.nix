@@ -95,7 +95,7 @@ in
     # === Core Options ===
     enable = lib.mkEnableOption "AI coding agents configuration";
 
-    globalInstructions = mkLinesOption "" "Global instructions injected into all AI agents (Claude CLAUDE.md, OpenCode instructions, Codex developer_instructions, Gemini systemInstruction)";
+    globalInstructions = mkLinesOption "" "Global instructions injected into all AI agents (Claude CLAUDE.md, OpenCode instructions, Codex developer_instructions, Antigravity systemInstruction)";
 
     secrets = {
       zaiApiKeyFile = mkNullOrStrOption "/run/secrets/zai_api_key" "Path to sops-decrypted Z.AI API key file";
@@ -104,6 +104,7 @@ in
       minimaxApiKeyFile = mkNullOrStrOption "/run/secrets/minimax_api_key" "Path to sops-decrypted MiniMax API key file";
       deepseekApiKeyFile = mkNullOrStrOption "/run/secrets/deepseek_api_key" "Path to sops-decrypted DeepSeek API key file";
       mimoApiKeyFile = mkNullOrStrOption "/run/secrets/mimo_api_key" "Path to sops-decrypted Xiaomi MiMo API key file";
+      openaiApiKeyFile = mkNullOrStrOption "/run/secrets/openai_api_key" "Path to sops-decrypted OpenAI API key file";
     };
 
     skills = lib.mkOption {
@@ -145,11 +146,6 @@ in
 
     impeccable = {
       enable = mkBoolOption false "Install pbakaus/impeccable skills for Claude and OpenCode";
-    };
-
-    terax = {
-      enable = mkBoolOption false "Install Terax AI-native terminal";
-      disableDmabufRenderer = mkBoolOption true "Set WEBKIT_DISABLE_DMABUF_RENDERER=1 for Terax on Wayland";
     };
 
     agentmemory = {
@@ -206,6 +202,55 @@ in
         installInstructions = mkBoolOption true "Install the upstream OpenCode instruction bundle from Everything Claude Code";
       };
 
+    };
+
+    speckit = {
+      enable = mkBoolOption false "Install github/spec-kit spec-driven-development slash commands";
+
+      claude = {
+        enable = mkBoolOption true "Install spec-kit commands into Claude Code";
+        commands = mkStrListOption [
+          "specify"
+          "plan"
+          "tasks"
+          "analyze"
+          "checklist"
+          "clarify"
+          "constitution"
+          "implement"
+          "taskstoissues"
+        ] "Spec-kit command templates to install for Claude Code (stems under templates/commands/*.md)";
+      };
+
+      codex = {
+        enable = mkBoolOption true "Install spec-kit commands into Codex";
+        commands = mkStrListOption [
+          "specify"
+          "plan"
+          "tasks"
+          "analyze"
+          "checklist"
+          "clarify"
+          "constitution"
+          "implement"
+          "taskstoissues"
+        ] "Spec-kit command templates to install for Codex (stems under templates/commands/*.md)";
+      };
+
+      opencode = {
+        enable = mkBoolOption true "Install spec-kit commands into OpenCode command dirs";
+        commands = mkStrListOption [
+          "specify"
+          "plan"
+          "tasks"
+          "analyze"
+          "checklist"
+          "clarify"
+          "constitution"
+          "implement"
+          "taskstoissues"
+        ] "Spec-kit command templates to install for OpenCode (stems under templates/commands/*.md)";
+      };
     };
 
     mcpServers = lib.mkOption (mkMcpServersOption "Shared MCP server definitions used by all agents");
@@ -312,13 +357,13 @@ in
       extraToml = mkLinesOption "" "Extra TOML lines appended to config.toml";
     };
 
-    # === Gemini Options ===
-    gemini = {
-      enable = lib.mkEnableOption "Gemini CLI configuration";
+    # === Antigravity Options ===
+    antigravity = {
+      enable = lib.mkEnableOption "Antigravity CLI (agy) configuration";
 
-      theme = mkStrOption "Default" "Theme for Gemini CLI";
+      theme = mkStrOption "Default" "Theme for Antigravity CLI";
       sandboxMode = mkStrOption "cautious" "Sandbox mode (none, cautious, strict)";
-      extraSettings = mkAttrsOption { } "Additional Gemini CLI settings";
+      extraSettings = mkAttrsOption { } "Additional Antigravity CLI settings";
     };
 
   };

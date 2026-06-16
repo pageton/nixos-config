@@ -7,10 +7,11 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   scriptsDir = "${config.home.homeDirectory}/${constants.paths.scripts}";
   models = import ./_models.nix;
-  workflowPrompts = import ./_workflow-prompts.nix {};
+  workflowPrompts = import ./_workflow-prompts.nix { };
   commitSplitPrompt = workflowPrompts.commitSplit;
   refactorMaintainabilityPrompt = workflowPrompts.refactorMaintainability;
   securityAuditPrompt = workflowPrompts.securityAudit;
@@ -20,7 +21,7 @@
   runtimePerformancePrompt = workflowPrompts.runtimePerformance;
   markdownSyncPrompt = workflowPrompts.markdownSync;
 
-  flattenForAlias = builtins.replaceStrings ["\n"] ["\\n"];
+  flattenForAlias = builtins.replaceStrings [ "\n" ] [ "\\n" ];
 
   codexBase = "command codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox";
   codexHeadless = "codex exec --dangerously-bypass-approvals-and-sandbox";
@@ -29,13 +30,13 @@
   gptMedModel = models.gpt-default;
   gptXHighModel = models.gpt-xhigh;
 
-  mkAliasAttrs = aliasSpecs:
+  mkAliasAttrs =
+    aliasSpecs:
     builtins.listToAttrs (
       map (spec: {
         name = spec.alias;
         value = spec.command;
-      })
-      aliasSpecs
+      }) aliasSpecs
     );
 
   # Single source of truth for all agent aliases.
@@ -322,6 +323,48 @@
       tool = "copilot";
       launcherSimple = true;
     }
+
+    # MiMoCode
+    {
+      alias = "mi";
+      command = "mimo";
+      workflowPromptMode = "positional";
+      envMarker = "-";
+      interactiveCommand = "mimo";
+      headlessCommand = "mimo run";
+      tool = "mimo";
+      launcherSimple = true;
+    }
+    {
+      alias = "miglm";
+      command = "mimo_glm";
+      workflowPromptMode = "positional";
+      envMarker = "ZAI";
+      interactiveCommand = "mimo -m zai-coding-plan/glm-5.2";
+      headlessCommand = "mimo run -m zai-coding-plan/glm-5.2";
+      tool = "mimo";
+      launcherSimple = false;
+    }
+    {
+      alias = "miseek";
+      command = "mimo_seek";
+      workflowPromptMode = "positional";
+      envMarker = "DEEPSEEK";
+      interactiveCommand = "mimo -m deepseek/deepseek-v4-pro";
+      headlessCommand = "mimo run -m deepseek/deepseek-v4-pro";
+      tool = "mimo";
+      launcherSimple = false;
+    }
+    {
+      alias = "migpt";
+      command = "mimo_gpt";
+      workflowPromptMode = "positional";
+      envMarker = "-";
+      interactiveCommand = "mimo -m openai/gpt-5.4";
+      headlessCommand = "mimo run -m openai/gpt-5.4";
+      tool = "mimo";
+      launcherSimple = false;
+    }
   ];
 
   # Workflow prompt specs with labels for bash WORKFLOW_MAP generation.
@@ -380,51 +423,53 @@
 
   aiWorkflowAliasSpecs = lib.flatten (
     map (
-      workflow: let
+      workflow:
+      let
         flatPrompt = flattenForAlias workflow.prompt;
       in
-        map (agent: {
-          alias = "${agent.alias}${workflow.suffix}";
-          command =
-            if agent.workflowPromptMode == "flag"
-            then "_ai_agent_exec ${agent.alias}${workflow.suffix} -- ${agent.command} --prompt ${lib.escapeShellArg flatPrompt}"
-            else "_ai_agent_exec ${agent.alias}${workflow.suffix} -- ${agent.command} ${lib.escapeShellArg flatPrompt}";
-        })
-        workflowAgentSpecs
-    )
-    workflowPromptSpecs
+      map (agent: {
+        alias = "${agent.alias}${workflow.suffix}";
+        command =
+          if agent.workflowPromptMode == "flag" then
+            "_ai_agent_exec ${agent.alias}${workflow.suffix} -- ${agent.command} --prompt ${lib.escapeShellArg flatPrompt}"
+          else
+            "_ai_agent_exec ${agent.alias}${workflow.suffix} -- ${agent.command} ${lib.escapeShellArg flatPrompt}";
+      }) workflowAgentSpecs
+    ) workflowPromptSpecs
   );
 
-  workflowClipboardAliasSpecs =
-    map (
-      workflow: let
-        flatPrompt = flattenForAlias workflow.prompt;
-      in {
-        alias = "cp${workflow.suffix}";
-        command =
-          "if command -v wl-copy >/dev/null 2>&1; then printf '%s' ${lib.escapeShellArg flatPrompt} | wl-copy; "
-          + "elif command -v xclip >/dev/null 2>&1; then printf '%s' ${lib.escapeShellArg flatPrompt} | xclip -selection clipboard; "
-          + "else echo 'Clipboard tool not found (need wl-copy or xclip)' >&2; false; fi "
-          + "&& echo 'Copied ${workflow.suffix} prompt to clipboard'";
-      }
-    )
-    workflowPromptSpecs;
+  workflowClipboardAliasSpecs = map (
+    workflow:
+    let
+      flatPrompt = flattenForAlias workflow.prompt;
+    in
+    {
+      alias = "cp${workflow.suffix}";
+      command =
+        "if command -v wl-copy >/dev/null 2>&1; then printf '%s' ${lib.escapeShellArg flatPrompt} | wl-copy; "
+        + "elif command -v xclip >/dev/null 2>&1; then printf '%s' ${lib.escapeShellArg flatPrompt} | xclip -selection clipboard; "
+        + "else echo 'Clipboard tool not found (need wl-copy or xclip)' >&2; false; fi "
+        + "&& echo 'Copied ${workflow.suffix} prompt to clipboard'";
+    }
+  ) workflowPromptSpecs;
 
   aiAliases = mkAliasAttrs (
     (map (
-        spec: spec // {command = "_ai_agent_exec ${spec.alias} -- ${spec.command}";}
-      )
-      aiAgentAliasSpecs)
+      spec: spec // { command = "_ai_agent_exec ${spec.alias} -- ${spec.command}"; }
+    ) aiAgentAliasSpecs)
     ++ aiWorkflowAliasSpecs
     ++ workflowClipboardAliasSpecs
   );
 
-  mkWorkflowEnvVars = targetScript: let
-    envAssignments = map (spec: "${spec.envVar}=${lib.escapeShellArg spec.prompt}") workflowPromptSpecs;
-  in ''
-    ${builtins.concatStringsSep " \\\n    " envAssignments} \
-    exec ${targetScript} "$@"
-  '';
+  mkWorkflowEnvVars =
+    targetScript:
+    let
+      envAssignments = map (spec: "${spec.envVar}=${lib.escapeShellArg spec.prompt}") workflowPromptSpecs;
+    in
+    ''
+      ${builtins.concatStringsSep " \\\n    " envAssignments} \
+      exec ${targetScript} "$@"
+    '';
 
   aiAgentLauncher = pkgs.writeShellScriptBin "ai-agent-launcher" (
     mkWorkflowEnvVars "${scriptsDir}/ai/agent-launcher.sh"
@@ -432,31 +477,33 @@
 
   # --- Bash registry generation ---
 
-  escapeForBashDoubleQuote = s: builtins.replaceStrings ["\\" "\""] ["\\\\" "\\\""] s;
+  escapeForBashDoubleQuote = s: builtins.replaceStrings [ "\\" "\"" ] [ "\\\\" "\\\"" ] s;
 
   envMarkerNeedsQuoting = marker: builtins.match ".*\\$.*" marker != null;
 
-  mkRegistryLine = spec: let
-    envPart =
-      if spec.envMarker == "-"
-      then "-"
-      else if envMarkerNeedsQuoting spec.envMarker
-      then "\"${spec.envMarker}\""
-      else spec.envMarker;
-    interactivePart = "\"${escapeForBashDoubleQuote spec.interactiveCommand}\"";
-    headlessPart = "\"${escapeForBashDoubleQuote spec.headlessCommand}\"";
-  in "_def ${spec.alias}    ${envPart}    ${interactivePart}    ${headlessPart}";
+  mkRegistryLine =
+    spec:
+    let
+      envPart =
+        if spec.envMarker == "-" then
+          "-"
+        else if envMarkerNeedsQuoting spec.envMarker then
+          "\"${spec.envMarker}\""
+        else
+          spec.envMarker;
+      interactivePart = "\"${escapeForBashDoubleQuote spec.interactiveCommand}\"";
+      headlessPart = "\"${escapeForBashDoubleQuote spec.headlessCommand}\"";
+    in
+    "_def ${spec.alias}    ${envPart}    ${interactivePart}    ${headlessPart}";
 
   tools = lib.unique (map (spec: spec.tool) aiAgentAliasSpecs);
   simpleAliases = map (spec: spec.alias) (lib.filter (spec: spec.launcherSimple) aiAgentAliasSpecs);
   defLines = map mkRegistryLine aiAgentAliasSpecs;
   workflowSuffixes = map (spec: spec.suffix) workflowPromptSpecs;
 
-  workflowMapEntries =
-    map (
-      spec: "  [${spec.suffix}]=\"${spec.label}|${spec.envVar}\""
-    )
-    workflowPromptSpecs;
+  workflowMapEntries = map (
+    spec: "  [${spec.suffix}]=\"${spec.label}|${spec.envVar}\""
+  ) workflowPromptSpecs;
 
   aliasToolEntries = map (spec: "  [${spec.alias}]=\"${spec.tool}\"") aiAgentAliasSpecs;
 
@@ -464,8 +511,9 @@
     opencode = "OpenCode";
     claude = "Claude Code";
     codex = "Codex";
-    antigravity = "Antigravity";
     copilot = "GitHub Copilot";
+    antigravity = "Antigravity";
+    mimo = "MiMoCode";
   };
   providerLabelEntries = lib.mapAttrsToList (tool: label: "  [${tool}]=\"${label}\"") providerLabels;
 
@@ -475,6 +523,7 @@
     "codex"
     "copilot"
     "antigravity"
+    "mimo"
   ];
 
   generatedBashRegistry = builtins.concatStringsSep "\n" (
@@ -516,9 +565,10 @@
       "declare -A WORKFLOW_MAP=("
     ]
     ++ workflowMapEntries
-    ++ [")"]
+    ++ [ ")" ]
   );
-in {
+in
+{
   inherit
     aiAliases
     aiAgentLauncher
