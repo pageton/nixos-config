@@ -1,6 +1,5 @@
 # Home-Manager base modules — core identity, session, desktop entries, and activation.
-{ ... }:
-{
+{ ... }: {
   imports = [
     ./user.nix # Username, homeDirectory, stateVersion, packages, fonts
     ./session.nix # Session variables (Qt/GTK/Electron Wayland), telemetry opt-out

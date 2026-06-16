@@ -1,7 +1,6 @@
 # General utility packages and system tools including archive management,
 # system utilities, security tools, and development helpers.
-{ pkgsStable, ... }:
-with pkgsStable;
+{ pkgsStable, ... }: with pkgsStable;
 [
   # === Core GNU Utilities ===
   coreutils # Basic file, shell, and text manipulation utilities

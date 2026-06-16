@@ -1,8 +1,7 @@
 # Language servers for editor integration.
 # CLI-only linting/formatting tools live in packages/linting.nix.
 
-{ pkgs, ... }:
-{
+{ pkgs, ... }: {
   home.packages = with pkgs; [
     # === Nix ===
     nil # Nix language server with completion and diagnostics

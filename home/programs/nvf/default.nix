@@ -1,6 +1,5 @@
 # NVF — Neovim configuration via Nix.
-{ inputs, pkgs, ... }:
-{
+{ inputs, pkgs, ... }: {
   imports = [
     inputs.nvf.homeManagerModules.default
     ./options.nix

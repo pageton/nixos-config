@@ -1,6 +1,5 @@
 # Flatpak configuration for sandboxed application distribution.
-{ config, lib, ... }:
-{
+{ config, lib, ... }: {
   # Custom module options for Flatpak configuration
   options.mySystem.flatpak = {
     enable = lib.mkEnableOption "Flatpak support for sandboxed applications";

@@ -1,5 +1,4 @@
-{ inputs, user, ... }:
-{
+{ inputs, user, ... }: {
   imports = [ inputs.sops-nix.nixosModules.sops ];
 
   sops = {

@@ -1,5 +1,4 @@
-{ pkgs, ... }:
-{
+{ pkgs, ... }: {
   home.file.".local/bin/niri-auth-float" = {
     executable = true;
     text = ''

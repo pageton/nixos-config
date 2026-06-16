@@ -1,6 +1,5 @@
 # ActivityWatch app usage tracking (Wayland).
-{ pkgs, constants, ... }:
-{
+{ pkgs, constants, ... }: {
   xdg.configFile."activitywatch/aw-server-rust/config.toml".force = true;
 
   services.activitywatch = {

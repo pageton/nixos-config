@@ -1,6 +1,5 @@
 # Niri scrollable-tiling Wayland compositor — Home Manager configuration.
-{ config, pkgs, ... }:
-{
+{ config, pkgs, ... }: {
   imports = [
     ./animations.nix
     ./bindings.nix

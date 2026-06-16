@@ -1,7 +1,6 @@
 # Niri compositor and Wayland utilities including clipboard management,
 # screenshot tools, and desktop integration.
-{ pkgsStable, ... }:
-with pkgsStable;
+{ pkgsStable, ... }: with pkgsStable;
 [
   # === Clipboard Management ===
   cliphist # Clipboard history manager

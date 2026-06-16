@@ -1,6 +1,5 @@
 # Cross-module conflict assertions and dependency validation.
-{ config, lib, ... }:
-{
+{ config, lib, ... }: {
   assertions = [
     # === Power Management Daemon Conflicts ===
     {

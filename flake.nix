@@ -54,142 +54,140 @@
     };
   };
 
-  outputs = {
-    # self omitted — not currently needed. Add back as a parameter to access:
-    #   self.lastModifiedDate — for version strings
-    #   self.outPath          — for embedding repo path
-    #   self.rev              — for git revision in prompts
-    # Pattern: add `self` to the destructured inputs, then pass
-    # `inherit (self) outPath lastModifiedDate;` via specialArgs.
-    nixpkgs,
-    nixpkgs-stable,
-    home-manager,
-    ...
-  } @ inputs: let
-    system = "x86_64-linux";
-    homeStateVersion = "26.05";
-    user = "sadiq";
-    constants = import ./shared/constants.nix;
-    secretLoader = import ./home/_helpers/_secret-loader.nix;
-    hmSystemdHelpers = import ./shared/_hm-systemd-helpers.nix {inherit (nixpkgs) lib;};
-    nixpkgsConfig = {
-      allowUnfree = true; # Allow proprietary packages
-      allowBroken = false; # Don't allow broken packages
-      allowInsecure = false; # Don't allow insecure packages
-      allowUnsupportedSystem = false; # Don't allow unsupported systems
-    };
-    pkgs = import nixpkgs {
-      inherit system;
-      config = nixpkgsConfig;
-      overlays = [
-        inputs.niri.overlays.niri
-        (_final: prev: {
-          # Disable tests for packages with known flaky/sandbox-incompatible test suites.
-          #
-          # Python font packages: network-based or font-rendering tests don't work
-          # in the Nix build sandbox. The packages themselves are fine.
-          # TODO: Track upstream fixes and remove overrides when tests pass.
-          #   - picosvg: https://github.com/google/picosvg/issues
-          #   - nanoemoji: https://github.com/googlefonts/nanoemoji/issues
-          #   - gftools: https://github.com/googlefonts/gftools/issues
-          # Review periodically (e.g. on each nixpkgs update).
-          #
-          # OpenLDAP: test017-syncreplication-refresh is a known flaky test that
-          # fails intermittently due to timing in sync replication checks.
-          # Pulled in by lutris as a transitive dependency.
-          openldap = prev.openldap.overrideAttrs (_: {
-            doCheck = false;
-          });
-          # python3Packages = prev.python3Packages.overrideScope (
-          #   pyFinal: pyPrev: {
-          #     picosvg = pyPrev.picosvg.overridePythonAttrs (_: {
-          #       doCheck = false;
-          #     });
-          #     nanoemoji = pyPrev.nanoemoji.overridePythonAttrs (_: {
-          #       doCheck = false;
-          #     });
-          #     gftools = pyPrev.gftools.overridePythonAttrs (_: {
-          #       doCheck = false;
-          #     });
-          #   }
-          # );
-        })
-      ];
-    };
-
-    pkgsStable = import nixpkgs-stable {
-      inherit system;
-      config = nixpkgsConfig;
-      overlays = [
-        (_final: prev: {
-          # OpenLDAP: test017-syncreplication-refresh is a known flaky test that
-          # fails intermittently due to timing in sync replication checks.
-          # Pulled in by bottles as a transitive dependency.
-          openldap = prev.openldap.overrideAttrs (_: {
-            doCheck = false;
-          });
-        })
-      ];
-    };
-
-    makeSystem = {
-      hostname,
-      stateVersion,
-    }:
-      nixpkgs.lib.nixosSystem {
-        inherit system;
-        specialArgs = {
-          inherit
-            inputs
-            stateVersion
-            hostname
-            user
-            pkgsStable
-            constants
-            ;
-        };
-        modules = [./hosts/${hostname}/configuration.nix];
+  outputs =
+    {
+      # self omitted — not currently needed. Add back as a parameter to access:
+      #   self.lastModifiedDate — for version strings
+      #   self.outPath          — for embedding repo path
+      #   self.rev              — for git revision in prompts
+      # Pattern: add `self` to the destructured inputs, then pass
+      # `inherit (self) outPath lastModifiedDate;` via specialArgs.
+      nixpkgs,
+      nixpkgs-stable,
+      home-manager,
+      ...
+    }@inputs:
+    let
+      system = "x86_64-linux";
+      homeStateVersion = "26.05";
+      user = "sadiq";
+      constants = import ./shared/constants.nix;
+      secretLoader = import ./home/_helpers/_secret-loader.nix;
+      hmSystemdHelpers = import ./shared/_hm-systemd-helpers.nix { inherit (nixpkgs) lib; };
+      nixpkgsConfig = {
+        allowUnfree = true; # Allow proprietary packages
+        allowBroken = false; # Don't allow broken packages
+        allowInsecure = false; # Don't allow insecure packages
+        allowUnsupportedSystem = false; # Don't allow unsupported systems
       };
-
-    makeHome = {hostname}:
-      home-manager.lib.homeManagerConfiguration {
-        inherit pkgs;
-        extraSpecialArgs = {
-          inherit
-            inputs
-            homeStateVersion
-            user
-            pkgsStable
-            system
-            hostname
-            constants
-            hmSystemdHelpers
-            secretLoader
-            ;
-        };
-        modules = [
-          ./home/home.nix
-          ./home/programs/ai-agents/herdr-module.nix
-          inputs.stylix.homeModules.stylix
-          inputs.niri.homeModules.config
-          inputs.noctalia.homeModules.default
+      pkgs = import nixpkgs {
+        inherit system;
+        config = nixpkgsConfig;
+        overlays = [
+          inputs.niri.overlays.niri
+          (_final: prev: {
+            # Disable tests for packages with known flaky/sandbox-incompatible test suites.
+            #
+            # Python font packages: network-based or font-rendering tests don't work
+            # in the Nix build sandbox. The packages themselves are fine.
+            # TODO: Track upstream fixes and remove overrides when tests pass.
+            #   - picosvg: https://github.com/google/picosvg/issues
+            #   - nanoemoji: https://github.com/googlefonts/nanoemoji/issues
+            #   - gftools: https://github.com/googlefonts/gftools/issues
+            # Review periodically (e.g. on each nixpkgs update).
+            #
+            # OpenLDAP: test017-syncreplication-refresh is a known flaky test that
+            # fails intermittently due to timing in sync replication checks.
+            # Pulled in by lutris as a transitive dependency.
+            openldap = prev.openldap.overrideAttrs (_: {
+              doCheck = false;
+            });
+            # python3Packages = prev.python3Packages.overrideScope (
+            #   pyFinal: pyPrev: {
+            #     picosvg = pyPrev.picosvg.overridePythonAttrs (_: {
+            #       doCheck = false;
+            #     });
+            #     nanoemoji = pyPrev.nanoemoji.overridePythonAttrs (_: {
+            #       doCheck = false;
+            #     });
+            #     gftools = pyPrev.gftools.overridePythonAttrs (_: {
+            #       doCheck = false;
+            #     });
+            #   }
+            # );
+          })
         ];
       };
 
-    # Single source of truth — edit hosts/_inventory.nix to add/remove hosts.
-    hosts = import ./hosts/_inventory.nix;
-  in {
-    nixosConfigurations =
-      nixpkgs.lib.foldl' (
-        configs: host:
-          configs // {"${host.hostname}" = makeSystem {inherit (host) hostname stateVersion;};}
-      ) {}
-      hosts;
+      pkgsStable = import nixpkgs-stable {
+        inherit system;
+        config = nixpkgsConfig;
+        overlays = [
+          (_final: prev: {
+            # OpenLDAP: test017-syncreplication-refresh is a known flaky test that
+            # fails intermittently due to timing in sync replication checks.
+            # Pulled in by bottles as a transitive dependency.
+            openldap = prev.openldap.overrideAttrs (_: {
+              doCheck = false;
+            });
+          })
+        ];
+      };
 
-    homeConfigurations =
-      nixpkgs.lib.foldl' (
-        configs: host: configs // {"${user}@${host.hostname}" = makeHome {inherit (host) hostname;};}
-      ) {}
-      hosts;
-  };
+      makeSystem =
+        { hostname, stateVersion }:
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = {
+            inherit
+              inputs
+              stateVersion
+              hostname
+              user
+              pkgsStable
+              constants
+              ;
+          };
+          modules = [ ./hosts/${hostname}/configuration.nix ];
+        };
+
+      makeHome =
+        { hostname }:
+        home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
+          extraSpecialArgs = {
+            inherit
+              inputs
+              homeStateVersion
+              user
+              pkgsStable
+              system
+              hostname
+              constants
+              hmSystemdHelpers
+              secretLoader
+              ;
+          };
+          modules = [
+            ./home/home.nix
+            ./home/programs/ai-agents/herdr-module.nix
+            inputs.stylix.homeModules.stylix
+            inputs.niri.homeModules.config
+            inputs.noctalia.homeModules.default
+          ];
+        };
+
+      # Single source of truth — edit hosts/_inventory.nix to add/remove hosts.
+      hosts = import ./hosts/_inventory.nix;
+    in
+    {
+      nixosConfigurations = nixpkgs.lib.foldl' (
+        configs: host:
+        configs // { "${host.hostname}" = makeSystem { inherit (host) hostname stateVersion; }; }
+      ) { } hosts;
+
+      homeConfigurations = nixpkgs.lib.foldl' (
+        configs: host: configs // { "${user}@${host.hostname}" = makeHome { inherit (host) hostname; }; }
+      ) { } hosts;
+    };
 }

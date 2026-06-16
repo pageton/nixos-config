@@ -1,6 +1,11 @@
 # Networking configuration module.
 # NOTE: Firewall rules live in security.nix to keep all hardening in one place.
-{ lib, pkgs, constants, ... }:
+{
+  lib,
+  pkgs,
+  constants,
+  ...
+}:
 {
   # NetworkManager for GUI networking
   networking.networkmanager.enable = lib.mkDefault true;

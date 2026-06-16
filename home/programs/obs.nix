@@ -1,6 +1,5 @@
 # OBS Studio configuration with CUDA and essential plugins.
-{ pkgs, ... }:
-{
+{ pkgs, ... }: {
   programs.obs-studio = {
     enable = true;
 

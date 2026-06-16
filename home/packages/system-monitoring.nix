@@ -1,6 +1,5 @@
 # System monitoring and diagnostic tools.
-{ pkgsStable, ... }:
-with pkgsStable;
+{ pkgsStable, ... }: with pkgsStable;
 [
   # === Benchmarking ===
   stress-ng # CPU/memory/IO stress testing

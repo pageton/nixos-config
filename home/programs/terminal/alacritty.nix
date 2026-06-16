@@ -1,6 +1,5 @@
 # Alacritty terminal emulator.
-{ constants, lib, ... }:
-{
+{ constants, lib, ... }: {
   programs.alacritty = {
     enable = true;
     settings = {

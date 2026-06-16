@@ -1,6 +1,5 @@
 # Brave browser with Wayland wrapper and declarative extensions.
-{ pkgs, ... }:
-{
+{ pkgs, ... }: {
   programs.brave = {
     enable = true;
     package = pkgs.brave;

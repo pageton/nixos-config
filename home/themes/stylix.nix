@@ -5,9 +5,11 @@
   inputs,
   system,
   ...
-}: let
+}:
+let
   palette = import ./palette.nix;
-in {
+in
+{
   # === Font Packages ===
   # Consolidated here so fonts live alongside the theme that selects them.
   home.packages = with pkgs; [

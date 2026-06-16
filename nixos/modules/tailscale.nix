@@ -48,7 +48,10 @@ in
     # Mullvad's default route.
     systemd.services.tailscale-mullvad-routes = lib.mkIf config.mySystem.mullvadVpn.enable {
       description = "Add Tailscale routes that bypass Mullvad routing";
-      after = [ "mullvad-daemon.service" "tailscaled.service" ];
+      after = [
+        "mullvad-daemon.service"
+        "tailscaled.service"
+      ];
       requires = [ "tailscaled.service" ];
       wantedBy = [ "multi-user.target" ];
       serviceConfig.Type = "oneshot";

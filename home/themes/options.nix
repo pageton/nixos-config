@@ -1,6 +1,5 @@
 # Theme submodule options — visual preferences for the desktop environment.
-{ lib, config, ... }:
-{
+{ lib, config, ... }: {
   options.theme = lib.mkOption {
     type = lib.types.submodule {
       options = {

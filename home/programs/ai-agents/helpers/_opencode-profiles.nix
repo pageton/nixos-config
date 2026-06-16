@@ -1,6 +1,7 @@
 # Shared OpenCode profile definitions: single source of truth for profile names
 # and their model overrides. Adding a new profile only requires editing this file.
-{config}: let
+{ config }:
+let
   models = import ./_models.nix;
 
   profiles = [
@@ -53,6 +54,7 @@
 
   names = map (p: p.name) profiles;
   configPath = name: "${config.xdg.configHome}/${name}/opencode.json";
-in {
+in
+{
   inherit names configPath profiles;
 }

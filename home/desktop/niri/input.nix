@@ -1,5 +1,4 @@
-{ constants, ... }:
-{
+{ constants, ... }: {
   programs.niri.settings.input = {
     keyboard = {
       xkb = { inherit (constants.keyboard) layout options; };

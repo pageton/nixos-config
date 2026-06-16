@@ -1,5 +1,4 @@
-{ ... }:
-{
+{ ... }: {
   programs.noctalia-shell = {
     plugins = {
       version = 2;

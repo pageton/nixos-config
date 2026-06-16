@@ -1,8 +1,7 @@
 # System monitoring configuration.
 # This module enables hardware sensor monitoring and provides tools for
 # monitoring system resources, temperatures, and performance metrics.
-{ pkgsStable, ... }:
-{
+{ pkgsStable, ... }: {
   # thermald is managed per-host in thermal.nix (desktop) or
   # thinkpad-specific modules. Do not enable here to avoid conflicts.
 

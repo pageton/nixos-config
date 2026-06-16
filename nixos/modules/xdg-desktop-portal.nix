@@ -1,8 +1,7 @@
 # XDG Desktop Portal Configuration
 # This module provides proper configuration for xdg-desktop-portal services
 # optimized for niri Wayland compositor (uses GNOME portal for ScreenCast)
-{ pkgs, ... }:
-{
+{ pkgs, ... }: {
   # Install xdg-desktop-portal and related packages
   environment.systemPackages = with pkgs; [
     xdg-desktop-portal

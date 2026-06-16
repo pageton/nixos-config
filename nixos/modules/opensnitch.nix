@@ -1,6 +1,5 @@
 # OpenSnitch application firewall with per-app network logging.
-{ config, lib, ... }:
-{
+{ config, lib, ... }: {
   options.mySystem.opensnitch = {
     enable = lib.mkEnableOption "OpenSnitch application firewall with per-app network logging";
   };

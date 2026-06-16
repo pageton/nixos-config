@@ -1,5 +1,4 @@
-{ lib, ... }:
-{
+{ lib, ... }: {
   programs.nvf.settings.vim = {
     viAlias = false;
     vimAlias = true;

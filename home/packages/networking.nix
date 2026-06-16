@@ -1,7 +1,6 @@
 # Networking and network analysis tools for network analysis, monitoring,
 # debugging, security testing, and connectivity management.
-{ pkgs, ... }:
-with pkgs;
+{ pkgs, ... }: with pkgs;
 [
   # === Core Networking and Security ===
   openssl # OpenSSL cryptographic library

@@ -1,8 +1,7 @@
 # Nix package manager configuration (flakes, GC, etc.).
 # This module configures the Nix package manager with optimized settings
 # for performance, storage management, and development workflow.
-{ inputs, ... }:
-{
+{ inputs, ... }: {
   # Overlays applied to the NixOS nixpkgs (including pkgsi686Linux for 32-bit deps).
   # These apply to ALL package sets in the NixOS build, unlike overlays in flake.nix
   # which only affect the pkgs set passed to Home-Manager.

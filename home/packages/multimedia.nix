@@ -1,7 +1,6 @@
 # Multimedia and media processing packages for media playback,
 # image viewing, video processing, and media information analysis.
-{ pkgsStable, ... }:
-with pkgsStable;
+{ pkgsStable, ... }: with pkgsStable;
 [
   # === Image Viewers ===
   imv # Minimalist image viewer for Wayland

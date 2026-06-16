@@ -1,6 +1,5 @@
 # Desktop environment system configs — compositor, shell, theming, and integration.
-{ ... }:
-{
+{ ... }: {
   imports = [
     ./niri # Niri compositor keybinds, layouts, window rules, startup
     ./noctalia # Noctalia shell: bar, launcher, control center, notifications

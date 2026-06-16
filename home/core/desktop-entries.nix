@@ -1,5 +1,4 @@
-{ config, ... }:
-{
+{ config, ... }: {
   xdg.desktopEntries = {
     "org.telegram.desktop" = {
       name = "Telegram Desktop";

@@ -1,7 +1,6 @@
 # Fun and visually appealing terminal applications for entertainment
 # and visual effects.
-{ pkgsStable, ... }:
-with pkgsStable;
+{ pkgsStable, ... }: with pkgsStable;
 [
   # === Terminal Visual Effects ===
   peaclock # Elegant terminal clock with ASCII art

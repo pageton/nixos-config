@@ -130,9 +130,18 @@ in
   # Tailscale mesh hosts — SSOT for Tailscale peer hostnames and IPs.
   # Used by: networking.nix (hosts entries), ssh.nix (matchBlocks)
   tailscaleHosts = {
-    ads = { ip = "100.64.178.113"; fqdn = "ads.tail12fed2.ts.net"; };
-    server = { ip = "100.72.20.126"; fqdn = "server.tail12fed2.ts.net"; };
-    mail = { ip = "100.111.223.67"; fqdn = "mail.tail12fed2.ts.net"; };
+    ads = {
+      ip = "100.64.178.113";
+      fqdn = "ads.tail12fed2.ts.net";
+    };
+    server = {
+      ip = "100.72.20.126";
+      fqdn = "server.tail12fed2.ts.net";
+    };
+    mail = {
+      ip = "100.111.223.67";
+      fqdn = "mail.tail12fed2.ts.net";
+    };
   };
 
   # Tailscale MagicDNS resolver — used for split DNS routing.

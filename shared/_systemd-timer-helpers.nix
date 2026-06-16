@@ -5,8 +5,7 @@
 #
 #   mkNixosTimer — { description; wantedBy; timerConfig = { ... } }
 #   mkHmTimer    — { Unit.Description; Timer = { ... }; Install.WantedBy }
-{ lib }:
-{
+{ lib }: {
   mkNixosTimer =
     {
       description,
