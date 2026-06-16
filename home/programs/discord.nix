@@ -22,7 +22,7 @@ let
     "imageZoom"
     "memberCount"
     "permissionsViewer"
-    "PinDMs"
+    "pinDms"
     "quickMention"
     "readAllNotificationsButton"
     "revealAllSpoilers"
@@ -39,7 +39,7 @@ let
 
   privacyPlugins = [
     "anonymiseFileNames"
-    "ClearURLs"
+    "clearUrls"
     "silentTyping"
   ];
 
