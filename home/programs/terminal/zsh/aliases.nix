@@ -124,6 +124,7 @@ let
     cp = "cp -i";
 
     j = "just";
+    m = "make";
   };
 
   mkShellAliasPrograms = import ../../../_helpers/_shell-alias-programs.nix;

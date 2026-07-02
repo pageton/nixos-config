@@ -1,4 +1,4 @@
-{ ... }: {
+_: {
   programs.noctalia-shell = {
     plugins = {
       version = 2;
@@ -39,7 +39,7 @@
 
     pluginSettings = {
       usb-drive-manager = {
-        autoMount = false;
+        autoMount = true;
         fileBrowser = "yazi";
         notifications = true;
         hideWhenEmpty = false;
