@@ -29,6 +29,7 @@ let
     "opensrc"
     "@colbymchenry/codegraph"
     "@mimo-ai/cli"
+    "@oh-my-pi/pi-coding-agent"
   ];
 
   mkShellAliasPrograms = import ../../_helpers/_shell-alias-programs.nix;

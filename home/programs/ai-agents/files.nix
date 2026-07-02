@@ -36,6 +36,7 @@ let
     opencodeAndroidReMcpServers
     opencodeWebReMcpServers
     mimoSettings
+    ompSettings
     ;
 
   opencodeProfiles = import ./helpers/_opencode-profiles.nix { inherit config; };
@@ -118,7 +119,7 @@ in
         ".claude/hooks/herdr-agent-state.sh" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/claude/herdr-agent-state.sh";
-            sha256 = "sha256-QF2vfsCCXpwy8Vg7k0BNGHiN1ueMhs7lrxU+PzIO/jw=";
+            sha256 = "sha256-/9Wna3xi9TEwQPwemPoBD/Gaeqhd2f5vMluXKdXwG0Y=";
           };
           executable = true;
           force = true;
@@ -126,7 +127,7 @@ in
         ".codex/herdr-agent-state.sh" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/codex/herdr-agent-state.sh";
-            sha256 = "sha256-0P36pgmDS/1aP9HqFLWl0LvDBdczXmoCL9KI1vdlB4M=";
+            sha256 = "sha256-KsgRU1n/hJzWHkUFdLNx9nMngKY6B62HwARI21wgNi0=";
           };
           executable = true;
           force = true;
@@ -192,6 +193,25 @@ in
         // (mkTextFiles ".gemini/commands" fileTemplates.antigravityCommands)
         // (mkTextFiles ".gemini/policies" geminiPolicies)
       ))
+
+      # === Oh My Pi (omp): MCP config (~/.omp/agent/mcp.json) ===
+      (lib.mkIf cfg.omp.enable {
+        ".omp/agent/mcp.json" = {
+          text = toJSON ompSettings;
+          force = true;
+        };
+      })
+
+      # === Oh My Pi (omp): herdr agent state extension ===
+      (lib.mkIf (cfg.herdr.enable && cfg.omp.enable) {
+        ".omp/agent/extensions/herdr-omp-agent-state.ts" = {
+          source = pkgs.fetchurl {
+            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/omp/herdr-agent-state.ts";
+            sha256 = "sha256-2bdE/8Xr6+lOHrstuLXJJJ35eFhKBIYhhG/ZlXMkHOM=";
+          };
+          force = true;
+        };
+      })
     ];
 
     xdg.configFile = lib.mkMerge [
@@ -233,7 +253,7 @@ in
         "opencode/plugins/herdr-agent-state.js" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/opencode/herdr-agent-state.js";
-            sha256 = "sha256-JxMEoRD06Qx0IZ/Xt75tzuRY6xyaiL5PSli5v1YHB4Y=";
+            sha256 = "sha256-izSbTnCsAcKciqgOyEAbgrlRGigWeKLFqj2++/jyTvo=";
           };
           force = true;
         };

@@ -64,6 +64,13 @@ lib.hm.dag.entryAfter [ "writeBoundary" "linkGeneration" "setupCodexConfig" "set
       patch_json_file "$HOME/.gemini/settings.json" "$jq_arg" "$secret" "$antigravity_filter"
       echo "✓ Patched antigravity settings.json with $label"
     fi
+
+    # omp (~/.omp/agent/mcp.json) shares the Claude .mcp.json schema (.mcpServers),
+    # so the same claude_filter injects/patches secrets there.
+    if ${lib.boolToString cfg.omp.enable} && [[ -n "$claude_filter" ]] && [[ -f "$HOME/.omp/agent/mcp.json" ]]; then
+      patch_json_file "$HOME/.omp/agent/mcp.json" "$jq_arg" "$secret" "$claude_filter"
+      echo "✓ Patched omp mcp.json with $label"
+    fi
   }
 
   # --- Z.AI ---

@@ -17,6 +17,7 @@ in
       "codex-log" = "ai-agent-log-wrapper codex codex";
       "ag-log" = "ai-agent-log-wrapper antigravity agy";
       "mi-log" = "ai-agent-log-wrapper mimo mimo";
+      "omp-log" = "ai-agent-log-wrapper omp omp";
 
       "ai-logs" = "tail -f ${al}/*.log ${ol}/*.log ${cl}/*.log 2>/dev/null";
       "ai-errors" = "ai-agent-analyze errors";
@@ -51,8 +52,10 @@ in
       "hd-claude" = "herdr integration install claude";
       "hd-codex" = "herdr integration install codex";
       "hd-opencode" = "herdr integration install opencode";
+      "hd-copilot" = "herdr integration install copilot";
+      "hd-omp" = "herdr integration install omp";
       "hd-all" =
-        "herdr integration install claude && herdr integration install codex && herdr integration install opencode";
+        "herdr integration install claude && herdr integration install codex && herdr integration install opencode && herdr integration install copilot && herdr integration install omp";
     }
   else
     { }

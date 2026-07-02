@@ -95,6 +95,11 @@ let
       npmPackage = "@mimo-ai/cli";
       label = "MiMoCode CLI";
     }
+    {
+      binary = "omp";
+      npmPackage = "@oh-my-pi/pi-coding-agent";
+      label = "Oh My Pi CLI";
+    }
   ];
 
   autoUpdateAllScript = pkgs.writeShellScript "update-ai-agents" (

@@ -10,12 +10,14 @@ let
   mcpTransforms = import ./_mcp-transforms.nix { inherit cfg lib; };
   formatterRegistry = import ./_formatters.nix;
   opencodeProfiles = import ./_opencode-profiles.nix { inherit config; };
+  opencodeAgents = import ../config/models/_opencode-agents.nix { };
   inherit (mcpTransforms)
     opencodeMcpServers
     antigravityMcpServers
     opencodeAndroidReMcpServers
     opencodeWebReMcpServers
     mimoMcpServers
+    ompMcpServers
     ;
   opencodeFormatterSettings = builtins.listToAttrs (
     map (formatter: {
@@ -136,6 +138,22 @@ let
 
   mimoSettings = {
     mcp = mimoMcpServers;
+    # MiMoCode shares OpenCode's permission schema; yoloPermission auto-allows
+    # all tools incl. external_directory (bypasses the ~/.claude etc. prompt).
+    permission = opencodeAgents.yoloPermission;
+  };
+
+  # Oh My Pi (omp) reads MCP servers from ~/.omp/agent/mcp.json
+  # using the same { command, args, env } | { type, url, headers } shape as Claude.
+  ompSettings = {
+    mcpServers = ompMcpServers;
+    # pyghidra-mcp boots Ghidra headless on connect (30-60s+) and blocks the
+    # TUI startup; chrome-devtools fails via npx cold-start every launch.
+    # Both are RE/browser tools inappropriate for a coding agent's every-start.
+    disabledServers = [
+      "pyghidra-mcp"
+      "chrome-devtools"
+    ];
   };
 
 in
@@ -148,5 +166,6 @@ in
     opencodeAndroidReMcpServers
     opencodeWebReMcpServers
     mimoSettings
+    ompSettings
     ;
 }

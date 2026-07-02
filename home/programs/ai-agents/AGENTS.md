@@ -1,6 +1,6 @@
 # AI Agents Infrastructure
 
-High-density orchestration for Claude Code, OpenCode, Codex CLI, Gemini CLI, and Oh My ClaudeCode (OMC). This module manages dynamic provider switching and secure secret injection.
+High-density orchestration for Claude Code, OpenCode, Codex CLI, Antigravity, MiMoCode, and Oh My Pi (omp). This module manages dynamic provider switching, shared MCP servers, skill mirroring, and secure secret injection.
 
 ---
 
@@ -25,6 +25,10 @@ The system follows a strict unidirectional flow:
 ### Oh My ClaudeCode (OMC)
 
 OMC is a Claude Code marketplace plugin that provides multi-agent orchestration. Its installation is managed by Claude Code's plugin system. This Nix module manages OMC's **runtime configuration** (`~/.config/claude-omc/config.jsonc`) and **environment variables** for model routing, features, permissions, and team settings. Plugin installation/removal stays with Claude Code's marketplace.
+
+### Oh My Pi (omp)
+
+omp (fork of pi-mono) is a coding agent with subagents, LSP/DAP, and hindsight memory. The Nix module manages its **MCP config** (`~/.omp/agent/mcp.json`, derived from the shared `programs.aiAgents.mcpServers` via the `ompMcpServers` transform), **skills** (mirrored into `~/.omp/agent/skills` by the activation skill-sync), **herdr agent state extension** (`~/.omp/agent/extensions/herdr-omp-agent-state.ts`, fetched from herdr assets at the installed version), and the **`omp` zsh alias + autoupdate**. MCP secrets are patched into `mcp.json` at activation alongside the other agents. Model/provider selection stays with omp's interactive `~/.omp/agent/` config.
 
 ### Profile-Driven Polymorphism
 
@@ -70,6 +74,11 @@ ai-agents/
 │   ├── _formatters.nix                   # Formatter registry (shared by claude hooks + gemini config)
 │   ├── _impeccable-commands.nix          # Impeccable skill command definitions and text renderer
 │   ├── _models.nix                       # Shared model/provider constants (names, aliases)
+│   ├── _agent-env.nix                    # Runtime model/service env vars for shell scripts
+│   ├── _agentmemory-runtime.nix          # agentmemory npm service + MCP shim packaging
+│   ├── _herdr-mimo-plugin.nix            # Vendored herdr plugin for MiMoCode (herdr has no mimo target)
+│   ├── _opencode-theme.nix               # OpenCode TUI theme constants
+│   ├── _zai-env.nix                      # Z.AI service env var generation
 │   └── _git-clone-update.nix             # Git clone/update helper for plugin repos
 ├── activation/              # Home Manager activation scripts
 │   ├── default.nix          # Aggregation: wires all activation steps

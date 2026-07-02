@@ -7,7 +7,6 @@
 # SessionStart hook that reports the session id + transcript path. Working/idle
 # state is now derived from pane process monitoring, not hooks.
 { }:
-
 let
   herdrHookScript = "$HOME/.claude/hooks/herdr-agent-state.sh";
 in

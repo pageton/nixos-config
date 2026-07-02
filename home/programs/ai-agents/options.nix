@@ -366,5 +366,10 @@ in
       extraSettings = mkAttrsOption { } "Additional Antigravity CLI settings";
     };
 
+    # === Oh My Pi (omp) Options ===
+    omp = {
+      enable = lib.mkEnableOption "Oh My Pi (omp) coding agent configuration";
+    };
+
   };
 }

@@ -195,6 +195,10 @@ lib.mkIf (cfg.skills != [ ]) (
       mirror_skills_to "$HOME/.gemini/skills"
       mirror_count=$((mirror_count + 1))
 
+      # Oh My Pi (omp) reads skills from ~/.omp/agent/skills
+      mirror_skills_to "$HOME/.omp/agent/skills"
+      mirror_count=$((mirror_count + 1))
+
       echo "✓ Mirrored skills to $mirror_count agent directories"
     fi
   ''

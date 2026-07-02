@@ -365,6 +365,18 @@ let
       tool = "mimo";
       launcherSimple = false;
     }
+
+    # Oh My Pi (omp)
+    {
+      alias = "omp";
+      command = "omp";
+      workflowPromptMode = "positional";
+      envMarker = "-";
+      interactiveCommand = "omp";
+      headlessCommand = "omp -p";
+      tool = "omp";
+      launcherSimple = true;
+    }
   ];
 
   # Workflow prompt specs with labels for bash WORKFLOW_MAP generation.
@@ -514,6 +526,7 @@ let
     copilot = "GitHub Copilot";
     antigravity = "Antigravity";
     mimo = "MiMoCode";
+    omp = "Oh My Pi";
   };
   providerLabelEntries = lib.mapAttrsToList (tool: label: "  [${tool}]=\"${label}\"") providerLabels;
 
@@ -524,6 +537,7 @@ let
     "copilot"
     "antigravity"
     "mimo"
+    "omp"
   ];
 
   generatedBashRegistry = builtins.concatStringsSep "\n" (

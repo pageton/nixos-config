@@ -67,6 +67,20 @@ let
     remoteAttrs = server: { httpUrl = server.url; };
   };
 
+  # Oh My Pi (omp) MCP schema: stdio { type, command, args, env } or http { type, url, headers }.
+  # Mirrors the Claude .mcp.json shape (command is a string, args an array).
+  ompMcpServers = mkMcpTransform {
+    localAttrs = server: {
+      type = "stdio";
+      inherit (server) command;
+      args = server.args or [ ];
+    };
+    remoteAttrs = server: {
+      type = "http";
+      inherit (server) url;
+    };
+  };
+
   opencodeAndroidReMcpServers = mkMcpTransform {
     localAttrs = server: {
       type = "local";
@@ -106,5 +120,6 @@ in
     opencodeAndroidReMcpServers
     opencodeWebReMcpServers
     mimoMcpServers
+    ompMcpServers
     ;
 }

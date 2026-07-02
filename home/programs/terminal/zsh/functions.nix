@@ -11,6 +11,8 @@
 let
   inherit (secretLoader) loadSecretFn;
   zaiEnv = import ../../ai-agents/helpers/_zai-env.nix { inherit constants; };
+  # Provider-prefixed model IDs (source of truth for mimo/agent wrappers).
+  models = import ../../ai-agents/helpers/_models.nix;
 
   # Derive OpenCode wrapper functions from profile definitions.
   # Single source: home/programs/ai-agents/helpers/_opencode-profiles.nix.
@@ -110,10 +112,13 @@ in
       fi
       # Run under the ai-agents.slice to cap memory usage and prevent
       # the compositor/terminal from starving during large output.
-      # Fall back to direct exec if systemd-run is unavailable, the
+      # Skip the slice for omp: its native Rust addon deadlocks under the
+      # memory-constrained cgroup (hangs at startup with zero output, no OOM) —
+      # run it directly, the same way bunx/omp_glm/omp_seek invoke it.
+      # Also fall back to direct exec if systemd-run is unavailable, the
       # target is a shell function (systemd-run cannot resolve those),
       # or the transient scope already exists from a prior session.
-      if command -v systemd-run >/dev/null 2>&1 && ! whence -w "$1" 2>/dev/null | grep -q 'function$'; then
+      if [[ "$1" != "omp" ]] && command -v systemd-run >/dev/null 2>&1 && ! whence -w "$1" 2>/dev/null | grep -q 'function$'; then
         systemd-run --user --slice=ai-agents.slice --scope --unit="ai-''${tab_name}" -- "$@" 2>/dev/null || "$@"
       else
         "$@"
@@ -193,7 +198,7 @@ in
 
     mimo_glm() {
       _zellij_rename_tab "miglm"
-      mimo -m zai-coding-plan/glm-5.1 "$@"
+      mimo -m ${models.glm} "$@"
     }
 
     mimo_seek() {
