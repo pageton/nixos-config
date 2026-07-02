@@ -39,6 +39,16 @@
 - If information might have changed recently, verify it with current docs, official sites, or live command output before relying on it.
 - Separate verified facts from inference. If you infer, state that clearly.
 
+## Sub-agents and Skills Usage
+
+- Before starting non-trivial work, check whether a specialized sub-agent or skill fits the task. Delegate when it yields better results at equal or lower cost; do the rest inline.
+- Use **sub-agents** for complex, multi-step, domain-specific, or review-heavy tasks: broad code exploration, parallel independent investigations, adversarial review, large refactors, multi-file implementations. Keep simple lookups, one-line answers, and single-file edits in the main thread.
+- Use **skills** when the task matches an available skill's description — repeatable workflows, code review, docs, testing, planning, research, debugging, implementation patterns. Load the skill via the Skill tool *before* doing the work, and follow its workflow.
+- Don't over-delegate. Delegation has overhead (prompting, context handoff, verification). Only pay it when the payoff is real; otherwise answer directly.
+- The main agent coordinates: decides what to delegate, scopes each sub-agent task with concrete file paths/line refs and clear acceptance criteria, runs independent sub-agents in parallel, then merges their results into one coherent answer.
+- Verify sub-agent output before relying on it. Treat skill instructions as authoritative for their workflow, but still apply your own judgment for correctness and repo conventions.
+- For code-understanding questions, prefer **CodeGraph MCP tools** (see the CodeGraph section below) over spawning an exploration sub-agent — CodeGraph is the pre-built index and avoids redundant grep/Read loops.
+
 ## Memory Discipline
 
 - If `agentmemory` is available in the current agent, check it before re-deriving repo conventions, prior decisions, or long-running task context.
