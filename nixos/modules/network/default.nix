@@ -6,5 +6,6 @@
     ../mullvad.nix # Mullvad VPN with lockdown mode and quantum resistance (opt-in)
     ../tailscale.nix # Tailscale mesh VPN with loose RPF
     ../tor.nix # Tor client and torsocks (opt-in via mySystem.tor)
+    ../cloudflared.nix # Cloudflare Tunnel outbound connector (opt-in via mySystem.cloudflared)
   ];
 }
