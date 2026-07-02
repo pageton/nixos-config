@@ -14,7 +14,8 @@ in
 
       env = {
         EDITOR = "nvim";
-        CLAUDE_CODE_MAX_OUTPUT_TOKENS = "65536";
+        CLAUDE_CODE_MAX_OUTPUT_TOKENS = "32000";
+        API_TIMEOUT_MS = "120000";
       };
 
       permissions = claudePermissionRules;
