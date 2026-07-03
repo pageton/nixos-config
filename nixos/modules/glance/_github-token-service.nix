@@ -2,6 +2,7 @@
 # Uses the user's GitHub CLI auth, with hosts.yml token scraping as a fallback.
 
 {
+  config,
   lib,
   pkgs,
   user,
@@ -52,6 +53,9 @@ in
   serviceConfig = {
     ExecStartPre = [ "+${glanceGithubToken}/bin/glance-github-token" ];
     EnvironmentFile = lib.mkForce "-/run/glance/github-token.env";
-    SupplementaryGroups = [ "docker" ];
+    # Only add the docker group where Docker is actually enabled (desktop).
+    # On hosts without Docker (e.g. thinkpad) the group doesn't exist, which
+    # makes systemd fail the unit with status 216/GROUP.
+    SupplementaryGroups = lib.optionals config.virtualisation.docker.enable [ "docker" ];
   };
 }

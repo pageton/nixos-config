@@ -11,7 +11,14 @@
 
 let
   glanceSettings = import ./_settings.nix { inherit constants; };
-  githubTokenService = import ./_github-token-service.nix { inherit lib pkgs user; };
+  githubTokenService = import ./_github-token-service.nix {
+    inherit
+      config
+      lib
+      pkgs
+      user
+      ;
+  };
 in
 {
   options.mySystem.glance = {
