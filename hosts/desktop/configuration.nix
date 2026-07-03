@@ -57,6 +57,9 @@
     macchanger = {
       enable = true;
     };
+    amdRyzenThermal = {
+      enable = true;
+    };
     mullvadVpn = {
       enable = true;
     };

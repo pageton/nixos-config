@@ -1,4 +1,6 @@
-# AMD thermal management for Ryzen 5 7600X.
+# AMD Ryzen thermal management for desktop (Ryzen 5 7600X).
+# Opt-in via mySystem.amdRyzenThermal — desktop only.
+#
 # The firmware doesn't export ACPI thermal zones, so the kernel never throttles.
 #
 # Previous config used thermald with SensorType=hwmon, but thermald 2.5.11
@@ -9,7 +11,12 @@
 # amd_pstate=active provides hardware-managed frequency scaling with EPP hints.
 # Setting EPP to "power" biases aggressively toward efficiency while allowing
 # boost on demand.
-{ lib, pkgs, ... }:
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 
 let
   # Thermal watchdog: monitors k10temp and clamps max frequency when hot.
@@ -58,42 +65,48 @@ let
   '';
 in
 {
-  boot.kernelParams = [ "amd_pstate=active" ];
-
-  # Use powersave governor with EPP=power for maximum efficiency.
-  # Boost remains available on demand for short bursts.
-  powerManagement.cpuFreqGovernor = "powersave";
-
-  hardware.cpu.amd.updateMicrocode = lib.mkDefault true;
-
-  # Thermal watchdog — clamps max CPU freq when Tctl exceeds 85°C,
-  # restores when it cools below 70°C.
-  systemd.services.thermal-watchdog = {
-    description = "Thermal watchdog for AMD Ryzen 5 7600X";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "multi-user.target" ];
-    serviceConfig = {
-      ExecStart = thermalWatchdog;
-      Restart = "on-failure";
-      RestartSec = 5;
-      Nice = 19;
-      IOSchedulingClass = "idle";
-    };
+  options.mySystem.amdRyzenThermal = {
+    enable = lib.mkEnableOption "AMD Ryzen thermal management (amd-pstate EPP + thermal watchdog, disables thermald)";
   };
 
-  # Set EPP to power on boot and after resume.
-  systemd.services.set-amd-epp = {
-    description = "Set AMD EPP to power mode";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "multi-user.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "${pkgs.bash}/bin/bash -c 'for f in /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference; do echo power > \"$f\" 2>/dev/null || true; done'";
-      RemainAfterExit = true;
-    };
-  };
+  config = lib.mkIf config.mySystem.amdRyzenThermal.enable {
+    boot.kernelParams = [ "amd_pstate=active" ];
 
-  # Disable thermald — it was silently failing with "invalid sensor type hwmon"
-  # and "THD engine init failed" on every boot. The watchdog above replaces it.
-  services.thermald.enable = false;
+    # Use powersave governor with EPP=power for maximum efficiency.
+    # Boost remains available on demand for short bursts.
+    powerManagement.cpuFreqGovernor = "powersave";
+
+    hardware.cpu.amd.updateMicrocode = lib.mkDefault true;
+
+    # Thermal watchdog — clamps max CPU freq when Tctl exceeds 85°C,
+    # restores when it cools below 70°C.
+    systemd.services.thermal-watchdog = {
+      description = "Thermal watchdog for AMD Ryzen 5 7600X";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "multi-user.target" ];
+      serviceConfig = {
+        ExecStart = thermalWatchdog;
+        Restart = "on-failure";
+        RestartSec = 5;
+        Nice = 19;
+        IOSchedulingClass = "idle";
+      };
+    };
+
+    # Set EPP to power on boot and after resume.
+    systemd.services.set-amd-epp = {
+      description = "Set AMD EPP to power mode";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${pkgs.bash}/bin/bash -c 'for f in /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference; do echo power > \"$f\" 2>/dev/null || true; done'";
+        RemainAfterExit = true;
+      };
+    };
+
+    # Disable thermald — it was silently failing with "invalid sensor type hwmon"
+    # and "THD engine init failed" on every boot. The watchdog above replaces it.
+    services.thermald.enable = false;
+  };
 }

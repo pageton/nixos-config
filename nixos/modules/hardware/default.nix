@@ -7,6 +7,6 @@
     ../graphics.nix # NVIDIA proprietary driver, VA-API, Wayland env vars
     ../libinput.nix # libinput for touchpad/mouse handling
     ../upower.nix # Power statistics and battery reporting
-    ../thermal.nix # AMD Ryzen thermal management via thermald
+    ../thermal.nix # AMD Ryzen thermal watchdog (opt-in via mySystem.amdRyzenThermal)
   ];
 }
