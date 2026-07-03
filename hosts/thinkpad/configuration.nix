@@ -41,6 +41,9 @@
     dnscryptProxy = {
       enable = false;
     };
+    tailscale = {
+      enable = true;
+    };
     netdata = {
       enable = true;
     };
