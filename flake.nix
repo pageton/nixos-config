@@ -170,7 +170,6 @@
           };
           modules = [
             ./home/home.nix
-            ./home/programs/ai-agents/herdr-module.nix
             inputs.stylix.homeModules.stylix
             inputs.niri.homeModules.config
             inputs.noctalia.homeModules.default
