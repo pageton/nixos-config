@@ -20,6 +20,17 @@
 let
   speckitCfg = cfg.speckit;
   gitCloneUpdate = import ../helpers/_git-clone-update.nix { inherit pkgs; };
+
+  # Shared per-command processing loop for spec-kit commands.
+  # destPathFn maps a command name to its destination file path.
+  mkSpecKitCommands =
+    commands: destPathFn: cmdPrefix:
+    lib.concatMapStringsSep "\n" (name: ''
+      if [[ -f "$SPECKIT_DIR/templates/commands/${name}.md" ]]; then
+        process_speckit_command "$SPECKIT_DIR/templates/commands/${name}.md" "${cmdPrefix}" \
+          > "${destPathFn name}"
+      fi
+    '') commands;
 in
 {
   installSpecKit = lib.mkIf speckitCfg.enable (
@@ -82,52 +93,38 @@ in
           -e "s|__SPECKIT_COMMAND_TASKSTOISSUES__|''${cmd_prefix}taskstoissues|g"
       }
 
-      # === Claude Code ===
-      if [[ -d "$SPECKIT_DIR/templates/commands" ]] && [[ "${
-        if cfg.claude.enable then "1" else "0"
-      }" == "1" ]] && [[ "${if speckitCfg.claude.enable then "1" else "0"}" == "1" ]]; then
-        mkdir -p "$HOME/.claude/commands"
-        ${lib.concatMapStringsSep "\n" (name: ''
-          if [[ -f "$SPECKIT_DIR/templates/commands/${name}.md" ]]; then
-            process_speckit_command "$SPECKIT_DIR/templates/commands/${name}.md" "/speckit-" \
-              > "$HOME/.claude/commands/speckit-${name}.md"
-          fi
-        '') speckitCfg.claude.commands}
-        echo "✓ Spec Kit installed for Claude Code"
-      fi
+      ${lib.optionalString (cfg.claude.enable && speckitCfg.claude.enable) ''
+        if [[ -d "$SPECKIT_DIR/templates/commands" ]]; then
+          mkdir -p "$HOME/.claude/commands"
+          ${mkSpecKitCommands speckitCfg.claude.commands (
+            name: "$HOME/.claude/commands/speckit-${name}.md"
+          ) "/speckit-"}
+          echo "✓ Spec Kit installed for Claude Code"
+        fi
+      ''}
 
-      # === Codex ===
-      if [[ -d "$SPECKIT_DIR/templates/commands" ]] && [[ "${
-        if cfg.codex.enable then "1" else "0"
-      }" == "1" ]] && [[ "${if speckitCfg.codex.enable then "1" else "0"}" == "1" ]]; then
-        mkdir -p "$HOME/.codex/commands"
-        ${lib.concatMapStringsSep "\n" (name: ''
-          if [[ -f "$SPECKIT_DIR/templates/commands/${name}.md" ]]; then
-            process_speckit_command "$SPECKIT_DIR/templates/commands/${name}.md" "/speckit-" \
-              > "$HOME/.codex/commands/speckit-${name}.md"
-          fi
-        '') speckitCfg.codex.commands}
-        echo "✓ Spec Kit installed for Codex"
-      fi
+      ${lib.optionalString (cfg.codex.enable && speckitCfg.codex.enable) ''
+        if [[ -d "$SPECKIT_DIR/templates/commands" ]]; then
+          mkdir -p "$HOME/.codex/commands"
+          ${mkSpecKitCommands speckitCfg.codex.commands (
+            name: "$HOME/.codex/commands/speckit-${name}.md"
+          ) "/speckit-"}
+          echo "✓ Spec Kit installed for Codex"
+        fi
+      ''}
 
-      # === OpenCode ===
-      if [[ -d "$SPECKIT_DIR/templates/commands" ]] && [[ "${
-        if cfg.opencode.enable then "1" else "0"
-      }" == "1" ]] && [[ "${if speckitCfg.opencode.enable then "1" else "0"}" == "1" ]]; then
-        ${lib.optionalString speckitCfg.opencode.enable ''
+      ${lib.optionalString (cfg.opencode.enable && speckitCfg.opencode.enable) ''
+        if [[ -d "$SPECKIT_DIR/templates/commands" ]]; then
           for profile in ${lib.concatStringsSep " " (map lib.escapeShellArg opencodeProfileNames)}; do
             commands_dir="$HOME/.config/$profile/commands"
             mkdir -p "$commands_dir"
-            ${lib.concatMapStringsSep "\n" (name: ''
-              if [[ -f "$SPECKIT_DIR/templates/commands/${name}.md" ]]; then
-                process_speckit_command "$SPECKIT_DIR/templates/commands/${name}.md" "/speckit." \
-                  > "$commands_dir/speckit.${name}.md"
-              fi
-            '') speckitCfg.opencode.commands}
+            ${mkSpecKitCommands speckitCfg.opencode.commands (
+              name: "$commands_dir/speckit.${name}.md"
+            ) "/speckit."}
           done
           echo "✓ Spec Kit installed for OpenCode"
-        ''}
-      fi
+        fi
+      ''}
     ''
   );
 }

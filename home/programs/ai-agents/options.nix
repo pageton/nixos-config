@@ -89,6 +89,19 @@ let
     default = { };
     inherit description;
   };
+
+  # Default spec-kit command set — shared across Claude, Codex, and OpenCode.
+  speckitCommands = [
+    "specify"
+    "plan"
+    "tasks"
+    "analyze"
+    "checklist"
+    "clarify"
+    "constitution"
+    "implement"
+    "taskstoissues"
+  ];
 in
 {
   options.programs.aiAgents = {
@@ -209,47 +222,17 @@ in
 
       claude = {
         enable = mkBoolOption true "Install spec-kit commands into Claude Code";
-        commands = mkStrListOption [
-          "specify"
-          "plan"
-          "tasks"
-          "analyze"
-          "checklist"
-          "clarify"
-          "constitution"
-          "implement"
-          "taskstoissues"
-        ] "Spec-kit command templates to install for Claude Code (stems under templates/commands/*.md)";
+        commands = mkStrListOption speckitCommands "Spec-kit command templates to install for Claude Code (stems under templates/commands/*.md)";
       };
 
       codex = {
         enable = mkBoolOption true "Install spec-kit commands into Codex";
-        commands = mkStrListOption [
-          "specify"
-          "plan"
-          "tasks"
-          "analyze"
-          "checklist"
-          "clarify"
-          "constitution"
-          "implement"
-          "taskstoissues"
-        ] "Spec-kit command templates to install for Codex (stems under templates/commands/*.md)";
+        commands = mkStrListOption speckitCommands "Spec-kit command templates to install for Codex (stems under templates/commands/*.md)";
       };
 
       opencode = {
         enable = mkBoolOption true "Install spec-kit commands into OpenCode command dirs";
-        commands = mkStrListOption [
-          "specify"
-          "plan"
-          "tasks"
-          "analyze"
-          "checklist"
-          "clarify"
-          "constitution"
-          "implement"
-          "taskstoissues"
-        ] "Spec-kit command templates to install for OpenCode (stems under templates/commands/*.md)";
+        commands = mkStrListOption speckitCommands "Spec-kit command templates to install for OpenCode (stems under templates/commands/*.md)";
       };
     };
 
