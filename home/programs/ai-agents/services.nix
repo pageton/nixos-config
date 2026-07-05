@@ -22,24 +22,41 @@ let
   agentIter = pkgs.writeShellScriptBin "iter" (
     aliasLib.mkWorkflowEnvVars "bash ${scriptsDir}/ai/agent-iter.sh"
   );
-  agentsSearch = pkgs.writeShellScriptBin "agents-search" ''
-    exec ${scriptsDir}/ai/agents-search.sh "$@"
-  '';
-  findingsAndroid = pkgs.writeShellScriptBin "findings-android" ''
-    exec ${scriptsDir}/ai/android-re/findings.sh "$@"
-  '';
-  findingsWeb = pkgs.writeShellScriptBin "findings-web" ''
-    exec ${scriptsDir}/ai/web-re/findings.sh "$@"
-  '';
-  generateTotp = pkgs.writeShellScriptBin "generate-totp" ''
-    exec ${scriptsDir}/ai/web-re/generate-totp.sh "$@"
-  '';
-  reDoctor = pkgs.writeShellScriptBin "re-doctor" ''
-    exec ${scriptsDir}/ai/android-re/re-doctor.sh "$@"
-  '';
-  webReDoctor = pkgs.writeShellScriptBin "web-re-doctor" ''
-    exec ${scriptsDir}/ai/web-re/web-re-doctor.sh "$@"
-  '';
+  # Pure exec wrappers — each delegates to a script under scriptsDir.
+  scriptWrappers =
+    map
+      (
+        e:
+        pkgs.writeShellScriptBin e.name ''
+          exec ${scriptsDir}/${e.script} "$@"
+        ''
+      )
+      [
+        {
+          name = "agents-search";
+          script = "ai/agents-search.sh";
+        }
+        {
+          name = "findings-android";
+          script = "ai/android-re/findings.sh";
+        }
+        {
+          name = "findings-web";
+          script = "ai/web-re/findings.sh";
+        }
+        {
+          name = "generate-totp";
+          script = "ai/web-re/generate-totp.sh";
+        }
+        {
+          name = "re-doctor";
+          script = "ai/android-re/re-doctor.sh";
+        }
+        {
+          name = "web-re-doctor";
+          script = "ai/web-re/web-re-doctor.sh";
+        }
+      ];
   androidReLaunchers = import ./android-re/_launchers.nix {
     inherit
       config
@@ -141,16 +158,11 @@ in
     home.packages = [
       agentLogWrapper
       agentIter
-      agentsSearch
       aiAgentLauncher
       aiAgentInventory
       pkgs.bubblewrap
-      findingsAndroid
-      findingsWeb
-      generateTotp
-      reDoctor
-      webReDoctor
     ]
+    ++ scriptWrappers
     ++ (lib.optional cfg.agentmemory.enable agentmemoryRuntime.iiiEngine)
     ++ (lib.optional cfg.serena.enable serena)
     ++ (lib.optional cfg.speckit.enable pkgs.spec-kit)
