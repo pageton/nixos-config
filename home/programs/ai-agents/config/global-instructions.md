@@ -143,3 +143,56 @@ A direct CodeGraph answer is a handful of calls; a grep/read exploration is doze
 At the start of a session, ask the user if they'd like to initialize CodeGraph:
 
 "I notice this project doesn't have CodeGraph initialized. Would you like me to run `codegraph init -i` to build a code knowledge graph?"
+
+## NixOS Development Rules
+
+When working in NixOS environments, these rules override general Linux assumptions:
+
+- Never use `apt`, `dnf`, `pacman`, or `brew`. Use `nix develop`, `nix-shell -p`, or `nix run nixpkgs#<pkg>`.
+- Respect the split apply flow: `nh home switch` (user-level) before `nh os switch` (system-level). Run home first, then OS.
+- Validate Nix changes with `just format && just modules` before evaluating. Avoid `just check` and `just nixos` when pre-existing system conflicts exist — eval the `activationPackage` instead.
+- All new `.nix` files MUST be `git add`-ed before `nix eval` works on them.
+- Nix hashes: `nix-prefetch-url` returns base32. Convert to SRI via `nix hash to-sri --type sha256` before using with `sha256-` prefix. Never prepend `sha256-` to a base32 hash.
+- In Nix `''...''` strings, shell `${var:-default}` conflicts with Nix interpolation. Use `$var` without braces or escape with `''${`.
+- Never run `git add` and `git commit` in parallel — race on shared index causes files to be swept into wrong commits.
+- Format with `nixfmt --strict` (via `just format`). Lint with `statix check` (via `just lint`).
+- Use `shared/constants.nix` as the SSOT — never hardcode values that belong there (ports, paths, colors, fonts, proxies).
+- All modules expose `mySystem.<module>.enable` for per-host opt-in. Follow this pattern for new modules.
+- SOPS secrets: never in plaintext on disk. Use `/run/secrets/<key>` via `_load_secret()` or `sops.placeholder.*`.
+
+## Security Coding Mindset
+
+- Treat all external input (user data, API responses, file contents, environment variables) as untrusted until validated.
+- Validate at trust boundaries, not deep inside business logic. Fail closed, not open.
+- Parameterize all queries (SQL, shell, URL). Never concatenate user input into executable strings.
+- Prefer allow-lists over deny-lists for input validation. Deny-lists are always incomplete.
+- Secrets belong in environment variables or secret managers, never in source, logs, or error messages.
+- Apply the principle of least privilege: request the minimum scope needed for each operation.
+- Log security-relevant events (auth, access, mutations) but never log secrets or PII.
+- When reviewing crypto code, verify: constant-time comparisons, proper IV/nonce handling, key rotation, and side-channel resistance.
+- Flag any code that handles authentication, authorization, crypto, or PII for explicit review.
+
+## Performance Optimization Patterns
+
+- Measure before optimizing. Profile to identify actual bottlenecks, not guessed ones.
+- Prefer algorithmic improvements (better Big-O) over micro-optimizations (constant factors).
+- Hot path discipline: the most-executed code gets the most attention. Cold paths can be clear over fast.
+- Allocation awareness: every allocation has a cost. Reuse buffers, pool resources, batch operations.
+- Cache strategically: cache expensive computations with bounded size and clear invalidation rules.
+- Lazy evaluation: defer work until needed. Stream large datasets instead of loading into memory.
+- Parallelize independent work. Identify the longest sequential chain (critical path) and break it.
+- Avoid premature abstraction: a simple direct solution often outperforms a clever general one.
+- Monitor in production: latency percentiles (p50/p95/p99), not averages. Tail latency matters.
+
+## Error Handling Patterns
+
+- Errors are values, not afterthoughts. Design error paths as deliberately as happy paths.
+- Fail fast: detect errors at the boundary. Don't propagate invalid state deeper into the system.
+- Provide actionable error messages: what went wrong, where, and what the user can do about it.
+- Distinguish recoverable errors (retry, fallback, degrade) from unrecoverable ones (halt, report).
+- Never swallow errors silently. An empty catch/except is a bug waiting to surface in production.
+- Wrap errors with context as they propagate: `"failed to parse config: $originalError"`.
+- Use structured errors (typed exceptions, Result types) over stringly-typed error codes.
+- Log errors with enough context to reproduce: input, state, stack trace, correlation ID.
+- Test error paths as rigorously as happy paths. Edge cases and failures are where bugs hide.
+- Idempotency: retry-safe operations should produce the same result regardless of how many times they run.
