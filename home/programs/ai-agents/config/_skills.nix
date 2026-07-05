@@ -400,5 +400,146 @@
 
     # ── Speckit spec-driven development ────────────────────────────────────
     "dceoy/speckit-agent-skills"
+
+    # ── NixOS / Nix ecosystem ─────────────────────────────────────────────
+    # Comprehensive auto-updated NixOS documentation (daily from nix.dev,
+    # nixpkgs manual, nix-pills). Covers modules, flakes, HM, testing, overlays.
+    "marceloeatworld/nixos-ai-skill"
+    {
+      repo = "chatondearu/ai-dev-kit";
+      skill = "nix-develop-shell";
+    }
+
+    # ── Database design & SQL ─────────────────────────────────────────────
+    # 5-phase methodology: model → constrain → index → query → operate.
+    # Complements existing postgres-pro with schema/index/migration guidance.
+    "Chris-Graffagnino/database-design"
+
+    # ── Multi-language patterns (Rust, Python, TS, Go, Java) ──────────────
+    # 75 skills: language idioms + framework patterns (FastAPI, Django, React,
+    # Next.js, Express) + Docker + CI/CD + security + testing + database.
+    "VersoXBT/claude-initial-setup"
+
+    # ── DevOps & infrastructure ───────────────────────────────────────────
+    # Docker, Terraform, Helm, AWS/EKS, Prometheus, Grafana, Jenkins, CI/CD.
+    "abdullahkhawer/devops-skills"
+
+    # ── Python web frameworks ─────────────────────────────────────────────
+    # Django, DRF, FastAPI, Flask with production patterns (SQLAlchemy 2.x
+    # async, Pydantic v2, Alembic migrations).
+    "rishapgandhi/python-skills"
+
+    # ── Practical developer utilities ─────────────────────────────────────
+    # API designer, dockerfile doctor, SQL expert, regex builder, test
+    # generator, dependency upgrader, migration planner, changelog writer.
+    "kakarot-oncloud/claude-dev-skills"
+
+    # ── Security research (Trail of Bits) ─────────────────────────────────
+    # Professional security firm's plugin marketplace — key plugins:
+    {
+      repo = "trailofbits/skills";
+      skill = "yara-authorship";
+    }
+    {
+      repo = "trailofbits/skills";
+      skill = "constant-time-analysis";
+    }
+    {
+      repo = "trailofbits/skills";
+      skill = "c-review";
+    }
+    {
+      repo = "trailofbits/skills";
+      skill = "rust-review";
+    }
+    {
+      repo = "trailofbits/skills";
+      skill = "static-analysis";
+    }
+    {
+      repo = "trailofbits/skills";
+      skill = "supply-chain-risk-auditor";
+    }
+    {
+      repo = "trailofbits/skills";
+      skill = "semgrep-rule-creator";
+    }
+    {
+      repo = "trailofbits/skills";
+      skill = "variant-analysis";
+    }
+    {
+      repo = "trailofbits/skills";
+      skill = "firebase-apk-scanner";
+    }
+
+    # ── Reverse engineering — completing existing repos ───────────────────
+    # wshobson/agents: add the remaining 3 RE skills (already has protocol-re)
+    {
+      repo = "wshobson/agents";
+      skill = "anti-reversing-techniques";
+    }
+    {
+      repo = "wshobson/agents";
+      skill = "binary-analysis-patterns";
+    }
+    {
+      repo = "wshobson/agents";
+      skill = "memory-forensics";
+    }
+    # P4nda0s/reverse-skills: add remaining 7 IDA-centric skills (already has rev-frida)
+    {
+      repo = "P4nda0s/reverse-skills";
+      skill = "rev-symbol";
+    }
+    {
+      repo = "P4nda0s/reverse-skills";
+      skill = "rev-struct";
+    }
+    {
+      repo = "P4nda0s/reverse-skills";
+      skill = "rev-unicorn-debug";
+    }
+    {
+      repo = "P4nda0s/reverse-skills";
+      skill = "rev-dex-dumper";
+    }
+    {
+      repo = "P4nda0s/reverse-skills";
+      skill = "rev-u3d-dump";
+    }
+    {
+      repo = "P4nda0s/reverse-skills";
+      skill = "rev-idapython";
+    }
+    {
+      repo = "P4nda0s/reverse-skills";
+      skill = "rev-ios-dump";
+    }
+
+    # ── Mobile reverse engineering ────────────────────────────────────────
+    {
+      repo = "incogbyte/android-reverse-engineering-claude-skill";
+      skill = "android-reverse-engineering";
+    }
+    {
+      repo = "incogbyte/iOS-reverse-engineering-claude-skill";
+      skill = "ios-reverse-engineering";
+    }
+
+    # ── CTF & exploit development ─────────────────────────────────────────
+    # 11 skills across all CTF categories: pwn, reverse, crypto, forensics,
+    # web, malware, OSINT. Includes solve-challenge orchestrator.
+    "ljagiello/ctf-skills"
+
+    # ── Comprehensive cybersecurity (817 skills, 29 domains) ──────────────
+    # MITRE ATT&CK, NIST CSF, malware analysis, digital forensics, pentesting,
+    # cryptography, threat hunting, red teaming, web/mobile security.
+    "mukul975/Anthropic-Cybersecurity-Skills"
+
+    # ── RE/pentest/exploit router pack (7.3k stars) ───────────────────────
+    # IDA Pro, radare2, pentest tools, pwn chains, patch-diff exploit,
+    # firmware pentest, EDR bypass, binary diff, LLM security.
+    "zhaoxuya520/reverse-skill"
   ];
 }
