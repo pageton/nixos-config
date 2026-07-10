@@ -68,6 +68,17 @@ let
 
   webReLaunchers = import ./web-re/_launchers.nix { inherit lib pkgs scriptsDir; };
 
+  mimoAndroidReLaunchers = import ./android-re/_mimo-launchers.nix {
+    inherit
+      config
+      constants
+      lib
+      pkgs
+      ;
+  };
+
+  mimoWebReLaunchers = import ./web-re/_mimo-launchers.nix { inherit lib pkgs scriptsDir; };
+
   aliasLib = import ./helpers/_aliases.nix {
     inherit
       config
@@ -168,6 +179,8 @@ in
     ++ (lib.optional cfg.speckit.enable pkgs.spec-kit)
     ++ androidReLaunchers
     ++ webReLaunchers
+    ++ mimoAndroidReLaunchers
+    ++ mimoWebReLaunchers
     ++ (lib.optional cfg.logging.enable (
       pkgs.writeShellScriptBin "ai-agent-log-cleanup" ''
         ${logCleanupCommand}

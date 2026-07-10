@@ -248,6 +248,19 @@ in
           force = true;
         };
       })
+      # MiMoCode RE agent-specific MCP fragments (merged into the runtime overlay by mimo launchers)
+      (lib.mkIf cfg.enable {
+        "mimocode/android-re-mcp-servers.json" = {
+          text = toJSON opencodeAndroidReMcpServers;
+          force = true;
+        };
+      })
+      (lib.mkIf cfg.enable {
+        "mimocode/web-re-mcp-servers.json" = {
+          text = toJSON opencodeWebReMcpServers;
+          force = true;
+        };
+      })
       # herdr agent state plugin for OpenCode (auto-discovered from plugins/ dir)
       (lib.mkIf (cfg.herdr.enable && cfg.opencode.enable) {
         "opencode/plugins/herdr-agent-state.js" = {

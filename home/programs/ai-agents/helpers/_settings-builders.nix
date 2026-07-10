@@ -11,6 +11,16 @@ let
   formatterRegistry = import ./_formatters.nix;
   opencodeProfiles = import ./_opencode-profiles.nix { inherit config; };
   opencodeAgents = import ../config/models/_opencode-agents.nix { };
+  # MiMoCode RE agents (mimo shares opencode's agent schema). Merged into mimoSettings.agent.
+  # Built-in agents (build/plan/...) remain; default_agent stays unset so plain `mi` uses `build`.
+  mimoAndroidReAgent = import ../config/models/_mimo-android-re.nix {
+    inherit config lib;
+    yoloPermission = opencodeAgents.yoloPermission;
+  };
+  mimoWebReAgent = import ../config/models/_mimo-web-re.nix {
+    inherit config lib;
+    yoloPermission = opencodeAgents.yoloPermission;
+  };
   inherit (mcpTransforms)
     opencodeMcpServers
     antigravityMcpServers
@@ -141,6 +151,9 @@ let
     # MiMoCode shares OpenCode's permission schema; yoloPermission auto-allows
     # all tools incl. external_directory (bypasses the ~/.claude etc. prompt).
     permission = opencodeAgents.yoloPermission;
+    # android-re/web-re agents (mirrors opencode). The launcher pins default_agent
+    # per-session via MIMOCODE_CONFIG_DIR overlay, so plain `mi` still defaults to `build`.
+    agent = mimoAndroidReAgent // mimoWebReAgent;
   };
 
   # Oh My Pi (omp) reads MCP servers from ~/.omp/agent/mcp.json
