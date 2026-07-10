@@ -4,7 +4,6 @@
   config,
   constants,
   lib,
-  pkgs,
   ...
 }:
 
