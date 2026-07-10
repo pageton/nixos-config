@@ -8,8 +8,10 @@
 # (AGENTS.md, WORKFLOW.md, TOOLS.md, TROUBLESHOOTING.md, README.md) injected at Nix eval time.
 # No need to pass them again via --prompt.
 #
-# If no emulator is running, `re-avd.sh start` is launched in the background so the
-# agent session opens immediately instead of blocking on the full boot chain.
+# If no emulator is running, `re-avd.sh start-basic` is launched in the background so
+# the agent session opens immediately instead of blocking on the full boot chain.
+# start-basic boots only the emulator; the agent enables Frida/mitm/spoof on demand
+# via `re-avd.sh frida-start`, `spoof`, `proxy-set`, etc.
 # The agent can monitor progress with `re-avd.sh status` or `adb wait-for-device`.
 set -euo pipefail
 
@@ -39,13 +41,13 @@ if command -v niri >/dev/null 2>&1 && niri msg version >/dev/null 2>&1; then
 fi
 
 # Boot the emulator baseline if nothing is running.
-# Run start in background so the OpenCode session opens immediately;
+# Run start-basic in background so the OpenCode session opens immediately;
 # the agent can check readiness with `re-avd.sh status` or `adb wait-for-device`.
 if ! emulator_online; then
-	echo "No emulator running — starting Android RE baseline in background (log: ${START_LOG})"
-	nohup bash "${SCRIPT_DIR}/re-avd.sh" start >"${START_LOG}" 2>&1 &
+	echo "No emulator running — starting emulator (start-basic) in background (log: ${START_LOG})"
+	nohup bash "${SCRIPT_DIR}/re-avd.sh" start-basic >"${START_LOG}" 2>&1 &
 	START_PID=$!
-	echo "re-avd.sh start PID: ${START_PID}"
+	echo "re-avd.sh start-basic PID: ${START_PID}"
 	echo "Monitor with: tail -f ${START_LOG}"
 else
 	echo "Emulator already running — checking status..."
