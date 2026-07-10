@@ -69,9 +69,6 @@
     webRe = {
       enable = true;
     };
-    ollama = {
-      enable = true;
-    };
     vaultwarden = {
       enable = true;
     };

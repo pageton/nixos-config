@@ -23,7 +23,6 @@ let
     glance = 8082; # Glance dashboard
     zellij-web = 8083; # Zellij web terminal server
     activitywatch = 5600;
-    ollama = 11434;
     vnc = 5900;
     vnc-web = 6080;
   };
