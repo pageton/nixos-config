@@ -73,6 +73,17 @@ nixos-fast target=host:
     @echo -e "\n➤ Rebuilding NixOS (fast mode)…"
     NH_NO_VALIDATE=1 nh os switch . --hostname {{target}} --diff never --no-update-lock-file --no-write-lock-file --no-nom
 
+# Apply resumable-retry curl flags (NIX_CURL_FLAGS) to the running nix-daemon.
+# Bridges the build catch-22 so large fetches (NVIDIA driver, Android Studio)
+# resume across connection drops instead of restarting from byte 0.
+fetch-retry:
+    @echo -e "\n➤ Applying NIX_CURL_FLAGS to running nix-daemon…"
+    @sudo bash ./scripts/build/fetch-retry.sh
+
+# Live dashboard for the big resumable CDN fetches during `nh os switch`.
+fetch-progress:
+    @sudo bash ./scripts/build/fetch-progress.sh
+
 # Fast local quality gate (no switch)
 qa:
     @echo -e "\n➤ Running local QA (no switch)…"

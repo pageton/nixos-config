@@ -67,6 +67,18 @@
 
       download-buffer-size = 262144000; # 250 MB (250 * 1024 * 1024)
 
+      # Substituter robustness on a flaky link — the mirror of the NIX_CURL_FLAGS
+      # fix below, but for cache.nixos.org nar pulls, which use Nix's INTERNAL
+      # libcurl downloader (not fetchurl's curl, so NIX_CURL_FLAGS doesn't apply).
+      # Without these, a single TCP reset tears down a multiplexed HTTP/2 stream
+      # and bursts of "Stream error in the HTTP/2 framing layer" / timeouts kill
+      # nar downloads (e.g. VirtualBox-7.2.10.tar.bz2), cascading into "no
+      # substituter can build it" and a failed closure. http2=false forces
+      # HTTP/1.1 so each nar is its own connection — a drop fails only that one
+      # transfer, which Nix then retries. Confirmed levers: `nix show-config`.
+      http2 = false;
+      download-attempts = 10; # default 5; extra chances when a nar times out
+
       substituters = [
         # high priority since it's almost always used
         "https://cache.nixos.org?priority=10"
@@ -87,4 +99,26 @@
       options = "--delete-older-than 14d --max-freed $((64 * 1024**3))"; # Keep 14 days, max 64GB freed
     };
   };
+
+  # Pass extra curl flags to fetchurl builds via the Nix daemon environment.
+  # nixpkgs fetchurl hardcodes --retry 3 --retry-all-errors (builder.sh).
+  # NIX_CURL_FLAGS is in fetchurl's impureEnvVars and is appended LAST, so these
+  # override. --retry 100 gives curl many chances to push through the SSL EOF /
+  # connection-reset drops seen on us.download.nvidia.com and edgedl.me.gvt1.com;
+  # with -C - each retry is cheap because it resumes from the partial file, so a
+  # high ceiling removes the retry-exhaustion cliff without wasting bandwidth.
+  # The ~400 MB NVIDIA .run and ~1.2 GB Android Studio tarball would otherwise
+  # burn the default budget on a flaky link and never converge.
+  systemd.services.nix-daemon.environment.NIX_CURL_FLAGS = "--retry 100 --retry-delay 3 -C -";
+
+  # Runtime bridge so the CURRENT `nh os switch` build picks up the http2
+  # substituter setting above without waiting for a successful switch to
+  # regenerate /etc/nix/nix.conf (catch-22: the build that would activate it
+  # runs under the old daemon, where http2=true still causes the HTTP/2 stream
+  # errors). NIX_CONFIG overrides nix.conf for the daemon on restart. Only one
+  # setting here — systemd Environment= cannot hold the newline that NIX_CONFIG
+  # needs for multiple — but http2 is the decisive lever; download-attempts
+  # takes effect via nix.settings on the next successful switch.
+  # Applied to the running daemon by scripts/build/fetch-retry.sh.
+  systemd.services.nix-daemon.environment.NIX_CONFIG = "http2 = false";
 }
