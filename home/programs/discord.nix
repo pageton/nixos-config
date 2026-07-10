@@ -54,7 +54,13 @@ in
   programs.nixcord = {
     enable = true;
 
-    discord.enable = true;
+    discord = {
+      enable = true;
+      # Patch vanilla Discord with Vencord so the configured plugins below
+      # actually apply. Without this, nixcord warns that Discord ships with
+      # no client mod (vencord/equicord both disabled).
+      vencord.enable = true;
+    };
     vesktop.enable = true;
 
     config = {

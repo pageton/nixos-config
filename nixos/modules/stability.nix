@@ -86,9 +86,9 @@
   };
 
   # Keep user-session app scopes from delaying reboot for the default 90s.
-  systemd.user.extraConfig = ''
-    DefaultTimeoutStopSec=30s
-  '';
+  systemd.user.settings.Manager = {
+    DefaultTimeoutStopSec = "30s";
+  };
 
   # Real-time kit for multimedia tasks (workstations only)
   security.rtkit.enable = true;

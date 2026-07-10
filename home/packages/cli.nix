@@ -45,6 +45,7 @@
 
   # === Network Analysis ===
   mitmproxy # HTTP proxy for debugging and analysis
+  sshpass # Non-interactive SSH password authentication
   wireshark-cli # Network protocol analyzer (CLI)
 
   # Code coverage and binary hardening analysis

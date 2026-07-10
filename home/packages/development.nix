@@ -69,6 +69,9 @@ with pkgsStable;
   rustc # Rust programming language compiler
   cargo # Rust package manager and build tool
 
+  # === WebAssembly ===
+  binaryen # WebAssembly compiler toolchain (wasm-opt, wasm2js, wasm-as)
+
   # === Reverse Engineering and Dynamic Analysis ===
   frida-tools # Dynamic instrumentation toolkit for reverse engineering
   ghidra-bin # NSA reverse engineering framework (GUI + headless)
