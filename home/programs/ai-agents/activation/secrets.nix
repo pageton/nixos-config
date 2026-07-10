@@ -44,6 +44,12 @@ lib.hm.dag.entryAfter [ "writeBoundary" "linkGeneration" "setupCodexConfig" "set
         echo "✓ Patched $(basename "$(dirname "$OPENCODE_CFG")")/opencode.json with $label"
       fi
     done
+    # MiMoCode config.json — same MCP JSON structure as opencode (mimoMcpServers = opencodeMcpServers).
+    local mimocode_cfg="$HOME/.config/mimocode/config.json"
+    if [[ -f "$mimocode_cfg" ]]; then
+      patch_json_file "$mimocode_cfg" "$jq_arg" "$secret" "$opencode_filter"
+      echo "✓ Patched mimocode/config.json with $label"
+    fi
 
     if [[ -n "$claude_filter" ]] && [[ -f "$HOME/.mcp.json" ]]; then
       patch_json_file "$HOME/.mcp.json" "$jq_arg" "$secret" "$claude_filter"
@@ -85,6 +91,12 @@ lib.hm.dag.entryAfter [ "writeBoundary" "linkGeneration" "setupCodexConfig" "set
         "__ZAI_API_KEY_PLACEHOLDER__" \
         '\[mcp_servers.zai-mcp-server.env\]' \
         "Z.AI API key + remote MCPs"
+      # MiMoCode auth.json — patch provider key if entry exists
+      mimocode_auth="$HOME/.local/share/mimocode/auth.json"
+      if [[ -f "$mimocode_auth" ]] && ${pkgs.jq}/bin/jq -e 'has("zai-coding-plan")' "$mimocode_auth" &>/dev/null; then
+        ${pkgs.jq}/bin/jq --arg key "$ZAI_KEY" '."zai-coding-plan".key = $key' "$mimocode_auth" > "$mimocode_auth.tmp" && mv "$mimocode_auth.tmp" "$mimocode_auth"
+        echo "✓ Patched mimocode auth.json with Z.AI key"
+      fi
 
       unset ZAI_KEY
     else
@@ -156,6 +168,12 @@ lib.hm.dag.entryAfter [ "writeBoundary" "linkGeneration" "setupCodexConfig" "set
           echo "✓ Patched $(basename "$(dirname "$OPENCODE_CFG")")/opencode.json with DeepSeek key"
         fi
       done
+      # MiMoCode auth.json — patch provider key if entry exists
+      mimocode_auth="$HOME/.local/share/mimocode/auth.json"
+      if [[ -f "$mimocode_auth" ]] && ${pkgs.jq}/bin/jq -e 'has("deepseek")' "$mimocode_auth" &>/dev/null; then
+        ${pkgs.jq}/bin/jq --arg key "$DEEPSEEK_KEY" '.deepseek.key = $key' "$mimocode_auth" > "$mimocode_auth.tmp" && mv "$mimocode_auth.tmp" "$mimocode_auth"
+        echo "✓ Patched mimocode auth.json with DeepSeek key"
+      fi
 
       unset DEEPSEEK_KEY escaped_deepseek
     else
@@ -176,6 +194,12 @@ lib.hm.dag.entryAfter [ "writeBoundary" "linkGeneration" "setupCodexConfig" "set
           echo "✓ Patched $(basename "$(dirname "$OPENCODE_CFG")")/opencode.json with MiMo key"
         fi
       done
+      # MiMoCode auth.json — patch provider key if entry exists
+      mimocode_auth="$HOME/.local/share/mimocode/auth.json"
+      if [[ -f "$mimocode_auth" ]] && ${pkgs.jq}/bin/jq -e 'has("xiaomi")' "$mimocode_auth" &>/dev/null; then
+        ${pkgs.jq}/bin/jq --arg key "$MIMO_KEY" '.xiaomi.key = $key' "$mimocode_auth" > "$mimocode_auth.tmp" && mv "$mimocode_auth.tmp" "$mimocode_auth"
+        echo "✓ Patched mimocode auth.json with MiMo key"
+      fi
 
       unset MIMO_KEY escaped_mimo
     else

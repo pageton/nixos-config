@@ -19,40 +19,51 @@ let
   ) { } individualSkills;
   desiredSkillStateJson = toJSON normalizedSkills;
   repoLevelSkillCommands = map (repo: ''
-    processed_groups=$((processed_groups + 1))
-    echo "  [$processed_groups/$configured_groups] ${repo}"
-    echo "  → ${repo}"
-    echo "  [AI] starting install for ${repo} at $(date +'%F %T')"
-    total_attempts=$((total_attempts + 1))
-    if ! attempt_cmd "install ${repo}" "$SKILLS_BIN" add "${repo}" --global --yes; then
-      echo "❌ Failed to install ${repo}"
-      failed_installs=$((failed_installs + 1))
+    if grep -qxF "${repo}" "$completed_file" 2>/dev/null; then
+      echo "  [$((processed_groups + 1))/$configured_groups] ${repo} ⏭ already done"
+      processed_groups=$((processed_groups + 1))
+      skipped_installs=$((skipped_installs + 1))
     else
-      echo "✔ Installed ${repo}"
-      successful_installs=$((successful_installs + 1))
+      processed_groups=$((processed_groups + 1))
+      echo "  [$processed_groups/$configured_groups] ${repo}"
+      echo "  → ${repo}"
+      echo "  [AI] starting install for ${repo} at $(date +'%F %T')"
+      total_attempts=$((total_attempts + 1))
+      if install_repo_via_clone "${repo}" ""; then
+        echo "✔ Installed ${repo}"
+        echo "${repo}" >> "$completed_file"
+        successful_installs=$((successful_installs + 1))
+      else
+        echo "❌ Failed to install ${repo}"
+        failed_installs=$((failed_installs + 1))
+      fi
     fi
   '') repoLevelSkills;
   individualSkillCommands = lib.mapAttrsToList (
     repo: skills:
     let
       uniqueSkills = lib.unique skills;
-      skillFlags = lib.concatMapStringsSep " " (
-        skill: "--skill ${lib.escapeShellArg skill}"
-      ) uniqueSkills;
       skillList = lib.concatStringsSep ", " uniqueSkills;
     in
     ''
-      processed_groups=$((processed_groups + 1))
-      echo "  [$processed_groups/$configured_groups] ${repo} (${toString (builtins.length uniqueSkills)} skill(s))"
-      echo "  → ${repo}: ${skillList}"
-      echo "  [AI] starting batched install for ${repo} at $(date +'%F %T')"
-      total_attempts=$((total_attempts + 1))
-      if ! attempt_cmd "install ${repo} (${skillList})" "$SKILLS_BIN" add "https://github.com/${repo}" ${skillFlags} --global --yes; then
-        echo "❌ Failed to install ${repo}: ${skillList}"
-        failed_installs=$((failed_installs + 1))
+      if grep -qxF "${repo}" "$completed_file" 2>/dev/null; then
+        echo "  [$((processed_groups + 1))/$configured_groups] ${repo} (${toString (builtins.length uniqueSkills)} skill(s)) ⏭ already done"
+        processed_groups=$((processed_groups + 1))
+        skipped_installs=$((skipped_installs + 1))
       else
-        echo "✔ Installed ${repo}: ${skillList}"
-        successful_installs=$((successful_installs + 1))
+        processed_groups=$((processed_groups + 1))
+        echo "  [$processed_groups/$configured_groups] ${repo} (${toString (builtins.length uniqueSkills)} skill(s))"
+        echo "  → ${repo}: ${skillList}"
+        echo "  [AI] starting install for ${repo} at $(date +'%F %T')"
+        total_attempts=$((total_attempts + 1))
+        if install_repo_via_clone "${repo}" ""; then
+          echo "✔ Installed ${repo}: ${skillList}"
+          echo "${repo}" >> "$completed_file"
+          successful_installs=$((successful_installs + 1))
+        else
+          echo "❌ Failed to install ${repo}: ${skillList}"
+          failed_installs=$((failed_installs + 1))
+        fi
       fi
     ''
   ) individualSkillsByRepo;
@@ -60,33 +71,14 @@ let
   installGroupCount =
     builtins.length repoLevelSkillCommands + builtins.length individualSkillCommands;
 in
-lib.mkIf (cfg.skills != [ ]) (
+lib.mkIf true (
   lib.hm.dag.entryAfter [ "writeBoundary" "createJSWorkspace" ] ''
     export BUN_INSTALL="$HOME/.bun"
     export PATH="${pkgs.git}/bin:${pkgs.nodejs_22}/bin:${pkgs.bun}/bin:$BUN_INSTALL/bin:$PATH"
 
-    SKILLS_BIN="$BUN_INSTALL/bin/skills"
-    if [[ ! -x "$SKILLS_BIN" ]]; then
-      SKILLS_BIN="$(command -v skills 2>/dev/null || true)"
-    fi
-
-    if [[ -z "$SKILLS_BIN" ]]; then
-      echo "📦 skills CLI missing, bootstrapping with bun..."
-      if ! $DRY_RUN_CMD "${pkgs.bun}/bin/bun" add --global --cwd "$HOME" --no-summary skills; then
-        echo "❌ Failed to bootstrap skills CLI"
-        exit 1
-      fi
-
-      SKILLS_BIN="$BUN_INSTALL/bin/skills"
-      if [[ ! -x "$SKILLS_BIN" ]]; then
-        SKILLS_BIN="$(command -v skills 2>/dev/null || true)"
-      fi
-    fi
-
-    if [[ -z "$SKILLS_BIN" ]]; then
-      echo "❌ skills CLI not found after bootstrap"
-      exit 1
-    fi
+    # skills CLI no longer used — clone+copy is the primary install method.
+    # The CLI has unsuppressible interactive prompts, PromptScript blocking,
+    # and missing --yes flag that make it unsuitable for batch activation.
 
     if ! command -v git >/dev/null 2>&1; then
       echo "❌ git is required for skills installation but is not in PATH"
@@ -95,10 +87,11 @@ lib.mkIf (cfg.skills != [ ]) (
 
     desired_skill_state_json=${lib.escapeShellArg desiredSkillStateJson}
     # Include a version marker so cache invalidates when install flags change
-    desired_skill_state_hash=$(printf '%s:v4' "$desired_skill_state_json" | ${pkgs.coreutils}/bin/sha256sum | cut -d' ' -f1)
+    desired_skill_state_hash=$(printf '%s:v7' "$desired_skill_state_json" | ${pkgs.coreutils}/bin/sha256sum | cut -d' ' -f1)
     skill_state_cache_dir="$HOME/.cache/ai-agents"
     skill_state_cache_file="$skill_state_cache_dir/skills-state.sha256"
-    skill_lock_file="$HOME/.agents/.skill-lock.json"
+    skill_lock_file="$HOME/.cache/ai-agents/skills-installed.marker"
+    completed_file="$skill_state_cache_dir/skills-completed.txt"
     skip_skill_install=0
 
     if [[ -f "$skill_state_cache_file" ]] && [[ -f "$skill_lock_file" ]]; then
@@ -108,28 +101,63 @@ lib.mkIf (cfg.skills != [ ]) (
         skip_skill_install=1
       fi
     fi
-
     if [[ "$skip_skill_install" -eq 0 ]]; then
-      # Remove all existing global skills before reinstall to prevent stale accumulation.
-      # skills CLI has no non-interactive bulk remove, so wipe directories directly.
-      echo "🧹 Removing all existing global skills before reinstall..."
-      "$SKILLS_BIN" remove --global --all --yes 2>/dev/null || true
-      rm -rf "$HOME/.agents/skills"/* 2>/dev/null || true
-      rm -rf "$HOME/.agents/.skill-lock.json" 2>/dev/null || true
-      rm -rf "$HOME/.claude/skills"/* 2>/dev/null || true
-      echo "✓ Cleaned skill directories"
-
-      attempt_cmd() {
-        local label="$1"
-        shift
-        local attempt
-        for attempt in 1 2 3; do
-          if $DRY_RUN_CMD "$@"; then
-            return 0
+      # Check if completed_file is for the current skill list (hash match)
+      # vs stale from a different list that was cancelled.
+      completed_hash_file="$skill_state_cache_dir/skills-completed.hash"
+      if [[ -f "$completed_file" ]] && [[ -f "$completed_hash_file" ]]; then
+        completed_list_hash="$(cat "$completed_hash_file")"
+        if [[ "$completed_list_hash" == "$desired_skill_state_hash" ]]; then
+          done_count=$(wc -l < "$completed_file" 2>/dev/null || echo 0)
+          echo "📋 Resuming partial install ($done_count repo(s) already done)"
+        else
+          echo "🧹 Skill list changed — full reinstall"
+          rm -rf "$HOME/.agents/skills"/* 2>/dev/null || true
+          rm -rf "$HOME/.claude/skills"/* 2>/dev/null || true
+          rm -f "$completed_file" "$completed_hash_file"
+          echo "✓ Cleaned skill directories"
+        fi
+      else
+        echo "🧹 Removing all existing global skills before reinstall..."
+        rm -rf "$HOME/.agents/skills"/* 2>/dev/null || true
+        rm -rf "$HOME/.claude/skills"/* 2>/dev/null || true
+        rm -f "$completed_file" "$completed_hash_file"
+        echo "✓ Cleaned skill directories"
+      fi
+      # Seed the completed_file tracking for this install run
+      mkdir -p "$skill_state_cache_dir"
+      printf '%s' "$desired_skill_state_hash" > "$completed_hash_file"
+      : > "$completed_file"
+      #   skills/<name>/SKILL.md  (most repos)
+      #   .claude/skills/<name>/SKILL.md  (Claude plugin format)
+      #   <name>/SKILL.md  (flat structure)
+      install_repo_via_clone() {
+        local repo="$1"
+        local clone_dir
+        clone_dir=$(mktemp -d)
+        if ! git clone --depth 1 "https://github.com/''${repo}" "$clone_dir" 2>/dev/null; then
+          rm -rf "$clone_dir"
+          return 1
+        fi
+        local found=0
+        local skill_src
+        # Try common skill directory layouts
+        for skill_src in "$clone_dir/skills" "$clone_dir/.claude/skills"; do
+          if [[ -d "$skill_src" ]]; then
+            cp -r "$skill_src"/* "$HOME/.claude/skills/" 2>/dev/null
+            found=1
           fi
-          echo "⚠ $label failed (attempt $attempt/3)"
-          sleep 1
         done
+        # Fallback: find any SKILL.md and copy its parent dir
+        if [[ "$found" -eq 0 ]]; then
+          for skill_md in $(find "$clone_dir" -name SKILL.md 2>/dev/null); do
+            cp -r "$(dirname "$skill_md")" "$HOME/.claude/skills/" 2>/dev/null && found=1
+          done
+        fi
+        rm -rf "$clone_dir"
+        if [[ "$found" -eq 1 ]]; then
+          return 0
+        fi
         return 1
       }
 
@@ -146,18 +174,16 @@ lib.mkIf (cfg.skills != [ ]) (
       ${lib.concatStringsSep "" skillCommands}
 
       install_duration_seconds=$(( $(date +%s) - install_started_epoch ))
-
-      echo "🧠 Skills summary: configured=$configured_entries batches=$processed_groups attempted=$total_attempts success=$successful_installs skipped=$skipped_installs failures=$failed_installs duration=''${install_duration_seconds}s"
-
       if [[ "$failed_installs" -gt 0 ]]; then
         echo "⚠ Skills installation finished with $failed_installs failures"
-        echo "⚠ Continuing Home Manager activation; agent skills sync is best-effort"
+        echo "⚠ $successful_installs succeeded — retrying remaining on next nh home switch"
+      else
+        mkdir -p "$skill_state_cache_dir"
+        printf '%s' "$desired_skill_state_hash" > "$skill_state_cache_file"
+        touch "$skill_lock_file"
+        rm -f "$completed_file" "$completed_hash_file"
+        echo "✓ Skills installation complete"
       fi
-
-      mkdir -p "$skill_state_cache_dir"
-      printf '%s' "$desired_skill_state_hash" > "$skill_state_cache_file"
-
-      echo "✓ Skills installation complete"
     fi
 
     # Mirror Claude skills to all agent skill directories.
@@ -200,6 +226,15 @@ lib.mkIf (cfg.skills != [ ]) (
       mirror_count=$((mirror_count + 1))
 
       echo "✓ Mirrored skills to $mirror_count agent directories"
+    else
+      # ~/.claude/skills/ removed — clean stale symlinks from all agent dirs
+      echo "🧹 No skills installed — cleaning stale symlinks from agent directories..."
+      for profile in ${lib.concatStringsSep " " (map lib.escapeShellArg opencodeProfileNames)}; do
+        rm -rf "$HOME/.config/$profile/skills" 2>/dev/null || true
+        mkdir -p "$HOME/.config/$profile/skills"
+      done
+      rm -rf "$HOME/.codex/skills" "$HOME/.gemini/skills" "$HOME/.omp/agent/skills" 2>/dev/null || true
+      echo "✓ Agent skill directories cleaned"
     fi
   ''
 )

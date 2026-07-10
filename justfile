@@ -219,3 +219,25 @@ sops-key:
         echo "No age key found. Run 'just sops-setup' to create one."; \
     fi
 
+
+# ── AI Agent Skills ────────────────────────────────────────────────────
+
+# Install a skill repo on demand (bypasses Nix-managed skill list)
+skill-add repo:
+    @echo -e "\n➤ Installing skills from {{repo}}"
+    @bash scripts/ai/skill-add.sh "{{repo}}"
+# List currently installed skills count
+skills-count:
+    @echo -e "\n➤ Installed skills: $$(find ~/.claude/skills -name SKILL.md 2>/dev/null | wc -l)"
+    @echo "   Disk usage: $$(du -sh ~/.claude/skills/ 2>/dev/null | cut -f1)"
+
+# Remove a skill repo's skills (manual cleanup for on-demand installs)
+skill-rm repo:
+    @echo -e "\n➤ Removing skills from {{repo}}"
+    @echo "  Manual step: remove relevant dirs from ~/.claude/skills/"
+
+# Rebuild skills from Nix config (full reinstall, cleans stale)
+skills-rebuild:
+    @echo -e "\n➤ Forcing full skill reinstall on next nh home switch"
+    @rm -f ~/.cache/ai-agents/skills-state.sha256 ~/.cache/ai-agents/skills-installed.marker
+    @echo "✔ Cache cleared. Run 'nh home switch' to reinstall."
