@@ -4,7 +4,22 @@
 # shellcheck source=scripts/ai/android-re/_helpers.sh
 
 MESA_EGL_VENDOR_FILE="${MESA_EGL_VENDOR_FILE:-/run/opengl-driver/share/glvnd/egl_vendor.d/50_mesa.json}"
-NVIDIA_VULKAN_ICD="${NVIDIA_VULKAN_ICD:-/run/opengl-driver/share/vulkan/icd.d/nvidia_icd.x86_64.json}"
+# NVIDIA Vulkan ICD path. Env-overridable; otherwise auto-discovered because distros
+# name it differently — NixOS proprietary driver ships nvidia_icd.json, while upstream
+# Mesa layout uses nvidia_icd.x86_64.json. When this resolves to nothing, the emulator
+# can't pin the host GPU and falls back to lavapipe/SwiftShader software rendering,
+# which pegs every CPU core continuously — so resolving it is load-bearing for CPU use.
+NVIDIA_VULKAN_ICD="${NVIDIA_VULKAN_ICD:-}"
+if [[ -z "${NVIDIA_VULKAN_ICD}" ]]; then
+	for _cand in \
+		/run/opengl-driver/share/vulkan/icd.d/nvidia_icd.x86_64.json \
+		/run/opengl-driver/share/vulkan/icd.d/nvidia_icd.json; do
+		if [[ -f "${_cand}" ]]; then
+			NVIDIA_VULKAN_ICD="${_cand}"
+			break
+		fi
+	done
+fi
 EMU_GPU_MODE="${EMU_GPU_MODE:-auto}"
 EMU_HEADLESS="${EMU_HEADLESS:-0}"
 EMU_DISABLE_VULKAN="${EMU_DISABLE_VULKAN:-0}"
