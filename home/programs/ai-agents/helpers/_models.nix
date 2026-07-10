@@ -32,8 +32,8 @@
   glm-raw = "zai/glm-5.2";
   gemini = "google/gemini-3-pro-preview";
   gemini-raw = "google/gemini-3-pro-preview";
-  zen = "opencode/minimax-m2.5-free";
-  zen-raw = "opencode-zen/minimax-m2.5-free";
+  zen = "opencode/deepseek-v4-flash-free";
+  zen-raw = "opencode/deepseek-v4-flash-free";
   gemini-pro = "gemini-3-pro-preview";
   gemini-flash = "gemini-2.5-flash";
   gemini-flash-lite = "gemini-2.5-flash-lite";

@@ -147,13 +147,9 @@ let
   # using the same { command, args, env } | { type, url, headers } shape as Claude.
   ompSettings = {
     mcpServers = ompMcpServers;
-    # pyghidra-mcp boots Ghidra headless on connect (30-60s+) and blocks the
-    # TUI startup; chrome-devtools fails via npx cold-start every launch.
-    # Both are RE/browser tools inappropriate for a coding agent's every-start.
-    disabledServers = [
-      "pyghidra-mcp"
-      "chrome-devtools"
-    ];
+    # chrome-devtools is a browser tool that slow-starts every launch;
+    # inappropriate for a coding agent's every-start.
+    disabledServers = [ "chrome-devtools" ];
   };
 
 in

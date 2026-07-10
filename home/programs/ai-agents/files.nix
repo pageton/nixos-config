@@ -207,7 +207,7 @@ in
         ".omp/agent/extensions/herdr-omp-agent-state.ts" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/omp/herdr-agent-state.ts";
-            sha256 = "sha256-2bdE/8Xr6+lOHrstuLXJJJ35eFhKBIYhhG/ZlXMkHOM=";
+            sha256 = "sha256-GCv3TRK95W9jvgoAy01akwuqQZWHmHb4FO1BHV68msM=";
           };
           force = true;
         };
@@ -253,7 +253,7 @@ in
         "opencode/plugins/herdr-agent-state.js" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/opencode/herdr-agent-state.js";
-            sha256 = "sha256-izSbTnCsAcKciqgOyEAbgrlRGigWeKLFqj2++/jyTvo=";
+            sha256 = "sha256-fXyK4B+hexUPXay9Hb2n50LEk0y8KIu64GMxk8WLf6I=";
           };
           force = true;
         };
