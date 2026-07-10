@@ -42,9 +42,7 @@ in
     };
   };
 
-  programs.zsh.initContent =
-    lib.mkIf (aiCfg.herdr.enable && config.programs.zsh.enable)
-      ''
-        eval "$(herdr integration shell zsh 2>/dev/null || true)"
-      '';
+  programs.zsh.initContent = lib.mkIf (aiCfg.herdr.enable && config.programs.zsh.enable) ''
+    eval "$(herdr integration shell zsh 2>/dev/null || true)"
+  '';
 }

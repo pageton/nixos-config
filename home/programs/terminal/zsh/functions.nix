@@ -114,7 +114,7 @@ in
       # the compositor/terminal from starving during large output.
       # Skip the slice for omp: its native Rust addon deadlocks under the
       # memory-constrained cgroup (hangs at startup with zero output, no OOM) —
-      # run it directly, the same way bunx/omp_glm/omp_seek invoke it.
+      # run it directly, the same way bunx/omp_glm invoke it.
       # Also fall back to direct exec if systemd-run is unavailable, the
       # target is a shell function (systemd-run cannot resolve those),
       # or the transient scope already exists from a prior session.
@@ -167,12 +167,6 @@ in
       local key; key="$(_load_zai_key)" || return 1
       _zellij_rename_tab "opi"
       ZAI_API_KEY="$key" omp "$@"
-    }
-
-    omp_seek() {
-      local key; key="$(_load_deepseek_key)" || return 1
-      _zellij_rename_tab "ompds"
-      DEEPSEEK_API_KEY="$key" omp "$@"
     }
 
     _opencode_profile() {

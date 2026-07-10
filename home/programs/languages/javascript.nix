@@ -8,11 +8,12 @@
 }:
 
 let
+  # AI agent CLIs (@anthropic-ai/claude-code, @openai/codex, @github/copilot,
+  # opencode-ai, @colbymchenry/codegraph, @mimo-ai/cli, @oh-my-pi/pi-coding-agent)
+  # are managed by home/programs/ai-agents/services.nix via dedicated auto-update
+  # timers + activation scripts. NOT listed here to avoid redundant downloads
+  # on every home-manager switch (was double-downloading ~2GB per switch).
   globalNpmPackages = [
-    "@anthropic-ai/claude-code"
-    "@openai/codex"
-    "@github/copilot"
-    "opencode-ai"
     "btca"
     "skills"
     # MCP servers (globally installed for fast startup, avoids npx cold starts)
@@ -27,9 +28,6 @@ let
     "agent-device"
     "@z_ai/mcp-server"
     "opensrc"
-    "@colbymchenry/codegraph"
-    "@mimo-ai/cli"
-    "@oh-my-pi/pi-coding-agent"
   ];
 
   mkShellAliasPrograms = import ../../_helpers/_shell-alias-programs.nix;

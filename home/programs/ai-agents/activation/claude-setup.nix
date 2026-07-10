@@ -44,7 +44,7 @@ lib.mkIf cfg.claude.enable (
 
     ${lib.optionalString (cfg.globalInstructions != "") ''
       CLAUDE_MD="$HOME/.claude/CLAUDE.md"
-      cp "${claudeInstructionsFile}" "$CLAUDE_MD"
+      rm -f "$CLAUDE_MD" && cp "${claudeInstructionsFile}" "$CLAUDE_MD"
       echo "✓ Claude CLAUDE.md configured"
     ''}
   ''

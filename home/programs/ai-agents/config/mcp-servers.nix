@@ -12,22 +12,6 @@ let
   cfg = config.programs.aiAgents;
   zai = import ../helpers/_zai-services.nix { inherit constants; };
 
-  # jpype (used by pyghidra) needs libstdc++.so.6 at runtime.
-  # On NixOS the FHS path is not available to uvx, so we inject
-  # LD_LIBRARY_PATH from the system gcc lib output.
-  gccLib = pkgs.stdenv.cc.cc.lib;
-
-  # Ghidra requires java on PATH — uvx launches in a minimal env without it.
-  jdkBin = "${pkgs.jdk}/bin";
-
-  # Wrapper that prepends the JDK to PATH so pyghidra can find java.
-  pyghidraMcpWrapper = pkgs.writeShellScriptBin "pyghidra-mcp" ''
-    export PATH="${jdkBin}:$PATH"
-    export GHIDRA_INSTALL_DIR="${pkgs.ghidra-bin}/lib/ghidra"
-    export LD_LIBRARY_PATH="${gccLib}/lib''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-    exec uvx pyghidra-mcp "$@"
-  '';
-
   mkZaiRemoteMcp = path: {
     enable = true;
     type = "remote";
@@ -80,55 +64,32 @@ in
 
         chrome-devtools = {
           enable = true;
-          command = "npx";
+          command = "bunx";
           # No --autoConnect: let the server launch & manage its own Chrome.
           # --autoConnect requires a manually-started Chrome 144+ with remote
           # debugging enabled (chrome://inspect/#remote-debugging); absent that,
           # the CDP socket drops → "Connection closed" (-32000).
           args = [
-            "-y"
             "chrome-devtools-mcp@1.5.0" # Pinned — was @latest, caused registry check on every agent session
           ];
         };
 
-        pyghidra-mcp = {
-          enable = true;
-          command = "${pyghidraMcpWrapper}/bin/pyghidra-mcp";
-          args = [
-            "--project-path"
-            "${config.xdg.dataHome}/pyghidra-mcp/claude"
-          ];
-          env = {
-            GHIDRA_INSTALL_DIR = "${pkgs.ghidra-bin}/lib/ghidra";
-            LD_LIBRARY_PATH = "${gccLib}/lib";
-          };
-        };
-
         sequential-thinking = {
           enable = true;
-          command = "npx";
-          args = [
-            "-y"
-            "@modelcontextprotocol/server-sequential-thinking@2026.7.4"
-          ];
+          command = "bunx";
+          args = [ "@modelcontextprotocol/server-sequential-thinking@2026.7.4" ];
         };
 
         playwright = {
           enable = true;
-          command = "npx";
-          args = [
-            "-y"
-            "@playwright/mcp@latest"
-          ];
+          command = "bunx";
+          args = [ "@playwright/mcp@latest" ];
         };
 
         brave-search = {
           enable = false; # Opt-in — requires Brave Search API key
-          command = "npx";
-          args = [
-            "-y"
-            "@brave/brave-search-mcp-server@2.0.85"
-          ];
+          command = "bunx";
+          args = [ "@brave/brave-search-mcp-server@2.0.85" ];
           env = {
             BRAVE_API_KEY = "__BRAVE_API_KEY_PLACEHOLDER__";
           };
@@ -136,11 +97,8 @@ in
 
         database = {
           enable = false; # Opt-in — requires DB path or connection string
-          command = "npx";
-          args = [
-            "-y"
-            "@executeautomation/database-server@1.1.0"
-          ];
+          command = "bunx";
+          args = [ "@executeautomation/database-server@1.1.0" ];
         };
       }
       // lib.optionalAttrs cfg.agentmemory.enable {
