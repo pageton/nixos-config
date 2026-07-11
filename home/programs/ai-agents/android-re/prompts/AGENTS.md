@@ -339,36 +339,36 @@ If none of those are true, keep triaging instead of guessing hooks.
 
 All paths relative to repo root (`/home/sadiq/System`):
 
-- `home-manager/modules/ai-agents/android-re/prompts/AGENTS.md`: quick session
+- `home/programs/ai-agents/android-re/prompts/AGENTS.md`: quick session
   contract for RE work
-- `home-manager/modules/ai-agents/android-re/prompts/README.md`: operator map,
+- `home/programs/ai-agents/android-re/prompts/README.md`: operator map,
   entrypoints, and decision guide
-- `home-manager/modules/ai-agents/android-re/prompts/WORKFLOW.md`: phased static
+- `home/programs/ai-agents/android-re/prompts/WORKFLOW.md`: phased static
   and dynamic RE workflow
-- `home-manager/modules/ai-agents/android-re/prompts/TOOLS.md`: tool reference,
+- `home/programs/ai-agents/android-re/prompts/TOOLS.md`: tool reference,
   command recipes, tmux usage, and POC guidance
-- `home-manager/modules/ai-agents/android-re/prompts/TROUBLESHOOTING.md`:
+- `home/programs/ai-agents/android-re/prompts/TROUBLESHOOTING.md`:
   failure modes and recovery paths
-- `home-manager/modules/ai-agents/android-re/prompts/DATAFLOW-VALIDATION.md`:
+- `home/programs/ai-agents/android-re/prompts/DATAFLOW-VALIDATION.md`:
   5-step source-to-sink validation framework for separating real vulns from
   false positives
-- `home-manager/modules/ai-agents/android-re/prompts/EXPLOIT-METHODOLOGY.md`:
+- `home/programs/ai-agents/android-re/prompts/EXPLOIT-METHODOLOGY.md`:
   structured PoC development with per-vuln-type strategies and quality
   checklist
-- `home-manager/modules/ai-agents/android-re/prompts/SEMGREP-GUIDE.md`:
+- `home/programs/ai-agents/android-re/prompts/SEMGREP-GUIDE.md`:
   Semgrep setup, commands, and custom Android rules for SAST on jadx output
-- `home-manager/modules/ai-agents/android-re/prompts/FINDINGS-PRIORITIZATION.md`:
+- `home/programs/ai-agents/android-re/prompts/FINDINGS-PRIORITIZATION.md`:
   adversarial priority order and severity adjudication process
-- `home-manager/modules/ai-agents/android-re/prompts/CODEQL-GUIDE.md`:
+- `home/programs/ai-agents/android-re/prompts/CODEQL-GUIDE.md`:
   CodeQL setup, database creation, query suites, and custom Android taint
   tracking queries for deep source-to-sink validation
-- `home-manager/modules/ai-agents/android-re/prompts/NATIVE-FUZZING.md`:
+- `home/programs/ai-agents/android-re/prompts/NATIVE-FUZZING.md`:
   AFL++ fuzzing for native .so libraries, autonomous corpus generation,
   crash analysis with GDB, crash dedup, and ASan integration
-- `home-manager/modules/ai-agents/android-re/prompts/SESSION-MEMORY.md`:
+- `home/programs/ai-agents/android-re/prompts/SESSION-MEMORY.md`:
   JSON-based persistent learning system that remembers strategies, bypasses,
   and payloads across sessions with confidence scoring
-- `home-manager/modules/ai-agents/android-re/prompts/EXPLOIT-VERIFICATION.md`:
+- `home/programs/ai-agents/android-re/prompts/EXPLOIT-VERIFICATION.md`:
   proof-of-exploitation levels (1-4), bypass exhaustion protocol, per-type
   evidence checklists, critical decision test for classification
 - `scripts/ai/android-re/re-avd.sh`: emulator, root, Frida, proxy, cert, and
@@ -381,13 +381,13 @@ All paths relative to repo root (`/home/sadiq/System`):
   data
 - `scripts/ai/android-re/opencode-android-re.sh`: OpenCode Android RE session
   launcher
-- `home-manager/modules/ai-agents/android-re/_launchers.nix`: Nix wrapper
+- `home/programs/ai-agents/android-re/_launchers.nix`: Nix wrapper
   definitions for `oc*are` launchers
-- `home-manager/modules/ai-agents/android-re/prompts/DETECTION-PAIRING.md`:
+- `home/programs/ai-agents/android-re/prompts/DETECTION-PAIRING.md`:
   mandatory detection content (YARA, Sigma, IOC, SIEM) for confirmed findings
-- `home-manager/modules/ai-agents/android-re/prompts/EXPLOITATION-QUEUE.md`:
+- `home/programs/ai-agents/android-re/prompts/EXPLOITATION-QUEUE.md`:
   JSON schema and workflow for structured vuln-to-exploit handoff
-- `home-manager/modules/ai-agents/android-re/prompts/FINDINGS-DB.md`:
+- `home/programs/ai-agents/android-re/prompts/FINDINGS-DB.md`:
   SQLite findings database schema, query patterns, and CLI integration
 - `scripts/ai/android-re/findings.sh`:
   SQLite findings database CLI (init, add, list, update, query)

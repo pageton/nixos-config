@@ -2,14 +2,38 @@
 
 ## MCP Analysis Servers
 
-Two MCP servers load exclusively for this agent:
+The following MCP servers are shared across all agents (opencode, mimo,
+claude-code, omp) and are available in every session:
+
+### Reverse Engineering
 
 - **pyghidra-mcp** — headless Ghidra via PyGhidra: native `.so` decompilation,
   cross-refs, call graphs, symbol search
 - **apktool-mcp-server** — APK decode/rebuild, smali and resource
   read/modify, project management
+- **reva** — ReVa (Reverse Engineering Assistant): AI-optimized Ghidra MCP with
+  context-rot mitigation, tool-driven analysis, decompilation with cross-refs,
+  and support for large binaries. Use alongside pyghidra-mcp for deeper native
+  analysis — ReVa provides higher-level AI-assisted exploration while
+  pyghidra-mcp provides raw decompilation access
+- **gdb** — GDB/MI protocol server: native binary debugging, breakpoints,
+  stack inspection, memory reads for `.so` analysis
 
-Shared MCP servers also available to this agent:
+### General Purpose
+
+- **terminal** — secure terminal command execution within allowed paths
+  (`~/Documents`, `~/Downloads`, `~/.cache/android-re`)
+- **ripgrep** — fast code search via ripgrep MCP: search source code,
+  jadx/apktool output, and any text files for patterns and strings
+- **fetch** — web content fetcher: retrieve and convert documentation, API
+  specs, and web pages for reference during analysis
+- **ssh** — remote SSH command execution: run commands on remote servers via
+  SSH (reads host config from `~/.ssh/config`)
+- **filesystem** — filesystem operations: read, write, search, and manage
+  files within allowed paths (`~/Documents`, `~/Downloads`,
+  `~/.cache/android-re`)
+
+### Also Shared
 
 - **semgrep MCP** — structured Semgrep scans and rule/schema lookup through
   `semgrep mcp`
@@ -684,19 +708,51 @@ is to get quick proof, then adapt only when the target requires it.
 Available scripts under `scripts/ai/android-re/`:
 
 - `frida-hook-build-fields.js` — log `android.os.Build.*` values seen by the app
-- `frida-hook-file-exists.js` — log root/emulator/frida file probes
-- `frida-hook-shared-prefs.js` — log SharedPreferences reads and writes
-- `frida-hook-url-log.js` — log URL construction and common OkHttp request URLs
-- `frida-bypass-certificate-pinner.js` — bypass common OkHttp and Conscrypt trust checks
-- `frida-spoof-build.js` — spoof Java-layer Build fields and hide emulator file paths
-- `frida-hook-crypto.js` — log javax.crypto.Cipher, Mac, MessageDigest, Signature
-  operations (algorithm, input/output size, digest hex)
+- `frida-hook-file-exists.js` — log root/emulator/frida file probes (exists,
+  isFile, canRead) with 23+ detection patterns
+- `frida-hook-shared-prefs.js` — log all SharedPreferences reads and writes
+  (getString, getBoolean, getInt, getLong, getFloat, contains, getAll, put*,
+  remove, clear)
+- `frida-hook-url-log.js` — log URL/URI construction (java.net.URL all
+  constructors, java.net.URI, OkHttp HttpUrl, WebView.loadUrl)
+- `frida-bypass-certificate-pinner.js` — bypass 9 pinning implementations:
+  OkHttp CertificatePinner (3 overloads), Conscrypt TrustManagerImpl (2),
+  SSLContext.init, CertificateChainCleaner, CertPathValidator,
+  NetworkSecurityConfig
+- `frida-spoof-build.js` — spoof Java-layer Build fields, SUPPORTED_ABIS,
+  SystemProperties.get for CPU ABI, and hide emulator file paths (exists,
+  isFile, canRead)
+- `frida-hook-crypto.js` — log javax.crypto.Cipher, Mac, MessageDigest,
+  Signature operations with hex dumps, plus KeyGenerator, KeyAgreement,
+  SecureRandom, KeyStore
 - `frida-hook-webview.js` — log WebView.loadUrl, evaluateJavascript,
   addJavascriptInterface, shouldOverrideUrlLoading, setJavaScriptEnabled
-- `frida-hook-network.js` — log Socket.connect (host:port), SSLSocket.startHandshake,
-  OkHttp RealCall.execute, HttpURLConnection.connect
+- `frida-hook-network.js` — log Socket.connect, SSLSocket.startHandshake,
+  OkHttp RealCall.execute + Response.code/body, Retrofit, HttpURLConnection,
+  URLConnection, SSL factory/hostname verifier overrides
 - `frida-hook-intent.js` — log startActivity, BroadcastReceiver.onReceive,
   ContentResolver.query with action, data URI, and extras keys
+- `frida-hook-root-detection.js` — log root/emulator/debugger detection
+  vectors: Runtime.exec, PackageManager root-app scan, isDebuggerConnected,
+  Settings.Secure, TelephonyManager, /proc reads, System.getProperty
+- `frida-hook-frida-detection.js` — log Frida artifact detection: port 27042
+  scans, /proc/self/maps reads, process enumeration, thread scanning,
+  Runtime.exec frida/ps/lsof commands
+- `frida-hook-dex-classloader.js` — log dynamic code loading: DexClassLoader,
+  PathClassLoader, DexFile, InMemoryDexClassLoader, ClassLoader.loadClass,
+  dex file creation
+- `frida-hook-sqlite.js` — log SQLite operations: openDatabase, execSQL,
+  query, rawQuery, insert, update, delete
+- `frida-hook-keystore.js` — log Android Keystore: getInstance, load,
+  getEntry, getKey, setEntry, KeyGenParameterSpec
+- `frida-hook-clipboard.js` — log clipboard read/write: setPrimaryClip,
+  getPrimaryClip, getText, ClipData operations
+- `frida-hook-location.js` — log location access: getLastKnownLocation,
+  requestLocationUpdates, Location getters, isProviderEnabled, getProviders
+- `frida-hook-content-provider.js` — log ContentResolver operations: query,
+  insert, update, delete, call, openInputStream, openOutputStream
+- `frida-hook-settings.js` — log system settings access: Secure/Global/System
+  getString (filtered for adb/debug/proxy/verifier), putInt, putString
 
 Example usage:
 
