@@ -77,7 +77,6 @@ ai-agents/
 │   ├── _agent-env.nix                    # Runtime model/service env vars for shell scripts
 │   ├── _agentmemory-runtime.nix          # agentmemory npm service + MCP shim packaging
 │   ├── _herdr-mimo-plugin.nix            # Vendored herdr plugin for MiMoCode (herdr has no mimo target)
-│   ├── _opencode-theme.nix               # OpenCode TUI theme constants
 │   ├── _zai-env.nix                      # Z.AI service env var generation
 │   └── _git-clone-update.nix             # Git clone/update helper for plugin repos
 ├── activation/              # Home Manager activation scripts

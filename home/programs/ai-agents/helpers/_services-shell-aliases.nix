@@ -22,7 +22,6 @@ in
       "ai-logs" = "tail -f ${al}/*.log ${ol}/*.log ${cl}/*.log 2>/dev/null";
       "ai-errors" = "ai-agent-analyze errors";
       "ai-errors-all" = "ai-agent-analyze patterns";
-      "ai-errors-runtime" = "ai-agent-analyze errors";
 
       "ai-stats" = "ai-agent-analyze stats";
       "ai-report" = "ai-agent-analyze report";

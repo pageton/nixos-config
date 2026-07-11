@@ -93,7 +93,7 @@ lib.hm.dag.entryAfter [ "writeBoundary" "linkGeneration" "setupCodexConfig" "set
         "Z.AI API key + remote MCPs"
       # MiMoCode auth.json — patch provider key if entry exists
       mimocode_auth="$HOME/.local/share/mimocode/auth.json"
-      if [[ -f "$mimocode_auth" ]] && ${pkgs.jq}/bin/jq -e 'has("zai-coding-plan")' "$mimocode_auth" &>/dev/null; then
+      if [[ -f "$mimocode_auth" ]] && ${pkgs.jq}/bin/jq -e 'has("zai-coding-plan")' "$mimocode_auth" >/dev/null 2>&1; then
         ${pkgs.jq}/bin/jq --arg key "$ZAI_KEY" '."zai-coding-plan".key = $key' "$mimocode_auth" > "$mimocode_auth.tmp" && mv "$mimocode_auth.tmp" "$mimocode_auth"
         echo "✓ Patched mimocode auth.json with Z.AI key"
       fi
@@ -170,7 +170,7 @@ lib.hm.dag.entryAfter [ "writeBoundary" "linkGeneration" "setupCodexConfig" "set
       done
       # MiMoCode auth.json — patch provider key if entry exists
       mimocode_auth="$HOME/.local/share/mimocode/auth.json"
-      if [[ -f "$mimocode_auth" ]] && ${pkgs.jq}/bin/jq -e 'has("deepseek")' "$mimocode_auth" &>/dev/null; then
+      if [[ -f "$mimocode_auth" ]] && ${pkgs.jq}/bin/jq -e 'has("deepseek")' "$mimocode_auth" >/dev/null 2>&1; then
         ${pkgs.jq}/bin/jq --arg key "$DEEPSEEK_KEY" '.deepseek.key = $key' "$mimocode_auth" > "$mimocode_auth.tmp" && mv "$mimocode_auth.tmp" "$mimocode_auth"
         echo "✓ Patched mimocode auth.json with DeepSeek key"
       fi
@@ -196,7 +196,7 @@ lib.hm.dag.entryAfter [ "writeBoundary" "linkGeneration" "setupCodexConfig" "set
       done
       # MiMoCode auth.json — patch provider key if entry exists
       mimocode_auth="$HOME/.local/share/mimocode/auth.json"
-      if [[ -f "$mimocode_auth" ]] && ${pkgs.jq}/bin/jq -e 'has("xiaomi")' "$mimocode_auth" &>/dev/null; then
+      if [[ -f "$mimocode_auth" ]] && ${pkgs.jq}/bin/jq -e 'has("xiaomi")' "$mimocode_auth" >/dev/null 2>&1; then
         ${pkgs.jq}/bin/jq --arg key "$MIMO_KEY" '.xiaomi.key = $key' "$mimocode_auth" > "$mimocode_auth.tmp" && mv "$mimocode_auth.tmp" "$mimocode_auth"
         echo "✓ Patched mimocode auth.json with MiMo key"
       fi

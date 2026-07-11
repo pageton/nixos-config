@@ -19,22 +19,23 @@ let
   ) { } individualSkills;
   desiredSkillStateJson = toJSON normalizedSkills;
   repoLevelSkillCommands = map (repo: ''
-    if grep -qxF "${repo}" "$completed_file" 2>/dev/null; then
-      echo "  [$((processed_groups + 1))/$configured_groups] ${repo} ⏭ already done"
+    repo_name=${lib.escapeShellArg repo}
+    if grep -qxF "$repo_name" "$completed_file" 2>/dev/null; then
+      echo "  [$((processed_groups + 1))/$configured_groups] $repo_name ⏭ already done"
       processed_groups=$((processed_groups + 1))
       skipped_installs=$((skipped_installs + 1))
     else
       processed_groups=$((processed_groups + 1))
-      echo "  [$processed_groups/$configured_groups] ${repo}"
-      echo "  → ${repo}"
-      echo "  [AI] starting install for ${repo} at $(date +'%F %T')"
+      echo "  [$processed_groups/$configured_groups] $repo_name"
+      echo "  → $repo_name"
+      echo "  [AI] starting install for $repo_name at $(date +'%F %T')"
       total_attempts=$((total_attempts + 1))
-      if install_repo_via_clone "${repo}" ""; then
-        echo "✔ Installed ${repo}"
-        echo "${repo}" >> "$completed_file"
+      if install_repo_via_clone "$repo_name" ""; then
+        echo "✔ Installed $repo_name"
+        echo "$repo_name" >> "$completed_file"
         successful_installs=$((successful_installs + 1))
       else
-        echo "❌ Failed to install ${repo}"
+        echo "❌ Failed to install $repo_name"
         failed_installs=$((failed_installs + 1))
       fi
     fi
@@ -46,22 +47,24 @@ let
       skillList = lib.concatStringsSep ", " uniqueSkills;
     in
     ''
-      if grep -qxF "${repo}" "$completed_file" 2>/dev/null; then
-        echo "  [$((processed_groups + 1))/$configured_groups] ${repo} (${toString (builtins.length uniqueSkills)} skill(s)) ⏭ already done"
+      repo_name=${lib.escapeShellArg repo}
+      skill_list=${lib.escapeShellArg skillList}
+      if grep -qxF "$repo_name" "$completed_file" 2>/dev/null; then
+        echo "  [$((processed_groups + 1))/$configured_groups] $repo_name (${toString (builtins.length uniqueSkills)} skill(s)) ⏭ already done"
         processed_groups=$((processed_groups + 1))
         skipped_installs=$((skipped_installs + 1))
       else
         processed_groups=$((processed_groups + 1))
-        echo "  [$processed_groups/$configured_groups] ${repo} (${toString (builtins.length uniqueSkills)} skill(s))"
-        echo "  → ${repo}: ${skillList}"
-        echo "  [AI] starting install for ${repo} at $(date +'%F %T')"
+        echo "  [$processed_groups/$configured_groups] $repo_name (${toString (builtins.length uniqueSkills)} skill(s))"
+        echo "  → $repo_name: $skill_list"
+        echo "  [AI] starting install for $repo_name at $(date +'%F %T')"
         total_attempts=$((total_attempts + 1))
-        if install_repo_via_clone "${repo}" ""; then
-          echo "✔ Installed ${repo}: ${skillList}"
-          echo "${repo}" >> "$completed_file"
+        if install_repo_via_clone "$repo_name" ""; then
+          echo "✔ Installed $repo_name: $skill_list"
+          echo "$repo_name" >> "$completed_file"
           successful_installs=$((successful_installs + 1))
         else
-          echo "❌ Failed to install ${repo}: ${skillList}"
+          echo "❌ Failed to install $repo_name: $skill_list"
           failed_installs=$((failed_installs + 1))
         fi
       fi

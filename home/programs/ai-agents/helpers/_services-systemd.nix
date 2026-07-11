@@ -7,10 +7,10 @@
   logCleanupCommand,
   mkCliAutoupdateScript,
   autoUpdateTools,
+  agentmemoryRuntime,
 }:
 let
   inherit (hmSystemdHelpers) mkWeeklyTimer;
-  agentmemoryRuntime = import ./_agentmemory-runtime.nix { inherit pkgs; };
   mkAutoUpdateService =
     {
       binary,

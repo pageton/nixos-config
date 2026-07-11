@@ -114,10 +114,8 @@ in
       zaiApiKeyFile = mkNullOrStrOption "/run/secrets/zai_api_key" "Path to sops-decrypted Z.AI API key file";
       openrouterApiKeyFile = mkNullOrStrOption "/run/secrets/openrouter_api_key" "Path to sops-decrypted OpenRouter API key file";
       context7ApiKeyFile = mkNullOrStrOption "/run/secrets/context7-api-key" "Path to sops-decrypted Context7 API key file";
-      minimaxApiKeyFile = mkNullOrStrOption "/run/secrets/minimax_api_key" "Path to sops-decrypted MiniMax API key file";
       deepseekApiKeyFile = mkNullOrStrOption "/run/secrets/deepseek_api_key" "Path to sops-decrypted DeepSeek API key file";
       mimoApiKeyFile = mkNullOrStrOption "/run/secrets/mimo_api_key" "Path to sops-decrypted Xiaomi MiMo API key file";
-      openaiApiKeyFile = mkNullOrStrOption "/run/secrets/openai_api_key" "Path to sops-decrypted OpenAI API key file";
     };
 
     skills = lib.mkOption {

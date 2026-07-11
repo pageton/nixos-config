@@ -161,6 +161,7 @@ let
       logCleanupCommand
       mkCliAutoupdateScript
       autoUpdateTools
+      agentmemoryRuntime
       ;
   };
 in
@@ -192,12 +193,11 @@ in
       (lib.mkIf cfg.opencode.enable { OPENCODE_EXPERIMENTAL_LSP_TOOL = "true"; })
     ];
 
-    home.activation.updateAiAgentCLIs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      ${autoUpdateAllScript}
-    '';
-
     programs.zsh.shellAliases = shellAliases;
 
+    home.activation.updateAiAgentCLIs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      $DRY_RUN_CMD ${autoUpdateAllScript}
+    '';
     systemd.user = aiSystemdUser;
   };
 }

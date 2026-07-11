@@ -4,6 +4,7 @@
   config,
   constants,
   lib,
+  pkgs,
   ...
 }:
 
@@ -27,6 +28,36 @@ let
       value = mkZaiRemoteMcp svc.name;
     }) zai.services
   );
+
+  # GDB MCP server — pre-built static musl binary (no nix run needed).
+  # Needs gdb on PATH for debugging.
+  gdbMcpPkg = pkgs.stdenv.mkDerivation {
+    pname = "mcp-server-gdb";
+    version = "0.2.3";
+    src = pkgs.fetchurl {
+      url = "https://github.com/pansila/mcp_server_gdb/releases/download/v0.2.3/mcp-server-gdb_0.2.3-x86_64-unknown-linux-musl.tar.gz";
+      hash = "sha256-SGYl+lRp/XNadJNTPUVqvhRssF8H2qDnZivEz4Fvu0I=";
+    };
+    sourceRoot = ".";
+    installPhase = ''
+      runHook preInstall
+      mkdir -p $out/bin
+      install -m755 mcp-server-gdb $out/bin/
+      runHook postInstall
+    '';
+  };
+
+  gdbMcpWrapper = pkgs.writeShellScriptBin "mcp-server-gdb" ''
+    export PATH="${pkgs.gdb}/bin:$PATH"
+    exec ${gdbMcpPkg}/bin/mcp-server-gdb "$@"
+  '';
+
+  # Allowed paths for terminal and filesystem MCP servers.
+  mcpAllowedPaths = [
+    "${config.home.homeDirectory}/Documents"
+    "${config.home.homeDirectory}/Downloads"
+    "${config.home.homeDirectory}/.cache/android-re"
+  ];
 in
 {
   programs.aiAgents = {
@@ -64,13 +95,7 @@ in
         chrome-devtools = {
           enable = true;
           command = "bunx";
-          # No --autoConnect: let the server launch & manage its own Chrome.
-          # --autoConnect requires a manually-started Chrome 144+ with remote
-          # debugging enabled (chrome://inspect/#remote-debugging); absent that,
-          # the CDP socket drops → "Connection closed" (-32000).
-          args = [
-            "chrome-devtools-mcp@1.5.0" # Pinned — was @latest, caused registry check on every agent session
-          ];
+          args = [ "chrome-devtools-mcp@1.5.0" ];
         };
 
         sequential-thinking = {
@@ -86,18 +111,61 @@ in
         };
 
         brave-search = {
-          enable = false; # Opt-in — requires Brave Search API key
+          enable = false;
           command = "bunx";
           args = [ "@brave/brave-search-mcp-server@2.0.85" ];
           env = {
-            BRAVE_API_KEY = "__BRAVE_API_KEY_PLACEHOLDER__";
+            # Set BRAVE_API_KEY manually after enabling this server.
+            BRAVE_API_KEY = "";
           };
         };
 
         database = {
-          enable = false; # Opt-in — requires DB path or connection string
+          enable = false;
           command = "bunx";
           args = [ "@executeautomation/database-server@1.1.0" ];
+        };
+
+        # ── General-purpose MCP servers (available to all agents) ──
+
+        terminal = {
+          enable = true;
+          command = "bunx";
+          args = [
+            "@dillip285/mcp-terminal"
+            "--allowed-paths"
+            "${builtins.concatStringsSep ":" mcpAllowedPaths}"
+          ];
+        };
+
+        ripgrep = {
+          enable = true;
+          command = "bunx";
+          args = [ "mcp-ripgrep" ];
+        };
+
+        fetch = {
+          enable = true;
+          command = "uvx";
+          args = [ "mcp-server-fetch" ];
+        };
+
+        ssh = {
+          enable = false;
+          command = "bunx";
+          args = [ "@fangjunjie/ssh-mcp-server" ];
+        };
+
+        filesystem = {
+          enable = true;
+          command = "bunx";
+          args = [ "@modelcontextprotocol/server-filesystem" ] ++ mcpAllowedPaths;
+        };
+
+        gdb = {
+          enable = true;
+          command = "${gdbMcpWrapper}/bin/mcp-server-gdb";
+          args = [ ];
         };
       }
       // lib.optionalAttrs cfg.agentmemory.enable {

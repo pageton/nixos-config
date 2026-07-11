@@ -9,8 +9,8 @@ Central registry for AI agent defaults, MCP servers, model definitions, and Clau
 This directory holds the **data layer** for `programs.aiAgents`. While `options.nix` (parent) defines *what* can be configured, this directory defines *what the values are*:
 
 1. **`defaults.nix`** — Enablement flags, global instructions, skill set selection
-2. **`mcp-servers.nix`** — Shared MCP server definitions (Context7, GitHub, Semgrep, Chrome DevTools, PyGhidra)
-3. **`mcp-servers-android-re.nix`** — Android RE agent-specific servers (PyGhidra, APKTool)
+2. **`mcp-servers.nix`** — Shared MCP server definitions (Context7, GitHub, Semgrep, Chrome DevTools, PyGhidra, ReVa, Terminal, ripgrep, fetch, SSH, Filesystem, GDB)
+3. **`mcp-servers-android-re.nix`** — Reserved for future Android RE agent-specific servers (currently empty — all RE MCP servers are shared)
 4. **`mcp-servers-web-re.nix`** — Web RE agent-specific servers (placeholder)
 5. **`claude/`** — Claude Code permissions, lifecycle hooks, and extra settings
 6. **`models/`** — Model/provider registries for each agent runtime
@@ -67,8 +67,8 @@ Each agent runtime has its own file in `models/`. The `default.nix` import hub w
 | File | Purpose |
 |------|---------|
 | `defaults.nix` | Sets `enable`, `globalInstructions`, `skills`, and sub-agent toggles |
-| `mcp-servers.nix` | Defines shared MCP servers with placeholder-based secret injection |
-| `mcp-servers-android-re.nix` | PyGhidra + APKTool MCP for Android RE workflows |
+| `mcp-servers.nix` | Defines shared MCP servers (all agents) with wrapper scripts and placeholder-based secret injection |
+| `mcp-servers-android-re.nix` | Reserved for future Android RE agent-specific servers (currently empty — all RE MCP servers moved to shared) |
 | `mcp-servers-web-re.nix` | Placeholder for future web RE MCP servers |
 | `claude/default.nix` | Claude Code model, env vars, permissions, hooks, extraSettings |
 | `models/default.nix` | Import hub for all agent model configurations |

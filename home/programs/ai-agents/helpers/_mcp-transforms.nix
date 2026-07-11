@@ -1,4 +1,31 @@
 # MCP server transformation functions.
+#
+# Each AI agent expects a different MCP server config shape. The transforms below
+# convert a shared internal representation into each agent's native format.
+#
+# Internal representation (defined in config.mcpServers):
+#   { enable, type, command, args, url, env, headers }
+#   type "local"  → stdio/local server (command + args)
+#   type "remote" → HTTP/SSE server (url + optional headers)
+#
+# Agent-specific output shapes:
+#
+#   Claude (.mcp.json):
+#     local:  { command = "..."; args = [...]; }   (stdio is implicit)
+#     remote: { type = "http"; url = "..."; }
+#
+#   OpenCode / MiMoCode:
+#     local:  { type = "local"; command = [ prog arg ... ]; }
+#     remote: { type = "remote"; url = "..."; }
+#     env key: "environment"
+#
+#   Antigravity:
+#     local:  { command = "..."; args = [...]; }
+#     remote: { httpUrl = "..."; }                  (uses httpUrl, not type)
+#
+#   omp (Oh My Pi):
+#     local:  { type = "stdio"; command = "..."; args = [...]; }
+#     remote: { type = "http"; url = "..."; }
 
 { cfg, lib }:
 

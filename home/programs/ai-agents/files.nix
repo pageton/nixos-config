@@ -54,7 +54,7 @@ let
         {
           name = "${name}/tui.json";
           value = {
-            text = toJSON { theme = "catppuccin-macchiato"; };
+            text = toJSON { theme = "catppuccin-mocha"; };
             force = true;
           };
         }
