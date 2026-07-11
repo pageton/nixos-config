@@ -44,7 +44,6 @@ let
     v = "${editor}";
     se = "sudoedit";
     open = "xdg-open";
-    ezshr = "${editor} ~/System/home-manager/modules/terminal/zsh";
     enix = "${editor} ~/System";
 
     # System info
@@ -114,9 +113,6 @@ let
     # Metadata scrubbing
     scrub = "mat2 --inplace";
     scrub-all = "find ~/Downloads ~/Desktop ~/Documents -maxdepth 3 -type f \\( -name '*.jpg' -o -name '*.jpeg' -o -name '*.png' -o -name '*.pdf' -o -name '*.docx' -o -name '*.mp4' -o -name '*.mkv' \\) -exec mat2 --inplace {} \\; 2>/dev/null";
-
-    # Protocol handlers
-    yt = "youtube-mpv";
 
     # Safety nets
     rm = "rm -I";

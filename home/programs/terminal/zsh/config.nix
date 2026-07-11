@@ -10,7 +10,7 @@
 {
   programs.zsh = {
     enable = true;
-    enableCompletion = false; # Carapace handles completions
+    enableCompletion = true; # Required: oh-my-zsh and /etc/zshrc call compinit; carapace adds completions on top via compdef
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
 
@@ -85,6 +85,22 @@
 
       # Better autosuggestions: prefer history, fall back to completion
       ZSH_AUTOSUGGEST_STRATEGY=("history" "completion")
+    '';
+
+    # Ensure NixOS system and Home-Manager profile bins are in PATH for ALL
+    # shells, including non-interactive ones spawned by MCP servers and agents.
+    # Without this, coreutils (tail, head, cut, etc.) are not found.
+    # Also set ZSH_COMPDUMP early (in .zshenv) so that the compinit call in
+    # /etc/zshrc uses the managed dump file location, preventing
+    # "compdump: function definition file not found" errors.
+    envExtra = ''
+      ZSH_COMPDUMP="${config.xdg.cacheHome}/zsh/.zcompdump"
+      mkdir -p "$(dirname "$ZSH_COMPDUMP")"
+
+      case ":$PATH:" in
+        *":/run/current-system/sw/bin:"*) ;;
+        *) export PATH="/run/current-system/sw/bin:/etc/profiles/per-user/$USER/bin:$HOME/.nix-profile/bin:$PATH" ;;
+      esac
     '';
 
     defaultKeymap = "viins"; # Vi insert mode (hybrid vi/emacs)

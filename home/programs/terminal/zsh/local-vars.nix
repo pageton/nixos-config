@@ -35,9 +35,6 @@
 
     # Tool homes (static values, no need for shell export)
     CARGO_HOME = "$HOME/.cargo";
-    RUSTUP_HOME = "$HOME/.rustup";
-    PYENV_ROOT = "$HOME/.pyenv";
-    NVM_DIR = "$HOME/.nvm";
     COMPOSER_HOME = "$HOME/.config/composer";
   };
 }
