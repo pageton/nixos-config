@@ -2,6 +2,7 @@
 {
   pkgs,
   config,
+  constants,
   inputs,
   system,
   ...
@@ -64,20 +65,20 @@ in
     icons = {
       enable = true;
       package = pkgs.gruvbox-plus-icons;
-      dark = "Gruvbox-Plus-Dark";
-      light = "Gruvbox-Plus-Light";
+      dark = constants.theme.iconDark;
+      light = constants.theme.iconLight;
     };
 
     cursor = {
-      name = "Bibata-Modern-Ice";
-      size = 24;
+      name = constants.theme.cursor;
+      size = constants.theme.cursorSize;
       package = pkgs.bibata-cursors;
     };
 
     fonts = {
       monospace = {
         package = pkgs.nerd-fonts.jetbrains-mono;
-        name = "JetBrains Mono Nerd Font";
+        name = constants.font.monoNerd;
       };
       sansSerif = {
         package = pkgs.source-sans;
@@ -89,10 +90,10 @@ in
         name = "Noto Color Emoji";
       };
       sizes = {
-        applications = 13;
-        desktop = 13;
-        popups = 13;
-        terminal = 13;
+        applications = constants.font.sizeApplications;
+        desktop = constants.font.size;
+        popups = constants.font.size;
+        terminal = constants.font.size;
       };
     };
 

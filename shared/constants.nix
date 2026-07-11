@@ -53,13 +53,22 @@ in
     sizeApplications = 11;
   };
 
-  # Theme identifiers (used for reference/fetch tools).
+  # Theme configuration (single source of truth for icon/cursor/theme names).
   # Stylix theming and custom modules all use Catppuccin Mocha.
-  theme = "catppuccin-mocha";
+  theme = {
+    name = "catppuccin-mocha"; # Base theme identifier — used by vivid, fetch tools, etc.
+    icon = "gruvbox-plus-icons"; # Icon theme package name
+    iconDark = "Gruvbox-Plus-Dark"; # Dark icon theme name
+    iconLight = "Gruvbox-Plus-Light"; # Light icon theme name
+    cursor = "Bibata-Modern-Ice"; # Cursor theme name
+    cursorSize = 24; # Cursor size in pixels
+  };
   palette = "catppuccin-mocha";
 
   # Catppuccin Mocha color palette
   # Mapped to the same semantic structure for compatibility with ai-agents and other modules.
+  # Cross-reference: themes/palette.nix defines the same colors in base16 format (base00–base0F).
+  # Both files MUST stay in sync when palette colors change.
   # Palette reference: https://github.com/catppuccin/catppuccin
   color = {
     # Background shades
@@ -110,13 +119,6 @@ in
   # Mullvad SOCKS5 proxy endpoints for browser profiles.
   # Never mix proxies - each profile gets a dedicated exit.
   proxies = {
-    brave = {
-      personal = "fi-hel-wg-socks5-001.relays.mullvad.net"; # Finland
-      work = "de-fra-wg-socks5-001.relays.mullvad.net"; # Germany
-      banking = "nl-ams-wg-socks5-001.relays.mullvad.net"; # Netherlands
-      shopping = "ro-buh-wg-socks5-001.relays.mullvad.net"; # Romania
-      illegal = "ch-zur-wg-socks5-001.relays.mullvad.net"; # Switzerland
-    };
     librewolf = {
       personal = "se-sto-wg-socks5-001.relays.mullvad.net"; # Sweden
       work = "de-fra-wg-socks5-001.relays.mullvad.net"; # Germany

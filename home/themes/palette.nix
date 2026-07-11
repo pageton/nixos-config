@@ -1,4 +1,6 @@
 # Catppuccin Mocha base16 palette — single source of truth.
+# Cross-reference: shared/constants.nix `color` attrset defines the same Catppuccin Mocha
+# colors in semantic format (bg, fg, red, blue, …). Both files MUST stay in sync.
 # Referenced by Stylix config and the wallpaper generator.
 # Palette: https://github.com/catppuccin/catppuccin
 {

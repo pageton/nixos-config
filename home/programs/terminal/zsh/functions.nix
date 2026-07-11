@@ -48,7 +48,7 @@ in
       ls_colors_cache="$HOME/.cache/vivid-ls-colors"
       if [[ ! -f "$ls_colors_cache" ]]; then
         mkdir -p "$HOME/.cache"
-        vivid generate ${constants.theme} > "$ls_colors_cache"
+        vivid generate ${constants.theme.name} > "$ls_colors_cache"
       fi
       export LS_COLORS="$(cat "$ls_colors_cache")"
     fi
@@ -91,7 +91,7 @@ in
 
     _zellij_rename_tab() {
       local tab_name="$1"
-      [[ -n "$tab_name" && -n "${"ZELLIJ:-"}" ]] || return 0
+      [[ -n "$tab_name" && -n "''${ZELLIJ:-}" ]] || return 0
       local icon
       icon="$(_ai_tab_icon "$tab_name")"
       command zellij action rename-tab "''${icon}''${tab_name}" >/dev/null 2>&1 || true

@@ -10,16 +10,19 @@ System-wide theming via Stylix engine with Catppuccin Mocha palette. Controls fo
 | `options.nix` | Theme submodule options: rounding, gaps, opacity, bar settings |
 | `palette.nix` | Catppuccin Mocha color palette attrset (plain Nix, not a module) |
 | `stylix.nix` | Stylix config: fonts, cursor, icons, wallpaper, per-app targets |
+| `librewolf-userChrome.css` | Custom CSS overrides for LibreWolf browser chrome (UI) |
+| `librewolf-userContent.css` | Custom CSS overrides for LibreWolf content (web pages) |
 
 ## Directory Structure
 
 ```
 home/themes/
-├── default.nix    # Import hub (options + stylix modules)
-├── options.nix    # Theme submodule options (rounding, gaps, opacity)
-├── palette.nix    # Catppuccin Mocha color palette attrset
-└── stylix.nix     # Stylix config: fonts, cursor, icons, wallpaper, targets
-```
+├── default.nix                # Import hub (options + stylix modules)
+├── options.nix                # Theme submodule options (rounding, gaps, opacity)
+├── palette.nix                # Catppuccin Mocha color palette attrset
+├── stylix.nix                 # Stylix config: fonts, cursor, icons, wallpaper, targets
+├── librewolf-userChrome.css   # Custom CSS for LibreWolf browser chrome (UI)
+└── librewolf-userContent.css  # Custom CSS for LibreWolf content (web pages)
 
 ## Conventions
 
