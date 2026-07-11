@@ -91,7 +91,7 @@ doctor() {
 	done
 
 	log_info "--- Static analysis ---"
-	for tool in jadx apktool radare2 binwalk semgrep afl-fuzz yara; do
+	for tool in jadx apkid apktool radare2 rizin cutter binwalk semgrep afl-fuzz yara; do
 		check_tool "$tool"
 	done
 	check_tool ghidra || check_tool analyzeHeadless
@@ -102,13 +102,20 @@ doctor() {
 		check_tool "$tool"
 	done
 
+	log_info "--- Non-HTTP protocol ---"
+	for tool in grpcurl websocat protoc; do
+		check_tool "$tool"
+	done
+
 	log_info "--- Binary analysis ---"
 	for tool in checksec objdump readelf nm; do
 		check_tool "$tool"
 	done
 
 	log_info "--- Supply chain ---"
-	check_tool trivy
+	for tool in trivy osv-scanner syft grype; do
+		check_tool "$tool"
+	done
 
 	log_info "--- Coverage ---"
 	check_tool gcovr
@@ -119,7 +126,7 @@ doctor() {
 	done
 
 	log_info "--- Core utils ---"
-	for tool in curl jq sqlite3 unzip xz git; do
+	for tool in curl jq sqlite3 unzip xz git http; do
 		check_tool "$tool"
 	done
 
@@ -130,6 +137,11 @@ doctor() {
 		else
 			log_warning "python module missing: ${pymod}"
 		fi
+	done
+
+	log_info "--- Crypto / token tools ---"
+	for tool in cyberchef jwt step; do
+		check_tool "$tool"
 	done
 
 	echo ""

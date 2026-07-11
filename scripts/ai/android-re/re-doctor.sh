@@ -64,13 +64,19 @@ doctor() {
 
     echo ""
     log_info "--- Static Analysis ---"
-    for tool in jadx apktool radare2 cutter ghidra binwalk semgrep codeql afl-fuzz yara; do
+    for tool in jadx apkid apktool radare2 rizin cutter ghidra binwalk semgrep codeql afl-fuzz yara; do
         check_and_count "${tool}"
     done
 
     echo ""
     log_info "--- Web Testing ---"
     for tool in ffuf dalfox arjun zap nuclei subfinder whatweb interactsh testssl gobuster feroxbuster commix rustscan; do
+        check_and_count "${tool}"
+    done
+
+    echo ""
+    log_info "--- Non-HTTP Protocol ---"
+    for tool in grpcurl websocat protoc; do
         check_and_count "${tool}"
     done
 
@@ -82,7 +88,9 @@ doctor() {
 
     echo ""
     log_info "--- Supply Chain ---"
-    check_and_count trivy
+    for tool in trivy osv-scanner syft grype; do
+        check_and_count "${tool}"
+    done
 
     echo ""
     log_info "--- Android Build ---"
@@ -96,7 +104,7 @@ doctor() {
 
     echo ""
     log_info "--- Core Utils ---"
-    for tool in curl jq sqlite3 unzip xz git; do
+    for tool in curl jq sqlite3 unzip xz git http; do
         check_and_count "${tool}"
     done
 
@@ -104,6 +112,12 @@ doctor() {
     log_info "--- Python Modules ---"
     for module in androguard waybackpy z3; do
         check_python_module "${module}"
+    done
+
+    echo ""
+    log_info "--- Crypto / Token Tools ---"
+    for tool in cyberchef jwt step; do
+        check_and_count "${tool}"
     done
 
     echo ""

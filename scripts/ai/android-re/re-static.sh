@@ -120,6 +120,72 @@ diff_analysis() {
 	new_classes="$(find "${new_dir}/jadx/sources" -name '*.java' 2>/dev/null | wc -l || echo 0)"
 	log_info "Java classes: ${old_classes} -> ${new_classes}"
 
+	# String constants (URLs, API keys, secrets)
+	local old_strings new_strings
+	if [[ -d "${old_dir}/jadx/sources" && -d "${new_dir}/jadx/sources" ]]; then
+		old_strings="$(grep -rohE 'https?://[^ "]+|(api_|key_|token_|secret_)[a-zA-Z0-9_]+' "${old_dir}/jadx/sources" 2>/dev/null | sort -u || true)"
+		new_strings="$(grep -rohE 'https?://[^ "]+|(api_|key_|token_|secret_)[a-zA-Z0-9_]+' "${new_dir}/jadx/sources" 2>/dev/null | sort -u || true)"
+		if [[ "${old_strings}" != "${new_strings}" ]]; then
+			log_info "string constants changed:"
+			diff <(echo "${old_strings}") <(echo "${new_strings}") || true
+		else
+			log_info "string constants: unchanged"
+		fi
+	fi
+
+	# Exported components
+	if [[ -f "${old_manifest}" && -f "${new_manifest}" ]]; then
+		local old_exported new_exported
+		old_exported="$(grep -E '<(activity|service|receiver|provider)' "${old_manifest}" | grep 'exported="true"' | grep -oP 'android:name="\K[^"]+' | sort -u || true)"
+		new_exported="$(grep -E '<(activity|service|receiver|provider)' "${new_manifest}" | grep 'exported="true"' | grep -oP 'android:name="\K[^"]+' | sort -u || true)"
+		if [[ "${old_exported}" != "${new_exported}" ]]; then
+			log_info "exported components changed:"
+			diff <(echo "${old_exported}") <(echo "${new_exported}") || true
+		else
+			log_info "exported components: unchanged"
+		fi
+	fi
+
+	# Native symbol changes
+	local old_lib_dir new_lib_dir
+	old_lib_dir="${old_dir}/apktool/lib"
+	new_lib_dir="${new_dir}/apktool/lib"
+	if [[ -d "${old_lib_dir}" || -d "${new_lib_dir}" ]]; then
+		local old_syms new_syms
+		old_syms="$(find "${old_lib_dir}" -name '*.so' -exec nm -D {} \; 2>/dev/null | awk '{print $NF}' | sort -u || true)"
+		new_syms="$(find "${new_lib_dir}" -name '*.so' -exec nm -D {} \; 2>/dev/null | awk '{print $NF}' | sort -u || true)"
+		if [[ "${old_syms}" != "${new_syms}" ]]; then
+			log_info "native symbols changed:"
+			diff <(echo "${old_syms}") <(echo "${new_syms}") || true
+		else
+			log_info "native symbols: unchanged"
+		fi
+	fi
+
+	# Signing certificates
+	local old_apk new_apk
+	if [[ -f "${old_dir}/sha256.txt" ]]; then
+		old_apk="$(awk '{print $2}' "${old_dir}/sha256.txt")"
+	fi
+	if [[ -f "${new_dir}/sha256.txt" ]]; then
+		new_apk="$(awk '{print $2}' "${new_dir}/sha256.txt")"
+	fi
+	if [[ -n "${old_apk:-}" && -n "${new_apk:-}" && -f "${old_apk}" && -f "${new_apk}" ]]; then
+		if command -v apksigner >/dev/null 2>&1; then
+			local old_certs new_certs
+			old_certs="$(apksigner verify --print-certs "${old_apk}" 2>&1 || true)"
+			new_certs="$(apksigner verify --print-certs "${new_apk}" 2>&1 || true)"
+			if [[ "${old_certs}" != "${new_certs}" ]]; then
+				log_info "signing certificates changed:"
+				diff <(echo "${old_certs}") <(echo "${new_certs}") || true
+			else
+				log_info "signing certificates: unchanged"
+			fi
+		else
+			log_info "signing certificates: skipped (apksigner not found)"
+		fi
+	fi
+
 	log_success "diff complete"
 }
 

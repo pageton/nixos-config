@@ -14,6 +14,43 @@ trap 'log_error "command failed at line ${LINENO}: ${BASH_COMMAND}"' ERR
 
 DB_ARGS=()  # Extra sqlite3 args (e.g. -cmd ".mode column")
 
+# Escape a string for safe use inside SQL single-quoted string literals.
+# Doubles single quotes (' → '') per the SQL standard — the only safe escape
+# for string literals. Prevents SQL injection from user-supplied data.
+sql_escape() {
+    local s="$1"
+    s="${s//\'/\'\'}"
+    printf '%s' "${s}"
+}
+
+# Validate that a value is a non-negative integer.
+# Exits with error if the value is empty or non-numeric.
+validate_int() {
+    local val="$1"
+    local name="${2:-value}"
+    if [[ -z "${val}" || ! "${val}" =~ ^[0-9]+$ ]]; then
+        error_exit "invalid ${name}: expected non-negative integer, got '${val}'"
+    fi
+}
+
+# Validate severity against the CHECK constraint.
+validate_severity() {
+    local val="$1"
+    case "${val}" in
+    Critical|High|Medium|Low|Info) return 0 ;;
+    *) error_exit "invalid severity: ${val} (expected Critical/High/Medium/Low/Info)" ;;
+    esac
+}
+
+# Validate status against the CHECK constraint.
+validate_vuln_status() {
+    local val="$1"
+    case "${val}" in
+    open|in_progress|confirmed|exploited|false_positive|remediated) return 0 ;;
+    *) error_exit "invalid vuln status: ${val}" ;;
+    esac
+}
+
 SCHEMA_SQL="$(cat <<'SQL'
 CREATE TABLE IF NOT EXISTS hosts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -157,9 +194,14 @@ cmd_add_host() {
     db="$(db_path "${workspace}")"
     [[ -f "${db}" ]] || error_exit "database not found: ${db}"
 
+    local e_ip e_hostname e_os
+    e_ip="$(sql_escape "${ip}")"
+    e_hostname="$(sql_escape "${hostname}")"
+    e_os="$(sql_escape "${os}")"
+
     local rowid
     rowid="$(sqlite_cli "${db}" \
-        "INSERT INTO hosts (ip, hostname, os) VALUES ('${ip}', '${hostname}', '${os}');
+        "INSERT INTO hosts (ip, hostname, os) VALUES ('${e_ip}', '${e_hostname}', '${e_os}');
          SELECT last_insert_rowid();")"
     log_success "host added: id=${rowid} ip=${ip}"
 }
@@ -175,10 +217,18 @@ cmd_add_service() {
     db="$(db_path "${workspace}")"
     [[ -f "${db}" ]] || error_exit "database not found: ${db}"
 
+    validate_int "${host_id}" "host_id"
+    validate_int "${port}" "port"
+
+    local e_protocol e_service e_version
+    e_protocol="$(sql_escape "${protocol}")"
+    e_service="$(sql_escape "${service}")"
+    e_version="$(sql_escape "${version}")"
+
     local rowid
     rowid="$(sqlite_cli "${db}" \
         "INSERT INTO services (host_id, port, protocol, service, version)
-         VALUES (${host_id}, ${port}, '${protocol}', '${service}', '${version}');
+         VALUES (${host_id}, ${port}, '${e_protocol}', '${e_service}', '${e_version}');
          SELECT last_insert_rowid();")"
     log_success "service added: id=${rowid} port=${port}/${protocol}"
 }
@@ -194,9 +244,17 @@ cmd_add_vuln() {
     db="$(db_path "${workspace}")"
     [[ -f "${db}" ]] || error_exit "database not found: ${db}"
 
+    validate_severity "${severity}"
+    validate_vuln_status "${status}"
+
+    local e_finding_id e_title e_owasp
+    e_finding_id="$(sql_escape "${finding_id}")"
+    e_title="$(sql_escape "${title}")"
+    e_owasp="$(sql_escape "${owasp}")"
+
     sqlite_cli "${db}" \
         "INSERT INTO vulns (finding_id, title, severity, owasp, status)
-         VALUES ('${finding_id}', '${title}', '${severity}', '${owasp}', '${status}');"
+         VALUES ('${e_finding_id}', '${e_title}', '${severity}', '${e_owasp}', '${status}');"
     log_success "vuln added: ${finding_id} [${severity}]"
 }
 
@@ -211,9 +269,17 @@ cmd_add_cred() {
     db="$(db_path "${workspace}")"
     [[ -f "${db}" ]] || error_exit "database not found: ${db}"
 
+    validate_int "${host_id}" "host_id"
+
+    local e_username e_hash_type e_hash_value e_source
+    e_username="$(sql_escape "${username}")"
+    e_hash_type="$(sql_escape "${hash_type}")"
+    e_hash_value="$(sql_escape "${hash_value}")"
+    e_source="$(sql_escape "${source}")"
+
     sqlite_cli "${db}" \
         "INSERT INTO credentials (host_id, username, hash_type, hash_value, source)
-         VALUES (${host_id}, '${username}', '${hash_type}', '${hash_value}', '${source}');"
+         VALUES (${host_id}, '${e_username}', '${e_hash_type}', '${e_hash_value}', '${e_source}');"
     log_success "credential added: ${username}@host${host_id}"
 }
 
@@ -226,9 +292,14 @@ cmd_add_chain() {
     db="$(db_path "${workspace}")"
     [[ -f "${db}" ]] || error_exit "database not found: ${db}"
 
+    local e_name e_description e_steps_json
+    e_name="$(sql_escape "${name}")"
+    e_description="$(sql_escape "${description}")"
+    e_steps_json="$(sql_escape "${steps_json}")"
+
     sqlite_cli "${db}" \
         "INSERT INTO chains (name, description, steps_json)
-         VALUES ('${name}', '${description}', '${steps_json}');"
+         VALUES ('${e_name}', '${e_description}', '${e_steps_json}');"
     log_success "chain added: ${name}"
 }
 
@@ -241,11 +312,16 @@ cmd_log_session() {
     db="$(db_path "${workspace}")"
     [[ -f "${db}" ]] || error_exit "database not found: ${db}"
 
+    local e_goals e_findings e_next_steps
+    e_goals="$(sql_escape "${goals_json}")"
+    e_findings="$(sql_escape "${findings_json}")"
+    e_next_steps="$(sql_escape "${next_steps_json}")"
+
     local session_date
     session_date="$(date -Iseconds)"
     sqlite_cli "${db}" \
         "INSERT INTO session_log (session_date, goals_json, findings_json, next_steps_json)
-         VALUES ('${session_date}', '${goals_json}', '${findings_json}', '${next_steps_json}');"
+         VALUES ('${session_date}', '${e_goals}', '${e_findings}', '${e_next_steps}');"
     log_success "session logged: ${session_date}"
 }
 
@@ -261,11 +337,13 @@ cmd_list_vulns() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
         --severity)
-            sql="${sql} AND severity = '$2'"
+            validate_severity "$2"
+            sql="${sql} AND severity = '$(sql_escape "$2")'"
             shift 2
             ;;
         --status)
-            sql="${sql} AND status = '$2'"
+            validate_vuln_status "$2"
+            sql="${sql} AND status = '$(sql_escape "$2")'"
             shift 2
             ;;
         *)
@@ -319,15 +397,17 @@ cmd_update_vuln() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
         --status)
-            sets+=("status = '${2}'")
+            validate_vuln_status "$2"
+            sets+=("status = '$(sql_escape "$2")'")
             shift 2
             ;;
         --evidence)
-            sets+=("evidence_path = '${2}'")
+            sets+=("evidence_path = '$(sql_escape "$2")'")
             shift 2
             ;;
         --confidence)
-            sets+=("confidence = ${2}")
+            validate_int "$2" "confidence"
+            sets+=("confidence = $2")
             shift 2
             ;;
         *)
@@ -345,8 +425,11 @@ cmd_update_vuln() {
     set_clause="$(printf '%s, ' "${sets[@]}")"
     set_clause="${set_clause%, }"
 
+    local e_finding_id
+    e_finding_id="$(sql_escape "${finding_id}")"
+
     sqlite_cli "${db}" \
-        "UPDATE vulns SET ${set_clause}, updated = datetime('now') WHERE finding_id = '${finding_id}';"
+        "UPDATE vulns SET ${set_clause}, updated = datetime('now') WHERE finding_id = '${e_finding_id}';"
     log_success "vuln updated: ${finding_id}"
 }
 
