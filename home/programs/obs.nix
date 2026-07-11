@@ -1,9 +1,7 @@
-# OBS Studio configuration with CUDA and essential plugins.
+# OBS Studio configuration with essential plugins.
 { pkgs, ... }: {
   programs.obs-studio = {
     enable = true;
-
-    package = pkgs.obs-studio.override { cudaSupport = true; };
 
     plugins = with pkgs.obs-studio-plugins; [
       input-overlay # Display keyboard/mouse input

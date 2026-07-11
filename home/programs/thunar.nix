@@ -130,8 +130,8 @@
           <icon>utilities-terminal</icon>
           <name>Open Terminal Here</name>
           <unique-id>1700000000000001</unique-id>
-          <command>kitty -d %f</command>
-          <description>Opens Kitty terminal in the selected folder</description>
+          <command>alacritty --working-directory %f</command>
+          <description>Opens Alacritty terminal in the selected folder</description>
           <patterns>*</patterns>
           <startup-notify/>
           <directories/>

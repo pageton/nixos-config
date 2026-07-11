@@ -6,7 +6,7 @@ let
     "--ozone-platform=wayland"
     "--enable-wayland-ime"
     "--wayland-text-input-version=3"
-    "--password-store=basic"
+    "--password-store=gnome-libsecret"
   ];
 in
 {

@@ -121,7 +121,6 @@ in
       pnpm
       yarn
       typescript-language-server
-      vscode-langservers-extracted
       emmet-language-server
       tailwindcss-language-server
       eslint
@@ -139,7 +138,6 @@ in
       graphql-language-service-cli
       netlify-cli
       supabase-cli
-      dockerfile-language-server
     ];
 
     sessionVariables = {

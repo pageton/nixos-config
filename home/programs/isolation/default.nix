@@ -88,12 +88,10 @@ in
       executable = true;
       text = ''
         #!/usr/bin/env bash
-        # Work browser profile - isolated from personal browsing
+        # Work browser - uses the hardened librewolf work profile (Germany proxy)
         set -euo pipefail
 
-        ${mkPersistentProfile ".librewolf-work"}
-
-        exec ${pkgsStable.librewolf}/bin/librewolf --profile "$PROFILE_DIR" --new-instance 2>/dev/null
+        exec ${pkgsStable.librewolf}/bin/librewolf -P work --new-instance 2>/dev/null
       '';
     };
 

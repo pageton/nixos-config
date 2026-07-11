@@ -27,7 +27,6 @@
       with-key-origin = true;
       require-cross-certification = true;
       no-symkey-cache = true;
-      use-agent = true;
       throw-keyids = true;
     };
   };
@@ -37,7 +36,7 @@
     defaultCacheTtl = 86400;
     # Avoid gpg-agent hijacking SSH auth; OpenSSH should use ~/.ssh/id_ed25519 directly.
     enableSshSupport = false;
-    pinentry.package = pkgsStable.pinentry-curses;
+    pinentry.package = pkgsStable.pinentry-qt;
     # Allow loopback mode for non-interactive environments (e.g., CI, scripts without TTY)
     extraConfig = ''
       allow-loopback-pinentry

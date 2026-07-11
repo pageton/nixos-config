@@ -3,15 +3,10 @@
 #- This module provides a script to search for Nerd Fonts icons using fzf.
 #-
 #- - `nerdfont-fzf` - Search for Nerd Fonts icons using fzf.
-{
-  lib,
-  pkgs,
-  user,
-  ...
-}:
+{ pkgs, config, ... }:
 let
   nerdfont-fzf = pkgs.writeShellScriptBin "nerdfont-fzf" ''
-    icons=$(${pkgs.jq}/bin/jq -r 'to_entries[] | "\(.key):\(.value.char)"' "/home/${user}/.config/nerdfont_glyphnames.json" | awk -F: '{print "\033[95m "$2" \033[0m "$1}')
+    icons=$(${pkgs.jq}/bin/jq -r 'to_entries[] | "\(.key):\(.value.char)"' "${config.home.homeDirectory}/.config/nerdfont_glyphnames.json" | awk -F: '{print "\033[95m "$2" \033[0m "$1}')
     fzf_result=$(echo "$icons" | ${pkgs.fzf}/bin/fzf --ansi --border none | awk '{print $1}')
     if [ -z "$fzf_result" ]; then
       echo "No icon selected"

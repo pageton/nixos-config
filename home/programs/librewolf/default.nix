@@ -45,7 +45,7 @@ let
     "privacy.sanitize.sanitizeOnShutdown" = false;
 
     # Anti-fingerprinting
-    "privacy.resistFingerprinting" = true;
+    "privacy.resistFingerprinting" = false;
     "privacy.fingerprintingProtection" = true;
     "privacy.fingerprintingProtection.overrides" = "";
     "privacy.trackingprotection.enabled" = true;
@@ -100,14 +100,12 @@ let
 
         if [ "$#" -gt 0 ]; then
           exec ${pkgsStable.librewolf}/bin/librewolf \
-            --name librewolf-${name} \
             --profile "$PROFILE_DIR" \
             --new-tab "$1"
         fi
 
         exec ${pkgsStable.librewolf}/bin/librewolf \
           --new-instance \
-          --name librewolf-${name} \
           --profile "$PROFILE_DIR"
       '';
     };

@@ -5,7 +5,6 @@
   home.packages = with pkgs; [
     # === Nix ===
     nil # Nix language server with completion and diagnostics
-    nixd # Nix language server with nixpkgs integration
 
     # === Scripting Languages ===
     bash-language-server # Bash/Shell script language server

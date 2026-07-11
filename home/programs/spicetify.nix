@@ -26,12 +26,4 @@ in
     ];
   };
 
-  # Environment variables to improve Spotify stability and performance
-  home.sessionVariables = {
-    # Increase memory cache size for better performance
-    SPOTIFY_MAX_CACHE_SIZE_MB = "1024";
-
-    # Additional stability flags
-    SPOTIFY_SKIP_LINUX_NOTIFICATIONS = "1"; # Skip DBus notifications (Noctalia handles media via MPRIS)
-  };
 }
