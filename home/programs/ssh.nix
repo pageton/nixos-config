@@ -50,21 +50,21 @@ in
       "web" = {
         hostname = tsHosts.ads.fqdn;
         user = "root";
-        ForwardAgent = "yes";
+        ForwardAgent = "no";
         ProxyCommand = "/run/current-system/sw/bin/tailscale nc %h %p";
       };
 
       "server" = {
         hostname = tsHosts.server.fqdn;
         user = "root";
-        ForwardAgent = "yes";
+        ForwardAgent = "no";
         ProxyCommand = "/run/current-system/sw/bin/tailscale nc %h %p";
       };
 
       "devrio" = {
         hostname = tsHosts.mail.fqdn;
         user = "root";
-        ForwardAgent = "yes";
+        ForwardAgent = "no";
         ProxyCommand = "/run/current-system/sw/bin/tailscale nc %h %p";
       };
     };
