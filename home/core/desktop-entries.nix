@@ -33,7 +33,7 @@
     "com.ayugram.desktop" = {
       name = "AyuGram Desktop";
       exec = "/run/current-system/sw/bin/ayugram-desktop -- %U";
-      icon = "org.telegram.desktop";
+      icon = "org.telegram.desktop"; # AyuGram is a Telegram fork — reuses the Telegram icon intentionally
       comment = "AyuGram Telegram client (firejail-wrapped)";
       categories = [
         "Chat"

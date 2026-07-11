@@ -14,7 +14,10 @@
     stateVersion = homeStateVersion;
   };
 
-  nixpkgs.config.allowUnfree = true;
+  nixpkgs.config = {
+    allowUnfree = true; # needed by HM — flake-level nixpkgsConfig does NOT propagate to HM's nixpkgs.config
+    permittedInsecurePackages = [ "nodejs-slim-20.20.2" ];
+  };
 
   home.packages =
     let
