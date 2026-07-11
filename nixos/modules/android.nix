@@ -75,13 +75,10 @@ in
   environment = {
     systemPackages = [
       pkgsStable.android-tools
-      # TEMP-DISABLED: android-studio 2025.3.4.7 (panda4-patch1) FOD fails to
-      # download — Google's CDN (edgedl.me.gvt1.com) resets the bulk transfer,
-      # and cache.nixos.org doesn't have this FOD yet. ADB/fastboot/emulator/
-      # build-tools wrappers below still work; only the AS GUI is dropped.
-      # Re-enable once cache.nixos.org has it or you're on a network that can
-      # pull the 1.4 GB tarball.
-      # pkgs.android-studio
+      # Re-enabled: nix.nix NIX_CURL_FLAGS (--retry 100 -C -) + just fetch-retry
+      # handle the edgedl.me.gvt1.com connection-reset flakiness that previously
+      # broke this FOD download. Run `just fetch-retry` before `just nixos`.
+      pkgs.android-studio
       pkgs.libpulseaudio
       pkgs.libxcb-cursor
       pkgs.libsm
