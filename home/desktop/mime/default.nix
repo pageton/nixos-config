@@ -69,7 +69,6 @@ let
     #   "application/rtf"
     # ];
     pdf = [ "application/pdf" ];
-    terminal = [ "terminal" ];
     archive = [
       "application/zip"
       "application/x-rar"

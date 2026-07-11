@@ -69,7 +69,6 @@ in
             { id = "Network"; }
             { id = "Bluetooth"; }
             { id = "NoctaliaPerformance"; }
-            { id = "plugin:screen-toolkit"; }
           ];
           right = [
             { id = "Notifications"; }

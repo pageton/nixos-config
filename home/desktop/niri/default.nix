@@ -57,30 +57,15 @@
       ELECTRON_OZONE_PLATFORM_HINT = "auto";
       # Prevent Electron/Chromium GPU sandbox contention with niri under load
       ELECTRON_EXTRA_LAUNCH_FLAGS = "--disable-gpu-sandbox";
-      # QT_QPA_PLATFORM is set globally in home.nix sessionVariables
-      QT_STYLE_OVERRIDE = "kvantum";
       XDG_SCREENSHOTS_DIR = "$HOME/Screens";
     };
-
-    # environment = {
-    #   _JAVA_AWT_WM_NONREPARENTING = "1";
-    #   IN_NIX_SHELL = null;
-    #   QT_QPA_PLATFORM = "wayland;xcb";
-    #   QT_AUTO_SCREEN_SCALE_FACTOR = "1";
-    #   QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
-    #   ELECTRON_OZONE_PLATFORM_HINT = "x11";
-    #   ELECTRON_EXTRA_LAUNCH_FLAGS = "--disable-gpu-sandbox";
-    #   XDG_SESSION_TYPE = "wayland";
-    #   XDG_CURRENT_DESKTOP = "niri";
-    #   XCURSOR_SIZE = if isThinkpad then "20" else "24";
-    # };
 
     spawn-at-startup = [
       {
         command = [
           "${pkgs.bash}/bin/bash"
           "-c"
-          "pgrep -f 'niri-auth-float' > /dev/null || exec ${config.home.profileDirectory}/.local/bin/niri-auth-float"
+          "pgrep -f 'niri-auth-float' > /dev/null || exec niri-auth-float"
         ];
       }
       { argv = [ "${config.home.profileDirectory}/bin/noctalia-shell" ]; }
