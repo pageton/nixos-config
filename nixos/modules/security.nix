@@ -220,7 +220,10 @@ in
         to = 65535;
       }
     ]; # Dev servers on loopback only
-    interfaces."tailscale0".allowedTCPPorts = [ 22 ]; # SSH via Tailscale only
+    interfaces."tailscale0".allowedTCPPorts = [
+      22
+      6768
+    ]; # SSH + Orca mobile companion
     allowedUDPPortRanges = [ ];
   };
 

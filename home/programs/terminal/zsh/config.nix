@@ -83,10 +83,11 @@
       # Snappy vi mode (default 0.4s feels laggy)
       KEYTIMEOUT=1
 
-      # Better autosuggestions: prefer history, fall back to completion
       ZSH_AUTOSUGGEST_STRATEGY=("history" "completion")
-    '';
 
+      # Allow Orca to redefine omp as a function (conflicts with the omp alias)
+      [[ -n "''${ORCA_OMP_STATUS_EXTENSION:-}" ]] && unalias omp 2>/dev/null
+    '';
     # Ensure NixOS system and Home-Manager profile bins are in PATH for ALL
     # shells, including non-interactive ones spawned by MCP servers and agents.
     # Without this, coreutils (tail, head, cut, etc.) are not found.
