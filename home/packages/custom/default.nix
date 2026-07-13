@@ -5,5 +5,5 @@
 }:
 
 builtins.concatLists (
-  map (f: import f { inherit pkgs pkgsStable constants; }) [ ./antigravity-cli.nix ]
+  map (f: import f { inherit pkgs pkgsStable constants; }) [ ./antigravity-cli.nix ./orca.nix ]
 )
