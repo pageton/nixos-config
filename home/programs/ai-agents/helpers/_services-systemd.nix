@@ -11,6 +11,7 @@
 }:
 let
   inherit (hmSystemdHelpers) mkWeeklyTimer;
+  bunPackage = import ../../../_helpers/_bun-package.nix { inherit pkgs; };
   mkAutoUpdateService =
     {
       binary,
@@ -38,10 +39,10 @@ lib.mkMerge [
         Environment = [
           "AGENTMEMORY_URL=${cfg.agentmemory.url}"
           "CI=1"
-          "NPM_CONFIG_CACHE=%h/.cache/npm"
-          "PATH=${agentmemoryRuntime.iiiEngine}/bin:${pkgs.nodejs_22}/bin:/run/current-system/sw/bin"
+          "BUN_INSTALL_CACHE_DIR=%h/.cache/bun"
+          "PATH=${agentmemoryRuntime.iiiEngine}/bin:${bunPackage}/bin:/run/current-system/sw/bin"
         ];
-        ExecStart = "${pkgs.nodejs_22}/bin/npx -y @agentmemory/agentmemory@${cfg.agentmemory.version}";
+        ExecStart = "${bunPackage}/bin/bunx @agentmemory/agentmemory@${cfg.agentmemory.version}";
         Restart = "always";
         RestartSec = "10s";
         TimeoutStartSec = "300";

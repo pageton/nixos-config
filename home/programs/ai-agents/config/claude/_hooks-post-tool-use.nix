@@ -68,7 +68,7 @@
                 DIR=$(dirname "$DIR")
               done
               if [ -f "$DIR/tsconfig.json" ]; then
-                TSC_OUT=$(cd "$DIR" && npx tsc --noEmit --pretty false 2>&1 | grep "$FILE_PATH" | head -10) || true
+                TSC_OUT=$(cd "$DIR" && bunx tsc --noEmit --pretty false 2>&1 | grep "$FILE_PATH" | head -10) || true
                 if [ -n "$TSC_OUT" ]; then
                   echo "[Hook] TypeScript errors:" >&2
                   echo "$TSC_OUT" >&2
@@ -168,15 +168,18 @@
                 (cd "$DIR" && cargo test 2>&1 | tail -10 >&2) || true
                 break
               elif [ -f "$DIR/package.json" ] && grep -q '"test"' "$DIR/package.json" 2>/dev/null; then
-                if [ -f "$DIR/pnpm-lock.yaml" ]; then
+                if [ -f "$DIR/bun.lockb" ] || [ -f "$DIR/bun.lock" ]; then
+                  echo "[Hook] Running bun tests..." >&2
+                  (cd "$DIR" && bun run test 2>&1 | tail -10 >&2) || true
+                elif [ -f "$DIR/pnpm-lock.yaml" ]; then
                   echo "[Hook] Running pnpm tests..." >&2
                   (cd "$DIR" && pnpm test 2>&1 | tail -10 >&2) || true
                 elif [ -f "$DIR/yarn.lock" ]; then
                   echo "[Hook] Running yarn tests..." >&2
                   (cd "$DIR" && yarn test 2>&1 | tail -10 >&2) || true
                 else
-                  echo "[Hook] Running npm tests..." >&2
-                  (cd "$DIR" && npm test 2>&1 | tail -10 >&2) || true
+                  echo "[Hook] Running bun tests..." >&2
+                  (cd "$DIR" && bun run test 2>&1 | tail -10 >&2) || true
                 fi
                 break
               elif [ -f "$DIR/flake.nix" ]; then

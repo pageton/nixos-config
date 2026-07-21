@@ -30,8 +30,8 @@ in
             echo "🔍 Pre-commit: running pre-commit..." >&2
             pre-commit run --all-files 2>&1 | tail -5 >&2
           elif [ -f "package.json" ] && grep -q '"lint"' package.json 2>/dev/null; then
-            echo "🔍 Pre-commit: running npm run lint..." >&2
-            npm run lint 2>&1 | tail -5 >&2
+            echo "🔍 Pre-commit: running bun run lint..." >&2
+            bun run lint 2>&1 | tail -5 >&2
           elif [ -f "Cargo.toml" ] && command -v cargo >/dev/null 2>&1; then
             echo "🔍 Pre-commit: running cargo check..." >&2
             cargo check 2>&1 | tail -5 >&2

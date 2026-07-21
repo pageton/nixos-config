@@ -11,6 +11,7 @@
 }:
 
 let
+  bunPackage = import ../../../_helpers/_bun-package.nix { inherit pkgs; };
   normalizedSkills = lib.unique cfg.skills;
   repoLevelSkills = builtins.filter builtins.isString normalizedSkills;
   individualSkills = builtins.filter (s: !(builtins.isString s)) normalizedSkills;
@@ -77,7 +78,7 @@ in
 lib.mkIf true (
   lib.hm.dag.entryAfter [ "writeBoundary" "createJSWorkspace" ] ''
     export BUN_INSTALL="$HOME/.bun"
-    export PATH="${pkgs.git}/bin:${pkgs.nodejs_22}/bin:${pkgs.bun}/bin:$BUN_INSTALL/bin:$PATH"
+    export PATH="${pkgs.git}/bin:${bunPackage}/bin:$BUN_INSTALL/bin:$PATH"
 
     # skills CLI no longer used — clone+copy is the primary install method.
     # The CLI has unsuppressible interactive prompts, PromptScript blocking,

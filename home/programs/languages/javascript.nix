@@ -8,6 +8,8 @@
 }:
 
 let
+  bunPackage = import ../../_helpers/_bun-package.nix { inherit pkgs; };
+
   # AI agent CLIs (@anthropic-ai/claude-code, @openai/codex, @github/copilot,
   # opencode-ai, @colbymchenry/codegraph, @mimo-ai/cli, @oh-my-pi/pi-coding-agent)
   # are managed by home/programs/ai-agents/services.nix via dedicated auto-update
@@ -42,8 +44,8 @@ in
         el = "eslint --fix";
         pf = "prettier --write";
         jt = "jest --watch";
-        vt = "npx vitest";
-        pt = "npx playwright";
+        vt = "bunx vitest";
+        pt = "bunx playwright";
         bc = "biome check";
         bf = "biome format";
         bcf = "biome check --apply";
@@ -114,9 +116,25 @@ in
       '';
     };
 
+    file.".local/bin/bun" = {
+      executable = true;
+      text = ''
+        #!/usr/bin/env bash
+        exec ${bunPackage}/bin/bun "$@"
+      '';
+    };
+
+    file.".local/bin/bunx" = {
+      executable = true;
+      text = ''
+        #!/usr/bin/env bash
+        exec ${bunPackage}/bin/bunx "$@"
+      '';
+    };
+
     packages = with pkgs; [
       nodejs_22
-      bun
+      bunPackage
       deno
       pnpm
       yarn
@@ -163,13 +181,10 @@ in
       $DRY_RUN_CMD mkdir -p $HOME/Projects/{javascript,typescript,react,node}
       $DRY_RUN_CMD mkdir -p $HOME/.npm-global
 
-      $DRY_RUN_CMD ${pkgs.nodejs_22}/bin/npm config set prefix "$HOME/.npm-global"
-
-      echo "📦 Managing global npm packages with bun..."
-      $DRY_RUN_CMD ${pkgs.bun}/bin/bun add --global --cwd "$HOME" --no-summary ${lib.escapeShellArgs globalNpmPackages} || echo "❌ Failed to manage global npm packages"
+      echo "📦 Managing global packages with bun..."
+      $DRY_RUN_CMD ${bunPackage}/bin/bun add --global --cwd "$HOME" --no-summary ${lib.escapeShellArgs globalNpmPackages} || echo "❌ Failed to manage global packages"
       # Remove retired standalone Gemini CLI; Antigravity CLI is Nix-managed as agy.
-      $DRY_RUN_CMD ${pkgs.bun}/bin/bun remove --global --cwd "$HOME" @google/gemini-cli >/dev/null 2>&1 || true
-      $DRY_RUN_CMD ${pkgs.nodejs_22}/bin/npm uninstall --global @google/gemini-cli >/dev/null 2>&1 || true
+      $DRY_RUN_CMD ${bunPackage}/bin/bun remove --global --cwd "$HOME" @google/gemini-cli >/dev/null 2>&1 || true
       $DRY_RUN_CMD rm -f "$HOME/.npm-global/bin/gemini" "$HOME/.npm-global/bin/gemini-cli"
       echo "✔ Global packages management completed"
     '';
