@@ -1,0 +1,47 @@
+# ─── Permanent server inventory — TEMPLATE ─────────────────────────
+# This .example file is COMMITTED to Git as documentation.
+# Real IPs live in servers.nix (gitignored — see below).
+#
+# SETUP (first clone or new machine):
+#   cp inventory/permanent/servers.nix.example inventory/permanent/servers.nix
+#   # Edit servers.nix: replace placeholders with real hostnames/IPs
+#   git add -f inventory/permanent/servers.nix
+#
+# WHY git add -f:
+#   Nix flakes only see Git-tracked files during evaluation.
+#   .gitignore prevents accidental commits; git add -f makes the file
+#   visible to Nix locally without pushing it.
+#
+# WHY separate .example + .nix:
+#   The .example shows the schema and documents every field.
+#   The .nix has your real infrastructure data and never leaves your machine.
+# ──────────────────────────────────────────────────────────────────
+[
+  {
+    hostname = "web-01";
+    ip = "10.0.0.10"; # Real IP — only in gitignored servers.nix
+    user = "root";
+    stateVersion = "26.05";
+    location = "nyc";
+    roles = [
+      "web"
+      "monitoring"
+    ];
+    tags = {
+      env = "production";
+      tier = "frontend";
+    };
+  }
+  {
+    hostname = "db-01";
+    ip = "10.0.0.20";
+    user = "root";
+    stateVersion = "26.05";
+    location = "nyc";
+    roles = [ "database" ];
+    tags = {
+      env = "production";
+      tier = "data";
+    };
+  }
+]

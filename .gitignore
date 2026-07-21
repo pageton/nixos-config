@@ -21,3 +21,10 @@ id_ed25519
 .opencode/
 pyghidra_mcp_projects/
 .codegraph/
+
+
+# Server inventory — real files with IPs (force-add locally, never push).
+# Nix flakes need these Git-tracked locally to see them during eval.
+# On first clone: cp servers.nix.example servers.nix && git add -f servers.nix
+inventory/permanent/servers.nix
+inventory/ephemeral/servers.nix

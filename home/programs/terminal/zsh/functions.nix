@@ -25,19 +25,11 @@ let
   profileSuffix = p: builtins.replaceStrings [ "opencode-" ] [ "" ] p.name;
 
   # Oh My Pi (omp) profile definitions for wrapper functions.
-  ompProfiles = import ../../ai-agents/helpers/_omp-profiles.nix { inherit config; };
 
   # OMP: simple wrappers (excludes default "omp" which has no profile suffix).
-  simpleOmpProfiles = builtins.filter (p: p.name != "omp") ompProfiles.profiles;
-
-  ompProfileSuffix = p: builtins.replaceStrings [ "omp-" ] [ "" ] p.name;
 
   # Pi (badlogic/pi-mono) profile definitions for wrapper functions.
-  piProfiles = import ../../ai-agents/helpers/_pi-profiles.nix { inherit config; };
 
-  simplePiProfiles = builtins.filter (p: p.name != "pi") piProfiles.profiles;
-
-  piProfileSuffix = p: builtins.replaceStrings [ "pi-" ] [ "" ] p.name;
 in
 
 {
@@ -399,6 +391,18 @@ in
       }
       preexec_functions+=(_zellij_auto_tab_preexec)
     fi
+
+    # === SSH key upload ===
+    # Usage: ssh-copy <ip> [user]  (defaults to root)
+    ssh-copy() {
+      local ip="$1"
+      local user="''${2:-root}"
+      if [[ -z "$ip" ]]; then
+        echo "Usage: ssh-copy <ip> [user]" >&2
+        return 1
+      fi
+      ssh-copy-id -i ~/.ssh/id_ed25519.pub "''${user}@''${ip}"
+    }
 
     # === Environment setup ===
     export GPG_TTY=$(tty)

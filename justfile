@@ -241,3 +241,10 @@ skills-rebuild:
     @echo -e "\n➤ Forcing full skill reinstall on next nh home switch"
     @rm -f ~/.cache/ai-agents/skills-state.sha256 ~/.cache/ai-agents/skills-installed.marker
     @echo "✔ Cache cleared. Run 'nh home switch' to reinstall."
+
+# ── Server Inventory ──────────────────────────────────────────────────
+
+# Upload SSH public key to inventory servers (prompts for password on first connect)
+provision-ssh hostname='':
+    @echo -e "\n➤ Provisioning SSH keys to inventory servers…"
+    @./scripts/inventory/provision-ssh.sh {{hostname}}
