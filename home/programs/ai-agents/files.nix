@@ -207,7 +207,7 @@ in
         ".omp/agent/extensions/herdr-omp-agent-state.ts" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/omp/herdr-agent-state.ts";
-            sha256 = "sha256-GCv3TRK95W9jvgoAy01akwuqQZWHmHb4FO1BHV68msM=";
+            sha256 = "sha256-TRnt8SD6Oi4z71Bkyh39Rqiv5V8g62zYJmibKjRaVeQ=";
           };
           force = true;
         };

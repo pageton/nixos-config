@@ -9,6 +9,7 @@
 
 let
   gitCloneUpdate = import ../helpers/_git-clone-update.nix { inherit pkgs; };
+  bunPackage = import ../../../_helpers/_bun-package.nix { inherit pkgs; };
 in
 
 {
@@ -24,8 +25,8 @@ in
         echo "📦 Building impeccable bundles..."
         (
           cd "$IMPECCABLE_DIR"
-          ${pkgs.bun}/bin/bun install --frozen-lockfile >/dev/null 2>&1 || ${pkgs.bun}/bin/bun install >/dev/null 2>&1
-          ${pkgs.bun}/bin/bun run build >/dev/null 2>&1
+          ${bunPackage}/bin/bun install --frozen-lockfile >/dev/null 2>&1 || ${bunPackage}/bin/bun install >/dev/null 2>&1
+          ${bunPackage}/bin/bun run build >/dev/null 2>&1
         ) || true
       fi
 

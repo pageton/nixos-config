@@ -5,11 +5,11 @@
 {
   programs.aiAgents.codex = {
     enable = true;
-    model = "gpt-5.5";
+    model = "gpt-5.6-sol";
     sandboxMode = "danger-full-access";
     enableSearch = false;
     personality = "pragmatic";
-    reasoningEffort = "medium";
+    reasoningEffort = "high";
     approvalPolicy = "never";
     features = {
       apps = false;

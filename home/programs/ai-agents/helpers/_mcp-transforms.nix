@@ -4,7 +4,7 @@
 # convert a shared internal representation into each agent's native format.
 #
 # Internal representation (defined in config.mcpServers):
-#   { enable, type, command, args, url, env, headers }
+#   { enable, type, command, args, url, env, headers, timeout }
 #   type "local"  → stdio/local server (command + args)
 #   type "remote" → HTTP/SSE server (url + optional headers)
 #
@@ -59,8 +59,11 @@ let
           else
             remoteBase;
         envAttrs = lib.optionalAttrs (server.env or { } != { }) { ${envKey} = server.env; };
+        timeoutAttr = lib.optionalAttrs ((server ? timeout) && (server.timeout != null)) {
+          inherit (server) timeout;
+        };
       in
-      base // envAttrs
+      base // envAttrs // timeoutAttr
     ) (lib.filterAttrs (_: s: s.enable) servers);
 
   claudeMcpServers = mkMcpTransform {
@@ -76,10 +79,12 @@ let
 
   opencodeMcpServers = mkMcpTransform {
     localAttrs = server: {
+      enabled = true;
       type = "local";
       command = [ server.command ] ++ (server.args or [ ]);
     };
     remoteAttrs = server: {
+      enabled = true;
       type = "remote";
       inherit (server) url;
     };

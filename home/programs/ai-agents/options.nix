@@ -81,6 +81,9 @@ let
       url = mkNullOrStrOption null "URL for remote MCP servers";
       headers = mkNullableOption (lib.types.attrsOf lib.types.str) null "Headers for remote MCP servers";
       env = mkAttrsOfStrOption { } "Environment variables for the server";
+      timeout =
+        mkTypedOption (lib.types.nullOr lib.types.int) null
+          "MCP tool timeout in milliseconds (null = agent default)";
     };
   };
 
@@ -164,6 +167,7 @@ in
       version = mkStrOption "0.9.16" "agentmemory npm package version for the service and MCP shim";
       url = mkStrOption "http://localhost:3111" "Base URL for the local agentmemory server";
       viewerUrl = mkStrOption "http://localhost:3113" "URL for the local agentmemory viewer";
+      timeout = mkIntOption 300000 "MCP tool timeout in milliseconds (default 5 minutes)";
     };
 
     herdr = {
@@ -296,7 +300,7 @@ in
     codex = {
       enable = lib.mkEnableOption "Codex CLI configuration";
 
-      model = mkStrOption "openai/gpt-5.5" "Default model for Codex";
+      model = mkStrOption "openai/gpt-5.6-sol" "Default model for Codex";
       sandboxMode = mkStrOption "workspace-write" "Default sandbox mode for Codex";
       # Active only at top-level codex settings.
       enableSearch = mkBoolOption false "Enable native Codex web search by default";
@@ -309,7 +313,7 @@ in
 
       reasoningEffort = lib.mkOption {
         type = codexReasoningEffortType;
-        default = "medium";
+        default = "high";
         description = "Reasoning effort level";
       };
 

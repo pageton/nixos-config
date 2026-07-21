@@ -11,7 +11,7 @@ Parent: `home-manager/modules/ai-agents/AGENTS.md`
 | File                | Purpose                                                                                     |
 | ------------------- | ------------------------------------------------------------------------------------------- |
 | `default.nix`       | Import hub: imports codex, opencode                                                |
-| `codex.nix`         | Codex CLI: model (gpt-5.5), profiles, custom agents, features                               |
+| `codex.nix`         | Codex CLI: model (gpt-5.6-sol, reasoning high), profiles, custom agents, features          |
 | `opencode.nix`      | OpenCode: model (claude-opus-4-6), 7 agents, 6 commands, LSP, permissions                   |
 | `_opencode-lsp.nix` | Plain attrset (not a module): LSP server definitions for 9 languages                        |
 | `_opencode-web-re.nix`     | OpenCode Web RE agent definition (imports `../../web-re/_prompt.nix`)                       |

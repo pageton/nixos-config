@@ -29,29 +29,6 @@ let
     }) zai.services
   );
 
-  # GDB MCP server — pre-built static musl binary (no nix run needed).
-  # Needs gdb on PATH for debugging.
-  gdbMcpPkg = pkgs.stdenv.mkDerivation {
-    pname = "mcp-server-gdb";
-    version = "0.2.3";
-    src = pkgs.fetchurl {
-      url = "https://github.com/pansila/mcp_server_gdb/releases/download/v0.2.3/mcp-server-gdb_0.2.3-x86_64-unknown-linux-musl.tar.gz";
-      hash = "sha256-SGYl+lRp/XNadJNTPUVqvhRssF8H2qDnZivEz4Fvu0I=";
-    };
-    sourceRoot = ".";
-    installPhase = ''
-      runHook preInstall
-      mkdir -p $out/bin
-      install -m755 mcp-server-gdb $out/bin/
-      runHook postInstall
-    '';
-  };
-
-  gdbMcpWrapper = pkgs.writeShellScriptBin "mcp-server-gdb" ''
-    export PATH="${pkgs.gdb}/bin:$PATH"
-    exec ${gdbMcpPkg}/bin/mcp-server-gdb "$@"
-  '';
-
   # Allowed paths for terminal and filesystem MCP servers.
   mcpAllowedPaths = [
     "${config.home.homeDirectory}/Documents"
@@ -161,16 +138,11 @@ in
           command = "bunx";
           args = [ "@modelcontextprotocol/server-filesystem" ] ++ mcpAllowedPaths;
         };
-
-        gdb = {
-          enable = true;
-          command = "${gdbMcpWrapper}/bin/mcp-server-gdb";
-          args = [ ];
-        };
       }
       // lib.optionalAttrs cfg.agentmemory.enable {
         agentmemory = {
           enable = true;
+          timeout = cfg.agentmemory.timeout;
           command = "bunx";
           args = [
             "--silent"

@@ -13,13 +13,13 @@
   claude-sonnet-default = "claude-sonnet-4-20250514";
 
   # OpenAI models
-  gpt-default = "openai/gpt-5.5";
+  gpt-default = "openai/gpt-5.6-sol";
   "gpt-5.4" = "openai/gpt-5.4";
   gpt-low = "openai/gpt-5.5-spark";
   gpt-xhigh = "openai/gpt-5.1-codex-max";
 
   # OpenAI models (raw IDs)
-  gpt-default-raw = "openai-codex/gpt-5.5";
+  gpt-default-raw = "openai-codex/gpt-5.6-sol";
   gpt-low-raw = "gpt-5.5-spark";
 
   # Provider-specific aliases

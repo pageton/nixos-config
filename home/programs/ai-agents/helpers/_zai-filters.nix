@@ -22,6 +22,7 @@ let
         let
           extraFieldLines = lib.mapAttrsToList (k: v: "${k}: ${v}") extraFields;
           objectLines = [
+            (lib.optionalString (type != null) "enabled: true")
             (lib.optionalString (type != null) ''type: "${type}"'')
             ''url: "${zai.baseUrl}/${svc.name}/mcp"''
             ''headers: { Authorization: ("Bearer " + $key) }''
