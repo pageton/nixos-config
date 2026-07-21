@@ -21,7 +21,6 @@
           height = 1080;
           refresh = 143.976;
         };
-        transform.rotation = 90;
         position = {
           x = 2560;
           y = 0;
