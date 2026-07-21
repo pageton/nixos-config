@@ -1,12 +1,10 @@
 # Zsh core options, history, Oh My Zsh, plugins, keymap, and setOptions.
-
 {
   config,
   lib,
   pkgs,
   ...
 }:
-
 {
   programs.zsh = {
     enable = true;
@@ -21,36 +19,6 @@
       path = "${config.xdg.dataHome}/zsh/history";
       ignoreDups = true;
       ignoreSpace = true;
-      ignorePatterns = [
-        "rm *"
-        "kill *"
-        "pkill *"
-        "*token*"
-        "*TOKEN*"
-        "*password*"
-        "*PASSWORD*"
-        "*secret*"
-        "*SECRET*"
-        "*API_KEY*"
-        "*api_key*"
-        "*ANTHROPIC*"
-        "export *KEY*"
-        "export *TOKEN*"
-        "export *SECRET*"
-        "export *PASSWORD*"
-        "curl *-H*Auth*"
-        "wget *--password*"
-        "*bearer*"
-        "*BEARER*"
-        "*jwt*"
-        "*JWT*"
-        "ssh *@*"
-        "scp *@*"
-        "*sops*"
-        "*SOPS*"
-        "*decrypt*"
-        "*DECRYPT*"
-      ];
       expireDuplicatesFirst = true; # Remove duplicates first when trimming
       extended = true; # Save timestamps and durations
     };
