@@ -5,8 +5,7 @@
   pkgs,
   hmSystemdHelpers,
   logCleanupCommand,
-  mkCliAutoupdateScript,
-  autoUpdateTools,
+  autoUpdate,
   agentmemoryRuntime,
 }:
 let
@@ -22,7 +21,7 @@ let
       Unit.Description = "Auto-update ${label}";
       Service = {
         Type = "oneshot";
-        ExecStart = "${mkCliAutoupdateScript { inherit binary npmPackage label; }}";
+        ExecStart = "${autoUpdate.mkScript { inherit binary npmPackage label; }}";
       };
     };
 in
@@ -93,7 +92,9 @@ lib.mkMerge [
       };
     }
     // builtins.listToAttrs (
-      map (tool: lib.nameValuePair "${tool.binary}-autoupdate" (mkAutoUpdateService tool)) autoUpdateTools
+      map (
+        tool: lib.nameValuePair "${tool.binary}-autoupdate" (mkAutoUpdateService tool)
+      ) autoUpdate.tools
     );
 
     timers = {
@@ -106,7 +107,7 @@ lib.mkMerge [
         lib.nameValuePair "${tool.binary}-autoupdate" (mkWeeklyTimer {
           description = "Weekly ${tool.label} auto-update";
         })
-      ) autoUpdateTools
+      ) autoUpdate.tools
     );
   })
 ]

@@ -89,49 +89,11 @@ let
   };
   inherit (aliasLib) aiAliases aiAgentLauncher aiAgentInventory;
   agentmemoryRuntime = import ./helpers/_agentmemory-runtime.nix { inherit pkgs; };
-  mkCliAutoupdateScript = import ./helpers/_mk-cli-autoupdate-script.nix { inherit pkgs; };
+  autoUpdate = import ./helpers/_mk-cli-autoupdate-script.nix { inherit pkgs; };
   shellAliases = import ./helpers/_services-shell-aliases.nix { inherit cfg aiAliases constants; };
 
-  autoUpdateTools = [
-    {
-      binary = "claude";
-      npmPackage = "@anthropic-ai/claude-code";
-      label = "Claude Code CLI";
-    }
-    {
-      binary = "opencode";
-      npmPackage = "opencode-ai";
-      label = "OpenCode CLI";
-    }
-    {
-      binary = "codex";
-      npmPackage = "@openai/codex";
-      label = "Codex CLI";
-    }
-    {
-      binary = "codegraph";
-      npmPackage = "@colbymchenry/codegraph";
-      label = "CodeGraph CLI";
-    }
-    {
-      binary = "copilot";
-      npmPackage = "@github/copilot";
-      label = "GitHub Copilot CLI";
-    }
-    {
-      binary = "mimo";
-      npmPackage = "@mimo-ai/cli";
-      label = "MiMoCode CLI";
-    }
-    {
-      binary = "omp";
-      npmPackage = "@oh-my-pi/pi-coding-agent";
-      label = "Oh My Pi CLI";
-    }
-  ];
-
   autoUpdateAllScript = pkgs.writeShellScript "update-ai-agents" (
-    lib.concatMapStringsSep "\n" (tool: toString (mkCliAutoupdateScript tool)) autoUpdateTools
+    lib.concatMapStringsSep "\n" (tool: toString (autoUpdate.mkScript tool)) autoUpdate.tools
     + lib.optionalString cfg.serena.enable ''
 
       ${pkgs.uv}/bin/uv tool install -p 3.13 --prerelease=allow ${cfg.serena.package}@latest 2>/dev/null && echo "Updated Serena" || true
@@ -159,8 +121,7 @@ let
       pkgs
       hmSystemdHelpers
       logCleanupCommand
-      mkCliAutoupdateScript
-      autoUpdateTools
+      autoUpdate
       agentmemoryRuntime
       ;
   };
