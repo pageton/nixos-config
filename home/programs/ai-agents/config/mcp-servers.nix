@@ -4,7 +4,6 @@
   config,
   constants,
   lib,
-  pkgs,
   ...
 }:
 
@@ -35,6 +34,7 @@ let
     "${config.home.homeDirectory}/Downloads"
     "${config.home.homeDirectory}/.cache/android-re"
   ];
+
 in
 {
   programs.aiAgents = {
@@ -115,6 +115,15 @@ in
           ];
         };
 
+        tmux = {
+          enable = true;
+          command = "bunx";
+          args = [
+            "tmux-mcp"
+            "--shell-type=zsh"
+          ];
+        };
+
         ripgrep = {
           enable = true;
           command = "bunx";
@@ -125,6 +134,12 @@ in
           enable = true;
           command = "uvx";
           args = [ "mcp-server-fetch" ];
+        };
+
+        superpowers = {
+          enable = true;
+          command = "bunx";
+          args = [ "superpowers-mcp" ];
         };
 
         ssh = {
@@ -138,6 +153,18 @@ in
           command = "bunx";
           args = [ "@modelcontextprotocol/server-filesystem" ] ++ mcpAllowedPaths;
         };
+
+        # ── TON Blockchain MCP ──
+
+        ton = {
+          enable = true;
+          command = "npx";
+          args = [
+            "-y"
+            "@ton/mcp@alpha"
+          ];
+        };
+
       }
       // lib.optionalAttrs cfg.agentmemory.enable {
         agentmemory = {

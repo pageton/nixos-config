@@ -21,6 +21,27 @@
 - Prefer existing repo scripts and wrappers over ad-hoc commands.
 - Preserve momentum: if you can unblock yourself with local inspection or narrow validation, do that before asking the user.
 
+## Long-running processes via tmux-mcp
+
+Only use tmux for tasks that require monitoring or involve long-running logs — API servers, dev servers, build watchers, migrations, or any process whose output must be observed over time. Regular commands (linting, testing, file ops, one-shot builds) should NOT be run in tmux — use normal command execution for those.
+
+Why: tmux sessions are fully detached. The process survives the agent session ending. A future agent session can check on it by name.
+
+Workflow:
+
+1. `tmux_create_session` with a descriptive `name` (e.g. `api-server`, `postgres`, `bun-dev`).
+2. `tmux_execute_command` to start the process in that session. For interactive tools (REPLs, CLIs needing input) pass `rawMode=true`.
+3. `tmux_capture_pane` to read logs/output at any time — adjust `lines` for history depth, `captureColors` for ANSI output.
+4. `tmux_find_session` / `tmux_list_sessions` to discover what is already running before starting a duplicate.
+5. `tmux_kill_session` when the process is no longer needed.
+
+Rules:
+- **Regular commands stay out of tmux** — if it finishes in seconds and you need the result immediately, run it normally.
+- **Always name sessions** — unnamed sessions are invisible to future agents.
+- **Check for existing sessions first** (`tmux_list_sessions`) before creating a new one.
+- **Do not keep the agent idle waiting for a tmux process** — start it, capture output to verify it launched, then continue working. Re-check with `tmux_capture_pane` when you need results.
+- Use `tmux_get_command_result` for one-shot commands that produce output you need to parse.
+
 ## Context and state discipline
 
 - Treat the context window as lossy. For long tasks, keep a small active ledger of goal, current hypothesis, evidence, blockers, and next step.

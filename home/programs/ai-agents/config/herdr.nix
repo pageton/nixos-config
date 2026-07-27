@@ -30,7 +30,6 @@ in
 
       ui = {
         show_agent_labels_on_pane_borders = true;
-        agent_panel_scope = "current";
         sidebar_width = 32;
         mouse_capture = true;
       };
