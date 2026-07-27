@@ -23,8 +23,8 @@ let
 
   flattenForAlias = builtins.replaceStrings [ "\n" ] [ "\\n" ];
 
-  codexBase = "command codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox";
-  codexHeadless = "codex exec --dangerously-bypass-approvals-and-sandbox";
+  codexBase = "command codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox --dangerously-bypass-hook-trust";
+  codexHeadless = "codex exec --dangerously-bypass-approvals-and-sandbox --dangerously-bypass-hook-trust";
 
   gptLowModel = models.gpt-low;
   gptMedModel = models.gpt-default;
@@ -121,7 +121,7 @@ let
       command = codexBase;
       workflowPromptMode = "positional";
       envMarker = "-";
-      interactiveCommand = "codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox";
+      interactiveCommand = "codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox --dangerously-bypass-hook-trust";
       headlessCommand = codexHeadless;
       tool = "codex";
       launcherSimple = true;
@@ -131,7 +131,7 @@ let
       command = "${codexBase} -c 'model_reasoning_effort=\"low\"'";
       workflowPromptMode = "positional";
       envMarker = "-";
-      interactiveCommand = ''codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort="low"' '';
+      interactiveCommand = ''codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox --dangerously-bypass-hook-trust -c 'model_reasoning_effort="low"' '';
       headlessCommand = "${codexHeadless} -c 'model_reasoning_effort=\"low\"'";
       tool = "codex";
       launcherSimple = true;
@@ -141,7 +141,7 @@ let
       command = "${codexBase} -c 'model_reasoning_effort=\"medium\"'";
       workflowPromptMode = "positional";
       envMarker = "-";
-      interactiveCommand = ''codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort="medium"' '';
+      interactiveCommand = ''codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox --dangerously-bypass-hook-trust -c 'model_reasoning_effort="medium"' '';
       headlessCommand = "${codexHeadless} -c 'model_reasoning_effort=\"medium\"'";
       tool = "codex";
       launcherSimple = true;
@@ -151,7 +151,7 @@ let
       command = "${codexBase} -c 'model_reasoning_effort=\"high\"'";
       workflowPromptMode = "positional";
       envMarker = "-";
-      interactiveCommand = ''codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort="high"' '';
+      interactiveCommand = ''codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox --dangerously-bypass-hook-trust -c 'model_reasoning_effort="high"' '';
       headlessCommand = "${codexHeadless} -c 'model_reasoning_effort=\"high\"'";
       tool = "codex";
       launcherSimple = true;
@@ -161,7 +161,7 @@ let
       command = "${codexBase} -c 'model_reasoning_effort=\"xhigh\"'";
       workflowPromptMode = "positional";
       envMarker = "-";
-      interactiveCommand = ''codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox -c 'model_reasoning_effort="xhigh"' '';
+      interactiveCommand = ''codex --no-alt-screen --dangerously-bypass-approvals-and-sandbox --dangerously-bypass-hook-trust -c 'model_reasoning_effort="xhigh"' '';
       headlessCommand = "${codexHeadless} -c 'model_reasoning_effort=\"xhigh\"'";
       tool = "codex";
       launcherSimple = true;
