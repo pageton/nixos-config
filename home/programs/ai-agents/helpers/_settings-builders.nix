@@ -28,6 +28,7 @@ let
     opencodeWebReMcpServers
     mimoMcpServers
     ompMcpServers
+    ompAndroidReMcpServers
     ;
   opencodeFormatterSettings = builtins.listToAttrs (
     map (formatter: {
@@ -172,6 +173,7 @@ in
     opencodeSettings
     antigravitySettings
     opencodeSettingsByProfile
+    ompAndroidReMcpServers
     opencodeAndroidReMcpServers
     opencodeWebReMcpServers
     mimoSettings

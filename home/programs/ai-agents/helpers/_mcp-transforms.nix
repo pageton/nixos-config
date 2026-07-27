@@ -113,6 +113,20 @@ let
     };
   };
 
+  # omp android-re MCP servers — same omp shape but sourced from androidReMcpServers
+  ompAndroidReMcpServers = mkMcpTransform {
+    localAttrs = server: {
+      type = "stdio";
+      inherit (server) command;
+      args = server.args or [ ];
+    };
+    remoteAttrs = server: {
+      type = "http";
+      inherit (server) url;
+    };
+    servers = androidReMcpServers;
+  };
+
   opencodeAndroidReMcpServers = mkMcpTransform {
     localAttrs = server: {
       type = "local";
@@ -138,7 +152,6 @@ let
     envKey = "environment";
     servers = webReMcpServers;
   };
-
   # MiMo uses the same MCP format as OpenCode (shared codebase).
   mimoMcpServers = opencodeMcpServers;
 in
@@ -153,5 +166,6 @@ in
     opencodeWebReMcpServers
     mimoMcpServers
     ompMcpServers
+    ompAndroidReMcpServers
     ;
 }

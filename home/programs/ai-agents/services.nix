@@ -77,6 +77,15 @@ let
       ;
   };
 
+  ompAndroidReLaunchers = import ./android-re/_omp-launchers.nix {
+    inherit
+      config
+      constants
+      lib
+      pkgs
+      ;
+  };
+
   mimoWebReLaunchers = import ./web-re/_mimo-launchers.nix { inherit lib pkgs scriptsDir; };
 
   aliasLib = import ./helpers/_aliases.nix {
@@ -148,6 +157,7 @@ in
     ++ webReLaunchers
     ++ mimoAndroidReLaunchers
     ++ mimoWebReLaunchers
+    ++ ompAndroidReLaunchers
     ++ (lib.optional cfg.zcode.enable zcodeDrv)
     ++ (lib.optional cfg.logging.enable (
       pkgs.writeShellScriptBin "ai-agent-log-cleanup" ''

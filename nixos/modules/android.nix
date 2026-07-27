@@ -88,6 +88,7 @@ in
       (buildToolsWrapped "aapt2")
       (buildToolsWrapped "apksigner")
       (buildToolsWrapped "zipalign")
+      pkgs.apkid # Android Application Identifier (APK/DEX/ELF packing detection)
     ];
 
     sessionVariables = {

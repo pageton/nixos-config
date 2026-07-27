@@ -35,10 +35,10 @@ let
     opencodeSettingsByProfile
     opencodeAndroidReMcpServers
     opencodeWebReMcpServers
+    ompAndroidReMcpServers
     mimoSettings
     ompSettings
     ;
-
   opencodeProfiles = import ./helpers/_opencode-profiles.nix { inherit config; };
   opencodeProfileNames = opencodeProfiles.names;
   opencodeConfigFiles = builtins.listToAttrs (
@@ -140,7 +140,7 @@ in
                   hooks = [
                     {
                       type = "command";
-                      command = "~/.codex/herdr-agent-state.sh session";
+                      command = "$HOME/.codex/herdr-agent-state.sh session";
                       timeout = 10;
                     }
                   ];
@@ -207,7 +207,7 @@ in
         ".omp/agent/extensions/herdr-omp-agent-state.ts" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/omp/herdr-agent-state.ts";
-            sha256 = "sha256-TRnt8SD6Oi4z71Bkyh39Rqiv5V8g62zYJmibKjRaVeQ=";
+            sha256 = "sha256-C4krjNUH8EbGLS8XGbFmZ3iPZ3gptxzssnBYMoj0FD4=";
           };
           force = true;
         };
@@ -261,12 +261,19 @@ in
           force = true;
         };
       })
+      # omp RE agent-specific MCP fragments (merged into the runtime overlay by omp launchers)
+      (lib.mkIf cfg.enable {
+        ".omp/agent/android-re-mcp-servers.json" = {
+          text = toJSON ompAndroidReMcpServers;
+          force = true;
+        };
+      })
       # herdr agent state plugin for OpenCode (auto-discovered from plugins/ dir)
       (lib.mkIf (cfg.herdr.enable && cfg.opencode.enable) {
         "opencode/plugins/herdr-agent-state.js" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/opencode/herdr-agent-state.js";
-            sha256 = "sha256-fXyK4B+hexUPXay9Hb2n50LEk0y8KIu64GMxk8WLf6I=";
+            sha256 = "sha256-LBoP2aUHKLYmGKKoF/Qty4l2L0b8z+0HwDb9kMm62JQ=";
           };
           force = true;
         };
