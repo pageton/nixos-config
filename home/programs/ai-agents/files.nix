@@ -132,24 +132,6 @@ in
           executable = true;
           force = true;
         };
-        ".codex/hooks.json" = {
-          text = toJSON {
-            hooks = {
-              SessionStart = [
-                {
-                  hooks = [
-                    {
-                      type = "command";
-                      command = "$HOME/.codex/herdr-agent-state.sh session";
-                      timeout = 10;
-                    }
-                  ];
-                }
-              ];
-            };
-          };
-          force = true;
-        };
         ".copilot/herdr-agent-state.sh" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/copilot/herdr-agent-state.sh";

@@ -78,6 +78,9 @@
       # tunnel create vault-desktop`). DNS cutover for vault.sadiq.lol happens last.
       tunnelId = "0011ea12-dadf-44f9-8eba-1d7a3cc44b68";
     };
+    codex = {
+      enable = true;
+    };
   };
 
   environment.systemPackages = with pkgs; [ home-manager ];

@@ -59,6 +59,9 @@
     macchanger = {
       enable = true;
     };
+    codex = {
+      enable = true;
+    };
   };
 
   environment.systemPackages = with pkgs; [ home-manager ];
