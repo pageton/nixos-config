@@ -17,6 +17,7 @@ in
     herdr.enable = true;
     antigravity.enable = true;
     omp.enable = true;
+    zcode.enable = true;
     codegraph.enable = true;
     serena.enable = false;
 

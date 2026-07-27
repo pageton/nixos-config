@@ -91,6 +91,11 @@ let
   agentmemoryRuntime = import ./helpers/_agentmemory-runtime.nix { inherit pkgs; };
   autoUpdate = import ./helpers/_mk-cli-autoupdate-script.nix { inherit pkgs; };
   shellAliases = import ./helpers/_services-shell-aliases.nix { inherit cfg aiAliases constants; };
+  zcodeDrv =
+    let
+      zcodeList = import ../../packages/custom/zcode.nix { inherit pkgs lib; };
+    in
+    builtins.head zcodeList;
 
   autoUpdateAllScript = pkgs.writeShellScript "update-ai-agents" (
     lib.concatMapStringsSep "\n" (tool: toString (autoUpdate.mkScript tool)) autoUpdate.tools
@@ -143,6 +148,7 @@ in
     ++ webReLaunchers
     ++ mimoAndroidReLaunchers
     ++ mimoWebReLaunchers
+    ++ (lib.optional cfg.zcode.enable zcodeDrv)
     ++ (lib.optional cfg.logging.enable (
       pkgs.writeShellScriptBin "ai-agent-log-cleanup" ''
         ${logCleanupCommand}

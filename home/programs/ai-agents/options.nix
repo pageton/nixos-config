@@ -356,5 +356,10 @@ in
       enable = lib.mkEnableOption "Oh My Pi (omp) coding agent configuration";
     };
 
+    # === ZCode Options ===
+    zcode = {
+      enable = lib.mkEnableOption "ZCode Desktop App from Z.AI";
+    };
+
   };
 }
