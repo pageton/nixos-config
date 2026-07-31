@@ -133,7 +133,12 @@ in
         fetch = {
           enable = true;
           command = "uvx";
-          args = [ "mcp-server-fetch" ];
+          # mcp>=2.0.0 renamed McpError→MCPError; mcp-server-fetch hasn't caught up.
+          args = [
+            "--with"
+            "mcp<2"
+            "mcp-server-fetch"
+          ];
         };
 
         superpowers = {

@@ -82,6 +82,8 @@ in
           "--project-path"
           "${config.home.homeDirectory}/Downloads/android-re-tools/pyghidra-mcp"
         ];
+        # Ghidra headless JVM boot takes 30-60s+; default 30s MCP timeout is too short.
+        timeout = 120000;
       };
 
       apktool-mcp-server = {
@@ -94,6 +96,8 @@ in
         enable = true;
         command = "${revaMcpWrapper}/bin/mcp-reva";
         args = [ ];
+        # ReVa wraps PyGhidra + Ghidra extension; JVM boot takes 30-60s+.
+        timeout = 120000;
       };
 
       gdb = {
