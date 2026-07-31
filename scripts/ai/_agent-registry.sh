@@ -139,6 +139,55 @@ zai_omp_env() {
   printf '%s\n' "ZAI_API_KEY=${key}"
 }
 
+# DeepSeek API key resolution.
+deepseek_key_path() {
+  printf '%s\n' "${DEEPSEEK_API_KEY_FILE:-/run/secrets/deepseek_api_key}"
+}
+
+deepseek_key() {
+  local key_path
+  key_path="$(deepseek_key_path)"
+  require_secret_file "${key_path}"
+  cat "${key_path}"
+}
+
+# DeepSeek env vars for claude --dangerously-skip-permissions.
+# Mirrors the claude_seek() shell function in zshrc.
+deepseek_claude_env() {
+  local key
+  key="$(deepseek_key)"
+  printf '%s\n' "ANTHROPIC_AUTH_TOKEN=${key}"
+  printf '%s\n' "ANTHROPIC_BASE_URL=https://api.deepseek.com/anthropic"
+  printf '%s\n' "ANTHROPIC_DEFAULT_OPUS_MODEL=deepseek-v4-pro[1m]"
+  printf '%s\n' "ANTHROPIC_DEFAULT_SONNET_MODEL=deepseek-v4-pro[1m]"
+  printf '%s\n' "ANTHROPIC_DEFAULT_HAIKU_MODEL=deepseek-v4-flash[1m]"
+  printf '%s\n' "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1"
+}
+
+# MiMo (Xiaomi) API key resolution.
+mimo_key_path() {
+  printf '%s\n' "${MIMO_API_KEY_FILE:-/run/secrets/mimo_api_key}"
+}
+
+mimo_key() {
+  local key_path
+  key_path="$(mimo_key_path)"
+  require_secret_file "${key_path}"
+  cat "${key_path}"
+}
+
+# MiMo env vars for claude --dangerously-skip-permissions.
+# Mirrors the claude_mimo() shell function in zshrc.
+mimo_claude_env() {
+  local key
+  key="$(mimo_key)"
+  printf '%s\n' "ANTHROPIC_AUTH_TOKEN=${key}"
+  printf '%s\n' "ANTHROPIC_BASE_URL=https://token-plan-sgp.xiaomimimo.com/anthropic"
+  printf '%s\n' "ANTHROPIC_DEFAULT_OPUS_MODEL=mimo-v2.5-pro[1m]"
+  printf '%s\n' "ANTHROPIC_DEFAULT_SONNET_MODEL=mimo-v2.5-pro[1m]"
+  printf '%s\n' "ANTHROPIC_DEFAULT_HAIKU_MODEL=mimo-v2.5[1m]"
+}
+
 # --- Workflow suffix resolution ---
 
 workflow_label() {
@@ -166,6 +215,8 @@ resolve_workflow_prompt() {
 #   env_marker:
 #     "-"           = no extra env vars (outputs empty string)
 #     "ZAI"         = resolve Z.AI API vars at runtime
+#     "DEEPSEEK"    = resolve DeepSeek API vars for Claude Code
+#     "MIMO"        = resolve MiMo API vars for Claude Code
 #     "OPENROUTER"  = resolve OpenRouter API key + OpenCode config dir
 #     otherwise     = literal env string (e.g. "FOO=bar BAZ=qux")
 resolve_env_marker() {
@@ -174,6 +225,8 @@ resolve_env_marker() {
 	"-") ;;
 	"ZAI") zai_claude_env | tr '\n' ' ' ;;
 	"ZAI_OMP") zai_omp_env | tr '\n' ' ' ;;
+	"DEEPSEEK") deepseek_claude_env | tr '\n' ' ' ;;
+	"MIMO") mimo_claude_env | tr '\n' ' ' ;;
 	"OPENROUTER") openrouter_opencode_env | tr '\n' ' ' ;;
 	*) printf '%s' "$env_marker" ;;
 	esac

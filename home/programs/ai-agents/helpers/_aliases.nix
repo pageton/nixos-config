@@ -349,7 +349,7 @@ let
       alias = "miseek";
       command = "mimo_seek";
       workflowPromptMode = "positional";
-      envMarker = "DEEPSEEK";
+      envMarker = "-";
       interactiveCommand = "mimo -m deepseek/deepseek-v4-pro";
       headlessCommand = "mimo run -m deepseek/deepseek-v4-pro";
       tool = "mimo";
