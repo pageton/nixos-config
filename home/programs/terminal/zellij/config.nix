@@ -2,11 +2,14 @@
 {
   config,
   constants,
+  lib,
   pkgs,
   ...
 }:
 
 let
+  enableAutolock = false;
+  enableOtherPlugins = true;
   zellijAiPanel = pkgs.writeShellScriptBin "zellij-ai-panel" ''
     set -euo pipefail
 
@@ -111,9 +114,10 @@ in
       styled_underlines = true;
       auto_layout = true;
       mouse_mode = true;
-      advanced_mouse_actions = true;
-      focus_follows_mouse = true;
-      visual_bell = true;
+      advanced_mouse_actions = false;
+      mouse_hover_effects = false;
+      focus_follows_mouse = false;
+      visual_bell = false;
 
       copy_command = "${pkgs.wl-clipboard}/bin/wl-copy";
       copy_clipboard = "system";
@@ -129,10 +133,7 @@ in
       scrollback_lines_to_serialize = 10000;
       serialization_interval = 120;
 
-      # "detach" keeps the session server alive when the terminal is closed (Mod+Q, SIGHUP).
-      # This is required for zellij-tui: sessions created via the TUI must survive terminal closure.
-      # "quit" would kill the session server on force-close, destroying the session.
-      on_force_close = "detach";
+      on_force_close = "quit";
       show_startup_tips = false;
       show_release_notes = false;
       stacked_resize = true;
@@ -140,9 +141,25 @@ in
     };
 
     extraConfig = ''
-      load_plugins {
-        "file:~/.config/zellij/plugins/zellij-attention.wasm"
-      }
+      ${lib.optionalString enableAutolock ''
+        plugins {
+          autolock location="file:~/.config/zellij/plugins/zellij-autolock.wasm" {
+            is_enabled true
+            triggers "nvim|vim|git|fzf|zoxide|atuin|lazygit"
+            reaction_seconds "0.3"
+          }
+        }
+
+        load_plugins {
+          autolock
+        }
+      ''}
+
+      ${lib.optionalString enableOtherPlugins ''
+        load_plugins {
+          "file:~/.config/zellij/plugins/zellij-attention.wasm"
+        }
+      ''}
 
       themes {
         catppuccin-mocha-custom {
@@ -241,9 +258,9 @@ in
 
           bind "Alt n" { NewPane; }
           bind "Alt s" { NewPane "Down"; SwitchToMode "Normal"; }
-          bind "Alt v" { NewPane "Right"; SwitchToMode "Normal"; MoveFocus "Right"; MoveFocus "Left"; }
+          bind "Alt v" { NewPane "Right"; SwitchToMode "Normal"; MoveFocus "Left"; }
           bind "Alt S" { NewPane "stacked"; SwitchToMode "Normal"; }
-          bind "Alt x" { CloseFocus; SwitchToMode "Normal"; }
+          bind "Alt x" { CloseTab; GoToNextTab; SwitchToMode "Normal"; }
           bind "Alt z" { ToggleFocusFullscreen; SwitchToMode "Normal"; }
           bind "Alt w" { ToggleFloatingPanes; SwitchToMode "Normal"; }
           bind "Alt f" { TogglePaneEmbedOrFloating; SwitchToMode "Normal"; }
@@ -284,58 +301,66 @@ in
             SwitchToMode "Normal";
           }
 
-          bind "Alt o" {
-            LaunchOrFocusPlugin "zellij:session-manager" {
-              floating true
-              move_to_focused_tab true
+          ${lib.optionalString enableOtherPlugins ''
+            bind "Alt o" {
+              LaunchOrFocusPlugin "zellij:session-manager" {
+                floating true
+                move_to_focused_tab true
+              }
             }
-          }
-          bind "Alt O" {
-            LaunchOrFocusPlugin "zellij:layout-manager" {
-              floating true
-              move_to_focused_tab true
+            bind "Alt O" {
+              LaunchOrFocusPlugin "zellij:layout-manager" {
+                floating true
+                move_to_focused_tab true
+              }
             }
-          }
 
-          bind "Alt p" {
-            LaunchOrFocusPlugin "file:~/.config/zellij/plugins/monocle.wasm" {
-              floating true
+            bind "Alt p" {
+              LaunchOrFocusPlugin "file:~/.config/zellij/plugins/monocle.wasm" {
+                floating true
+              }
             }
-          }
-          bind "Alt P" {
-            LaunchOrFocusPlugin "zellij:plugin-manager" {
-              floating true
-              move_to_focused_tab true
+            bind "Alt P" {
+              LaunchOrFocusPlugin "zellij:plugin-manager" {
+                floating true
+                move_to_focused_tab true
+              }
             }
-          }
-          bind "Alt C" {
-            LaunchOrFocusPlugin "configuration" {
-              floating true
-              move_to_focused_tab true
+            bind "Alt C" {
+              LaunchOrFocusPlugin "configuration" {
+                floating true
+                move_to_focused_tab true
+              }
             }
-          }
-          bind "Alt r" {
-            LaunchOrFocusPlugin "file:~/.config/zellij/plugins/room.wasm" {
-              floating true
-              ignore_case true
+            bind "Alt r" {
+              LaunchOrFocusPlugin "file:~/.config/zellij/plugins/room.wasm" {
+                floating true
+                ignore_case true
+              }
             }
-          }
-          bind "Alt b" {
-            LaunchOrFocusPlugin "file:~/.config/zellij/plugins/harpoon.wasm" {
-              floating true
+            bind "Alt b" {
+              LaunchOrFocusPlugin "file:~/.config/zellij/plugins/harpoon.wasm" {
+                floating true
+              }
             }
-          }
-          bind "Alt /" {
-            LaunchOrFocusPlugin "file:~/.config/zellij/plugins/zellij-forgot.wasm" {
-              floating true
-              "LOAD_ZELLIJ_BINDINGS" "true"
+            bind "Alt /" {
+              LaunchOrFocusPlugin "file:~/.config/zellij/plugins/zellij-forgot.wasm" {
+                floating true
+                "LOAD_ZELLIJ_BINDINGS" "true"
+              }
             }
-          }
-          bind "Alt m" {
-            LaunchPlugin "file:~/.config/zellij/plugins/multitask.wasm" {
-              floating false
+            bind "Alt m" {
+              LaunchPlugin "file:~/.config/zellij/plugins/multitask.wasm" {
+                floating false
+              }
             }
-          }
+            bind "Alt g" {
+              LaunchOrFocusPlugin "file:~/.config/zellij/plugins/zellij-worktree.wasm" {
+                floating true
+                move_to_focused_tab true
+              }
+            }
+          ''}
         }
       }
     '';
