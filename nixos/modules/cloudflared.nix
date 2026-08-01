@@ -17,6 +17,8 @@ let
 
   credFile = config.sops.secrets.cf-tunnel-creds.path;
 
+  mullvadExclude = "/run/wrappers/bin/mullvad-exclude";
+
   configFile = pkgs.writeText "cloudflared-config.yml" ''
     tunnel: ${cfg.tunnelId}
     credentials-file: ${credFile}
@@ -73,6 +75,20 @@ in
         PrivateTmp = true;
         PrivateDevices = true;
       };
+    };
+
+    # === Mullvad VPN Bypass ===
+    # When Mullvad lockdown-mode is active, all traffic is routed through
+    # wg0-mullvad which blocks Cloudflare's edge (port 7844). The
+    # mullvad-exclude wrapper unsets the fwmark so cloudflared's outbound
+    # connections bypass the VPN tunnel and reach Cloudflare directly.
+    systemd.services.cloudflared-tunnel = lib.mkIf config.mySystem.mullvadVpn.enable {
+      after = [ "mullvad-daemon.service" ];
+      wants = [ "mullvad-daemon.service" ];
+      serviceConfig.ExecStart = lib.mkForce [
+        ""
+        "${mullvadExclude} ${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate --config ${configFile} run"
+      ];
     };
   };
 }

@@ -91,6 +91,7 @@
   git-extras # 60+ git utilities (git-summary, git-effort, git-standup, etc.)
   glab # GitLab CLI tool
   hcloud # Hetzner Cloud CLI
+  doctl # DigitalOcean CLI
   lazydocker # Terminal UI for Docker management
   serie # Git log TUI viewer
 

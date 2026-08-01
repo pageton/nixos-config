@@ -21,6 +21,8 @@ with pkgsStable;
 
   # === AI and Development Tools ===
   pkgs.antigravity-fhs # AI-powered agentic IDE
+  # === Terminal Emulators ===
+  termius # Modern SSH client with cloud sync
 
   # === Gaming and Compatibility ===
   (bottles.override { removeWarningPopup = true; }) # Run Windows applications on Linux
