@@ -18,6 +18,7 @@
           statuscolumn.enabled = true;
           zen.enabled = true;
           bufdelete.enabled = true;
+          animate.enabled = true;
         };
       };
     };

@@ -4,6 +4,10 @@
       vim-wakatime.enable = true;
       motion.flash-nvim.enable = true;
       outline.aerial-nvim.enable = true;
+      yazi-nvim = {
+        enable = true;
+        mappings.openYazi = "<leader>e";
+      };
     };
 
     tabline.nvimBufferline.enable = true;
