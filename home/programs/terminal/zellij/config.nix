@@ -26,7 +26,11 @@ let
       printf '%s\n' \
         "Claude Code" \
         "Claude GLM" \
+        "Claude DeepSeek" \
         "OpenCode" \
+        "OpenCode DeepSeek" \
+        "OpenCode GLM" \
+        "OpenCode Zen" \
         "OpenCode GPT" \
         "OpenCode Sonnet" \
         "OpenCode Gemini" \
@@ -34,7 +38,7 @@ let
         "Codex High" \
         "Codex XHigh" \
         "Antigravity" \
-        "oh-my-pi GLM" \
+        "Oh My Pi" \
         "AI Council" \
         "AI Logs" \
         "Agent Inventory" \
@@ -53,8 +57,20 @@ let
       "Claude GLM")
         exec "$zellij" action new-tab --name "󰚩 clglm" -- "$zsh" -ic "clglm"
         ;;
+      "Claude DeepSeek")
+        exec "$zellij" action new-tab --name "󰚩 clsk" -- "$zsh" -ic "clsk"
+        ;;
       "OpenCode")
         exec "$zellij" action new-tab --name " oc" -- "$zsh" -ic "oc"
+        ;;
+      "OpenCode DeepSeek")
+        exec "$zellij" action new-tab --name " ocsk" -- "$zsh" -ic "ocsk"
+        ;;
+      "OpenCode GLM")
+        exec "$zellij" action new-tab --name " ocglm" -- "$zsh" -ic "ocglm"
+        ;;
+      "OpenCode Zen")
+        exec "$zellij" action new-tab --name " oczen" -- "$zsh" -ic "oczen"
         ;;
       "OpenCode GPT")
         exec "$zellij" action new-tab --name " ocgpt" -- "$zsh" -ic "ocgpt"
@@ -77,8 +93,8 @@ let
       "Antigravity")
         exec "$zellij" action new-tab --name "󰊭 ag" -- "$zsh" -ic "ag"
         ;;
-      "oh-my-pi GLM")
-        exec "$zellij" action new-tab --name "󰐻 opi" -- "$zsh" -ic "opi"
+      "Oh My Pi")
+        exec "$zellij" action new-tab --name "󰐻 omp" -- "$zsh" -ic "omp"
         ;;
       "AI Council")
         exec "$zellij" action new-tab --name "󰚩 council" --layout "$HOME/.config/zellij/layouts/ai-council.kdl"
@@ -260,7 +276,7 @@ in
           bind "Alt s" { NewPane "Down"; SwitchToMode "Normal"; }
           bind "Alt v" { NewPane "Right"; SwitchToMode "Normal"; MoveFocus "Left"; }
           bind "Alt S" { NewPane "stacked"; SwitchToMode "Normal"; }
-          bind "Alt x" { CloseTab; GoToNextTab; SwitchToMode "Normal"; }
+          bind "Alt x" { CloseFocus; GoToNextTab; SwitchToMode "Normal"; }
           bind "Alt z" { ToggleFocusFullscreen; SwitchToMode "Normal"; }
           bind "Alt w" { ToggleFloatingPanes; SwitchToMode "Normal"; }
           bind "Alt f" { TogglePaneEmbedOrFloating; SwitchToMode "Normal"; }
