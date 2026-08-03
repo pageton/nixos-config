@@ -24,6 +24,7 @@
   dust # Modern du with tree visualization
   fd # Modern find replacement with intuitive syntax
   fselect # SQL-like file selection tool
+  ouch # Painless archive compression and decompression
   trash-cli # Safe rm replacement (for snacks.explorer)
 
   # === General Utilities ===

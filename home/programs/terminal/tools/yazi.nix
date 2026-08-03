@@ -9,7 +9,28 @@
     enableZshIntegration = true;
     shellWrapperName = "y";
 
-    plugins = { inherit (pkgs.yaziPlugins) git diff full-border; };
+    plugins = {
+      inherit (pkgs.yaziPlugins)
+        git
+        diff
+        full-border
+        piper
+        ouch
+        convert
+        jump-to-char
+        wl-clipboard
+        ;
+      batch-rename-gui = pkgs.yaziPlugins.mkYaziPlugin {
+        pname = "batch-rename-gui.yazi";
+        version = "0-unstable-2025-07-08";
+        src = pkgs.fetchFromGitHub {
+          owner = "pakhromov";
+          repo = "batch-rename-gui.yazi";
+          rev = "5c2d5aa349948b6ab405a171541faab44751f6a5";
+          hash = "sha256-3RviPY3WOyYi5GWXWRYMWp6VLxCe5cuJX7Kb7AyWxLE=";
+        };
+      };
+    };
 
     initLua = ''
       require("full-border"):setup()
@@ -24,6 +45,55 @@
         ];
         run = "plugin diff";
         desc = "Diff selected file with hovered file";
+      }
+      {
+        on = [ "C" ];
+        run = "plugin ouch";
+        desc = "Compress selection";
+      }
+      {
+        on = [ "X" ];
+        run = "plugin ouch --args=extract";
+        desc = "Extract archive";
+      }
+      {
+        on = [
+          "c"
+          "p"
+        ];
+        run = "plugin convert -- --extension='png'";
+        desc = "Convert to PNG";
+      }
+      {
+        on = [
+          "c"
+          "j"
+        ];
+        run = "plugin convert -- --extension='jpg'";
+        desc = "Convert to JPG";
+      }
+      {
+        on = [
+          "c"
+          "w"
+        ];
+        run = "plugin convert -- --extension='webp'";
+        desc = "Convert to WebP";
+      }
+      {
+        on = [ "F" ];
+        run = "plugin jump-to-char";
+        desc = "Jump to char";
+      }
+      {
+        on = [ "Y" ];
+        run = "plugin wl-clipboard";
+        desc = "Copy to clipboard (Wayland)";
+      }
+      {
+        on = [ "B" ];
+        run = "plugin batch-rename-gui";
+        desc = "Batch rename (GUI)";
       }
     ];
 
@@ -69,6 +139,20 @@
           url = "*/";
           run = "git";
           group = "git";
+        }
+      ];
+
+      plugin.prepend_previewers = [
+        {
+          url = "*.md";
+          run = ''piper -- CLICOLOR_FORCE=1 glow -w=$w -s=dark "$1"'';
+        }
+      ];
+
+      plugin.prepend_openers = [
+        {
+          url = "*.{zip,tar,gz,bz2,xz,7z,rar}";
+          run = "ouch";
         }
       ];
     };
