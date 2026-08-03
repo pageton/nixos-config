@@ -9,7 +9,6 @@
       matcher = "Write";
       extractCommand = false;
       body = ''
-        INPUT=$(cat)
         FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // ""')
         CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // ""')
         LINE_COUNT=$(echo "$CONTENT" | wc -l)
@@ -18,7 +17,6 @@
           echo "[Hook] WARNING: Writing $FILE_PATH ($LINE_COUNT lines). Consider splitting into smaller files." >&2
         fi
 
-        echo "$INPUT"
       '';
     })
 
@@ -27,7 +25,6 @@
       matcher = "Write|Edit";
       extractCommand = false;
       body = ''
-        INPUT=$(cat)
         FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // ""')
 
         case "$FILE_PATH" in
@@ -41,7 +38,6 @@
             ;;
         esac
 
-        echo "$INPUT"
       '';
     })
 
@@ -50,7 +46,6 @@
       matcher = "Write|Edit";
       extractCommand = false;
       body = ''
-        INPUT=$(cat)
         FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // ""')
 
         case "$FILE_PATH" in
@@ -59,7 +54,6 @@
             ;;
         esac
 
-        echo "$INPUT"
       '';
     })
   ];
@@ -70,7 +64,6 @@
       matcher = "Edit";
       extractCommand = false;
       body = ''
-        INPUT=$(cat)
         FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // ""')
 
         if [ -n "$FILE_PATH" ] && [ -f "$FILE_PATH" ]; then
@@ -80,7 +73,6 @@
           fi
         fi
 
-        echo "$INPUT"
       '';
     })
   ];

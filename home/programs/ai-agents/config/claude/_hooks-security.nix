@@ -8,7 +8,6 @@
       matcher = "Write|Edit";
       extractCommand = false;
       body = ''
-        INPUT=$(cat)
         TOOL_INPUT=$(echo "$INPUT" | jq -r '.tool_input // empty')
 
         # For Write: check new_string or full content
@@ -35,7 +34,7 @@
           fi
 
           # Generic high-entropy tokens in assignment context
-          if echo "$CONTENT" | grep -qE '(password|secret|token|api_key|apikey|access_key)\s*[:=]\s*["'\'''']?[A-Za-z0-9_\-]{20,}'; then
+          if echo "$CONTENT" | grep -qE "(password|secret|token|api_key|apikey|access_key)[[:space:]]*[:=][[:space:]]*['\"]?[A-Za-z0-9_-]{20,}"; then
             SECRETS_FOUND="''${SECRETS_FOUND:+$SECRETS_FOUND,}hardcoded-secret"
           fi
 
@@ -46,7 +45,6 @@
           fi
         fi
 
-        echo "$INPUT"
       '';
     })
   ];

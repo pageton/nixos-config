@@ -1,11 +1,7 @@
 # PostToolUse hooks — auto-formatting, PR detection, console.log warnings, TypeScript checking,
 # TODO/FIXME tracker, smart test runner, dependency change guard.
 
-{
-  mkFormatterHook,
-  formatterRegistry,
-  mkCommandHook,
-}:
+{ mkFormatterHook, formatterRegistry }:
 
 {
   PostToolUse = formatterRegistry.mkClaudeFormatterHooks mkFormatterHook ++ [

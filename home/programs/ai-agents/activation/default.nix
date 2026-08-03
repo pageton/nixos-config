@@ -36,7 +36,7 @@ let
   '';
 
   # Import helper modules
-  # modules-check: manual-helper ./secrets.nix ./codex-setup.nix ./claude-setup.nix ./plugins.nix ./skills.nix
+  # modules-check: manual-helper ./secrets.nix ./codex-setup.nix ./claude-setup.nix ./zcode-setup.nix ./plugins.nix ./skills.nix
   secretPatching = import ./secrets.nix {
     inherit
       cfg
@@ -69,6 +69,14 @@ let
       toJSON
       claudeSettings
       claudeMcpServers
+      ;
+  };
+  zcodeConfig = import ./zcode-setup.nix {
+    inherit
+      cfg
+      pkgs
+      lib
+      toJSON
       ;
   };
   opencodeProfileNames = opencodeProfiles.names;
@@ -132,6 +140,10 @@ in
       # === Claude Configuration ===
       # Real files (not symlinks) so plugins can modify them.
       setupClaudeConfig = claudeConfig;
+
+      # === ZCode Configuration ===
+      # Keep the user-owned config mutable while replacing the managed hook set.
+      setupZCodeConfig = zcodeConfig;
 
       # === Plugin Installation ===
       inherit (pluginInstalls)

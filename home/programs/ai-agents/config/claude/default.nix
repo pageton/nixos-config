@@ -4,7 +4,7 @@ _:
 
 let
   claudePermissionRules = import ./_permission-rules.nix;
-  claudeHooks = import ./_hooks.nix;
+  claudeHooks = import ./_hooks.nix { };
 in
 {
   programs.aiAgents = {

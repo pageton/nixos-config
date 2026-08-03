@@ -1,5 +1,9 @@
 # Lifecycle hook configuration for Claude Code — aggregates per-stage hook modules.
 
+{
+  includeHerdr ? true,
+}:
+
 let
   helpers = import ./_hooks-helpers.nix;
   inherit (helpers)
@@ -11,19 +15,28 @@ let
     ;
 
   preToolUse = import ./_hooks-pre-tool-use.nix { inherit mkBashHook; };
-  postToolUse = import ./_hooks-post-tool-use.nix {
-    inherit mkFormatterHook formatterRegistry mkCommandHook;
-  };
+  postToolUse = import ./_hooks-post-tool-use.nix { inherit mkFormatterHook formatterRegistry; };
   session = import ./_hooks-session.nix { inherit mkPassthroughHook; };
   herdr = import ./_hooks-herdr.nix { };
   security = import ./_hooks-security.nix { inherit mkCommandHook; };
   projectGuards = import ./_hooks-project-guards.nix { inherit mkCommandHook; };
 
-  # Both session and herdr register SessionStart hooks — concatenate the lists
-  # so the AGENTS.md context loader and herdr's session reporter both fire.
-  # (Plain // would let herdr clobber session's SessionStart entries.)
-  sessionStartMerged = {
-    SessionStart = (session.SessionStart or [ ]) ++ (herdr.SessionStart or [ ]);
-  };
+  hookSets = [
+    preToolUse
+    postToolUse
+    session
+  ]
+  ++ (if includeHerdr then [ herdr ] else [ ])
+  ++ [
+    security
+    projectGuards
+  ];
+
+  # Multiple modules contribute to the same lifecycle event. Concatenate their
+  # entries instead of using right-biased attrset merges that discard hooks.
+  mergeHookSets = builtins.foldl' (
+    merged: hookSet:
+    merged // builtins.mapAttrs (event: entries: (merged.${event} or [ ]) ++ entries) hookSet
+  ) { };
 in
-preToolUse // postToolUse // session // sessionStartMerged // security // projectGuards
+mergeHookSets hookSets

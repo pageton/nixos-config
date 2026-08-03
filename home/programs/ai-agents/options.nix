@@ -359,6 +359,8 @@ in
     # === ZCode Options ===
     zcode = {
       enable = lib.mkEnableOption "ZCode Desktop App from Z.AI";
+
+      hooks = mkAttrsOption { } "Lifecycle hooks for ZCode";
     };
 
   };
