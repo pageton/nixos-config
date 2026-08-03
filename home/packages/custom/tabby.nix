@@ -1,6 +1,7 @@
 # Tabby — modern terminal emulator with SSH, serial, and Telnet support.
 # https://tabby.sh / https://github.com/Eugeny/tabby
-{pkgs, ...}: let
+{ pkgs, ... }:
+let
   version = "1.0.235";
 
   src = pkgs.fetchurl {
@@ -51,4 +52,5 @@
       fi
     '';
   };
-in [tabby]
+in
+[ tabby ]

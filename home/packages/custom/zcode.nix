@@ -1,9 +1,6 @@
-{
-  pkgs,
-  lib,
-  ...
-}: let
-  version = "3.5.2";
+{ pkgs, ... }:
+let
+  version = "3.5.3";
 
   src = pkgs.fetchurl {
     url = "https://cdn-zcode.z.ai/zcode/electron/releases/${version}/linux-x64/ZCode-${version}-linux-x64.AppImage";
@@ -11,7 +8,7 @@
     # "hash mismatch" and print the actual SRI hash. Copy that hash here, then
     # rebuild. Alternatively, run:
     #   nix-prefetch-url "https://cdn-zcode.z.ai/zcode/electron/releases/3.5.2/linux-x64/ZCode-3.5.2-linux-x64.AppImage" | xargs nix hash to-sri --type sha256
-    sha256 = "sha256-FPZVqHxnBy8GNfVa9bbZoai10SOSbYVhyyus/Kr92JE=";
+    sha256 = "sha256-n+2EQbne1iXfFgUN2zxitSdAhYp9BOEhfgZuYZ8iMt0=";
   };
 
   appContents = pkgs.appimageTools.extractType2 {
@@ -53,4 +50,5 @@
       fi
     '';
   };
-in [zcode]
+in
+[ zcode ]

@@ -1,4 +1,5 @@
-{pkgs, ...}: let
+{ pkgs, ... }:
+let
   version = "0.0.28";
 
   src = pkgs.fetchurl {
@@ -48,4 +49,5 @@
       fi
     '';
   };
-in [t3code]
+in
+[ t3code ]

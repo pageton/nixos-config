@@ -1,6 +1,6 @@
 # Zellij Guide
 
-Zellij is a terminal multiplexer — it lets you split your terminal into panes, organize them into tabs, and persist sessions across disconnects. Think of it as tmux, but with a plugin system, better defaults, and a discoverable UI. Your setup has custom Vim-style keybindings, a Gruvbox status bar, and several community plugins.
+Zellij is a terminal multiplexer — it lets you split your terminal into panes, organize them into tabs, and persist sessions across disconnects. Think of it as tmux, but with a plugin system, better defaults, and a discoverable UI. Your setup has custom Vim-style keybindings, a focused Catppuccin status bar, and several community plugins.
 
 ---
 
@@ -10,6 +10,7 @@ Zellij is a terminal multiplexer — it lets you split your terminal into panes,
 zellij                          # Start or attach to default session
 zellij -s myproject             # Start a named session
 zellij attach myproject         # Attach to an existing session
+zellij -l work                  # Start the combined coding + AI workspace
 zellij -l dev                   # Start with the "dev" layout
 zellij -l monitoring            # Start with the "monitoring" layout
 zellij list-sessions            # List all sessions
@@ -17,7 +18,7 @@ zellij kill-session myproject   # Kill a named session
 zellij kill-all-sessions        # Kill all sessions
 ```
 
-Home Manager enables Zellij itself, but `programs.zellij.enableZshIntegration` is disabled in `home-manager/modules/terminal/zellij/config.nix`. Start or attach sessions explicitly with the commands above.
+Home Manager enables Zellij itself, but `programs.zellij.enableZshIntegration` is disabled in `home/programs/terminal/zellij/config.nix`. Start or attach sessions explicitly with the commands above.
 
 ---
 
@@ -37,7 +38,7 @@ Zellij is modal, like Vim. The current mode is shown in the bottom-left of the s
 | **Tab**     | Blue         | (default bindings)          | Tab management                         |
 | **Move**    | Gold         | (default bindings)          | Move panes around                      |
 
-**Auto-lock**: The `zellij-autolock` plugin is downloaded but **not yet loaded** in layouts or config. The auto-switching behavior described in some references is not active. To activate, add a `load_plugin` or `LaunchOrFocusPlugin` entry for `zellij-autolock.wasm` in `home-manager/modules/terminal/zellij/config.nix` or `layouts.nix`.
+**Auto-lock**: The `zellij-autolock` plugin is downloaded but **not yet loaded** in layouts or config. The auto-switching behavior described in some references is not active. To activate, set `enableAutolock = true` in `home/programs/terminal/zellij/config.nix`.
 
 ---
 
@@ -158,7 +159,7 @@ From Scroll mode, press `/` or `s` to enter search:
 
 ## Layouts
 
-Layouts define the initial pane arrangement when starting Zellij. Four layouts are configured:
+Layouts define the initial pane arrangement when starting Zellij. The primary daily layouts are:
 
 ### Default Layout
 
@@ -166,7 +167,20 @@ Layouts define the initial pane arrangement when starting Zellij. Four layouts a
 zellij                    # Uses default layout
 ```
 
-Single tab, single pane, with the zjstatus Gruvbox bar at the bottom.
+Single tab, single pane, with the zjstatus Catppuccin bar at the bottom.
+
+### Work Layout
+
+```bash
+zellij -l work
+```
+
+The combined daily workspace keeps coding and AI work separate but one shortcut away:
+
+- **code** (focused): 72% Neovim | 28% split between a shell and lazygit
+- **agent**: 68% agent shell | 32% combined AI logs
+
+In the agent shell, press `Alt a` to choose and launch an AI agent in a named tab.
 
 ### Dev Layout
 
@@ -217,7 +231,7 @@ Within any tab, you can cycle through different pane arrangements:
 
 ### zjstatus (Status Bar)
 
-Gruvbox-themed status bar showing the current mode, open tabs, and time. Always visible at the bottom of every tab. No interaction needed — it updates automatically.
+Catppuccin-themed status bar showing the session, focused-pane Git branch, named tabs, mode, and time. The active tab uses a strong blue highlight while inactive tabs retain their names. No interaction is needed — it updates automatically.
 
 ### zellij-autolock (Auto Lock) — Not Yet Active
 
@@ -277,12 +291,12 @@ Run the same command across multiple panes simultaneously.
 | Setting              | Value                               |
 | -------------------- | ----------------------------------- |
 | Default shell        | zsh                                 |
-| Pane frames          | Off (borderless)                    |
+| Pane frames          | Visible with multiple panes         |
 | Mouse                | Enabled                             |
 | Copy                 | `wl-copy` (Wayland), copy on select |
 | Scrollback           | 50,000 lines                        |
 | Session persistence  | Enabled (survives crashes)          |
-| Force close behavior | Quit (session ends)                 |
+| Force close behavior | Detach (session keeps running)      |
 | Auto-layout          | Enabled                             |
 | Scrollback editor    | Neovim                              |
 
