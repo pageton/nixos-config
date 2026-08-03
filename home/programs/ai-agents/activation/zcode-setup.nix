@@ -1,4 +1,4 @@
-# ZCode configuration activation — merges managed hooks into ~/.zcode/cli/config.json.
+# ZCode activation — installs custom agents and merges managed hooks.
 
 {
   cfg,
@@ -18,11 +18,32 @@ lib.mkIf cfg.zcode.enable (
         events = cfg.zcode.hooks;
       };
     });
+    agentFiles = lib.mapAttrs (
+      name: content: pkgs.writeText "zcode-agent-${name}.md" content
+    ) cfg.zcode.agents;
+    agentInstallScript = lib.concatStringsSep "\n" (
+      lib.mapAttrsToList (name: source: ''
+        agent_target="$agents_dir/${name}.md"
+        agent_tmp="$agent_target.tmp"
+
+        if [[ -f "$agent_target" ]] && [[ ! -L "$agent_target" ]] && ${cmp} -s "${source}" "$agent_target"; then
+          :
+        else
+          rm -f "$agent_tmp"
+          cp "${source}" "$agent_tmp"
+          chmod 644 "$agent_tmp"
+          mv "$agent_tmp" "$agent_target"
+        fi
+      '') agentFiles
+    );
+    agentCount = builtins.length (builtins.attrNames agentFiles);
   in
   lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     config_dir="$HOME/.zcode/cli"
     target="$config_dir/config.json"
     mkdir -p "$config_dir"
+    agents_dir="$HOME/.zcode/agents"
+    mkdir -p "$agents_dir"
 
     if [[ -f "$target" ]] && [[ ! -L "$target" ]]; then
       ${jq} -s '(.[1].hooks) as $hooks | .[0] * .[1] | .hooks = $hooks' \
@@ -38,6 +59,8 @@ lib.mkIf cfg.zcode.enable (
       chmod 644 "$target"
     fi
 
-    echo "✓ ZCode hooks configured"
+    ${agentInstallScript}
+
+    echo "✓ ZCode hooks and ${toString agentCount} custom agents configured"
   ''
 )

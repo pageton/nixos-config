@@ -361,6 +361,7 @@ in
       enable = lib.mkEnableOption "ZCode Desktop App from Z.AI";
 
       hooks = mkAttrsOption { } "Lifecycle hooks for ZCode";
+      agents = mkAttrsOption { } "Custom subagent Markdown definitions for ZCode";
     };
 
   };
