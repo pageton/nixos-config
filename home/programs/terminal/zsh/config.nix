@@ -55,6 +55,20 @@
 
       # Allow Orca to redefine omp as a function (conflicts with the omp alias)
       [[ -n "''${ORCA_OMP_STATUS_EXTENSION:-}" ]] && unalias omp 2>/dev/null
+
+      # Suffix Aliases — open files by extension
+      alias -s {nix,md,txt,json,yml,yaml,go,toml}=nvim
+      alias -s {png,jpg,jpeg,gif,svg,pdf}=xdg-open
+
+      # Global Aliases — pipe shortcuts usable anywhere in a command
+      alias -g G="| grep"
+      alias -g L="| less"
+      alias -g H="| head"
+      alias -g T="| tail"
+      alias -g JQ="| jq"
+      alias -g C="| wl-copy"
+      alias -g NE="2>/dev/null"
+      alias -g NUL=">/dev/null 2>&1"
     '';
     # Ensure NixOS system and Home-Manager profile bins are in PATH for ALL
     # shells, including non-interactive ones spawned by MCP servers and agents.
