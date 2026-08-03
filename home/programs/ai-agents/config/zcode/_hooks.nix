@@ -7,6 +7,7 @@
 let
   claudeHooks = import ../claude/_hooks.nix { includeHerdr = false; };
   tailoredHooks = import ./_hooks-go-git.nix;
+  safetyHooks = import ./_hooks-safety.nix;
 
   supportedEvents = [
     "SessionStart"
@@ -51,7 +52,7 @@ let
   );
 
   mergedEvents = builtins.mapAttrs (
-    event: entries: entries ++ (tailoredHooks.${event} or [ ])
+    event: entries: entries ++ (tailoredHooks.${event} or [ ]) ++ (safetyHooks.${event} or [ ])
   ) selectedEvents;
 in
 lib.filterAttrs (_event: entries: entries != [ ]) mergedEvents
