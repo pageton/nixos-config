@@ -55,7 +55,7 @@ Learn these first. Everything else can wait.
 | 3   | `Ctrl+S`           | Save file            | After making changes                   |
 | 4   | `:q` + Enter       | Quit                 | When you're done                       |
 | 5   | `Space f f`        | Find files           | Opening a file (like Ctrl+P in VSCode) |
-| 6   | `Space e`          | Toggle file explorer | Browsing project files (like sidebar)  |
+| 6   | `Space e`          | Open file explorer (Yazi) | Browsing project files (like sidebar)  |
 | 7   | `u`                | Undo                 | Made a mistake                         |
 | 8   | `Ctrl+R`           | Redo                 | Undid too much                         |
 | 9   | `/` + text + Enter | Search in file       | Finding text (like Ctrl+F)             |
@@ -65,22 +65,17 @@ Learn these first. Everything else can wait.
 
 ## Navigating Files
 
-### File Explorer (Neo-tree — like VSCode sidebar)
+### File Explorer (Yazi — like VSCode sidebar)
 
 | Key       | What It Does                     |
 | --------- | -------------------------------- |
-| `Space e` | Toggle the file explorer sidebar |
+| `Space e` | Open Yazi in floating window     |
 
-Inside Neo-tree:
+Yazi opens as a floating terminal window inside Neovim. Navigate with `j`/`k`, press `l` or `Enter` to open, `h` to go up. Press `q` to close and return to your file.
 
-- Use `j`/`k` or arrow keys to move up/down
-- Press `Enter` to open a file or expand a folder
-- Press `a` to create a new file
-- Press `d` to delete a file
-- Press `r` to rename a file
-- Press `?` to see all Neo-tree keybindings
+For full Yazi usage, see the [Yazi Guide](YAZI-GUIDE.md).
 
-### Fuzzy Finder (Telescope — like Ctrl+P in VSCode)
+### Fuzzy Finder (snacks.picker — like Ctrl+P in VSCode)
 
 | Key         | What It Does                             |
 | ----------- | ---------------------------------------- |
@@ -89,12 +84,12 @@ Inside Neo-tree:
 | `Space f b` | Switch between open files (buffers)      |
 | `Space f h` | Search help documentation                |
 
-Inside Telescope:
+Inside the picker:
 
 - Type to filter results
 - Use `Ctrl+j`/`Ctrl+k` or arrow keys to move up/down
 - Press `Enter` to open the selected file
-- Press `Esc` to close Telescope
+- Press `Esc` to close
 
 ---
 
@@ -265,7 +260,7 @@ Inside Trouble:
 
 ---
 
-## Surround (nvim-surround)
+## Surround (mini.surround)
 
 Quickly add, change, or delete surrounding characters (quotes, brackets, tags).
 
@@ -305,11 +300,21 @@ Common characters: `"`, `'`, `` ` ``, `(`, `)`, `[`, `]`, `{`, `}`, `<`, `>`, `t
 
 ---
 
-## Which-Key (Keybinding Helper)
+## Which-Key (mini.clue)
 
-Press `Space` and **wait**. A popup will appear showing all available keybindings that start with Space. This is your cheat sheet built right into the editor!
+Press any of these prefixes and **wait** — a popup shows all available keybindings:
 
----
+| Trigger     | Shows                                        |
+| ----------- | -------------------------------------------- |
+| `Space`     | All leader key groups (`+find`, `+git`, ...) |
+| `g`         | Go-to mappings (`gd`, `gr`, `gI`, ...)       |
+| `z`         | Folding and view commands                    |
+| `Ctrl+w`    | Window management commands                   |
+| `'` / `` ` `` | Marks and jumps                            |
+| `"`         | Register selection                           |
+| `Ctrl+r`    | Register paste (insert/command mode)         |
+
+Group hints appear for leader prefixes like `<leader>f` → `+find`, `<leader>s` → `+search`, etc.
 
 ## Common "I'm Stuck" Solutions
 
@@ -379,13 +384,13 @@ Undo history is persistent (saved to disk). Open the file again and press `u` to
 | `0`                   | N    | Go to beginning of line  |
 | `$`                   | N    | Go to end of line        |
 
-### File Explorer (Neo-tree)
+### File Explorer (Yazi)
 
-| Key       | Mode | Action               |
-| --------- | ---- | -------------------- |
-| `Space e` | N    | Toggle file explorer |
+| Key       | Mode | Action            |
+| --------- | ---- | ----------------- |
+| `Space e` | N    | Open Yazi picker  |
 
-### Fuzzy Finder (Telescope)
+### Fuzzy Finder (snacks.picker)
 
 | Key         | Mode | Action                      |
 | ----------- | ---- | --------------------------- |
@@ -484,7 +489,7 @@ Mode legend: **N** = Normal, **I** = Insert, **V** = Visual
 
 4. **Press Space and wait.** Which-key will show you what's available. It's like a built-in cheat sheet.
 
-5. **Use Telescope for everything.** `Space f f` to open files, `Space f g` to search text. You'll rarely need the file explorer once you get comfortable.
+5. **Use the picker for everything.** `Space f f` to open files, `Space f g` to search text. You'll rarely need the file explorer once you get comfortable.
 
 6. **Don't fight the modes.** The pattern is: `Esc` (go to Normal) → do something → `i` (go to Insert) → type. It becomes muscle memory within a few days.
 

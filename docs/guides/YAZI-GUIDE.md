@@ -211,17 +211,32 @@ Your Yazi setup includes:
 
 ### Installed Plugins
 
-| Plugin        | Purpose                                 |
-| ------------- | --------------------------------------- |
-| `git`         | Git status indicators in file list      |
-| `diff`        | Diff selected file against hovered file |
-| `full-border` | Border around file panels               |
+| Plugin             | Purpose                                       |
+| ------------------ | --------------------------------------------- |
+| `git`              | Git status indicators in file list            |
+| `diff`             | Diff selected file against hovered file       |
+| `full-border`      | Border around file panels                     |
+| `piper`            | Markdown preview via glow in preview pane     |
+| `ouch`             | Archive preview and extraction                |
+| `convert`          | Image format conversion (PNG, JPG, WebP)      |
+| `jump-to-char`     | Quick file navigation by character            |
+| `wl-clipboard`     | Copy file path to Wayland clipboard           |
+| `batch-rename-gui` | GUI batch rename for multiple files           |
 
 ### Custom Keybinds
 
 | Key          | What It Does                                                 |
 | ------------ | ------------------------------------------------------------ |
-| `g` then `d` | Diff selected file against hovered file (uses `diff` plugin) |
+| `g` then `d` | Diff selected file against hovered file (`diff` plugin)      |
+| `C`          | Compress selection to archive (`ouch` plugin)                |
+| `X`          | Extract archive (`ouch` plugin)                              |
+| `c` then `p` | Convert image to PNG (`convert` plugin)                      |
+| `c` then `j` | Convert image to JPG (`convert` plugin)                      |
+| `c` then `w` | Convert image to WebP (`convert` plugin)                     |
+| `F`          | Jump to file by character (`jump-to-char` plugin)            |
+| `Y`          | Copy file path to Wayland clipboard (`wl-clipboard` plugin)  |
+| `B`          | Batch rename files via GUI (`batch-rename-gui` plugin)       |
+
 
 ---
 
@@ -237,7 +252,7 @@ Supported preview types:
 - **Archives** — File listing
 - **Text files** — Syntax highlighted via bat
 
----
+- **Archives** — Preview and extract via ouch
 
 ## Tips
 
