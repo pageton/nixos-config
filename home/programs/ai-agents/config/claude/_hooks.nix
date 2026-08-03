@@ -17,6 +17,7 @@ let
   preToolUse = import ./_hooks-pre-tool-use.nix { inherit mkBashHook; };
   postToolUse = import ./_hooks-post-tool-use.nix { inherit mkFormatterHook formatterRegistry; };
   session = import ./_hooks-session.nix { inherit mkPassthroughHook; };
+  fileSafety = import ./_hooks-file-safety.nix;
   herdr = import ./_hooks-herdr.nix { };
   security = import ./_hooks-security.nix { inherit mkCommandHook; };
   projectGuards = import ./_hooks-project-guards.nix { inherit mkCommandHook; };
@@ -25,6 +26,7 @@ let
     preToolUse
     postToolUse
     session
+    fileSafety
   ]
   ++ (if includeHerdr then [ herdr ] else [ ])
   ++ [
