@@ -1,4 +1,4 @@
-# ZCode activation — installs managed agents, hooks, and the orchestration MCP server.
+# ZCode activation — installs managed agents, hooks, and MCP server entries.
 
 {
   cfg,
@@ -84,13 +84,20 @@ lib.mkIf cfg.zcode.enable (
       // lib.optionalAttrs orchestratorCfg.enable (
         lib.mapAttrs (event: entries: (cfg.zcode.hooks.${event} or [ ]) ++ entries) nativeHookEvents
       );
-    managedMcpServers = lib.optionalAttrs orchestratorCfg.enable {
-      zcode-orchestrator = {
-        command = "${orchestratorPackage}/bin/zcode-orchestrator";
-        args = [ ];
-        enabled = true;
+    managedMcpServers =
+      lib.optionalAttrs cfg.mcpServers.fetch.enable {
+        fetch = {
+          inherit (cfg.mcpServers.fetch) command args;
+          enabled = true;
+        };
+      }
+      // lib.optionalAttrs orchestratorCfg.enable {
+        zcode-orchestrator = {
+          command = "${orchestratorPackage}/bin/zcode-orchestrator";
+          args = [ ];
+          enabled = true;
+        };
       };
-    };
     zcodeConfigFile = pkgs.writeText "zcode-config.json" (toJSON {
       hooks = {
         enabled = true;
