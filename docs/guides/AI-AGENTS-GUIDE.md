@@ -237,6 +237,7 @@ without changing the repository-wide Node module mode.
 
 | Agent            | Workspace access | Purpose                                                       |
 | ---------------- | ---------------- | ------------------------------------------------------------- |
+| `planner`        | Read-only        | Decision-complete, evidence-backed execution plans             |
 | `explorer`       | Read-only        | Architecture, call flow, conventions, affected files          |
 | `implementation` | Writer           | Minimal complete implementation                               |
 | `code-review`    | Read-only        | Correctness and regression review                             |
@@ -246,9 +247,15 @@ without changing the repository-wide Node module mode.
 | `performance`    | Read-only        | Opt-in measurement and profiling                              |
 | `documentation`  | Writer           | Existing user-facing documentation                            |
 | `git`            | Approval-only    | Exact-path signed commits, optional push, and scoped rollback |
+| `android-reverse` | Target writer    | Authorized APK, emulator, Frida, traffic, and native-code analysis |
+| `web-reverse`     | Target writer    | Authorized browser, API, traffic, and client-side analysis         |
 
-Use the managed commands from the primary ZCode session instead of invoking a
-child profile directly:
+Use the managed commands from the primary ZCode session for coding
+orchestration instead of invoking a coding child profile directly.
+`planner`, `android-reverse`, and `web-reverse` are deliberate exceptions:
+they are native, on-demand subagents in the same ZCode profile. Use `planner`
+for decision-complete plans; invoke either reverse agent only with an explicitly
+authorized target and scope. They are not selected by `/agent-run`.
 
 | Command                    | Behavior                                                        |
 | -------------------------- | --------------------------------------------------------------- |
@@ -261,8 +268,9 @@ child profile directly:
 
 `/agent-run` is the default autonomous path. `/agent-plan` is the dry-run
 entrypoint for reviewing classification, risk, selected roles, and ordering.
-The managed child profiles remain visible for inspection, but the primary
-agent must not use ZCode's `Agent` tool to bypass the orchestrator.
+The primary agent must not use ZCode's `Agent` tool to bypass the orchestrator
+with coding roles; only the documented native `planner` and reverse specialists
+are direct-use profiles.
 
 Execution invariants:
 
