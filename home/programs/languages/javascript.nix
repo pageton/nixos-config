@@ -4,6 +4,7 @@
   config,
   lib,
   pkgs,
+  pkgsStable,
   ...
 }:
 
@@ -147,7 +148,7 @@ in
       eslint_d
       biome
       esbuild
-      swc
+      pkgsStable.swc # from 26.05 stable (rustc 1.95) — vendored rustix 0.37 fails on unstable's rustc 1.97+
       live-server
       http-server
       np

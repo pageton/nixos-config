@@ -141,6 +141,12 @@ in
           ];
         };
 
+        mitmproxy = {
+          enable = true;
+          command = "uvx";
+          args = [ "mitmproxy-mcp" ];
+        };
+
         superpowers = {
           enable = true;
           command = "bunx";

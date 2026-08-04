@@ -6,8 +6,7 @@
   constants,
 }:
 with pkgs;
-with pkgsStable;
-[
+with pkgsStable; [
   # === Web Browsers ===
   firefox # Mozilla Firefox web browser
 
@@ -20,12 +19,12 @@ with pkgsStable;
   obsidian # Knowledge base and note-taking application
 
   # === AI and Development Tools ===
-  pkgs.antigravity-fhs # AI-powered agentic IDE
+  pkgs.antigravity-ide-fhs # AI-powered agentic IDE
   # === Terminal Emulators ===
   termius # Modern SSH client with cloud sync
 
   # === Gaming and Compatibility ===
-  (bottles.override { removeWarningPopup = true; }) # Run Windows applications on Linux
+  (bottles.override {removeWarningPopup = true;}) # Run Windows applications on Linux
 
   # === Music and Media ===
   pear-desktop # YouTube Music desktop client
