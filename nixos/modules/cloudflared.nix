@@ -80,10 +80,18 @@ in
       (lib.mkIf config.mySystem.mullvadVpn.enable {
         after = [ "mullvad-daemon.service" ];
         wants = [ "mullvad-daemon.service" ];
-        serviceConfig.ExecStart = lib.mkForce [
-          ""
-          "${mullvadExclude} ${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate --config ${configFile} run"
-        ];
+        serviceConfig = {
+          # mullvad-exclude is a setuid-root wrapper that must elevate to move
+          # the process into the mullvad-exclusions cgroup. NoNewPrivileges
+          # blocks setuid, so the wrapper fails with EACCES on cgroup.procs.
+          # Relax it here; cloudflared itself still runs as the unprivileged
+          # cloudflared user after the wrapper execs it.
+          NoNewPrivileges = lib.mkForce false;
+          ExecStart = lib.mkForce [
+            ""
+            "${mullvadExclude} ${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate --config ${configFile} run"
+          ];
+        };
       })
     ];
   };
