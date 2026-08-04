@@ -6,8 +6,7 @@ let
     type = "command";
     command = ''
       cat >/dev/null
-      CONTEXT=${builtins.toJSON readGuidance}
-      jq -n --arg context "$CONTEXT" '{hookSpecificOutput: {hookEventName: "${eventName}", additionalContext: $context}}'
+      jq -n '{hookSpecificOutput: {hookEventName: "${eventName}", additionalContext: ${builtins.toJSON readGuidance}}}'
     '';
   };
 in
@@ -36,6 +35,8 @@ in
               jq -n \
                 --arg path "$FILE_PATH" \
                 '{hookSpecificOutput: {hookEventName: "PostToolUseFailure", additionalContext: ("The native stale-file guard rejected " + $path + " because it was not read with the native Read tool or changed after its last native Read. Call Read on that exact path now, then immediately retry Edit or Write using the current content. CodeGraph, MCP, grep, and shell reads do not satisfy this guard.")}}'
+            else
+              echo "$INPUT"
             fi
           '';
         }
