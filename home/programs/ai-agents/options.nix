@@ -371,6 +371,7 @@ in
         maxDepth = mkIntOption 1 "Maximum nested orchestration depth";
         agentTimeoutMs = mkIntOption 600000 "Per-subagent execution timeout in milliseconds";
         runTimeoutMs = mkIntOption 1800000 "Whole orchestration run timeout in milliseconds";
+        hookConfigFile = mkNullOrStrOption null "Optional JSON file defining external centralized hooks";
       };
     };
 

@@ -31,7 +31,6 @@ function hookResult(eventName, fields) {
     },
   };
 }
-
 async function readStandardInput() {
   const chunks = [];
   for await (const chunk of process.stdin) chunks.push(chunk);
@@ -119,6 +118,30 @@ async function runApprovalHook() {
     );
   }
 }
+
+async function runNativeHook() {
+  let input;
+  try {
+    input = JSON.parse(await readStandardInput());
+  } catch {
+    writeHookResponse({
+      hookSpecificOutput: {
+        hookEventName: "PreToolUse",
+        permissionDecision: "deny",
+        permissionDecisionReason: "Central hook runtime received invalid hook input.",
+      },
+    });
+    process.exitCode = 2;
+    return;
+  }
+  const orchestrator = new Orchestrator(createRuntimeConfig());
+  try {
+    writeHookResponse(await orchestrator.nativeHook(input));
+  } finally {
+    await orchestrator.shutdown("native hook process completed");
+  }
+}
+
 
 const TOOLS = [
   {
@@ -229,6 +252,50 @@ const TOOLS = [
       required: ["token"],
       properties: { token: { type: "string", pattern: "^[A-F0-9]{12}$" } },
     },
+  },
+  {
+    name: "hooks_list",
+    description: "List central orchestration hooks, optionally filtered by enabled or disabled state.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: { state: { type: "string", enum: ["all", "enabled", "disabled"], default: "all" } },
+    },
+  },
+  {
+    name: "hook_detail",
+    description: "Return one hook definition, effective state, and recent executions.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["hookId"],
+      properties: { hookId: { type: "string", minLength: 1 } },
+    },
+  },
+  {
+    name: "hook_enable",
+    description: "Enable a configurable hook. Mandatory safety hooks are always enabled.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["hookId"],
+      properties: { hookId: { type: "string", minLength: 1 } },
+    },
+  },
+  {
+    name: "hook_disable",
+    description: "Disable a non-mandatory hook. Mandatory safety hooks cannot be disabled.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["hookId"],
+      properties: { hookId: { type: "string", minLength: 1 } },
+    },
+  },
+  {
+    name: "hook_events",
+    description: "List every supported central hook event and its registered hooks.",
+    inputSchema: { type: "object", additionalProperties: false, properties: {} },
   },
 ];
 
@@ -343,6 +410,16 @@ async function dispatchTool(orchestrator, name, input) {
       return orchestrator.prepareRollback(input);
     case "rollback_apply":
       return orchestrator.applyRollback(input.token);
+    case "hooks_list":
+      return orchestrator.listHooks(input.state);
+    case "hook_detail":
+      return orchestrator.hookDetail(input.hookId);
+    case "hook_enable":
+      return orchestrator.setHookEnabled(input.hookId, true);
+    case "hook_disable":
+      return orchestrator.setHookEnabled(input.hookId, false);
+    case "hook_events":
+      return orchestrator.listHookEvents();
     default:
       throw new Error(`unknown tool: ${name}`);
   }
@@ -401,7 +478,8 @@ async function runServer() {
 }
 
 const argument = process.argv[2];
-if (argument === "--agent-gate") await runAgentGate();
+if (argument === "--native-hook") await runNativeHook();
+else if (argument === "--agent-gate") await runAgentGate();
 else if (argument === "--approval-hook") await runApprovalHook();
 else if (argument === "--version") process.stdout.write(`${ORCHESTRATOR_VERSION}\n`);
 else await runServer();

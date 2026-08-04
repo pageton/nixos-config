@@ -26,6 +26,7 @@ lib.mkIf cfg.zcode.enable (
     orchestratorSources = pkgs.runCommand "zcode-orchestrator-${zcodeDrv.version}-sources" { } ''
       install -Dm755 ${../../../../scripts/ai/zcode-orchestrator.mjs} $out/lib/zcode-orchestrator.mjs
       install -Dm644 ${../../../../scripts/ai/zcode-orchestrator-core.mjs} $out/lib/zcode-orchestrator-core.mjs
+      install -Dm644 ${../../../../scripts/ai/zcode-hook-runtime.mjs} $out/lib/zcode-hook-runtime.mjs
     '';
     orchestratorPackage = pkgs.writeShellApplication {
       name = "zcode-orchestrator";
@@ -49,26 +50,40 @@ lib.mkIf cfg.zcode.enable (
         export ZCODE_ORCHESTRATOR_MAX_DEPTH=${toString orchestratorCfg.maxDepth}
         export ZCODE_ORCHESTRATOR_AGENT_TIMEOUT_MS=${toString orchestratorCfg.agentTimeoutMs}
         export ZCODE_ORCHESTRATOR_RUN_TIMEOUT_MS=${toString orchestratorCfg.runTimeoutMs}
+        ${lib.optionalString (orchestratorCfg.hookConfigFile != null) ''
+          export ZCODE_ORCHESTRATOR_HOOK_CONFIG=${lib.escapeShellArg orchestratorCfg.hookConfigFile}
+        ''}
         exec ${pkgs.nodejs}/bin/node ${orchestratorSources}/lib/zcode-orchestrator.mjs "$@"
       '';
     };
 
-    approvalHook = {
+    nativeHookExecutor = {
+      type = "command";
+      command = "${orchestratorPackage}/bin/zcode-orchestrator --native-hook";
+      timeoutMs = 310000;
+      enabled = true;
+    };
+    matchedNativeHook = {
       matcher = "*";
-      hooks = [
-        {
-          type = "command";
-          command = "${orchestratorPackage}/bin/zcode-orchestrator --approval-hook";
-          timeoutMs = 5000;
-          enabled = true;
-        }
-      ];
+      hooks = [ nativeHookExecutor ];
+    };
+    unfilteredNativeHook = {
+      hooks = [ nativeHookExecutor ];
+    };
+    nativeHookEvents = {
+      SessionStart = [ unfilteredNativeHook ];
+      UserPromptSubmit = [ unfilteredNativeHook ];
+      PreToolUse = [ matchedNativeHook ];
+      PermissionRequest = [ matchedNativeHook ];
+      PostToolUse = [ matchedNativeHook ];
+      PostToolUseFailure = [ matchedNativeHook ];
+      Stop = [ unfilteredNativeHook ];
     };
     managedHookEvents =
       cfg.zcode.hooks
-      // lib.optionalAttrs orchestratorCfg.enable {
-        UserPromptSubmit = (cfg.zcode.hooks.UserPromptSubmit or [ ]) ++ [ approvalHook ];
-      };
+      // lib.optionalAttrs orchestratorCfg.enable (
+        lib.mapAttrs (event: entries: (cfg.zcode.hooks.${event} or [ ]) ++ entries) nativeHookEvents
+      );
     managedMcpServers = lib.optionalAttrs orchestratorCfg.enable {
       zcode-orchestrator = {
         command = "${orchestratorPackage}/bin/zcode-orchestrator";

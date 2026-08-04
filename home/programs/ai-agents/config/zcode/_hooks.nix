@@ -6,10 +6,7 @@
 
 let
   claudeHooks = import ../claude/_hooks.nix { includeHerdr = false; };
-  zcodeHookSets = [
-    (import ./_hooks-go-git.nix)
-    (import ./_hooks-orchestration.nix)
-  ];
+  zcodeHookSets = [ (import ./_hooks-go-git.nix) ];
 
   supportedEvents = [
     "SessionStart"

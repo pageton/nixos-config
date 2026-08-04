@@ -18,6 +18,13 @@ import {
 } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import path from "node:path";
+import {
+  HookOperationError,
+  appendHookExecutionReport,
+  createHookManager,
+  dispatchNativeZCodeHook,
+  zcodeHookProtocolResult,
+} from "./zcode-hook-runtime.mjs";
 
 export const ORCHESTRATOR_VERSION = "1.0.0";
 export const RESULT_STATUSES = new Set(["completed", "partial", "blocked", "failed"]);
@@ -174,6 +181,10 @@ export function createRuntimeConfig(environment = process.env) {
     entryScript: environment.ZCODE_ORCHESTRATOR_ENTRY_SCRIPT || process.argv[1],
     git: environment.ZCODE_ORCHESTRATOR_GIT || "git",
     bwrap: environment.ZCODE_ORCHESTRATOR_BWRAP || "bwrap",
+    hookConfigFile: environment.ZCODE_ORCHESTRATOR_HOOK_CONFIG || null,
+    hookReportFile: environment.ZCODE_HOOK_REPORT_FILE
+      ? path.resolve(environment.ZCODE_HOOK_REPORT_FILE)
+      : path.join(stateDir, "hook-events.jsonl"),
     agentPath: environment.ZCODE_ORCHESTRATOR_AGENT_PATH || environment.PATH || "",
     maxReaders: normalizeInteger(environment.ZCODE_ORCHESTRATOR_MAX_READERS, 4, 1, 8),
     maxActiveRuns: normalizeInteger(environment.ZCODE_ORCHESTRATOR_MAX_RUNS, 2, 1, 4),
@@ -1046,32 +1057,63 @@ export class ZCodeAgentRunner {
 
   async writeAgentConfig(agentHome) {
     const configDirectory = path.join(agentHome, ".zcode", "cli");
-    await mkdir(configDirectory, { recursive: true, mode: 0o700 });
-    const hookCommand = `${shellQuote(this.config.node)} ${shellQuote(this.config.entryScript)} --agent-gate`;
+    const hookStateDirectory = path.join(agentHome, ".cache", "zcode-orchestrator");
+    await Promise.all([
+      mkdir(configDirectory, { recursive: true, mode: 0o700 }),
+      mkdir(hookStateDirectory, { recursive: true, mode: 0o700 }),
+    ]);
+    const hookCommand = `${shellQuote(this.config.node)} ${shellQuote(this.config.entryScript)} --native-hook`;
+    const executor = {
+      type: "command",
+      enabled: true,
+      timeoutMs: 310_000,
+      command: hookCommand,
+    };
+    const matchedEntry = { matcher: "*", hooks: [executor] };
+    const unfilteredEntry = { hooks: [executor] };
     await atomicWriteJson(path.join(configDirectory, "config.json"), {
       hooks: {
         enabled: true,
-        timeoutMs: 5_000,
-        maxOutputBytes: 8_192,
+        timeoutMs: 60_000,
+        maxOutputBytes: 32_768,
         events: {
-          PreToolUse: [
-            {
-              matcher: "Bash",
-              hooks: [
-                {
-                  type: "command",
-                  enabled: true,
-                  timeoutMs: 5_000,
-                  command: hookCommand,
-                },
-              ],
-            },
-          ],
+          UserPromptSubmit: [unfilteredEntry],
+          PreToolUse: [matchedEntry],
+          PermissionRequest: [matchedEntry],
+          PostToolUse: [matchedEntry],
+          PostToolUseFailure: [matchedEntry],
+          Stop: [unfilteredEntry],
         },
       },
       mcp: { servers: {} },
       plugins: { enabledPlugins: {} },
     });
+
+    let hookState = { version: 1, enabled: {} };
+    try {
+      hookState = JSON.parse(await readFile(path.join(this.config.stateDir, "hook-state.json"), "utf8"));
+    } catch (error) {
+      if (error?.code !== "ENOENT") throw error;
+    }
+    await atomicWriteJson(path.join(hookStateDirectory, "hook-state.json"), hookState);
+
+    if (this.config.hookConfigFile) {
+      const hookConfig = JSON.parse(await readFile(this.config.hookConfigFile, "utf8"));
+      await atomicWriteJson(path.join(agentHome, ".zcode", "orchestrator-hooks.json"), hookConfig);
+    }
+  }
+
+  async readHookExecutions(agentHome) {
+    try {
+      return (await readFile(path.join(agentHome, "hook-events.jsonl"), "utf8"))
+        .split("\n")
+        .filter(Boolean)
+        .slice(-500)
+        .map((line) => JSON.parse(line));
+    } catch (error) {
+      if (error?.code === "ENOENT") return [];
+      throw error;
+    }
   }
 
   async sandboxArguments(workspace, agentHome, capability, gitSnapshot, cliArguments) {
@@ -1232,6 +1274,13 @@ export class ZCodeAgentRunner {
         ANTHROPIC_API_KEY: apiKey,
         ZCODE_ORCHESTRATOR_ROLE: input.role,
         ZCODE_ORCHESTRATOR_WORKSPACE: input.workspace,
+        ZCODE_ORCHESTRATOR_RUN_ID: input.runId,
+        ZCODE_ORCHESTRATOR_UNIT_ID: input.unitId,
+        ZCODE_HOOK_REPORT_FILE: "/agent-home/hook-events.jsonl",
+        ZCODE_ORCHESTRATOR_STATE_DIR: "/agent-home/.cache/zcode-orchestrator",
+        ...(this.config.hookConfigFile
+          ? { ZCODE_ORCHESTRATOR_HOOK_CONFIG: "/agent-home/.zcode/orchestrator-hooks.json" }
+          : {}),
         NO_COLOR: "1",
       },
     );
@@ -1246,13 +1295,29 @@ export class ZCodeAgentRunner {
       });
       const safeStderr = boundedString(redact(execution.stderr, [apiKey]), 4_000);
       const safeStdout = redact(execution.stdout, [apiKey]);
-      if (execution.aborted) throw new Error("sub-agent cancelled");
-      if (execution.timedOut) throw new Error(`sub-agent timed out after ${this.config.agentTimeoutMs}ms`);
-      if (execution.outputExceeded) throw new Error("sub-agent output exceeded the 8 MiB limit");
+      const hookExecutions = await this.readHookExecutions(agentHome);
+      if (execution.aborted) {
+        const error = new Error("sub-agent cancelled");
+        error.cancelled = true;
+        error.hookExecutions = hookExecutions;
+        throw error;
+      }
+      if (execution.timedOut) {
+        const error = new Error(`sub-agent timed out after ${this.config.agentTimeoutMs}ms`);
+        error.timedOut = true;
+        error.hookExecutions = hookExecutions;
+        throw error;
+      }
+      if (execution.outputExceeded) {
+        const error = new Error("sub-agent output exceeded the 8 MiB limit");
+        error.hookExecutions = hookExecutions;
+        throw error;
+      }
       if (execution.spawnError) throw execution.spawnError;
       if (execution.code !== 0) {
         const error = new Error(`sub-agent exited with code ${execution.code}: ${safeStderr}`);
         error.transient = isTransientAgentError(safeStderr);
+        error.hookExecutions = hookExecutions;
         throw error;
       }
       const envelope = extractJsonObject(safeStdout);
@@ -1260,7 +1325,7 @@ export class ZCodeAgentRunner {
         return {
           ...normalizeAgentResult(null, { role: input.role, raw: safeStdout }),
           usage: null,
-          runtime: { durationMs: execution.durationMs, stderr: safeStderr },
+          runtime: { durationMs: execution.durationMs, stderr: safeStderr, hooks: hookExecutions },
         };
       }
       const result = normalizeAgentResult(extractJsonObject(envelope.response), {
@@ -1281,6 +1346,7 @@ export class ZCodeAgentRunner {
           sessionId: typeof envelope.sessionId === "string" ? envelope.sessionId : null,
           durationMs: execution.durationMs,
           stderr: safeStderr,
+          hooks: hookExecutions,
         },
       };
     } finally {
@@ -1352,6 +1418,8 @@ export class Orchestrator {
     this.agentRunner = dependencies.agentRunner ?? new ZCodeAgentRunner(config, { processRunner: this.processRunner });
     this.approvals = dependencies.approvals ?? new ApprovalStore(config.stateDir);
     this.writerLock = dependencies.writerLock ?? new WorkspaceWriterLock();
+    this.hooks = dependencies.hooks ?? null;
+    this.hooksInitialized = dependencies.hooks !== undefined;
     this.activeRuns = new Map();
     this.workspaceRuns = new Map();
     this.launchReservations = new Set();
@@ -1388,7 +1456,82 @@ export class Orchestrator {
     await mkdir(path.join(this.config.stateDir, "runs"), { recursive: true, mode: 0o700 });
     await chmod(this.config.stateDir, 0o700).catch(() => {});
     await this.approvals.initialize();
+    if (!this.hooksInitialized) {
+      this.hooks = await createHookManager({
+        stateDir: this.config.stateDir,
+        configPath: this.config.hookConfigFile,
+        services: {
+          approvals: this.approvals,
+          gitTracker: this.gitTracker,
+          home: homedir(),
+        },
+        reporter: this.config.hookReportFile
+          ? (records) => appendHookExecutionReport(this.config.hookReportFile, records)
+          : null,
+      });
+      this.hooksInitialized = true;
+    }
   }
+
+  async nativeHook(input) {
+    await this.initialize();
+    if (!this.hooks) return {};
+    const result = await dispatchNativeZCodeHook(this.hooks, input);
+    const nativeEvent = input.hook_event_name ?? input.hookEventName ?? "";
+    return zcodeHookProtocolResult(nativeEvent, result);
+  }
+
+  async dispatchHooks(run, event, context = {}, signal) {
+    if (!this.hooks) return {
+      status: "continue",
+      reason: null,
+      context,
+      context_patch: {},
+      metadata: {},
+      require_approval: false,
+      retry: false,
+      executions: [],
+    };
+    const result = await this.hooks.dispatch(event, {
+      runId: run?.id ?? context.runId ?? null,
+      taskId: run?.id ?? context.taskId ?? null,
+      task: run
+        ? {
+            text: run.task,
+            workspace: run.workspace,
+            status: run.status,
+            completedUnits: run.plan.units.filter((unit) => unit.status === "completed").length,
+            failedUnits: run.plan.units.filter((unit) => ["failed", "blocked", "cancelled"].includes(unit.status)).length,
+          }
+        : context.task,
+      ...context,
+    }, { signal });
+    if (run) {
+      run.hookExecutions ??= [];
+      run.hookExecutions.push(...result.executions);
+      run.hookExecutions = run.hookExecutions.slice(-500);
+    }
+    return result;
+  }
+
+
+  async finalizeTask(run, signal) {
+    if (run.hooksFinalized) return;
+    const event =
+      run.status === "cancelled"
+        ? "on_task_cancelled"
+        : ["completed", "planned"].includes(run.status)
+          ? "on_task_success"
+          : "on_task_failure";
+    await this.dispatchHooks(run, event, {}, signal);
+    const after = await this.dispatchHooks(run, "after_task", {}, signal);
+    run.hookSummary = after.metadata.finalSummary ?? {
+      status: run.status,
+      executionCount: run.hookExecutions?.length ?? 0,
+    };
+    run.hooksFinalized = true;
+  }
+
 
   async persist(run) {
     run.updatedAt = nowIso();
@@ -1435,6 +1578,10 @@ export class Orchestrator {
       violations: run.violations,
       evaluation: run.evaluation ?? null,
       approval: run.approval ?? null,
+      hooks: {
+        summary: run.hookSummary ?? null,
+        executions: (run.hookExecutions ?? []).slice(-500),
+      },
       createdAt: run.createdAt,
       startedAt: run.startedAt ?? null,
       completedAt: run.completedAt ?? null,
@@ -1451,10 +1598,26 @@ export class Orchestrator {
     }
     const requestedWorkspace = await realpath(path.resolve(workspace || process.cwd()));
     if (!(await stat(requestedWorkspace)).isDirectory()) throw new Error("workspace must be a directory");
-    const normalizedTask = ensureTask(task);
+    const requestedTask = ensureTask(task);
+    const beforeTask = await this.dispatchHooks(null, "before_task", {
+      task: {
+        text: requestedTask,
+        workspace: requestedWorkspace,
+        status: mode === "plan" ? "planned" : "queued",
+      },
+      metadata: { mode, forcePerformance, requireApproval, depth },
+    });
+    const lifecycleHook =
+      mode === "plan"
+        ? await this.dispatchHooks(null, "before_plan", beforeTask.context)
+        : beforeTask;
+    const normalizedTask = ensureTask(lifecycleHook.context.task?.text ?? requestedTask);
     const classification = classifyTask(normalizedTask, { forcePerformance });
     const plan = buildExecutionPlan(classification);
-    const baseline = await this.gitTracker.snapshot(requestedWorkspace);
+    const baseline =
+      lifecycleHook.context.gitBaseline ??
+      beforeTask.context.gitBaseline ??
+      await this.gitTracker.snapshot(requestedWorkspace);
     const resolvedWorkspace = baseline.isRepo ? baseline.root : requestedWorkspace;
     if (this.workspaceRuns.has(resolvedWorkspace)) {
       throw new Error(`workspace already has active run ${this.workspaceRuns.get(resolvedWorkspace)}`);
@@ -1462,21 +1625,30 @@ export class Orchestrator {
     if (mode === "execute" && classification.mutating && !baseline.isRepo) {
       throw new Error("mutating orchestration requires a Git repository for change ownership tracking");
     }
+    const blockedByHook =
+      ["block", "skip"].includes(beforeTask.status) || ["block", "skip"].includes(lifecycleHook.status);
+    const cancelledByHook = beforeTask.status === "cancel" || lifecycleHook.status === "cancel";
+    const hookReason = lifecycleHook.reason ?? beforeTask.reason;
     const run = {
       version: 1,
       id: `run_${randomUUID()}`,
       task: normalizedTask,
       workspace: resolvedWorkspace,
       depth,
-      status: mode === "plan" ? "planned" : "queued",
+      status: cancelledByHook ? "cancelled" : blockedByHook ? "blocked" : mode === "plan" ? "planned" : "queued",
       classification,
       plan,
       baseline,
       agentCreatedPaths: [],
-      violations: [],
+      violations: blockedByHook ? [hookReason ?? "task blocked by hook"] : [],
       approval: null,
-      evaluation: null,
+      evaluation: blockedByHook || cancelledByHook
+        ? { status: cancelledByHook ? "cancelled" : "blocked", summary: hookReason ?? "task stopped by hook" }
+        : null,
       stopWriters: baseline.fingerprintOverflow,
+      hookExecutions: [...beforeTask.executions, ...(lifecycleHook === beforeTask ? [] : lifecycleHook.executions)],
+      hookSummary: null,
+      hooksFinalized: false,
       createdAt: nowIso(),
       updatedAt: nowIso(),
     };
@@ -1484,11 +1656,46 @@ export class Orchestrator {
       run.violations.push(`baseline exceeds ${MAX_TRACKED_PATHS} dirty paths; write ownership is ambiguous`);
     }
 
-    if (mode === "plan") {
+    if (blockedByHook || cancelledByHook) {
+      run.completedAt = nowIso();
+      if (mode === "plan") await this.dispatchHooks(run, "after_plan", {});
+      await this.finalizeTask(run);
       await this.persist(run);
       return this.publicRun(run);
     }
-    if (requireApproval || classification.risk === "high") {
+    if (mode === "plan") {
+      run.completedAt = nowIso();
+      await this.dispatchHooks(run, "after_plan", {});
+      await this.finalizeTask(run);
+      await this.persist(run);
+      return this.publicRun(run);
+    }
+    if (
+      requireApproval ||
+      classification.risk === "high" ||
+      beforeTask.require_approval ||
+      lifecycleHook.require_approval
+    ) {
+      const approvalHook = await this.dispatchHooks(run, "before_approval_request", {
+        approval: {
+          kind: "RUN",
+          operation: "orchestration-run",
+          risk: classification.risk,
+          affectedFiles: baseline.dirtyPaths,
+          userControlled: true,
+        },
+      });
+      if (["cancel", "block", "skip"].includes(approvalHook.status)) {
+        run.status = approvalHook.status === "cancel" ? "cancelled" : "blocked";
+        run.evaluation = { status: run.status, summary: approvalHook.reason ?? "approval request rejected by hook" };
+        run.completedAt = nowIso();
+        await this.dispatchHooks(run, "after_approval_denied", {
+          approval: { kind: "RUN", operation: "orchestration-run", reason: approvalHook.reason },
+        });
+        await this.finalizeTask(run);
+        await this.persist(run);
+        return this.publicRun(run);
+      }
       run.status = "awaiting_approval";
       run.approval = await this.approvals.create("RUN", { runId: run.id });
       await this.persist(run);
@@ -1515,12 +1722,21 @@ export class Orchestrator {
     const promise = this.execute(run, controller.signal)
       .catch(async (error) => {
         if (run.status !== "cancelled") {
-          run.status = "failed";
+          run.status = error instanceof HookOperationError && error.status === "cancel" ? "cancelled" : "failed";
           run.evaluation = {
-            status: "failed",
+            status: run.status,
             summary: boundedString(error instanceof Error ? error.message : String(error)),
           };
           run.completedAt = nowIso();
+          await this.dispatchHooks(run, "on_error", {
+            error: {
+              type: error?.name ?? "Error",
+              source: "orchestrator",
+              message: run.evaluation.summary,
+              recoverable: false,
+            },
+          });
+          await this.finalizeTask(run);
           await this.persist(run);
         }
       })
@@ -1537,13 +1753,26 @@ export class Orchestrator {
     this.reserveLaunch(run);
     let launched = false;
     try {
-      const payload = await this.approvals.consume(token, "RUN");
+      let payload;
+      try {
+        payload = await this.approvals.consume(token, "RUN");
+      } catch (error) {
+        await this.dispatchHooks(run, "after_approval_rejected", {
+          approval: { kind: "RUN", operation: "orchestration-run", reason: error instanceof Error ? error.message : String(error) },
+        });
+        throw error;
+      }
       if (payload.runId !== run.id) throw new Error("approval token belongs to another run");
+      await this.dispatchHooks(run, "after_approval_granted", {
+        approval: { kind: "RUN", operation: "orchestration-run", userControlled: true },
+      });
       const current = await this.gitTracker.snapshot(run.workspace);
       if (!sameWorkspaceState(run.baseline, current)) {
         run.status = "blocked";
         run.violations.push("workspace changed after plan approval was requested; create a fresh plan");
         run.completedAt = nowIso();
+        run.evaluation = { status: "blocked", summary: run.violations.at(-1) };
+        await this.finalizeTask(run);
         await this.persist(run);
         return this.publicRun(run);
       }
@@ -1609,6 +1838,7 @@ export class Orchestrator {
       run.evaluation = evaluateRun(run);
       run.status = run.evaluation.status;
       run.completedAt = nowIso();
+      await this.finalizeTask(run, signal);
       await this.persist(run);
     } catch (error) {
       if (signal.aborted) {
@@ -1616,6 +1846,7 @@ export class Orchestrator {
         for (const unit of run.plan.units.filter((item) => !terminalUnit(item))) unit.status = "cancelled";
         run.evaluation = { status: "cancelled", summary: boundedString(String(signal.reason ?? error)) };
         run.completedAt = nowIso();
+        await this.finalizeTask(run);
         await this.persist(run);
         return;
       }
@@ -1626,18 +1857,58 @@ export class Orchestrator {
   }
 
   async executeUnit(run, unit, signal) {
+    const capability = ROLE_CAPABILITIES[unit.role];
+    const beforeSnapshot = await this.gitTracker.snapshot(run.workspace);
+    const dependencyContext = compactDependencyContext(run.plan.units, unit.dependencies);
+    const beforeAgent = await this.dispatchHooks(run, "before_agent", {
+      unitId: unit.id,
+      agent: {
+        id: unit.id,
+        role: unit.role,
+        kind: unit.kind,
+        capability,
+        allowed: !(unit.kind === "writer" && run.stopWriters),
+        disallowedTools: capability?.disallowedTools ?? [],
+        dependencyContext,
+      },
+      git: beforeSnapshot,
+    }, signal);
     if (unit.kind === "writer" && run.stopWriters) {
       unit.status = "blocked";
       unit.error = "workspace ownership is ambiguous; writer execution stopped";
       unit.completedAt = nowIso();
+      await this.dispatchHooks(run, "on_agent_failure", {
+        unitId: unit.id,
+        agent: { id: unit.id, role: unit.role, kind: unit.kind, error: unit.error },
+      }, signal);
+      await this.dispatchHooks(run, "after_agent", {
+        unitId: unit.id,
+        agent: { id: unit.id, role: unit.role, kind: unit.kind, status: unit.status },
+      }, signal);
       await this.persist(run);
       return;
     }
+    if (["block", "skip", "cancel"].includes(beforeAgent.status)) {
+      unit.status = beforeAgent.status === "cancel" ? "cancelled" : "blocked";
+      unit.error = beforeAgent.reason ?? `agent ${beforeAgent.status} by hook`;
+      unit.completedAt = nowIso();
+      await this.dispatchHooks(run, "on_agent_failure", {
+        unitId: unit.id,
+        agent: { id: unit.id, role: unit.role, kind: unit.kind, error: unit.error },
+      }, signal);
+      await this.dispatchHooks(run, "after_agent", {
+        unitId: unit.id,
+        agent: { id: unit.id, role: unit.role, kind: unit.kind, status: unit.status },
+      }, signal);
+      await this.persist(run);
+      if (beforeAgent.status === "cancel") throw new HookOperationError(unit.error, "cancel", "before_agent");
+      return;
+    }
+
     unit.status = "running";
     unit.startedAt = nowIso();
     await this.persist(run);
-    const before = await this.gitTracker.snapshot(run.workspace);
-    const dependencyContext = compactDependencyContext(run.plan.units, unit.dependencies);
+    let terminalError = null;
     const execute = async () => {
       const maximumAttempts = unit.kind === "reader" ? 2 : 1;
       let lastError;
@@ -1645,18 +1916,60 @@ export class Orchestrator {
         unit.attempts = attempt;
         try {
           return await this.agentRunner.run({
+            runId: run.id,
+            unitId: unit.id,
             role: unit.role,
             task: run.task,
             workspace: run.workspace,
-            dependencyContext,
+            dependencyContext: beforeAgent.context.agent?.dependencyContext ?? dependencyContext,
             protectedPaths: run.baseline.dirtyPaths,
-            gitSnapshot: before,
+            gitSnapshot: beforeSnapshot,
             signal,
           });
         } catch (error) {
           lastError = error;
-          if (signal.aborted || attempt === maximumAttempts || error?.transient !== true) break;
-          await delay(Math.min(2_000, 250 * 2 ** attempt), signal);
+          if (Array.isArray(error?.hookExecutions)) {
+            run.hookExecutions.push(...error.hookExecutions);
+            run.hookExecutions = run.hookExecutions.slice(-500);
+          }
+          const errorContext = {
+            unitId: unit.id,
+            agent: { id: unit.id, role: unit.role, kind: unit.kind },
+            error: {
+              type: error?.name ?? "Error",
+              source: "sub-agent",
+              agentName: unit.role,
+              taskId: run.id,
+              retryCount: attempt - 1,
+              recoverable: error?.transient === true,
+              message: boundedString(error instanceof Error ? error.message : String(error)),
+            },
+          };
+          await this.dispatchHooks(run, "on_error", errorContext, signal);
+          if (signal.aborted || attempt === maximumAttempts) break;
+          const retryHook = await this.dispatchHooks(run, "before_retry", {
+            ...errorContext,
+            retry: {
+              attempt,
+              maximumAttempts,
+              delayMs: Math.min(2_000, 250 * 2 ** attempt),
+            },
+          }, signal);
+          const shouldRetry =
+            !["block", "cancel", "skip"].includes(retryHook.status) &&
+            (error?.transient === true || retryHook.retry);
+          if (!shouldRetry) break;
+          const retryDelay = normalizeInteger(
+            retryHook.context.retry?.delayMs,
+            Math.min(2_000, 250 * 2 ** attempt),
+            0,
+            5_000,
+          );
+          await delay(retryDelay, signal);
+          await this.dispatchHooks(run, "after_retry", {
+            ...errorContext,
+            retry: { attempt, maximumAttempts, delayMs: retryDelay },
+          }, signal);
         }
       }
       throw lastError;
@@ -1667,21 +1980,28 @@ export class Orchestrator {
         unit.kind === "writer" ? await this.writerLock.withLock(run.workspace, execute) : await execute();
       unit.result = result;
       unit.status = result.status;
+      if (Array.isArray(result.runtime?.hooks)) {
+        run.hookExecutions.push(...result.runtime.hooks);
+        run.hookExecutions = run.hookExecutions.slice(-500);
+      }
     } catch (error) {
-      unit.status = signal.aborted ? "cancelled" : "failed";
+      terminalError = error;
+      unit.status = signal.aborted || error?.cancelled ? "cancelled" : "failed";
       unit.error = boundedString(error instanceof Error ? error.message : String(error));
     }
     unit.completedAt = nowIso();
 
-    const after = await this.gitTracker.snapshot(run.workspace);
-    if (unit.kind === "reader" && !sameWorkspaceState(before, after)) {
+    const afterSnapshot = await this.gitTracker.snapshot(run.workspace);
+    let detectedChanges = [];
+    if (unit.kind === "reader" && !sameWorkspaceState(beforeSnapshot, afterSnapshot)) {
       unit.status = "blocked";
       unit.error = "workspace changed during a read-only unit; ownership is ambiguous";
       run.violations.push(`${unit.id}: workspace changed during read-only execution`);
       run.stopWriters = true;
     }
     if (unit.kind === "writer") {
-      const ownership = this.gitTracker.compare(run.baseline, after);
+      const ownership = this.gitTracker.compare(run.baseline, afterSnapshot);
+      detectedChanges = ownership.agentCreatedPaths;
       run.agentCreatedPaths = unique([...run.agentCreatedPaths, ...ownership.agentCreatedPaths]).sort();
       const violations = [
         ...ownership.protectedTouchedPaths.map((item) => `${unit.id}: protected path changed: ${item}`),
@@ -1702,13 +2022,71 @@ export class Orchestrator {
         ]);
       }
     }
+
+    const agentContext = {
+      unitId: unit.id,
+      agent: {
+        id: unit.id,
+        role: unit.role,
+        kind: unit.kind,
+        status: unit.status,
+        durationMs: Date.parse(unit.completedAt) - Date.parse(unit.startedAt),
+        detectedChanges,
+        error: unit.error ?? null,
+      },
+      git: afterSnapshot,
+      error: terminalError
+        ? {
+            type: terminalError?.name ?? "Error",
+            source: "sub-agent",
+            agentName: unit.role,
+            taskId: run.id,
+            retryCount: Math.max(0, unit.attempts - 1),
+            recoverable: terminalError?.transient === true,
+            message: unit.error,
+          }
+        : null,
+    };
+    const terminalHookSignal = signal.aborted ? undefined : signal;
+    if (terminalError?.timedOut) await this.dispatchHooks(run, "on_agent_timeout", agentContext, terminalHookSignal);
+    else if (unit.status === "cancelled") await this.dispatchHooks(run, "on_agent_cancelled", agentContext, terminalHookSignal);
+    else if (unit.status === "completed") await this.dispatchHooks(run, "on_agent_success", agentContext, terminalHookSignal);
+    else await this.dispatchHooks(run, "on_agent_failure", agentContext, terminalHookSignal);
+    await this.dispatchHooks(run, "after_agent", agentContext, terminalHookSignal);
     await this.persist(run);
   }
 
+  async listHooks(state = "all") {
+    await this.initialize();
+    const hooks = this.hooks?.list() ?? [];
+    const filtered =
+      state === "enabled"
+        ? hooks.filter((hook) => hook.enabled)
+        : state === "disabled"
+          ? hooks.filter((hook) => !hook.enabled)
+          : hooks;
+    return { state, count: filtered.length, hooks: filtered };
+  }
+
+  async hookDetail(hookId) {
+    await this.initialize();
+    return this.hooks.detail(hookId);
+  }
+
+  async setHookEnabled(hookId, enabled) {
+    await this.initialize();
+    return this.hooks.setEnabled(hookId, enabled);
+  }
+
+  async listHookEvents() {
+    await this.initialize();
+    return { events: this.hooks.events() };
+  }
   async get(runId, waitMs = 0) {
     const boundedWait = normalizeInteger(waitMs, 0, 0, 50_000);
     const active = this.activeRuns.get(runId);
     if (active && boundedWait > 0) {
+
       let waitTimer;
       await Promise.race([
         active.promise,
@@ -1728,10 +2106,25 @@ export class Orchestrator {
       if (TERMINAL_RUN_STATUSES.has(run.status)) return this.publicRun(run);
       throw new Error("run is not active in this server process");
     }
+    const beforeCancel = await this.dispatchHooks(active.run, "before_cancel", {
+      cancellation: { reason: "cancelled by user request", source: "user" },
+    });
+    if (["block", "skip", "cancel"].includes(beforeCancel.status)) {
+      throw new HookOperationError(
+        beforeCancel.reason ?? "cancellation blocked by hook",
+        beforeCancel.status,
+        "before_cancel",
+      );
+    }
     active.run.status = "cancelled";
     active.controller.abort(new Error("cancelled by user request"));
     await active.promise;
-    return this.publicRun(await this.loadRun(runId));
+    const run = await this.loadRun(runId);
+    await this.dispatchHooks(run, "after_cancel", {
+      cancellation: { reason: "cancelled by user request", source: "user" },
+    });
+    await this.persist(run);
+    return this.publicRun(run);
   }
 
   async shutdown(reason = "orchestrator server input closed") {
@@ -1745,6 +2138,16 @@ export class Orchestrator {
 
   async prepareGit({ runId, paths, message, push = false }) {
     const run = await this.loadRun(runId);
+    const prepareHook = await this.dispatchHooks(run, "before_git_prepare", {
+      git: { operation: "prepare", paths, message, push },
+    });
+    if (["block", "cancel", "skip"].includes(prepareHook.status)) {
+      throw new HookOperationError(
+        prepareHook.reason ?? "Git preparation blocked by hook",
+        prepareHook.status,
+        "before_git_prepare",
+      );
+    }
     if (run.status !== "completed") throw new Error("Git preparation requires a completed run with no unresolved findings");
     if (!run.baseline.isRepo) throw new Error("workspace is not a Git repository");
     if (!run.baseline.head) throw new Error("Git preparation requires a repository with a baseline commit");
@@ -1777,7 +2180,30 @@ export class Orchestrator {
       if (!current.dirtyPaths.includes(selectedPath)) throw new Error(`selected path is no longer dirty: ${selectedPath}`);
       fingerprints[selectedPath] = await fingerprintPath(run.workspace, selectedPath);
     }
-    return this.approvals.create("GIT", {
+    const approvalHook = await this.dispatchHooks(run, "before_approval_request", {
+      approval: {
+        kind: "GIT",
+        operation: push ? "git-commit-and-push" : "git-commit",
+        userControlled: true,
+        paths: normalizedPaths,
+      },
+    });
+    if (["block", "cancel", "skip"].includes(approvalHook.status)) {
+      await this.dispatchHooks(run, "after_approval_denied", {
+        approval: {
+          kind: "GIT",
+          operation: push ? "git-commit-and-push" : "git-commit",
+          reason: approvalHook.reason,
+        },
+      });
+      await this.persist(run);
+      throw new HookOperationError(
+        approvalHook.reason ?? "Git approval request blocked by hook",
+        approvalHook.status,
+        "before_approval_request",
+      );
+    }
+    const approval = await this.approvals.create("GIT", {
       runId,
       workspace: run.workspace,
       head: current.head,
@@ -1787,12 +2213,31 @@ export class Orchestrator {
       message,
       push: push === true,
     });
+    await this.persist(run);
+    return approval;
   }
 
   async applyGit(token) {
-    const payload = await this.approvals.consume(token, "GIT");
+    let payload;
+    try {
+      payload = await this.approvals.consume(token, "GIT");
+    } catch (error) {
+      await this.dispatchHooks(null, "after_approval_rejected", {
+        approval: { kind: "GIT", operation: "git-apply", userControlled: true },
+        error: { type: error?.name ?? "Error", source: "approval", message: boundedString(String(error)) },
+      });
+      throw error;
+    }
     return this.writerLock.withLock(payload.workspace, async () => {
       const run = await this.loadRun(payload.runId);
+      await this.dispatchHooks(run, "after_approval_granted", {
+        approval: {
+          kind: "GIT",
+          operation: payload.push ? "git-commit-and-push" : "git-commit",
+          userControlled: true,
+          paths: payload.paths,
+        },
+      });
       const current = await this.gitTracker.snapshot(payload.workspace);
       if (current.head !== payload.head) throw new Error("Git HEAD changed after approval was prepared");
       if (current.branch !== payload.branch) throw new Error("Git branch changed after approval was prepared");
@@ -1802,6 +2247,16 @@ export class Orchestrator {
         if (currentFingerprint !== payload.fingerprints[selectedPath]) {
           throw new Error(`path changed after approval was prepared: ${selectedPath}`);
         }
+      }
+      const commitHook = await this.dispatchHooks(run, "before_git_commit", {
+        git: { operation: "commit", paths: payload.paths, message: payload.message },
+      });
+      if (["block", "cancel", "skip"].includes(commitHook.status)) {
+        throw new HookOperationError(
+          commitHook.reason ?? "Git commit blocked by hook",
+          commitHook.status,
+          "before_git_commit",
+        );
       }
 
       const indexResult = await this.gitTracker.command(
@@ -1872,12 +2327,42 @@ export class Orchestrator {
       } finally {
         await rm(temporaryIndex, { force: true });
       }
+      await this.dispatchHooks(run, "after_git_commit", {
+        git: {
+          operation: "commit",
+          paths: payload.paths,
+          message: payload.message,
+          commitHash,
+          signatureVerified,
+          indexSynchronized,
+        },
+      });
 
       let pushResult = null;
       if (payload.push && indexSynchronized) {
-        pushResult = await this.gitTracker.command(payload.workspace, ["push"], { timeoutMs: 10 * 60 * 1_000 });
+        const pushHook = await this.dispatchHooks(run, "before_git_push", {
+          git: { operation: "push", branch: payload.branch, commitHash },
+        });
+        if (["block", "cancel", "skip"].includes(pushHook.status)) {
+          pushResult = {
+            code: 2,
+            stdout: "",
+            stderr: pushHook.reason ?? "Git push blocked by hook",
+          };
+        } else {
+          pushResult = await this.gitTracker.command(payload.workspace, ["push"], { timeoutMs: 10 * 60 * 1_000 });
+          await this.dispatchHooks(run, "after_git_push", {
+            git: {
+              operation: "push",
+              branch: payload.branch,
+              commitHash,
+              code: pushResult.code,
+            },
+          });
+        }
       }
       const after = await this.gitTracker.snapshot(payload.workspace);
+      await this.persist(run);
       return {
         status:
           indexSynchronized && (!payload.push || pushResult?.code === 0) ? "completed" : "partial",
@@ -1904,6 +2389,16 @@ export class Orchestrator {
 
   async prepareRollback({ runId, paths }) {
     const run = await this.loadRun(runId);
+    const prepareHook = await this.dispatchHooks(run, "before_rollback_prepare", {
+      rollback: { operation: "prepare", paths },
+    });
+    if (["block", "cancel", "skip"].includes(prepareHook.status)) {
+      throw new HookOperationError(
+        prepareHook.reason ?? "rollback preparation blocked by hook",
+        prepareHook.status,
+        "before_rollback_prepare",
+      );
+    }
     if (!TERMINAL_RUN_STATUSES.has(run.status)) throw new Error("run must be terminal before rollback preparation");
     if (!run.baseline.isRepo || !run.baseline.head) throw new Error("rollback requires a repository with a baseline commit");
     const requested = paths === undefined ? run.agentCreatedPaths : paths;
@@ -1923,18 +2418,57 @@ export class Orchestrator {
     for (const selectedPath of normalizedPaths) {
       fingerprints[selectedPath] = await fingerprintPath(run.workspace, selectedPath);
     }
-    return this.approvals.create("ROLLBACK", {
+    const approvalHook = await this.dispatchHooks(run, "before_approval_request", {
+      approval: {
+        kind: "ROLLBACK",
+        operation: "rollback",
+        userControlled: true,
+        paths: normalizedPaths,
+      },
+    });
+    if (["block", "cancel", "skip"].includes(approvalHook.status)) {
+      await this.dispatchHooks(run, "after_approval_denied", {
+        approval: { kind: "ROLLBACK", operation: "rollback", reason: approvalHook.reason },
+      });
+      await this.persist(run);
+      throw new HookOperationError(
+        approvalHook.reason ?? "rollback approval request blocked by hook",
+        approvalHook.status,
+        "before_approval_request",
+      );
+    }
+    const approval = await this.approvals.create("ROLLBACK", {
       runId,
       workspace: run.workspace,
       head: current.head,
       paths: normalizedPaths,
       fingerprints,
     });
+    await this.persist(run);
+    return approval;
   }
 
   async applyRollback(token) {
-    const payload = await this.approvals.consume(token, "ROLLBACK");
+    let payload;
+    try {
+      payload = await this.approvals.consume(token, "ROLLBACK");
+    } catch (error) {
+      await this.dispatchHooks(null, "after_approval_rejected", {
+        approval: { kind: "ROLLBACK", operation: "rollback", userControlled: true },
+        error: { type: error?.name ?? "Error", source: "approval", message: boundedString(String(error)) },
+      });
+      throw error;
+    }
     return this.writerLock.withLock(payload.workspace, async () => {
+      const run = await this.loadRun(payload.runId);
+      await this.dispatchHooks(run, "after_approval_granted", {
+        approval: {
+          kind: "ROLLBACK",
+          operation: "rollback",
+          userControlled: true,
+          paths: payload.paths,
+        },
+      });
       const current = await this.gitTracker.snapshot(payload.workspace);
       if (current.head !== payload.head) throw new Error("Git HEAD changed after rollback approval was prepared");
       if (current.stagedPaths.length > 0) throw new Error("Git index changed after rollback approval was prepared");
@@ -1943,6 +2477,16 @@ export class Orchestrator {
         if (fingerprint !== payload.fingerprints[selectedPath]) {
           throw new Error(`path changed after rollback approval was prepared: ${selectedPath}`);
         }
+      }
+      const rollbackHook = await this.dispatchHooks(run, "before_rollback", {
+        rollback: { operation: "apply", paths: payload.paths },
+      });
+      if (["block", "cancel", "skip"].includes(rollbackHook.status)) {
+        throw new HookOperationError(
+          rollbackHook.reason ?? "rollback blocked by hook",
+          rollbackHook.status,
+          "before_rollback",
+        );
       }
 
       const restored = [];
@@ -1968,6 +2512,11 @@ export class Orchestrator {
         }
       }
       const after = await this.gitTracker.snapshot(payload.workspace);
+      await this.dispatchHooks(run, "after_rollback", {
+        rollback: { operation: "apply", paths: payload.paths, restored, removed },
+        git: after,
+      });
+      await this.persist(run);
       return {
         status: "completed",
         restored,
