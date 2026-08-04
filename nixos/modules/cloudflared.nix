@@ -55,40 +55,36 @@ in
     };
     users.groups.cloudflared = { };
 
-    systemd.services.cloudflared-tunnel = {
-      description = "Cloudflare Tunnel";
-      after = [ "network-online.target" ];
-      wants = [ "network-online.target" ];
-      wantedBy = [ "multi-user.target" ];
+    systemd.services.cloudflared-tunnel = lib.mkMerge [
+      {
+        description = "Cloudflare Tunnel";
+        after = [ "network-online.target" ];
+        wants = [ "network-online.target" ];
+        wantedBy = [ "multi-user.target" ];
 
-      serviceConfig = {
-        ExecStart = "${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate --config ${configFile} run";
-        Environment = [ "HOME=/var/lib/cloudflared" ];
-        Restart = "on-failure";
-        RestartSec = 5;
-        User = "cloudflared";
-        Group = "cloudflared";
-        StateDirectory = "cloudflared";
-        NoNewPrivileges = true;
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        PrivateTmp = true;
-        PrivateDevices = true;
-      };
-    };
-
-    # === Mullvad VPN Bypass ===
-    # When Mullvad lockdown-mode is active, all traffic is routed through
-    # wg0-mullvad which blocks Cloudflare's edge (port 7844). The
-    # mullvad-exclude wrapper unsets the fwmark so cloudflared's outbound
-    # connections bypass the VPN tunnel and reach Cloudflare directly.
-    systemd.services.cloudflared-tunnel = lib.mkIf config.mySystem.mullvadVpn.enable {
-      after = [ "mullvad-daemon.service" ];
-      wants = [ "mullvad-daemon.service" ];
-      serviceConfig.ExecStart = lib.mkForce [
-        ""
-        "${mullvadExclude} ${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate --config ${configFile} run"
-      ];
-    };
+        serviceConfig = {
+          ExecStart = "${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate --config ${configFile} run";
+          Environment = [ "HOME=/var/lib/cloudflared" ];
+          Restart = "on-failure";
+          RestartSec = 5;
+          User = "cloudflared";
+          Group = "cloudflared";
+          StateDirectory = "cloudflared";
+          NoNewPrivileges = true;
+          ProtectSystem = "strict";
+          ProtectHome = true;
+          PrivateTmp = true;
+          PrivateDevices = true;
+        };
+      }
+      (lib.mkIf config.mySystem.mullvadVpn.enable {
+        after = [ "mullvad-daemon.service" ];
+        wants = [ "mullvad-daemon.service" ];
+        serviceConfig.ExecStart = lib.mkForce [
+          ""
+          "${mullvadExclude} ${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate --config ${configFile} run"
+        ];
+      })
+    ];
   };
 }
