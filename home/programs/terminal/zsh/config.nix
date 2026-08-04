@@ -76,8 +76,11 @@
     # Also set ZSH_COMPDUMP early (in .zshenv) so that the compinit call in
     # /etc/zshrc uses the managed dump file location, preventing
     # "compdump: function definition file not found" errors.
+    # The dump file is stamped with $ZSH_VERSION so each zsh upgrade gets its
+    # own cache — a version bump can never leave a stale .zwc that triggers
+    # "zwc file has wrong version (zsh-X.Y.Z)" recompile errors.
     envExtra = ''
-      ZSH_COMPDUMP="${config.xdg.cacheHome}/zsh/.zcompdump"
+      ZSH_COMPDUMP="${config.xdg.cacheHome}/zsh/.zcompdump-''${ZSH_VERSION}"
       mkdir -p "$(dirname "$ZSH_COMPDUMP")"
 
       case ":$PATH:" in
