@@ -127,7 +127,7 @@ in
         ".codex/herdr-agent-state.sh" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/codex/herdr-agent-state.sh";
-            sha256 = "sha256-KsgRU1n/hJzWHkUFdLNx9nMngKY6B62HwARI21wgNi0=";
+            sha256 = "sha256-XRbx1Ke/v4ROA1NiMx5ylbWqzU4neD/N70u+IEmuWOg=";
           };
           executable = true;
           force = true;
@@ -189,7 +189,7 @@ in
         ".omp/agent/extensions/herdr-omp-agent-state.ts" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/omp/herdr-agent-state.ts";
-            sha256 = "sha256-C4krjNUH8EbGLS8XGbFmZ3iPZ3gptxzssnBYMoj0FD4=";
+            sha256 = "sha256-RU7+wKOTAOEZUJcbrFuXt2gFXDpanmUP7chMtM7ZzKg=";
           };
           force = true;
         };
