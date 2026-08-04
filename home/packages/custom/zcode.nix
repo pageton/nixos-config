@@ -26,6 +26,8 @@ let
       pkgs.xdg-utils # open URLs/files from in-app
     ];
 
+    passthru = { inherit appContents; };
+
     extraInstallCommands = ''
       # Desktop file — rewrite Exec line with required flags
       install -Dm644 ${appContents}/zcode.desktop $out/share/applications/zcode.desktop

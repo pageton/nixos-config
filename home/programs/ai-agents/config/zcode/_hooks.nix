@@ -6,7 +6,10 @@
 
 let
   claudeHooks = import ../claude/_hooks.nix { includeHerdr = false; };
-  tailoredHooks = import ./_hooks-go-git.nix;
+  zcodeHookSets = [
+    (import ./_hooks-go-git.nix)
+    (import ./_hooks-orchestration.nix)
+  ];
 
   supportedEvents = [
     "SessionStart"
@@ -51,7 +54,7 @@ let
   );
 
   mergedEvents = builtins.mapAttrs (
-    event: entries: entries ++ (tailoredHooks.${event} or [ ])
+    event: entries: entries ++ lib.concatMap (hookSet: hookSet.${event} or [ ]) zcodeHookSets
   ) selectedEvents;
 in
 lib.filterAttrs (_event: entries: entries != [ ]) mergedEvents

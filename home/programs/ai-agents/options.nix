@@ -362,6 +362,16 @@ in
 
       hooks = mkAttrsOption { } "Lifecycle hooks for ZCode";
       agents = mkAttrsOption { } "Custom subagent Markdown definitions for ZCode";
+      commands = mkAttrsOption { } "Custom slash-command Markdown definitions for ZCode";
+
+      orchestrator = {
+        enable = mkBoolOption true "Enable the centralized ZCode subagent orchestration MCP server";
+        maxReaders = mkIntOption 4 "Maximum concurrent read-only subagents per run";
+        maxActiveRuns = mkIntOption 2 "Maximum concurrent orchestration runs";
+        maxDepth = mkIntOption 1 "Maximum nested orchestration depth";
+        agentTimeoutMs = mkIntOption 600000 "Per-subagent execution timeout in milliseconds";
+        runTimeoutMs = mkIntOption 1800000 "Whole orchestration run timeout in milliseconds";
+      };
     };
 
   };

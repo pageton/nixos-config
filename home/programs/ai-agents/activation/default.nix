@@ -77,6 +77,7 @@ let
       pkgs
       lib
       toJSON
+      constants
       ;
   };
   opencodeProfileNames = opencodeProfiles.names;
