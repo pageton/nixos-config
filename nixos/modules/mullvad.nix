@@ -89,7 +89,7 @@ in
 
     services.mullvad-vpn = {
       enable = true;
-      package = pkgs.mullvad-vpn; # Includes GUI
+      gui.enable = true;
     };
 
     # Mullvad's packaged unit waits for network-online, which adds ~14s of
