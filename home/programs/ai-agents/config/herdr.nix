@@ -29,6 +29,7 @@ in
       theme.name = "catppuccin";
 
       ui = {
+        agent_panel_sort = "spaces";
         show_agent_labels_on_pane_borders = true;
         sidebar_width = 32;
         mouse_capture = true;
