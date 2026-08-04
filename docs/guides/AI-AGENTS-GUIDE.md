@@ -296,6 +296,109 @@ phrase as its own prompt so the `UserPromptSubmit` hook can record it. The
 matching apply tool then consumes the token once. A mismatched, expired,
 concurrent, or replayed token is rejected.
 
+#### Central Hook Runtime
+
+The orchestrator owns a centralized hook manager in
+`scripts/ai/zcode-hook-runtime.mjs`. It runs for the primary ZCode session,
+every isolated subagent, and orchestrator-owned Git/rollback operations. Native
+ZCode events are adapted into the same runtime, so hooks are registered once
+per process instead of being copied into each profile.
+
+Supported events:
+
+- Task and control: `before_task`, `after_task`, `on_task_success`,
+  `on_task_failure`, `on_task_cancelled`, `before_plan`, `after_plan`,
+  `on_error`, `before_retry`, `after_retry`, `before_cancel`, and
+  `after_cancel`.
+- Agent: `before_agent`, `after_agent`, `on_agent_success`,
+  `on_agent_failure`, `on_agent_timeout`, and `on_agent_cancelled`.
+- Tool and file: `before_tool_call`, `after_tool_call`, `on_tool_success`,
+  `on_tool_failure`, plus before/after read, write, and delete events.
+- Commands and generic Git: before/after command, command
+  success/failure/timeout, before/after Git operation, and Git
+  success/failure.
+- Approval: `before_approval_request`, `after_approval_granted`,
+  `after_approval_denied`, and `after_approval_rejected`.
+- Repository mutation: Git prepare, before/after commit, before/after push,
+  rollback prepare, and before/after rollback.
+
+Hooks return a validated object with `status` (`continue`, `modify`, `skip`,
+`block`, `cancel`, or `retry`), optional `reason`, event-scoped
+`context_patch`, `metadata`, `require_approval`, and `retry`. Higher-priority
+interception results win deterministically: cancel, block, retry, skip,
+modify, then continue. Parallel hooks are observer-only; hooks that modify,
+block, cancel, request approval, or retry must be serial.
+
+Built-ins capture the Git baseline, validate agent/tool permissions, protect
+secret and credential paths, enforce workspace boundaries, parse dangerous
+shell commands, gate Git writes, track task-owned changes, record bounded
+logs/metrics, and produce a final summary. Safety hooks are mandatory and
+cannot be disabled through the CLI or persistent state. Disabling them
+requires the explicit `unsafeAllowDisableMandatory` configuration escape
+hatch.
+
+Use the managed commands from a primary ZCode session:
+
+| Command                    | Behavior                                      |
+| -------------------------- | --------------------------------------------- |
+| `/hook-list`               | List all effective hook registrations         |
+| `/hook-enabled`            | List enabled hooks                            |
+| `/hook-disabled`           | List disabled hooks                           |
+| `/hook-detail <hook-id>`   | Show definitions and recent execution records |
+| `/hook-enable <hook-id>`   | Persistently enable a hook                    |
+| `/hook-disable <hook-id>`  | Persistently disable a non-mandatory hook      |
+| `/hook-events`             | List all supported events in execution order  |
+
+Enable state is stored atomically in
+`~/.cache/zcode-orchestrator/hook-state.json`. Per-run status includes the
+last 500 sanitized hook executions. The primary session and orchestrator also
+append sanitized execution records to
+`~/.cache/zcode-orchestrator/hook-events.jsonl`; isolated agents keep their
+own `hook-events.jsonl` inside their private runtime home.
+
+To add an external command hook, set
+`programs.aiAgents.zcode.orchestrator.hookConfigFile` to an absolute JSON file:
+
+```nix
+programs.aiAgents.zcode.orchestrator.hookConfigFile =
+  "${config.home.homeDirectory}/.config/zcode/orchestrator-hooks.json";
+```
+
+```json
+{
+  "version": 1,
+  "maxDepth": 4,
+  "maxParallel": 4,
+  "events": {
+    "after_task": [
+      {
+        "name": "publish-task-metrics",
+        "command": "/absolute/path/to/publish-task-metrics",
+        "args": [],
+        "priority": 120,
+        "executionMode": "parallel",
+        "timeoutMs": 5000,
+        "failurePolicy": "warn",
+        "permissions": ["read_task_context", "write_logs"]
+      }
+    ]
+  }
+}
+```
+
+The command receives one sanitized JSON context object on stdin and must emit
+one hook-result JSON object on stdout. It sees only fields granted by its
+`permissions`; secret-like keys are redacted and child hook processes receive
+an allowlisted environment. Unknown events, fields, permissions, result
+shapes, or context patches fail configuration or dispatch validation.
+`failurePolicy` is one of `ignore`, `warn`, `fail_operation`, or `fail_task`.
+At isolated-agent launch, the orchestrator copies the current centralized
+enable-state and validated external configuration into the agent's private
+runtime home. Use Nix store paths for external hook commands so the executable
+is visible inside the Bubblewrap sandbox.
+Changes require a new ZCode session because ZCode snapshots native hooks and
+MCP configuration at session startup.
+
 Managed profiles are generated from
 `home/programs/ai-agents/config/zcode/_agents.nix` into `~/.zcode/agents/`.
 Activation removes retired managed profiles while preserving unmanaged agents,
