@@ -136,14 +136,6 @@ in
           };
         };
 
-        "cleanup-clipboard-history" = {
-          description = "Clean up clipboard history (OPSEC - prevents sensitive data persistence)";
-          serviceConfig = {
-            Type = "oneshot";
-            User = user;
-            ExecStart = "${pkgs.bash}/bin/bash -c 'if [ -d /home/${user}/.cache/cliphist ]; then ${pkgs.cliphist}/bin/cliphist wipe && rm -f /home/${user}/.cache/cliphist/db; fi'";
-          };
-        };
       };
 
       timers = {
@@ -257,15 +249,6 @@ in
           };
         };
 
-        "cleanup-clipboard-history" = {
-          description = "Timer for clipboard history cleanup";
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnCalendar = "daily";
-            Persistent = true;
-            RandomizedDelaySec = "6h";
-          };
-        };
       };
     };
 

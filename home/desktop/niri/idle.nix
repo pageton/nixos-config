@@ -1,33 +1,18 @@
-# Idle management (swayidle).
-# Chain: 3min dim -> 8min lock (Noctalia) -> 20min DPMS off.
-{ config, pkgs, ... }:
-let
-  lockCmd = "${config.home.profileDirectory}/bin/noctalia-shell ipc call lockScreen lock";
-in
+# Idle management is owned by DMS so its lock screen, fade, inhibitors, and
+# power-source-aware timeouts share one state machine.
 {
-  services.swayidle = {
-    enable = true;
+  services.swayidle.enable = false;
 
-    timeouts = [
-      {
-        timeout = 180;
-        command = "${pkgs.brightnessctl}/bin/brightnessctl -s set 30";
-        resumeCommand = "${pkgs.brightnessctl}/bin/brightnessctl -r";
-      }
-      {
-        timeout = 480;
-        command = lockCmd;
-      }
-      {
-        timeout = 1200;
-        command = "${pkgs.niri}/bin/niri msg action power-off-monitors";
-        resumeCommand = "${pkgs.niri}/bin/niri msg action power-on-monitors";
-      }
-    ];
-
-    events = {
-      before-sleep = lockCmd;
-      lock = "${pkgs.cliphist}/bin/cliphist wipe && ${lockCmd}";
-    };
+  programs.dank-material-shell.settings = {
+    # Values are seconds and match DMS's supported Settings UI presets.
+    acLockTimeout = 600;
+    batteryLockTimeout = 600;
+    acMonitorTimeout = 1200;
+    batteryMonitorTimeout = 1200;
+    lockBeforeSuspend = true;
+    fadeToLockEnabled = true;
+    fadeToLockGracePeriod = 5;
+    fadeToDpmsEnabled = true;
+    fadeToDpmsGracePeriod = 5;
   };
 }

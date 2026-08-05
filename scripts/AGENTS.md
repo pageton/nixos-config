@@ -49,7 +49,6 @@ scripts/
 │       ├── _tmux.sh         # tmux helper functions
 │       └── workspace-init.sh # Android RE workspace initialization
 ├── apps/
-│   ├── browser-select.sh    # Browser profile selector (wofi menu)
 │   ├── element-desktop-keyring.sh # Element Desktop keyring helper
 │   ├── playwright-cli-mcp-wrapper.sh # Playwright CLI local bin wrapper
 │   ├── xdg-open-wrapper.sh  # XDG open wrapper for Wayland
@@ -157,7 +156,6 @@ source "$(dirname "$0")/../lib/logging.sh"
 | `ai/android-re/re-static.sh`                       | Manual Android RE static-analysis workflow usage                                                                         |
 | `ai/skills-sync.sh`                                | `justfile` (`just skills-sync`)                                                                                          |
 | `sops/sops-edit.sh`                                | `justfile` (`just sops-edit`)                                                                                            |
-| `apps/browser-select.sh`                           | `home-manager/modules/apps/_desktop-local-bin-wrappers.nix` (`browser-select` wrapper)                                   |
 | `apps/element-desktop-keyring.sh`                  | `home-manager/modules/apps/_desktop-local-bin-wrappers.nix` (local bin wrapper)                                          |
 | `apps/playwright-cli-mcp-wrapper.sh`               | `home-manager/modules/programming-languages/javascript/default.nix` (local bin wrapper)                                  |
 | `apps/xdg-open-wrapper.sh`                         | `home-manager/modules/apps/_desktop-local-bin-wrappers.nix` (local bin wrapper)                                          |

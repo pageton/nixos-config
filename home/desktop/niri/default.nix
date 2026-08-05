@@ -66,27 +66,6 @@
           "pgrep -f 'niri-auth-float' > /dev/null || exec niri-auth-float"
         ];
       }
-      { argv = [ "${config.home.profileDirectory}/bin/noctalia-shell" ]; }
-      {
-        command = [
-          "wl-paste"
-          "--type"
-          "text"
-          "--watch"
-          "cliphist"
-          "store"
-        ];
-      }
-      {
-        command = [
-          "wl-paste"
-          "--type"
-          "image"
-          "--watch"
-          "cliphist"
-          "store"
-        ];
-      }
       {
         command = [
           "${pkgs.wl-clip-persist}/bin/wl-clip-persist"
@@ -98,20 +77,19 @@
 
     switch-events = {
       lid-close.action.spawn = [
-        "${config.home.profileDirectory}/bin/noctalia-shell"
+        "${config.home.profileDirectory}/bin/dms"
         "ipc"
         "call"
-        "lockScreen"
+        "lock"
         "lock"
       ];
     };
 
-    layer-rules = [
-      {
-        matches = [ { namespace = "^noctalia-overview.*"; } ];
-        place-within-backdrop = true;
-      }
-    ];
+    # NOTE: the previous Noctalia-specific layer-rule (namespace
+    # "^noctalia-overview.*", place-within-backdrop) is intentionally dropped.
+    # DMS renders its launcher/overview as a modal, not a backdrop layer, and
+    # its layer-shell namespace differs. If a DMS layer needs the same rule,
+    # confirm the namespace with `niri msg layers` and re-add it.
 
     # Debug flags — niri KDL uses nullary nodes, so {} produces a bare flag
     # (e.g. "disable-direct-scanout" not "disable-direct-scanout true").

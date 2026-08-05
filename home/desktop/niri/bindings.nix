@@ -6,16 +6,20 @@
   ...
 }:
 let
-  noctalia =
+  # Send a DMS IPC command, launching the shell first if it isn't running yet.
+  # Mirrors the old noctalia wrapper: try the IPC call; on failure, start DMS in
+  # the background, briefly wait, then retry. Idempotent and safe to fire from
+  # keybindings that may land before the shell is up at session start.
+  dms =
     cmd:
     [
       "${pkgs.bash}/bin/bash"
       "-c"
       ''
-        if ! ${config.home.profileDirectory}/bin/noctalia-shell ipc call "$@" >/dev/null 2>&1; then
-          ${pkgs.coreutils}/bin/nohup ${config.home.profileDirectory}/bin/noctalia-shell >/dev/null 2>&1 &
+        if ! ${config.home.profileDirectory}/bin/dms ipc call "$@" >/dev/null 2>&1; then
+          ${pkgs.coreutils}/bin/nohup ${config.home.profileDirectory}/bin/dms run >/dev/null 2>&1 &
           ${pkgs.coreutils}/bin/sleep 0.35
-          ${config.home.profileDirectory}/bin/noctalia-shell ipc call "$@" >/dev/null 2>&1 || true
+          ${config.home.profileDirectory}/bin/dms ipc call "$@" >/dev/null 2>&1 || true
         fi
       ''
       "bash"
@@ -88,6 +92,8 @@ in
     };
 
     # ── Screenshots ─────────────────────────────────────────────
+    # NOTE: DMS's own niri module binds Mod+P to notepad; we keep Mod+P as
+    # screenshot (preserves the existing binding) and skip notepad.
     "Mod+P".action.screenshot = { };
     "Mod+Ctrl+P".action.screenshot-screen = { };
     "Mod+Alt+P".action.screenshot-window = { };
@@ -98,19 +104,20 @@ in
       action = toggle-overview;
     };
 
-    # ── Noctalia shell controls ─────────────────────────────────
-    "Mod+Space".action.spawn = noctalia "launcher toggle";
-    "Mod+W".action.spawn = noctalia "launcher windows";
-    "Mod+N".action.spawn = noctalia "notifications toggleHistory";
-    "Mod+Comma".action.spawn = noctalia "settings toggle";
-    "Mod+S".action.spawn = noctalia "controlCenter toggle";
-    "Mod+X".action.spawn = noctalia "sessionMenu toggle";
-    "Mod+V".action.spawn = noctalia "launcher clipboard";
-    "Mod+M".action.spawn = noctalia "systemMonitor toggle";
-    "Mod+Alt+N".action.spawn = noctalia "darkMode toggle";
+    # ── DankMaterialShell controls ──────────────────────────────
+    # IPC targets verified against DMS docs (dms ipc call <target> <action>).
+    "Mod+Space".action.spawn = dms "spotlight toggle"; # app launcher
+    "Mod+W".action.spawn = dms "spotlight toggle"; # no separate windows mode in DMS
+    "Mod+N".action.spawn = dms "notifications toggle";
+    "Mod+Comma".action.spawn = dms "settings toggle";
+    "Mod+S".action.spawn = dms "control-center toggle";
+    "Mod+X".action.spawn = dms "powermenu toggle"; # was sessionMenu
+    "Mod+V".action.spawn = dms "clipboard toggle"; # was launcher clipboard
+    "Mod+M".action.spawn = dms "processlist toggle"; # was systemMonitor
+    "Mod+Alt+N".action.spawn = dms "theme toggle"; # was darkMode
 
     # ── Lock screen ─────────────────────────────────────────────
-    "Super+Alt+L".action.spawn = noctalia "lockScreen lock";
+    "Super+Alt+L".action.spawn = dms "lock lock";
 
     # ── System ──────────────────────────────────────────────────
     "Mod+Shift+E".action = quit;
@@ -121,45 +128,48 @@ in
     };
 
     # ── Volume (allow when locked) ──────────────────────────────
+    # DMS audio: increment/decrement take a step arg; mute toggles output.
     "XF86AudioRaiseVolume" = {
       allow-when-locked = true;
-      action.spawn = noctalia "volume increase";
+      action.spawn = dms "audio increment 5";
     };
     "XF86AudioLowerVolume" = {
       allow-when-locked = true;
-      action.spawn = noctalia "volume decrease";
+      action.spawn = dms "audio decrement 5";
     };
     "XF86AudioMute" = {
       allow-when-locked = true;
-      action.spawn = noctalia "volume muteOutput";
+      action.spawn = dms "audio mute";
     };
     "XF86AudioMicMute" = {
       allow-when-locked = true;
-      action.spawn = noctalia "volume muteInput";
+      action.spawn = dms "audio micmute";
     };
 
     # ── Brightness (allow when locked) ─────────────────────────
+    # DMS brightness: increment/decrement take <step> and a trailing "" arg
+    # (matches DMS's own niri module binding shape).
     "XF86MonBrightnessUp" = {
       allow-when-locked = true;
-      action.spawn = noctalia "brightness increase";
+      action.spawn = dms "brightness increment 5 \"\"";
     };
     "XF86MonBrightnessDown" = {
       allow-when-locked = true;
-      action.spawn = noctalia "brightness decrease";
+      action.spawn = dms "brightness decrement 5 \"\"";
     };
 
     # ── Media (allow when locked) ──────────────────────────────
     "XF86AudioPlay" = {
       allow-when-locked = true;
-      action.spawn = noctalia "media playPause";
+      action.spawn = dms "mpris playPause";
     };
     "XF86AudioNext" = {
       allow-when-locked = true;
-      action.spawn = noctalia "media next";
+      action.spawn = dms "mpris next";
     };
     "XF86AudioPrev" = {
       allow-when-locked = true;
-      action.spawn = noctalia "media previous";
+      action.spawn = dms "mpris previous";
     };
   };
 }

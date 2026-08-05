@@ -4,7 +4,7 @@ with lib;
 let
   defaultApps = {
     # check desktop files here: `ls $(echo $XDG_DATA_DIRS| sed "s/:/ /g")`
-    browser = [ "brave-browser.desktop" ];
+    browser = [ "brave.desktop" ];
     text = [ "code.desktop" ]; # Using VSCode as text editor
     image = [ "imv-dir.desktop" ];
     audio = [ "mpv.desktop" ];
