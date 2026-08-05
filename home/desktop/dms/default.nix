@@ -140,6 +140,7 @@ in
             }
           ];
           rightWidgets = [
+            "keyboard_layout_name"
             "systemTray"
             "notepadButton"
             "clipboard"
