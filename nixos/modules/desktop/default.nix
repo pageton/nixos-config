@@ -2,7 +2,7 @@
 {
   imports = [
     ../niri.nix # Niri scrollable-tiling compositor + xwayland-satellite
-    ../sddm.nix # SDDM display manager (Wayland, themed)
+    ../greetd.nix # DankGreeter (greetd-based, DMS-themed display manager)
     ../xserver.nix # X11 explicitly disabled (Wayland-only)
     ../xdg-desktop-portal.nix # XDG portals: FileChooser (GTK), ScreenCast/Screenshot (GNOME)
   ];
