@@ -143,7 +143,7 @@ CodeGraph builds a semantic knowledge graph of codebases for faster, smarter cod
 
 ### If `.codegraph/` exists in the project
 
-**Answer directly with CodeGraph — don't delegate exploration to a file-reading sub-agent or a grep/read loop.** CodeGraph *is* the pre-built search index; re-deriving its answers with grep + Read repeats work it already did and costs more for the same result. For "how does X work?", architecture, trace, or where-is-X questions, answer in a handful of CodeGraph calls and stop — typically with **zero file reads**. The returned source is complete and authoritative: treat it as already read and do not re-open those files. Reach for raw Read/Grep only to confirm a specific detail CodeGraph didn't cover.
+**Answer directly with CodeGraph — don't delegate exploration to a file-reading sub-agent or a grep/read loop.** CodeGraph *is* the pre-built search index; re-deriving its answers with grep + Read repeats work it already did and costs more for the same result. For read-only questions about how code works, architecture, traces, or symbol locations, answer in a handful of CodeGraph calls and stop — typically with **zero native file reads**. The returned source is complete and authoritative; do not re-open files merely to verify it. For mutation tasks, CodeGraph replaces exploratory reads, not the native write guard: during every user turn, call native Read on each existing target path immediately before its first Edit or Write. Reads from earlier turns and CodeGraph results do not satisfy that turn-local guard.
 
 **Tool selection by intent:**
 

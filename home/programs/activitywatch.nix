@@ -16,7 +16,7 @@
       awatcher = {
         package = pkgs.awatcher;
         settings = {
-          idle-timeout-seconds = 180; # Matches swayidle dim timeout
+          idle-timeout-seconds = 180; # Mark the user AFK after three idle minutes
           poll-time-idle-seconds = 5;
           poll-time-window-seconds = 1;
         };

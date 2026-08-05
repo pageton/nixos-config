@@ -28,8 +28,17 @@
 
     niri.url = "github:sodiboo/niri-flake"; # Do NOT follow nixpkgs — mesa compatibility
 
-    noctalia = {
-      url = "github:noctalia-dev/noctalia/legacy-v4";
+    # DankMaterialShell: Go + Quickshell desktop shell (bar/launcher/notifications/
+    # control-center/lock/power-menu). Replaces Noctalia.
+    # NOTE: We deliberately do NOT import homeModules.niri — it lib.mkForce's the
+    # niri config target and would hijack home/desktop/niri/. Manual wiring only.
+    # See https://github.com/AvengeMedia/DankMaterialShell and home/desktop/dms/
+    dank-material-shell = {
+      url = "github:AvengeMedia/DankMaterialShell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    dank-greeter = {
+      url = "github:AvengeMedia/dank-greeter";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nvf = {
@@ -148,7 +157,10 @@
               constants
               ;
           };
-          modules = [ ./hosts/${hostname}/configuration.nix ];
+          modules = [
+            ./hosts/${hostname}/configuration.nix
+            inputs.dank-greeter.nixosModules.default
+          ];
         };
 
       makeHome =
@@ -172,7 +184,7 @@
             ./home/home.nix
             inputs.stylix.homeModules.stylix
             inputs.niri.homeModules.config
-            inputs.noctalia.homeModules.default
+            inputs.dank-material-shell.homeModules.dank-material-shell
           ];
         };
 

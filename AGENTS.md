@@ -6,7 +6,7 @@
 
 ## Role
 
-Declarative, modular NixOS flake managing two hosts (desktop + thinkpad) with Home-Manager, SOPS secrets, Niri Wayland compositor, Noctalia shell, and a comprehensive AI agent orchestration layer. 286 Nix files, 74 shell scripts, 10 JS hooks.
+Declarative, modular NixOS flake managing two hosts (desktop + thinkpad) with Home-Manager, SOPS secrets, Niri Wayland compositor, DankMaterialShell, and a comprehensive AI agent orchestration layer. 286 Nix files, 74 shell scripts, 10 JS hooks.
 
 ## Architecture
 
@@ -52,14 +52,14 @@ System/
 │   │   ├── languages/           # Go, Python, JS/Node, LSP servers, mise version manager
 │   │   ├── isolation/           # Wayland browser sandbox wrappers
 │   │   └── *.nix                # brave, discord (nixcord), gpg, obs, spicetify, ssh, tailscale, thunar, activitywatch, t3code, etc.
-│   ├── desktop/                 # Niri config (bindings/layout/rules/animations/idle/lock), Noctalia shell, MIME, Qt, udiskie
+│   ├── desktop/                 # Niri config (bindings/layout/rules/animations/idle/lock), DankMaterialShell, MIME, Qt, udiskie
 │   ├── themes/                  # Stylix engine, Catppuccin Mocha palette, theme options
 │   └── scripts/                 # User-level scripts (nerdfont-fzf, build helpers)
 ├── scripts/
 │   ├── ai/                      # Agent launcher, iter, log analyzer, dashboard, inventory, registry, skills-sync
 │   │   ├── android-re/          # Full Android RE toolkit: AVD mgmt, Frida hooks, mitmproxy, static analysis
 │   │   └── web-re/              # Web RE toolkit: Chrome DevTools, mitmproxy, TOTP generation
-│   ├── apps/                    # Desktop wrappers: browser-select, youtube-mpv, xdg-open, playwright-mcp
+│   ├── apps/                    # Desktop wrappers: youtube-mpv, xdg-open, playwright-mcp
 │   ├── build/                   # Quality gates: modules-check, packages-check, pre-commit/push hooks, shellcheck-nix-inline
 │   ├── hardware/                # nvidia-fans control
 │   ├── lib/                     # Shared shell libs: logging, test-helpers, fzf-theme, AWK utils, require
@@ -87,7 +87,7 @@ System/
 | `scripts/build/modules-check.sh`  | Validates every .nix file is imported by its parent default.nix                                         |
 | `home/programs/activitywatch.nix` | ActivityWatch time tracking for Wayland                                                                 |
 | `home/programs/t3code.nix`        | T3 Code AI editor (ghgrab-managed release)                                                              |
-| `shared/_hm-systemd-helpers.nix`  | Shared HM timer helpers (mkHmTimer, mkWeeklyTimer)                                              |
+| `shared/_hm-systemd-helpers.nix`  | Shared HM timer helpers (mkHmTimer, mkWeeklyTimer)                                                      |
 
 ## Module Map
 
@@ -120,7 +120,7 @@ All NixOS modules use `options.mySystem.<module>` for per-host enablement. Impor
 | `programs/zen-browser/` | Multi-profile Zen Browser with per-profile Mullvad SOCKS5 proxy                                        |
 | `programs/languages/`   | Go, Python, JS/Node, LSP servers, mise version manager                                                 |
 | `programs/isolation/`   | Wayland browser sandbox wrappers                                                                       |
-| `desktop/`              | Niri (8 sub-modules incl. \_auth-float), Noctalia shell/bar/plugins, MIME, Qt, udiskie                 |
+| `desktop/`              | Niri (8 sub-modules incl. \_auth-float), DankMaterialShell (bar/launcher), MIME, Qt, udiskie           |
 | `themes/`               | Stylix engine, Catppuccin Mocha palette, theme options                                                 |
 
 ### Host-Specific Overrides
@@ -175,22 +175,22 @@ scripts/ai/_agent-registry.sh (alias → command mapping)
 
 ### External Flake Inputs
 
-| Input            | Version  | Notes                                                      |
-| ---------------- | -------- | ---------------------------------------------------------- |
-| `nixpkgs`        | unstable | Primary package set                                        |
-| `nixpkgs-stable` | 25.11    | Select stable packages via `pkgsStable`                    |
-| `home-manager`   | master   | User environment management                                |
-| `sops-nix`       | latest   | Age-encrypted secret management                            |
-| `stylix`         | latest   | System-wide theming (Catppuccin Mocha)                     |
-| `niri`           | latest   | ⚠️ Does NOT follow nixpkgs — pinned mesa for compatibility |
-| `noctalia`       | latest   | Shell/bar/launcher for Niri                                |
-| `spicetify-nix`  | latest   | Spotify customization                                      |
-| `nixcord`        | latest   | Discord theming                                            |
-| `nvf`            | latest   | Neovim configuration framework                             |
-| `nix-wallpaper`  | latest   | Nix-themed wallpaper generator                             |
-| `ghgrab`         | latest   | GitHub release downloader                                  |
-| `zellij-tui`     | latest   | Zellij TUI extension                                       |
-| `zen-browser`    | latest   | Zen Browser flake (beta channel)                           |
+| Input                 | Version  | Notes                                                      |
+| --------------------- | -------- | ---------------------------------------------------------- |
+| `nixpkgs`             | unstable | Primary package set                                        |
+| `nixpkgs-stable`      | 25.11    | Select stable packages via `pkgsStable`                    |
+| `home-manager`        | master   | User environment management                                |
+| `sops-nix`            | latest   | Age-encrypted secret management                            |
+| `stylix`              | latest   | System-wide theming (Catppuccin Mocha)                     |
+| `niri`                | latest   | ⚠️ Does NOT follow nixpkgs — pinned mesa for compatibility |
+| `dank-material-shell` | latest   | DMS shell/bar/launcher for Niri (Go + Quickshell)          |
+| `spicetify-nix`       | latest   | Spotify customization                                      |
+| `nixcord`             | latest   | Discord theming                                            |
+| `nvf`                 | latest   | Neovim configuration framework                             |
+| `nix-wallpaper`       | latest   | Nix-themed wallpaper generator                             |
+| `ghgrab`              | latest   | GitHub release downloader                                  |
+| `zellij-tui`          | latest   | Zellij TUI extension                                       |
+| `zen-browser`         | latest   | Zen Browser flake (beta channel)                           |
 
 ### Internal Dependency Graph
 
@@ -225,20 +225,20 @@ scripts/ai/_agent-registry.sh ← sourced by agent-launcher.sh, agent-iter.sh
 
 This project has `.codegraph/` initialized. **Always use CodeGraph MCP tools as the primary exploration mechanism** before falling back to grep/glob/Read.
 
-**Answer directly with CodeGraph — don't delegate exploration to a file-reading sub-agent or a grep/read loop.** CodeGraph is the pre-built search index; re-deriving its answers with grep + Read repeats work it already did and costs more for the same result. For "how does X work?", architecture, trace, or where-is-X questions, answer in a handful of CodeGraph calls and stop — typically with **zero file reads**. The returned source is complete and authoritative: treat it as already read and do not re-open those files. Reach for raw Read/Grep only to confirm a specific detail CodeGraph didn't cover.
+**Answer directly with CodeGraph — don't delegate exploration to a file-reading sub-agent or a grep/read loop.** CodeGraph is the pre-built search index; re-deriving its answers with grep + Read repeats work it already did and costs more for the same result. For read-only questions about how code works, architecture, traces, or symbol locations, answer in a handful of CodeGraph calls and stop — typically with **zero native file reads**. The returned source is complete and authoritative; do not re-open files merely to verify it. For mutation tasks, CodeGraph replaces exploratory reads, not the native write guard: during every user turn, call native Read on each existing target path immediately before its first Edit or Write. Reads from earlier turns and CodeGraph results do not satisfy that turn-local guard.
 
 **Tool selection by intent:**
 
-| Tool | Use For |
-|------|---------|
-| `codegraph_context` | Map a task / feature / area first — composes search + node + callers + callees in one call |
-| `codegraph_trace` | "How does X reach Y" — the call path, each hop's body inline (follows dynamic-dispatch hops grep can't) |
-| `codegraph_explore` | Survey several related symbols' source in ONE budget-capped call |
-| `codegraph_search` | Find a symbol by name |
-| `codegraph_callers` / `codegraph_callees` | Walk call flow one hop at a time |
-| `codegraph_impact` | Check what's affected before editing |
-| `codegraph_node` | Get a single symbol's source / signature |
-| `codegraph_files` | Project file structure from the index (faster than Glob/filesystem scanning) |
+| Tool                                      | Use For                                                                                                 |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `codegraph_context`                       | Map a task / feature / area first — composes search + node + callers + callees in one call              |
+| `codegraph_trace`                         | "How does X reach Y" — the call path, each hop's body inline (follows dynamic-dispatch hops grep can't) |
+| `codegraph_explore`                       | Survey several related symbols' source in ONE budget-capped call                                        |
+| `codegraph_search`                        | Find a symbol by name                                                                                   |
+| `codegraph_callers` / `codegraph_callees` | Walk call flow one hop at a time                                                                        |
+| `codegraph_impact`                        | Check what's affected before editing                                                                    |
+| `codegraph_node`                          | Get a single symbol's source / signature                                                                |
+| `codegraph_files`                         | Project file structure from the index (faster than Glob/filesystem scanning)                            |
 
 A direct CodeGraph answer is a handful of calls; a grep/read exploration is dozens.
 

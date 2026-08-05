@@ -6,7 +6,8 @@
   constants,
 }:
 with pkgs;
-with pkgsStable; [
+with pkgsStable;
+[
   # === Web Browsers ===
   firefox # Mozilla Firefox web browser
 
@@ -24,7 +25,7 @@ with pkgsStable; [
   termius # Modern SSH client with cloud sync
 
   # === Gaming and Compatibility ===
-  (bottles.override {removeWarningPopup = true;}) # Run Windows applications on Linux
+  (bottles.override { removeWarningPopup = true; }) # Run Windows applications on Linux
 
   # === Music and Media ===
   pear-desktop # YouTube Music desktop client

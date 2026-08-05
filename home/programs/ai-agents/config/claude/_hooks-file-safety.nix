@@ -1,6 +1,6 @@
 # Native file-tool discipline shared by Claude Code and ZCode.
 let
-  readGuidance = "Before Edit or Write modifies an existing file, call the native Read tool on that exact path in this session. CodeGraph, MCP, grep, and shell reads do not satisfy the native stale-file guard. If a formatter, hook, user, or other process changes the file after it was read, call Read again immediately before editing. Use Write without Read only to create a new file.";
+  readGuidance = "MANDATORY FILE-WRITE PRECONDITION: Before the first Edit or Write to each existing file in every user turn, call the native Read tool on that exact path during the same turn. A Read from an earlier turn or session history does not count; neither do CodeGraph, MCP, grep, or shell reads. If a formatter, hook, user, or other process changes the file after that native Read, call Read again before editing. Write may skip Read only when creating a path that does not exist.";
 
   mkContextExecutor = eventName: {
     type = "command";
@@ -34,7 +34,7 @@ in
             if echo "$ERROR" | grep -Eqi 'file has not been read yet|read it first before writing|write_file_not_read|file has been modified since read|read it again before attempting to write'; then
               jq -n \
                 --arg path "$FILE_PATH" \
-                '{hookSpecificOutput: {hookEventName: "PostToolUseFailure", additionalContext: ("The native stale-file guard rejected " + $path + " because it was not read with the native Read tool or changed after its last native Read. Call Read on that exact path now, then immediately retry Edit or Write using the current content. CodeGraph, MCP, grep, and shell reads do not satisfy this guard.")}}'
+                '{hookSpecificOutput: {hookEventName: "PostToolUseFailure", additionalContext: ("The native stale-file guard rejected " + $path + " because the current user turn has no valid native Read for that path, or the file changed after its last native Read. Call native Read on that exact path now, then immediately retry Edit or Write. Reads from earlier turns or session history do not count; neither do CodeGraph, MCP, grep, or shell reads.")}}'
             else
               echo "$INPUT"
             fi

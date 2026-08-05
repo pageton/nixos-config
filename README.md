@@ -34,10 +34,10 @@ This repository contains a declarative NixOS configuration using flakes with the
 
 ### Supported Hosts
 
-| Host | Description | Key Features |
-|------|-------------|--------------|
-| `desktop` | Desktop PC | Gaming (Gamescope), full desktop environment |
-| `thinkpad` | Laptop | NVIDIA GPU, power management (TLP) |
+| Host       | Description | Key Features                                 |
+| ---------- | ----------- | -------------------------------------------- |
+| `desktop`  | Desktop PC  | Gaming (Gamescope), full desktop environment |
+| `thinkpad` | Laptop      | NVIDIA GPU, power management (TLP)           |
 
 ---
 
@@ -57,27 +57,31 @@ just all
 ### Onboarding a New Machine
 
 1. **Clone the repo:**
+
 ```bash
 git clone https://github.com/pageton/nixos-config.git ~/System
 cd ~/System
 ```
 
 2. **Create the host configuration:**
+
 ```bash
 cd hosts
 cp -r desktop myhost  # or thinkpad/server as template
 ```
 
 3. **Copy the hardware configuration:**
+
 ```bash
 cp /etc/nixos/hardware-configuration.nix hosts/myhost/
 ```
 
 4. **Update personal settings in `shared/constants.nix`:**
-Edit `shared/constants.nix` to set your identity (name, email, GitHub handle, GPG signing key) and preferences (terminal, editor, fonts, keyboard layout, theme colors).
+   Edit `shared/constants.nix` to set your identity (name, email, GitHub handle, GPG signing key) and preferences (terminal, editor, fonts, keyboard layout, theme colors).
 
 5. **Add the new host to `hosts/_inventory.nix`:**
-Open `hosts/_inventory.nix` and append your new host:
+   Open `hosts/_inventory.nix` and append your new host:
+
 ```nix
 {
   hostname = "myhost";
@@ -86,16 +90,19 @@ Open `hosts/_inventory.nix` and append your new host:
 ```
 
 6. **Set your hostname:**
+
 ```bash
 sudo hostnamectl set-hostname myhost
 ```
 
 7. **Setup SOPS encryption key** (if not already done):
+
 ```bash
 just sops-setup
 ```
 
 8. **Deploy the system:**
+
 ```bash
 # For the new host (using nh)
 nh os switch --flake ~/System#myhost
@@ -125,7 +132,7 @@ System/
 ├── scripts/                     # Repository-level audit and lab scripts
 │   ├── build/                   # modules/security/performance audit scripts
 │   ├── ai/                      # AI agent launchers, inventory, and log analysis
-│   ├── apps/                    # Desktop app wrappers (browser-select, youtube-mpv, etc.)
+│   ├── apps/                    # Desktop app wrappers (youtube-mpv, xdg-open, etc.)
 │   ├── hardware/                # Hardware control scripts (nvidia-fans)
 │   ├── system/                  # System health report collectors
 │   ├── sops/                    # SOPS editing helpers
@@ -206,20 +213,19 @@ System/
 
 This configuration uses the following flakes:
 
-| Flake | Purpose |
-|-------|---------|
-| **nixpkgs** | NixOS unstable packages |
-| **nixpkgs-stable** | NixOS 26.05 stable packages |
-| **home-manager** | User environment management |
-| **sops-nix** | Secret management with age encryption |
-| **stylix** | System theming (Catppuccin Mocha theme) |
-| **spicetify-nix** | Spotify customization |
-| **niri** | Niri compositor module/overlay (does NOT follow nixpkgs — pinned mesa version required for compatibility) |
-| **noctalia** | Noctalia shell integration |
-| **nixcord** | Discord theming |
-| **nvf** | Neovim configuration framework |
-| **ghgrab** | GitHub release downloader utility |
-
+| Flake              | Purpose                                                                                                   |
+| ------------------ | --------------------------------------------------------------------------------------------------------- |
+| **nixpkgs**        | NixOS unstable packages                                                                                   |
+| **nixpkgs-stable** | NixOS 26.05 stable packages                                                                               |
+| **home-manager**   | User environment management                                                                               |
+| **sops-nix**       | Secret management with age encryption                                                                     |
+| **stylix**         | System theming (Catppuccin Mocha theme)                                                                   |
+| **spicetify-nix**  | Spotify customization                                                                                     |
+| **niri**           | Niri compositor module/overlay (does NOT follow nixpkgs — pinned mesa version required for compatibility) |
+| **noctalia**       | Noctalia shell integration                                                                                |
+| **nixcord**        | Discord theming                                                                                           |
+| **nvf**            | Neovim configuration framework                                                                            |
+| **ghgrab**         | GitHub release downloader utility                                                                         |
 
 ---
 
@@ -243,29 +249,29 @@ ln -sf ../../scripts/build/pre-push-hook.sh .git/hooks/pre-push
 
 ### Essential Commands
 
-| Command | Description |
-|---------|-------------|
-| `just` | List all available commands |
-| `just all` | **Run full pipeline**: modules, lint, format, security, flake check, nixos, home |
-| `just nixos` | Rebuild and switch current host (`--hostname $(hostname)`) with faster nh flags |
-| `just nixos <host>` | Rebuild and switch a specific host profile (e.g. `just nixos desktop`) |
-| `just nixos-fast` | Faster switch path (`NH_NO_VALIDATE=1`, no NOM) for iterative changes |
-| `just home` | Apply Home-Manager configuration using nh with lockfile-write disabled |
-| `just format` | Format all `.nix` files with `nixfmt` |
-| `just lint` | Lint all `.nix` files with `statix` + bash shellcheck |
-| `just modules` | Check for missing module imports (**critical before commits**) |
-| `just security` | Scan for risky security patterns and plaintext secret leaks |
-| `just perf` | Print boot/session performance diagnostics |
-| `just hardening` | Run `systemd-analyze security` report on core services |
-| `just check` | Evaluate full flake outputs with `nix flake check` |
-| `just eval-audit` | Measure eval time for all host nixos/home outputs |
-| `just eval-current` | Measure eval time for current host outputs only |
-| `just qa` | Full local QA (modules + security + check + eval-audit) |
-| `just qa-fast` | Fast local QA (modules + security + eval-current) |
-| `just update` | Update all flake inputs |
-| `just update-pkgs` | Update nixpkgs only |
-| `just update-pkgs-stable` | Update stable nixpkgs |
-| `just clean` | Clean up old generations and optimize store using **nh** |
+| Command                   | Description                                                                      |
+| ------------------------- | -------------------------------------------------------------------------------- |
+| `just`                    | List all available commands                                                      |
+| `just all`                | **Run full pipeline**: modules, lint, format, security, flake check, nixos, home |
+| `just nixos`              | Rebuild and switch current host (`--hostname $(hostname)`) with faster nh flags  |
+| `just nixos <host>`       | Rebuild and switch a specific host profile (e.g. `just nixos desktop`)           |
+| `just nixos-fast`         | Faster switch path (`NH_NO_VALIDATE=1`, no NOM) for iterative changes            |
+| `just home`               | Apply Home-Manager configuration using nh with lockfile-write disabled           |
+| `just format`             | Format all `.nix` files with `nixfmt`                                            |
+| `just lint`               | Lint all `.nix` files with `statix` + bash shellcheck                            |
+| `just modules`            | Check for missing module imports (**critical before commits**)                   |
+| `just security`           | Scan for risky security patterns and plaintext secret leaks                      |
+| `just perf`               | Print boot/session performance diagnostics                                       |
+| `just hardening`          | Run `systemd-analyze security` report on core services                           |
+| `just check`              | Evaluate full flake outputs with `nix flake check`                               |
+| `just eval-audit`         | Measure eval time for all host nixos/home outputs                                |
+| `just eval-current`       | Measure eval time for current host outputs only                                  |
+| `just qa`                 | Full local QA (modules + security + check + eval-audit)                          |
+| `just qa-fast`            | Fast local QA (modules + security + eval-current)                                |
+| `just update`             | Update all flake inputs                                                          |
+| `just update-pkgs`        | Update nixpkgs only                                                              |
+| `just update-pkgs-stable` | Update stable nixpkgs                                                            |
+| `just clean`              | Clean up old generations and optimize store using **nh**                         |
 
 ### Manual Rebuild (without just)
 
@@ -309,16 +315,16 @@ just secrets-add github_token ghp_your_token_here
 
 ### Available Commands
 
-| Command | Purpose |
-|---------|---------|
-| `just sops-view` | View decrypted secrets |
-| `just sops-edit` | Edit secrets (opens VS Code) |
-| `just secrets-add key value` | Add single secret |
-| `just sops-decrypt` | Decrypt to file for manual editing |
-| `just sops-encrypt` | Encrypt file back to secrets |
-| `just sops-key` | Show public age key |
-| `just sops-setup` | Setup new age key |
-| `just setup-keys` | Setup SSH and GPG keys from secrets |
+| Command                      | Purpose                             |
+| ---------------------------- | ----------------------------------- |
+| `just sops-view`             | View decrypted secrets              |
+| `just sops-edit`             | Edit secrets (opens VS Code)        |
+| `just secrets-add key value` | Add single secret                   |
+| `just sops-decrypt`          | Decrypt to file for manual editing  |
+| `just sops-encrypt`          | Encrypt file back to secrets        |
+| `just sops-key`              | Show public age key                 |
+| `just sops-setup`            | Setup new age key                   |
+| `just setup-keys`            | Setup SSH and GPG keys from secrets |
 
 ### Structure
 
@@ -353,11 +359,13 @@ environment.variables.MY_SECRET = config.sops.placeholder.mysecret;
 ### Adding a New Host
 
 1. Create host directory:
+
 ```bash
 mkdir -p hosts/myhost/modules
 ```
 
 2. Create `configuration.nix`:
+
 ```nix
 { config, inputs, hostname, stateVersion, pkgsStable, ... }:
 {
@@ -373,11 +381,13 @@ mkdir -p hosts/myhost/modules
 ```
 
 3. Create `hardware-configuration.nix`:
+
 ```bash
 sudo nixos-generate-config --root /mnt --show-hardware-config > hosts/myhost/hardware-configuration.nix
 ```
 
 4. Add to `hosts/_inventory.nix`:
+
 ```nix
 {
   hostname = "myhost";
@@ -388,6 +398,7 @@ sudo nixos-generate-config --root /mnt --show-hardware-config > hosts/myhost/har
 ### Adding NixOS Modules
 
 1. Create module file in `nixos/modules/` (flat file alongside existing ones):
+
 ```nix
 # nixos/modules/my-module.nix
 { config, lib, pkgs, ... }:
@@ -404,6 +415,7 @@ sudo nixos-generate-config --root /mnt --show-hardware-config > hosts/myhost/har
 ```
 
 2. Import it from the appropriate category `default.nix` (e.g., `nixos/modules/core/default.nix`):
+
 ```nix
 {
   imports = [
@@ -414,6 +426,7 @@ sudo nixos-generate-config --root /mnt --show-hardware-config > hosts/myhost/har
 ```
 
 3. Enable it in the host configuration (e.g., `hosts/desktop/configuration.nix`):
+
 ```nix
 mySystem.myModule.enable = true;
 ```
@@ -423,11 +436,13 @@ mySystem.myModule.enable = true;
 ### Adding Home-Manager Programs
 
 1. Create program directory in `home/programs/`:
+
 ```bash
 mkdir home/programs/myprogram
 ```
 
 2. Create `default.nix`:
+
 ```nix
 { config, lib, ... }:
 {
@@ -473,10 +488,10 @@ config = lib.mkIf (hostname == "desktop") {
 ### Desktop Environment
 
 - **Compositor**: Niri (Wayland)
-- **Shell**: Noctalia (bar, launcher, control center, notifications)
+- **Shell**: DankMaterialShell (bar, launcher, control center, notifications)
 - **Theme**: Catppuccin Mocha via Stylix
-- **Screen Locker**: swaylock + Noctalia lock integration
-- **Clipboard stack**: wl-paste + cliphist + wl-clip-persist
+- **Screen Locker**: DankMaterialShell lock screen with native idle handling
+- **Clipboard stack**: DankMaterialShell history + wl-clip-persist
 
 ### Development
 
