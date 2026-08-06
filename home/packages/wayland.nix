@@ -3,6 +3,7 @@
 { pkgsStable, ... }: with pkgsStable;
 [
   # === Clipboard Management ===
+  cliphist # Clipboard history manager
   wl-clip-persist # Keep clipboard content after source closes
   wl-clipboard # Wayland clipboard utilities (wl-copy, wl-paste)
   wtype # Wayland keyboard and mouse input simulation

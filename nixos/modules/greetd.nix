@@ -1,39 +1,39 @@
-# DankGreeter — greetd-based display manager using the DMS lock-screen aesthetic.
-# Replaces SDDM. The greeter runs niri as its compositor and mirrors the user's
-# DMS settings (wallpaper, theme, colors) so the login screen matches the desktop.
+# Noctalia Greeter — greetd-based display manager matching the Noctalia v5
+# shell aesthetic. Replaces DankGreeter (DMS-themed) and SDDM.
+#
+# The greeter syncs palette/wallpaper/font from the running Noctalia shell via
+# "Settings -> Security -> Noctalia Greeter -> Sync Now", which writes
+# /var/lib/noctalia-greeter/sync.toml. Declarative greeter.toml (settings below)
+# wins over synced keys; both layer under the live shell appearance.
 #
 # IMPORTANT: this is a system-level, boot-critical service. If the greeter fails,
 # you can still log in via TTY (Ctrl+Alt+F2) and `nh os switch` to revert.
-{ lib, user, ... }:
-let
-  profileImage = ../../home/assets/profile_picture.png;
-in
+{
+  lib,
+  user,
+  constants,
+  pkgs,
+  ...
+}:
 {
   # Disable SDDM — only one display manager may be active (asserted in
   # nixos/modules/validation.nix: SDDM && greetd is rejected).
   services.displayManager.sddm.enable = lib.mkForce false;
 
-  # DankGreeter. The greeter module auto-enables services.greetd and sets the
-  # default_session command to the dms-greeter script. niri is the greeter's
-  # compositor (matches the session compositor). configHome mirrors this user's
-  # DMS config (settings.json, session.json with wallpaper, dms-colors.json)
-  # into the greeter's cache dir so login looks like the desktop.
-  programs.dms-greeter = {
+  # Noctalia Greeter. The module auto-enables services.greetd and sets the
+  # default_session command to noctalia-greeter-session. niri is the greeter's
+  # compositor (matches the session compositor). Appearance flows from the
+  # shell sync; cursor is pinned here for parity with constants.theme.
+  programs.noctalia-greeter = {
     enable = true;
-    compositor.name = "niri";
-    configHome = "/home/${user}";
-  };
-
-  # configHome syncs DMS settings, session state, and colors, but not the user
-  # avatar. Install it in the per-user greeter cache where DankGreeter looks
-  # before AccountsService and ~/.face.
-  systemd.tmpfiles.settings."20-dms-greeter-profile" = {
-    "/var/lib/dms-greeter/users/${user}".d = {
-      user = "greeter";
-      group = "greeter";
-      mode = "0750";
+    settings = {
+      cursor = {
+        theme = constants.theme.cursor;
+        size = constants.theme.cursorSize;
+        path = "${pkgs.bibata-cursors}/share/icons";
+      };
+      session.default = "niri";
     };
-    "/var/lib/dms-greeter/users/${user}/profile.png"."L+".argument = toString profileImage;
   };
 
   # Default session after login = niri.

@@ -44,9 +44,10 @@ in
       zellij.enable = true;
       waybar.enable = false;
       nixcord.enable = false;
-      # NOTE: DankMaterialShell does not register a stylix target (unlike
-      # Noctalia). DMS handles its own theming via matugen wallpaper palettes;
-      # we feed it the stylix wallpaper in home/desktop/dms/.
+      # Noctalia v5 has NO stylix target (unlike v4's noctalia-shell.enable).
+      # Theme + wallpaper are hand-mirrored via programs.noctalia.settings in
+      # home/desktop/noctalia/settings.nix (Catppuccin builtin palette + the
+      # same nix-wallpaper derivation referenced below).
       librewolf = {
         enable = true;
         profileNames = [

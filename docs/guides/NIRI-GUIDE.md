@@ -423,7 +423,7 @@ These launch automatically when Niri starts:
 | --------------------------- | -------------------------------------------- | -------------------- |
 | xwayland-satellite          | X11 app compatibility (Java Swing, etc.)     | spawn-at-startup     |
 | polkit-gnome                | Authentication agent dialog                  | spawn-at-startup     |
-| noctalia-shell              | Bar, launcher, notifications, wallpaper, OSD | spawn-at-startup     |
+| noctalia (v5)               | Bar, launcher, notifications, wallpaper, OSD | spawn-at-startup     |
 | KeePassXC                   | Password manager + SSH agent                 | spawn-at-startup     |
 | mullvad-vpn                 | VPN client                                   | spawn-at-startup     |
 | wl-paste (text) + cliphist  | Clipboard history for text                   | spawn-at-startup     |

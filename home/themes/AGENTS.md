@@ -28,12 +28,12 @@ home/themes/
 
 - `palette.nix` is a plain attrset imported directly by `stylix.nix` — not a NixOS/HM module
 - Color values use hex strings matching Catppuccin Mocha spec
-- Theme options (rounding, gaps, opacity) are consumed by Niri, DMS (via its settings), and terminal configs
-- Wallpaper is managed via Stylix (`config.stylix.image`); DMS reads it for matugen palettes
+- Theme options (rounding, gaps, opacity) are consumed by Niri and terminal configs
+- Wallpaper is managed via Stylix (`config.stylix.image`); Noctalia v5 reads its wallpaper from `programs.noctalia.settings.wallpaper` (see `home/desktop/noctalia/settings.nix`), reusing the same `nix-wallpaper` derivation
 
 ## Dependencies
 
 - **Inputs**: Stylix flake input, `nix-wallpaper` flake input
 - **Imported by**: `home/home.nix`
-- **Consumed by**: niri, dank-material-shell, alacritty, and all Stylix-enabled targets
+- **Consumed by**: niri, noctalia (via `programs.noctalia.settings`), alacritty, and all Stylix-enabled targets
 ```

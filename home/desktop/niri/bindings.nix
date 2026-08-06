@@ -6,20 +6,20 @@
   ...
 }:
 let
-  # Send a DMS IPC command, launching the shell first if it isn't running yet.
-  # Mirrors the old noctalia wrapper: try the IPC call; on failure, start DMS in
-  # the background, briefly wait, then retry. Idempotent and safe to fire from
-  # keybindings that may land before the shell is up at session start.
-  dms =
+  # noctalia: auto-launch the shell if it isn't running, then send an IPC msg.
+  # v5 IPC is `noctalia msg <command>` (kebab-case single string); v4 was
+  # `noctalia-shell ipc call <ns> <method>`. The wrapper preserves the
+  # fire-and-forget + auto-start behavior so keybinds work mid-shell-restart.
+  noctalia =
     cmd:
     [
       "${pkgs.bash}/bin/bash"
       "-c"
       ''
-        if ! ${config.home.profileDirectory}/bin/dms ipc call "$@" >/dev/null 2>&1; then
-          ${pkgs.coreutils}/bin/nohup ${config.home.profileDirectory}/bin/dms run >/dev/null 2>&1 &
+        if ! ${config.home.profileDirectory}/bin/noctalia msg "$@" >/dev/null 2>&1; then
+          ${pkgs.coreutils}/bin/nohup ${config.home.profileDirectory}/bin/noctalia >/dev/null 2>&1 &
           ${pkgs.coreutils}/bin/sleep 0.35
-          ${config.home.profileDirectory}/bin/dms ipc call "$@" >/dev/null 2>&1 || true
+          ${config.home.profileDirectory}/bin/noctalia msg "$@" >/dev/null 2>&1 || true
         fi
       ''
       "bash"
@@ -92,8 +92,6 @@ in
     };
 
     # ── Screenshots ─────────────────────────────────────────────
-    # NOTE: DMS's own niri module binds Mod+P to notepad; we keep Mod+P as
-    # screenshot (preserves the existing binding) and skip notepad.
     "Mod+P".action.screenshot = { };
     "Mod+Ctrl+P".action.screenshot-screen = { };
     "Mod+Alt+P".action.screenshot-window = { };
@@ -104,20 +102,29 @@ in
       action = toggle-overview;
     };
 
-    # ── DankMaterialShell controls ──────────────────────────────
-    # IPC targets verified against DMS docs (dms ipc call <target> <action>).
-    "Mod+Space".action.spawn = dms "spotlight toggle"; # app launcher
-    "Mod+W".action.spawn = dms "spotlight toggle"; # no separate windows mode in DMS
-    "Mod+N".action.spawn = dms "notifications toggle";
-    "Mod+Comma".action.spawn = dms "settings toggle";
-    "Mod+S".action.spawn = dms "control-center toggle";
-    "Mod+X".action.spawn = dms "powermenu toggle"; # was sessionMenu
-    "Mod+V".action.spawn = dms "clipboard toggle"; # was launcher clipboard
-    "Mod+M".action.spawn = dms "processlist toggle"; # was systemMonitor
-    "Mod+Alt+N".action.spawn = dms "theme toggle"; # was darkMode
+    # ── Noctalia v5 shell controls ─────────────────────────────
+    # IPC verbs verified from upstream src/ipc + per-service registerIpc calls.
+    "Mod+Space".action.spawn = noctalia "panel-toggle launcher";
+    "Mod+W".action.spawn = noctalia "panel-toggle launcher"; # v5: no separate windows mode; launcher lists apps + windows
+    "Mod+N".action.spawn = noctalia "notification-clear-history";
+    "Mod+Comma".action.spawn = noctalia "settings-toggle";
+    "Mod+S".action.spawn = noctalia "panel-toggle control-center";
+    "Mod+X".action.spawn = noctalia "panel-toggle session";
+
+    # ── Clipboard ──────────────────────────────────────────────────
+    # Mod+V (v4 QML clipboard plugin) is deferred — v5 has a native clipboard
+    # panel reachable via `panel-toggle clipboard` and the bar widget. Rebind
+    # Mod+V to that native panel so the key isn't dead.
+    "Mod+V".action.spawn = noctalia "panel-toggle clipboard";
+
+    # Mod+M (v4 systemMonitor toggle): v5 has no dedicated system-monitor panel;
+    # route to the control center where system metrics live.
+    "Mod+M".action.spawn = noctalia "panel-toggle control-center";
+    "Mod+Alt+N".action.spawn = noctalia "theme-mode-toggle";
 
     # ── Lock screen ─────────────────────────────────────────────
-    "Super+Alt+L".action.spawn = dms "lock lock";
+    # session lock (verified: src/shell/session/session_ipc.cpp).
+    "Super+Alt+L".action.spawn = noctalia "session lock";
 
     # ── System ──────────────────────────────────────────────────
     "Mod+Shift+E".action = quit;
@@ -128,48 +135,45 @@ in
     };
 
     # ── Volume (allow when locked) ──────────────────────────────
-    # DMS audio: increment/decrement take a step arg; mute toggles output.
     "XF86AudioRaiseVolume" = {
       allow-when-locked = true;
-      action.spawn = dms "audio increment 5";
+      action.spawn = noctalia "volume-up";
     };
     "XF86AudioLowerVolume" = {
       allow-when-locked = true;
-      action.spawn = dms "audio decrement 5";
+      action.spawn = noctalia "volume-down";
     };
     "XF86AudioMute" = {
       allow-when-locked = true;
-      action.spawn = dms "audio mute";
+      action.spawn = noctalia "volume-mute";
     };
     "XF86AudioMicMute" = {
       allow-when-locked = true;
-      action.spawn = dms "audio micmute";
+      action.spawn = noctalia "mic-mute";
     };
 
     # ── Brightness (allow when locked) ─────────────────────────
-    # DMS brightness: increment/decrement take <step> and a trailing "" arg
-    # (matches DMS's own niri module binding shape).
     "XF86MonBrightnessUp" = {
       allow-when-locked = true;
-      action.spawn = dms "brightness increment 5 \"\"";
+      action.spawn = noctalia "brightness-up";
     };
     "XF86MonBrightnessDown" = {
       allow-when-locked = true;
-      action.spawn = dms "brightness decrement 5 \"\"";
+      action.spawn = noctalia "brightness-down";
     };
 
     # ── Media (allow when locked) ──────────────────────────────
     "XF86AudioPlay" = {
       allow-when-locked = true;
-      action.spawn = dms "mpris playPause";
+      action.spawn = noctalia "media play-pause";
     };
     "XF86AudioNext" = {
       allow-when-locked = true;
-      action.spawn = dms "mpris next";
+      action.spawn = noctalia "media next";
     };
     "XF86AudioPrev" = {
       allow-when-locked = true;
-      action.spawn = dms "mpris previous";
+      action.spawn = noctalia "media previous";
     };
   };
 }

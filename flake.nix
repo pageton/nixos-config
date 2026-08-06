@@ -28,17 +28,22 @@
 
     niri.url = "github:sodiboo/niri-flake"; # Do NOT follow nixpkgs — mesa compatibility
 
-    # DankMaterialShell: Go + Quickshell desktop shell (bar/launcher/notifications/
-    # control-center/lock/power-menu). Replaces Noctalia.
-    # NOTE: We deliberately do NOT import homeModules.niri — it lib.mkForce's the
-    # niri config target and would hijack home/desktop/niri/. Manual wiring only.
-    # See https://github.com/AvengeMedia/DankMaterialShell and home/desktop/dms/
-    dank-material-shell = {
-      url = "github:AvengeMedia/DankMaterialShell";
+    # Noctalia v5: native C++ desktop shell (bar/launcher/control-center/
+    # notifications/lock/power-menu). The ACTIVE shell — see home/desktop/noctalia/.
+    # v5 is a fresh architecture (TOML config, Luau plugins) — does not conflict
+    # with any v4 install. Binary: `noctalia`; IPC: `noctalia msg <command>`.
+    # NOTE: v5 has NO Stylix target (unlike v4's noctalia-shell.enable); theme is
+    # hand-mirrored via programs.noctalia.settings in home/desktop/noctalia/.
+    noctalia = {
+      url = "github:noctalia-dev/noctalia";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    dank-greeter = {
-      url = "github:AvengeMedia/dank-greeter";
+
+    # Noctalia Greeter: greetd-based display manager matching the Noctalia shell
+    # aesthetic. Replaces DankGreeter. Syncs palette/wallpaper/font from the
+    # running shell via sync.toml. See nixos/modules/greetd.nix.
+    noctalia-greeter = {
+      url = "github:noctalia-dev/noctalia-greeter";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nvf = {
@@ -159,7 +164,7 @@
           };
           modules = [
             ./hosts/${hostname}/configuration.nix
-            inputs.dank-greeter.nixosModules.default
+            inputs.noctalia-greeter.nixosModules.default
           ];
         };
 
@@ -184,7 +189,7 @@
             ./home/home.nix
             inputs.stylix.homeModules.stylix
             inputs.niri.homeModules.config
-            inputs.dank-material-shell.homeModules.dank-material-shell
+            inputs.noctalia.homeModules.default
           ];
         };
 

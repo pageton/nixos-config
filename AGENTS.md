@@ -175,22 +175,23 @@ scripts/ai/_agent-registry.sh (alias → command mapping)
 
 ### External Flake Inputs
 
-| Input                 | Version  | Notes                                                      |
-| --------------------- | -------- | ---------------------------------------------------------- |
-| `nixpkgs`             | unstable | Primary package set                                        |
-| `nixpkgs-stable`      | 25.11    | Select stable packages via `pkgsStable`                    |
-| `home-manager`        | master   | User environment management                                |
-| `sops-nix`            | latest   | Age-encrypted secret management                            |
-| `stylix`              | latest   | System-wide theming (Catppuccin Mocha)                     |
-| `niri`                | latest   | ⚠️ Does NOT follow nixpkgs — pinned mesa for compatibility |
-| `dank-material-shell` | latest   | DMS shell/bar/launcher for Niri (Go + Quickshell)          |
-| `spicetify-nix`       | latest   | Spotify customization                                      |
-| `nixcord`             | latest   | Discord theming                                            |
-| `nvf`                 | latest   | Neovim configuration framework                             |
-| `nix-wallpaper`       | latest   | Nix-themed wallpaper generator                             |
-| `ghgrab`              | latest   | GitHub release downloader                                  |
-| `zellij-tui`          | latest   | Zellij TUI extension                                       |
-| `zen-browser`         | latest   | Zen Browser flake (beta channel)                           |
+| Input              | Version  | Notes                                                      |
+| ------------------ | -------- | ---------------------------------------------------------- |
+| `nixpkgs`          | unstable | Primary package set                                        |
+| `nixpkgs-stable`   | 25.11    | Select stable packages via `pkgsStable`                    |
+| `home-manager`     | master   | User environment management                                |
+| `sops-nix`         | latest   | Age-encrypted secret management                            |
+| `stylix`           | latest   | System-wide theming (Catppuccin Mocha)                     |
+| `niri`             | latest   | ⚠️ Does NOT follow nixpkgs — pinned mesa for compatibility |
+| `noctalia`         | latest   | Noctalia v5 desktop shell (C++ native, TOML config)        |
+| `noctalia-greeter` | latest   | greetd-based display manager matching the Noctalia shell   |
+| `spicetify-nix`    | latest   | Spotify customization                                      |
+| `nixcord`          | latest   | Discord theming                                            |
+| `nvf`              | latest   | Neovim configuration framework                             |
+| `nix-wallpaper`    | latest   | Nix-themed wallpaper generator                             |
+| `ghgrab`           | latest   | GitHub release downloader                                  |
+| `zellij-tui`       | latest   | Zellij TUI extension                                       |
+| `zen-browser`      | latest   | Zen Browser flake (beta channel)                           |
 
 ### Internal Dependency Graph
 
