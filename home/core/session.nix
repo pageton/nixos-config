@@ -27,8 +27,8 @@ _: {
     SENTRY_DSN = "";
     STRIPE_CLI_TELEMETRY_OPTOUT = "1";
 
-    # Development
-    RUSTC_WRAPPER = "sccache"; # Use sccache for faster Rust/C++ rebuilds
+    # === Development ===
+    RUSTC_WRAPPER = "sccache"; # Faster Rust/C++ rebuilds via sccache
     DOCKER_CONTENT_TRUST = "1"; # Enforce signed Docker images
   };
 }

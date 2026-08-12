@@ -1,7 +1,7 @@
-# Qt theming and configuration
+# Qt theming and configuration.
+# Uses pkgs (unstable) — qt5ct/qt6ct are small config tools; no benefit from stable.
 
 { pkgs, ... }:
-
 {
   qt = {
     enable = true;

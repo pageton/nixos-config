@@ -19,16 +19,21 @@ Gaming/workstation PC host. Enables full virtualization stack, gaming with Games
 | `virtualisation` | `enable = true` (Docker, VirtualBox, libvirt) |
 | `gaming` | `enable = true`, `enableGamescope = true` |
 | `mullvadVpn` | `enable = true` |
-| `tor` | `enable = true` |
-| `netdata` | `enable = true` |
 | `scrutiny` | `enable = true` |
-| `syncthing` | `enable = true` |
 | `glance` | `enable = true` |
-| `macchanger` | `enable = true` |
 | `flatpak` | `enable = true` |
 | `sandboxing` | `enable = true`, user namespaces + wrapped binaries |
+| `tor` | `enable = true` |
+| `netdata` | `enable = true` |
+| `cloudflared` | `enable = true` (vault-desktop tunnel) |
+| `syncthing` | `enable = true` |
+| `codex` | `enable = true` |
+| `macchanger` | `enable = true` |
+| `tailscale` | `enable = true` |
+| `amdRyzenThermal` | `enable = true` |
 | `bluetooth` | Explicitly disabled (`enable = false`) |
-
+| `webRe` | `enable = true` |
+| `vaultwarden` | `enable = true` |
 ## Conventions
 
 - All `mySystem.*` options are set explicitly, even disabled ones — this is intentional for auditability.

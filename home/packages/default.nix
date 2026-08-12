@@ -16,7 +16,6 @@ let
     ./utilities.nix
     ./wayland.nix
     ./privacy.nix
-    ./linting.nix
     ./system-monitoring.nix
     ./productivity.nix
     ./custom/default.nix

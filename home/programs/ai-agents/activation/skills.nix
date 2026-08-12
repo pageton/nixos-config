@@ -229,6 +229,7 @@ lib.mkIf true (
       mirror_skills_to "$HOME/.omp/agent/skills"
       mirror_count=$((mirror_count + 1))
 
+
       echo "✓ Mirrored skills to $mirror_count agent directories"
     else
       # ~/.claude/skills/ removed — clean stale symlinks from all agent dirs

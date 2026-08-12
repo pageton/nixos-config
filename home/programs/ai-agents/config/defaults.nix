@@ -16,8 +16,8 @@ in
     agentmemory.enable = true;
     herdr.enable = true;
     antigravity.enable = true;
-    omp.enable = true;
     zcode.enable = true;
+    omp.enable = true;
     codegraph.enable = true;
     serena.enable = false;
 

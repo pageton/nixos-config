@@ -8,19 +8,19 @@ Parent: `home-manager/modules/ai-agents/AGENTS.md`
 
 ## Files
 
-| File                                  | Purpose                                                                                  |
-| ------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `default.nix`                         | Aggregation hub: wires all activation DAG entries into `home.activation`                 |
-| `secrets.nix`                         | Secret patching: injects Z.AI, OpenRouter, Context7, GitHub tokens + Pi API root/key via jq/sed |
-| `claude-setup.nix`                    | Generates `~/.claude/settings.json` and `~/.mcp.json` with jq merge for existing configs |
-| `codex-setup.nix`                     | Generates `~/.codex/config.toml` with personality, model, MCP, profiles, agents          |
-| `skills.nix`                          | Skills CLI bootstrap with retry, state caching (SHA256 skip), Claude-to-Codex/Pi mirroring |
-| `plugins.nix`                         | Plugin aggregation: imports impeccable, agency-agents, ECC installers + cleanup          |
-| `_plugin-impeccable.nix`              | Impeccable skill pack: git clone, bun build, copy to Claude/OpenCode skill dirs          |
-| `_plugin-agency-agents.nix`           | Agency agents: clone and copy division agent `.md` files to agent dirs                   |
-| `_plugin-everything-claude-code.nix`  | ECC: clone, curated copy of skills/commands/agents to all profiles                       |
-| `_cleanup-agency-agents.nix`          | Removes agency-agent files when disabled, preserves curated agents                       |
-| `_cleanup-everything-claude-code.nix` | Removes ECC files from Claude/Codex/OpenCode when disabled                               |
+| File                                  | Purpose                                                                                                                                                                                                                                                                                                          |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `default.nix`                         | Aggregation hub: wires all activation DAG entries into `home.activation`                                                                                                                                                                                                                                         |
+| `secrets.nix`                         | Secret patching: injects Z.AI, OpenRouter, Context7, GitHub tokens + Pi API root/key via jq/sed                                                                                                                                                                                                                  |
+| `claude-setup.nix`                    | Generates `~/.claude/settings.json` and `~/.mcp.json` with jq merge for existing configs                                                                                                                                                                                                                         |
+| `codex-setup.nix`                     | Generates `~/.codex/config.toml` with personality, model, MCP, profiles, agents                                                                                                                                                                                                                                  |
+| `skills.nix`                          | Skills CLI bootstrap with retry, state caching (SHA256 skip), Claude-to-Codex/Pi mirroring                                                                                                                                                                                                                       |
+| `plugins.nix`                         | Plugin aggregation: imports impeccable, agency-agents, ECC installers + cleanup                                                                                                                                                                                                                                  |
+| `_plugin-impeccable.nix`              | Impeccable skill pack: git clone, bun build, copy to Claude/OpenCode skill dirs                                                                                                                                                                                                                                  |
+| `_plugin-agency-agents.nix`           | Agency agents: clone and copy division agent `.md` files to agent dirs                                                                                                                                                                                                                                           |
+| `_plugin-everything-claude-code.nix`  | ECC: clone, curated copy of skills/commands/agents to all profiles                                                                                                                                                                                                                                               |
+| `_cleanup-agency-agents.nix`          | Removes agency-agent files when disabled, preserves curated agents                                                                                                                                                                                                                                               |
+| `_cleanup-everything-claude-code.nix` | Removes ECC files from Claude/Codex/OpenCode when disabled                                                                                                                                                                                                                                                       |
 
 ---
 

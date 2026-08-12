@@ -102,7 +102,7 @@ let
   shellAliases = import ./helpers/_services-shell-aliases.nix { inherit cfg aiAliases constants; };
   zcodeDrv =
     let
-      zcodeList = import ../../packages/custom/zcode.nix { inherit pkgs lib; };
+      zcodeList = import ./zcode-package.nix { inherit pkgs lib; };
     in
     builtins.head zcodeList;
 

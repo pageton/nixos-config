@@ -184,6 +184,7 @@ in
         };
       })
 
+
       # === Oh My Pi (omp): herdr agent state extension ===
       (lib.mkIf (cfg.herdr.enable && cfg.omp.enable) {
         ".omp/agent/extensions/herdr-omp-agent-state.ts" = {

@@ -16,4 +16,8 @@
 
   # === Media Playback ===
   vlc
+
+  # === Audio Control ===
+  pavucontrol # PulseAudio volume control GUI
+  easyeffects # Audio effects for PipeWire applications
 ]

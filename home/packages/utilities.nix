@@ -44,8 +44,6 @@
   udiskie # Automatic disk mounting for USB drives with notifications
 
   # === Audio Control ===
-  pavucontrol # PulseAudio volume control GUI
-  easyeffects # Audio effects for PipeWire applications
 
   # === Development and Debugging Utilities ===
   hexdump # Hexadecimal file dumper

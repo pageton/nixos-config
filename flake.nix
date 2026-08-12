@@ -66,6 +66,7 @@
       url = "github:ogulcancelik/herdr";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
   };
 
   outputs =

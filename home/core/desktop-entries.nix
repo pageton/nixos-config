@@ -1,4 +1,8 @@
 { config, ... }: {
+# NOTE: Entries referencing /run/current-system/sw/bin/ (Telegram, AyuGram,
+# Celluloid) require mySystem.sandboxing.enableWrappedBinaries = true.
+# Without it, these firejail-wrapped binaries don't exist.
+
   xdg.desktopEntries = {
     "org.telegram.desktop" = {
       name = "Telegram Desktop";
@@ -61,6 +65,8 @@
     };
 
     "brave-browser" = {
+      # NOTE: ~/.local/bin/brave is a user-managed wrapper script — not Nix-managed.
+      # If deleted, this desktop entry silently breaks.
       name = "Brave Web Browser";
       exec = "${config.home.homeDirectory}/.local/bin/brave %U";
       icon = "brave-browser";

@@ -16,6 +16,7 @@
 
   nixpkgs.config = {
     allowUnfree = true; # needed by HM — flake-level nixpkgsConfig does NOT propagate to HM's nixpkgs.config
+    # nodejs-slim-20.20.2: permitted because <add reason here>
     permittedInsecurePackages = [ "nodejs-slim-20.20.2" ];
   };
 

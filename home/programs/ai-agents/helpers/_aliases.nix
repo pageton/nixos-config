@@ -377,6 +377,7 @@ let
       tool = "omp";
       launcherSimple = true;
     }
+
   ];
 
   # Workflow prompt specs with labels for bash WORKFLOW_MAP generation.

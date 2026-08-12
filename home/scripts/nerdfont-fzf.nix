@@ -1,8 +1,7 @@
-# - ## Nerdfont FZF
-#-
-#- This module provides a script to search for Nerd Fonts icons using fzf.
-#-
-#- - `nerdfont-fzf` - Search for Nerd Fonts icons using fzf.
+# Nerdfont FZF — search Nerd Font icons via fzf and copy to clipboard.
+#
+# Provides:
+# - `nerdfont-fzf` — Search for Nerd Fonts icons using fzf.
 { pkgs, config, ... }:
 let
   nerdfont-fzf = pkgs.writeShellScriptBin "nerdfont-fzf" ''

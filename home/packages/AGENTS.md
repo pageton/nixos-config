@@ -1,6 +1,6 @@
 # User Packages
 
-Declarative package lists split into categorized chunk files. Each chunk receives `{ pkgs, pkgsStable }` and returns a flat package list. All lists are concatenated into `home.packages` by `home.nix`.
+Declarative package lists split into categorized chunk files. Each chunk receives `{ pkgs, pkgsStable, constants }` and returns a flat package list. All lists are concatenated into `home.packages` by `home.nix`.
 
 ## Files
 
@@ -15,10 +15,10 @@ Declarative package lists split into categorized chunk files. Each chunk receive
 | `utilities.nix` | General-purpose utilities |
 | `wayland.nix` | Wayland-specific tools (wl-clipboard, screenshot, etc.) |
 | `privacy.nix` | Privacy and security tools |
-| `linting.nix` | Linters and formatters |
 | `system-monitoring.nix` | System monitoring tools |
 | `productivity.nix` | Productivity applications |
 | `cool.nix` | Miscellaneous/niche tools |
+| `custom/` | Custom AppImage derivations (antigravity-cli, orca, t3code, tabby) |
 ## Directory Structure
 
 ```
@@ -32,17 +32,18 @@ home/packages/
 ├── utilities.nix   # General-purpose utilities
 ├── wayland.nix     # Wayland-specific tools
 ├── privacy.nix     # Privacy and security tools
-├── linting.nix     # Linters and formatters
 ├── system-monitoring.nix # System monitoring tools
 ├── productivity.nix # Productivity applications
+├── custom/        # Custom AppImage derivations
 └── cool.nix        # Miscellaneous/niche tools
 ```
 
 
 ## Conventions
 
-- Each file is a plain function `{ pkgs, pkgsStable }: [ ... ]` returning a package list
+- Each file is a plain function `{ pkgs, pkgsStable, constants }: [ ... ]` returning a package list
 - Use `pkgsStable` for packages that need the stable nixpkgs channel
+- `productivity.nix` uses `pkgs` (unstable) — its packages are not in pkgsStable
 - Alphabetize packages within each list
 - To add a category: create file → add to `chunks` list in `default.nix`
 

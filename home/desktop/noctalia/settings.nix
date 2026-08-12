@@ -56,6 +56,9 @@ in
       # Keep v5's built-in clipboard manager on (replaces the v4 QML clipboard
       # plugin's pin/copy affordances with the native panel for now).
       clipboard_enabled = true;
+      # Raise the unpinned history cap from the v5 default of 100 (pinned
+      # entries are exempt). Range is 10–10000.
+      clipboard_history_max_entries = 1000;
       font_family = config.stylix.fonts.monospace.name;
       app_icon_colorize = false;
       session = {

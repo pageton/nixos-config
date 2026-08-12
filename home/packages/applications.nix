@@ -18,11 +18,10 @@ with pkgsStable;
   # === Productivity and Knowledge Management ===
   anki-bin # Spaced repetition flashcard system
   obsidian # Knowledge base and note-taking application
-
-  # === AI and Development Tools ===
-  pkgs.antigravity-ide-fhs # AI-powered agentic IDE
-  # === Terminal Emulators ===
-  termius # Modern SSH client with cloud sync
+  # === AI-Powered IDE ===
+  antigravity-ide-fhs
+  # === Terminal Emulator ===
+  termius
 
   # === Gaming and Compatibility ===
   (bottles.override { removeWarningPopup = true; }) # Run Windows applications on Linux

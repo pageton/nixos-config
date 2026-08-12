@@ -84,4 +84,7 @@ with pkgsStable;
   yara # Pattern matching engine for malware/rules detection
   hashid # Hash type identification from hash strings
   cewl # Custom wordlist generator by spidering target sites
+
+  # === Linting and Formatting ===
+  markdownlint-cli # Markdown linting (used by nvim-lint)
 ]

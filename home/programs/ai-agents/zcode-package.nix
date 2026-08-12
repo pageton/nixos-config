@@ -1,14 +1,13 @@
-{ pkgs, ... }:
-let
-  version = "3.6.5";
+{ pkgs, ... }: let
+  version = "3.7.5";
 
   src = pkgs.fetchurl {
     url = "https://cdn-zcode.z.ai/zcode/electron/releases/${version}/linux-x64/ZCode-${version}-linux-x64.AppImage";
     # NOTE: lib.fakeSha256 is a placeholder. On first build, Nix will fail with
     # "hash mismatch" and print the actual SRI hash. Copy that hash here, then
     # rebuild. Alternatively, run:
-    #   nix-prefetch-url "https://cdn-zcode.z.ai/zcode/electron/releases/3.6.5/linux-x64/ZCode-3.6.5-linux-x64.AppImage" | xargs nix hash to-sri --type sha256
-    sha256 = "sha256-MJmvn8qnxfVQYWGm2/YBUspefX6jn9B1YkBK13lMWQY=";
+    #   nix-prefetch-url "https://cdn-zcode.z.ai/zcode/electron/releases/3.7.5/linux-x64/ZCode-3.7.5-linux-x64.AppImage" | xargs nix hash to-sri --type sha256
+    sha256 = "sha256-7yV4a4x0v1I1UJc/FmKhNlnochXLh8/PxmzdWVSIuEM=";
   };
 
   appContents = pkgs.appimageTools.extractType2 {
@@ -26,7 +25,7 @@ let
       pkgs.xdg-utils # open URLs/files from in-app
     ];
 
-    passthru = { inherit appContents; };
+    passthru = {inherit appContents;};
 
     extraInstallCommands = ''
       # Desktop file — rewrite Exec line with required flags
@@ -52,5 +51,4 @@ let
       fi
     '';
   };
-in
-[ zcode ]
+in [zcode]

@@ -8,7 +8,6 @@
     ./mcp-servers-web-re.nix # Web RE agent-specific MCP servers (not shared globally)
     ./models # Model/provider registries (OpenCode, Codex, OMP)
     ./claude # Claude Code permissions, hooks, and settings
-    ./zcode # ZCode lifecycle hooks
     ./herdr.nix # herdr config via upstream home-manager module
   ];
 }

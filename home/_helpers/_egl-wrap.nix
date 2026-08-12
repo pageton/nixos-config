@@ -5,7 +5,6 @@ let
   inherit (constants.paths) eglVendorFile;
 in
 {
-  inherit eglVendorFile;
 
   wrapWithMesaEgl =
     name: pkg:

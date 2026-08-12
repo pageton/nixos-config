@@ -1,46 +1,58 @@
 # Home-Manager Programs
 
-Top-level Home-Manager program configuration hub. Contains standalone `.nix` files for individual programs and subdirectories for complex multi-file configurations.
+Application and tool configurations — each program gets its own module (flat `.nix` file or subdirectory with `default.nix`).
 
-## Architecture
+## Files
 
-```
+| File/Dir | Purpose |
+|----------|---------|
+| `default.nix` | Import hub: 6 subdirs + 10 flat files |
+| `ai-agents/` | AI coding agents (Claude Code, Codex, OpenCode, OMP, ZCode) — config, hooks, services, activation |
+| `languages/` | Language toolchains (Go, Python, JS/Node), LSP servers, mise version manager |
+| `terminal/` | Terminal emulator (Alacritty), shell (Zsh), multiplexer (Zellij), 20+ CLI tools |
+| `nvf/` | Neovim via NVF framework |
+| `librewolf/` | LibreWolf browser with multi-profile proxy setup |
+| `isolation/` | Wayland browser sandbox wrappers |
+| `brave.nix` | Brave browser with Wayland flags and extensions |
+| `chromium.nix` | Chromium launch wrapper with Wayland flags |
+| `discord.nix` | Discord/Vesktop theming via nixcord |
+| `gpg.nix` | GPG key management and agent |
+| `obs.nix` | OBS Studio configuration |
+| `spicetify.nix` | Spotify customization via spicetify-nix |
+| `ssh.nix` | SSH client configuration |
+| `tailscale.nix` | Tailscale VPN packages |
+| `thunar.nix` | Thunar file manager custom actions |
+| `activitywatch.nix` | ActivityWatch time tracking |
+
+## Directory Structure
+
 ```
 home/programs/
-├── default.nix          # Imports all subdirectories and standalone .nix files
-├── ai-agents/           # AI agent orchestration (has AGENTS.md)
-├── terminal/            # Shell, terminal, CLI tools (has AGENTS.md)
-├── nvf/                 # Neovim via NVF framework (has AGENTS.md)
-├── zen-browser/         # Multi-profile browser with SOCKS5 proxies (has AGENTS.md)
-├── languages/           # Go, Python, JS/Node, LSP servers, mise (has AGENTS.md)
-├── isolation/           # Wayland browser sandbox wrappers (has AGENTS.md)
-├── packages/            # Categorized package lists (has AGENTS.md)
-├── themes/              # Stylix theming, Catppuccin Mocha (has AGENTS.md)
-├── core/                # User account, session vars, GTK, activation (has AGENTS.md)
-├── scripts/             # User-level scripts (has AGENTS.md)
-├── brave.nix            # Brave browser with proxy
-├── discord.nix          # Discord/Desktop theming (nixcord)
-├── gpg.nix              # GPG key management and agent
-├── obs.nix              # OBS Studio configuration
-├── spicetify.nix        # Spotify customization (spicetify-nix)
-├── ssh.nix              # SSH client configuration
-├── tailscale.nix        # Tailscale VPN packages
-├── thunar.nix           # Thunar file manager custom actions
+├── default.nix          # Import hub for all programs
+├── ai-agents/           # AI coding agent orchestration
+├── languages/           # Language toolchains + LSP servers
+├── terminal/            # Terminal, shell, multiplexer, CLI tools
+├── nvf/                 # Neovim via NVF framework
+├── librewolf/           # LibreWolf browser
+├── isolation/           # Browser sandbox wrappers
+├── brave.nix            # Brave browser config
+├── chromium.nix         # Chromium launch wrapper
+├── discord.nix          # Discord theming
+├── gpg.nix              # GPG key management
+├── obs.nix              # OBS Studio
+├── spicetify.nix        # Spotify customization
+├── ssh.nix              # SSH client
+├── tailscale.nix        # Tailscale VPN
+├── thunar.nix           # Thunar file manager
 └── activitywatch.nix    # ActivityWatch time tracking
 ```
 
-## Subdirectories with AGENTS.md
-
-- `ai-agents/` — Multi-provider AI agent orchestration
-- `terminal/` — Zsh, Alacritty, Zellij, 20+ CLI tools
-
 ## Conventions
 
-- Standalone `.nix` file for simple program configs (single file is sufficient)
-- Subdirectory for complex configs requiring multiple files (e.g., ai-agents, terminal, nvf)
-- Each subdirectory has its own `default.nix` as the import entry point
+- Subdirectories (ai-agents, languages, terminal, nvf, librewolf, isolation) contain `default.nix` that imports their sub-modules
+- Flat `.nix` files are single-concern application configs
+- Avoid new flat files for multi-file modules — create a subdirectory with `default.nix`
 
 ## Dependencies
 
-- **Imported by**: `home/home.nix`
-- **Receives**: `inputs`, `pkgs`, `pkgsStable`, `constants` via specialArgs
+- **Imported by**: `home/home.nix` (via `./programs`)

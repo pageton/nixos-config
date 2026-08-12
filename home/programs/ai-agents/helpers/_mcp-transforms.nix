@@ -23,9 +23,10 @@
 #     local:  { command = "..."; args = [...]; }
 #     remote: { httpUrl = "..."; }                  (uses httpUrl, not type)
 #
-#   omp (Oh My Pi):
+# omp (Oh My Pi):
 #     local:  { type = "stdio"; command = "..."; args = [...]; }
 #     remote: { type = "http"; url = "..."; }
+#
 
 { cfg, lib }:
 
@@ -154,6 +155,7 @@ let
   };
   # MiMo uses the same MCP format as OpenCode (shared codebase).
   mimoMcpServers = opencodeMcpServers;
+
 in
 
 {

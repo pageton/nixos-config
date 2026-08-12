@@ -35,13 +35,28 @@
     flatpak = {
       enable = true;
     };
-    tor = {
-      enable = true;
-    };
     dnscryptProxy = {
       enable = false;
     };
+    amdRyzenThermal = {
+      enable = false;
+    };
+    mullvadVpn = {
+      enable = false;
+    };
+    webRe = {
+      enable = false;
+    };
+    cloudflared = {
+      enable = false;
+    };
+    vaultwarden = {
+      enable = false;
+    };
     tailscale = {
+      enable = true;
+    };
+    tor = {
       enable = true;
     };
     netdata = {

@@ -18,8 +18,10 @@ let
       ''
         if ! ${config.home.profileDirectory}/bin/noctalia msg "$@" >/dev/null 2>&1; then
           ${pkgs.coreutils}/bin/nohup ${config.home.profileDirectory}/bin/noctalia >/dev/null 2>&1 &
-          ${pkgs.coreutils}/bin/sleep 0.35
-          ${config.home.profileDirectory}/bin/noctalia msg "$@" >/dev/null 2>&1 || true
+          for _ in $(seq 1 10); do
+            ${pkgs.coreutils}/bin/sleep 0.15
+            ${config.home.profileDirectory}/bin/noctalia msg "$@" >/dev/null 2>&1 && exit 0
+          done
         fi
       ''
       "bash"

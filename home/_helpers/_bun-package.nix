@@ -1,5 +1,5 @@
-# Shared Bun runtime pinned to 1.3.14.
-# nixpkgs bun 1.3.13 is too old for omp/copilot CLIs which require >= 1.3.14.
+# Shared Bun runtime pinned to 1.3.14 — tested working with omp/copilot CLIs.
+# Pinned because these CLIs are sensitive to Bun version changes.
 # Import: bunPackage = import ../../_helpers/_bun-package.nix { inherit pkgs; };
 { pkgs }:
 pkgs.stdenvNoCC.mkDerivation {

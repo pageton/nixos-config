@@ -9,7 +9,7 @@ nixos/modules/
 ├── default.nix              # Root loader → 10 category directories
 ├── core/                    # Boot, Nix daemon, users, SOPS, locale, stability
 ├── hardware/                # Audio, Bluetooth, GPU, input, power, thermal
-├── desktop/                 # Niri compositor, SDDM, X11 disabled, XDG portals
+├── desktop/                 # Niri compositor, greetd, X11 disabled, XDG portals
 ├── network/                 # NetworkManager, DNSCrypt, Mullvad, Tailscale, Tor
 ├── security-stack/          # Kernel hardening, firewall, Firejail, OpenSnitch, MAC
 ├── apps/                    # Browser deps, Flatpak, Gaming, Syncthing
@@ -36,18 +36,16 @@ nixos/modules/
 ├── upower.nix
 ├── thermal.nix
 ├── niri.nix
-├── sddm.nix
+├── greetd.nix
 ├── xserver.nix
 ├── xdg-desktop-portal.nix
 ├── networking.nix
 ├── dnscrypt-proxy.nix
 ├── mullvad.nix
 ├── tailscale.nix
+├── cloudflared.nix
 ├── tor.nix
 ├── security.nix
-├── firewall.nix
-├── aide.nix
-├── apparmor.nix
 ├── opensnitch.nix
 ├── macchanger.nix
 ├── opsec.nix
@@ -58,20 +56,17 @@ nixos/modules/
 ├── gaming.nix
 ├── syncthing.nix
 ├── virtualization.nix
-├── docker.nix
-├── virtualbox.nix
-├── libvirt.nix
 ├── nix-ld.nix
 ├── netdata.nix
 ├── scrutiny.nix
-├── glance.nix
 ├── loki.nix
 ├── monitoring.nix
 ├── boot-optimization.nix
 ├── cleanup.nix
 ├── backup.nix
+├── codex.nix
 ├── nh.nix
-├── android.nix
+├── vaultwarden.nix
 ├── fwupd.nix
 ├── printing.nix
 ├── secure-boot.nix
@@ -85,7 +80,7 @@ nixos/modules/
 |----------|---------|-------|
 | `core/` | bootloader, nix, users, sops, timezone, i18n, environment, stability, validation | Always active |
 | `hardware/` | audio (PipeWire), android (ADB), bluetooth, graphics (NVIDIA), libinput, upower, thermal | Always active except bluetooth |
-| `desktop/` | niri, sddm, xserver (disabled), xdg-desktop-portal | Always active |
+| `desktop/` | niri, greetd, xserver (disabled), xdg-desktop-portal | Always active |
 | `network/` | networking (NM+resolved), dnscrypt-proxy, mullvad, tailscale, tor | Mixed opt-in |
 | `security-stack/` | security (kernel/sysctl/nftables/AIDE/AppArmor), opsec (session lock, zram, NTS chrony), sandboxing (Firejail), opensnitch, macchanger, web-re (opt-in) | Mixed opt-in |
 | `apps/` | browser-deps, flatpak, gaming (Steam/Proton/MangoHud), syncthing | Mixed opt-in |

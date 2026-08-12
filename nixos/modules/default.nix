@@ -17,7 +17,7 @@
   imports = [
     ./core # Bootloader, Nix, users, SOPS, timezone, i18n, environment, stability, validation
     ./hardware # Audio, Bluetooth, Graphics (NVIDIA), Input, Power, Thermal, Android
-    ./desktop # Niri compositor, SDDM, X11 disabled, XDG portals
+    ./desktop # Niri compositor, greetd, X11 disabled, XDG portals
     ./network # NetworkManager, DNSCrypt, Mullvad VPN, Tailscale, Tor
     ./security-stack # Kernel/sysctl hardening, Firejail sandboxing, OpenSnitch, MAC randomization
     ./apps # Browser deps, Flatpak, Gaming, KDE Connect, Syncthing
