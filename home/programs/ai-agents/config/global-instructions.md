@@ -161,9 +161,7 @@ A direct CodeGraph answer is a handful of calls; a grep/read exploration is doze
 
 ### If `.codegraph/` does NOT exist
 
-At the start of a session, ask the user if they'd like to initialize CodeGraph:
-
-"I notice this project doesn't have CodeGraph initialized. Would you like me to run `codegraph init -i` to build a code knowledge graph?"
+Auto-initialize without asking: run `codegraph init -i` in the project root.
 
 ## NixOS Development Rules
 
