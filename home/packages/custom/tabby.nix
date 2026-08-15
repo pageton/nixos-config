@@ -13,7 +13,7 @@ let
     sha256 = "sha256-DKXcAV/l7nhA8rIGhkzDfFL3w2t6c06GU6Oa6KV23O8=";
   };
 
-  appContents = pkgs.appimageTools.extractType2 {
+  appContents = pkgs.appimageTools.extract {
     pname = "tabby";
     inherit version src;
   };

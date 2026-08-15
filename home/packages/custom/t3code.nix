@@ -11,7 +11,7 @@ let
     sha256 = "sha256-+mBp+wPrJRV/HpaimQHcqBuwqZcPWTbKJVNCVW7ELgo=";
   };
 
-  appContents = pkgs.appimageTools.extractType2 {
+  appContents = pkgs.appimageTools.extract {
     pname = "t3code";
     inherit version src;
   };

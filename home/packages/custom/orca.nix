@@ -12,7 +12,7 @@ let
     hash = "sha256-jHQSL6aTSnZEZgsKT7HxyXZppQwatUgiF1UPzR4fyZg=";
   };
 
-  appContents = pkgs.appimageTools.extractType2 {
+  appContents = pkgs.appimageTools.extract {
     pname = "orca";
     inherit version src;
   };
