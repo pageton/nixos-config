@@ -8,7 +8,7 @@ let
     // herdr agent state plugin for MiMoCode
     // Adapted from herdr's opencode integration plugin.
     // HERDR_INTEGRATION_ID=mimo
-    // HERDR_INTEGRATION_VERSION=5
+    // HERDR_INTEGRATION_VERSION=10 (tracks herdr's opencode plugin protocol)
 
     import net from "node:net";
 

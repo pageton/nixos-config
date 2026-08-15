@@ -3,6 +3,7 @@
 {
   config,
   constants,
+  inputs,
   lib,
   pkgs,
   ...
@@ -10,8 +11,11 @@
 
 let
   cfg = config.programs.aiAgents;
-
-  herdrPkgVersion = config.programs.herdr.package.version;
+  # herdr assets are fetched at the flake input's locked rev, not the version
+  # tag: the input follows master, and release tags regularly lag the locked
+  # rev's assets (v0.8.0 tag ships claude/codex v7 while the rev ships v8), so
+  # tag URLs drift out of sync with the installed binary's expected versions.
+  herdrAssetRev = inputs.herdr.rev;
 
   inherit (builtins) toJSON;
 
@@ -118,24 +122,24 @@ in
       (lib.mkIf cfg.herdr.enable {
         ".claude/hooks/herdr-agent-state.sh" = {
           source = pkgs.fetchurl {
-            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/claude/herdr-agent-state.sh";
-            sha256 = "sha256-/9Wna3xi9TEwQPwemPoBD/Gaeqhd2f5vMluXKdXwG0Y=";
+            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/${herdrAssetRev}/src/integration/assets/claude/herdr-agent-state.sh";
+            sha256 = "sha256-TeqqexI5k1jZUG225u4/6bbvBqvelJIvkZBWhUUR2bo=";
           };
           executable = true;
           force = true;
         };
         ".codex/herdr-agent-state.sh" = {
           source = pkgs.fetchurl {
-            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/codex/herdr-agent-state.sh";
-            sha256 = "sha256-XRbx1Ke/v4ROA1NiMx5ylbWqzU4neD/N70u+IEmuWOg=";
+            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/${herdrAssetRev}/src/integration/assets/codex/herdr-agent-state.sh";
+            sha256 = "sha256-OKkKKpmHLQbcvJeOdhNAbN2FLbsHUDq9ehE/UY1ZUfM=";
           };
           executable = true;
           force = true;
         };
         ".copilot/herdr-agent-state.sh" = {
           source = pkgs.fetchurl {
-            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/copilot/herdr-agent-state.sh";
-            sha256 = "sha256-Lgl/11kpgPrzpVfTmTLi9Qi7OZl3I3Rx1cyDaXY+99A=";
+            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/${herdrAssetRev}/src/integration/assets/copilot/herdr-agent-state.sh";
+            sha256 = "sha256-GXRg50I9JDhiaQ7rLa2qDursPULzEGxZckg7Apt5eCU=";
           };
           executable = true;
           force = true;
@@ -184,12 +188,11 @@ in
         };
       })
 
-
       # === Oh My Pi (omp): herdr agent state extension ===
       (lib.mkIf (cfg.herdr.enable && cfg.omp.enable) {
         ".omp/agent/extensions/herdr-omp-agent-state.ts" = {
           source = pkgs.fetchurl {
-            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/omp/herdr-agent-state.ts";
+            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/${herdrAssetRev}/src/integration/assets/omp/herdr-agent-state.ts";
             sha256 = "sha256-RU7+wKOTAOEZUJcbrFuXt2gFXDpanmUP7chMtM7ZzKg=";
           };
           force = true;
@@ -251,13 +254,27 @@ in
           force = true;
         };
       })
-      # herdr agent state plugin for OpenCode (auto-discovered from plugins/ dir)
+      # herdr integration for OpenCode: state plugin (auto-discovered from
+      # plugins/), TUI session plugin, and its tui.jsonc registration. herdr
+      # 0.8.0 requires all three or `herdr integration status` reports
+      # "needs repair".
       (lib.mkIf (cfg.herdr.enable && cfg.opencode.enable) {
         "opencode/plugins/herdr-agent-state.js" = {
           source = pkgs.fetchurl {
-            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v${herdrPkgVersion}/src/integration/assets/opencode/herdr-agent-state.js";
-            sha256 = "sha256-LBoP2aUHKLYmGKKoF/Qty4l2L0b8z+0HwDb9kMm62JQ=";
+            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/${herdrAssetRev}/src/integration/assets/opencode/herdr-agent-state.js";
+            sha256 = "sha256-XLFeBZpfgSog/P1ktDMD77qmPBtIdLEk4l32TcAjoV4=";
           };
+          force = true;
+        };
+        "opencode/herdr-tui-session.js" = {
+          source = pkgs.fetchurl {
+            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/${herdrAssetRev}/src/integration/assets/opencode/herdr-tui-session.js";
+            sha256 = "sha256-3Hm5bBzRI/8iVO/Rgwshz7TAVXqwH4uZcv3/bfioVAA=";
+          };
+          force = true;
+        };
+        "opencode/tui.jsonc" = {
+          text = toJSON { plugin = [ "./herdr-tui-session.js" ]; };
           force = true;
         };
       })

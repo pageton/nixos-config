@@ -28,7 +28,7 @@ OMC is a Claude Code marketplace plugin that provides multi-agent orchestration.
 
 ### Oh My Pi (omp)
 
-omp (fork of pi-mono) is a coding agent with subagents, LSP/DAP, and hindsight memory. The Nix module manages its **MCP config** (`~/.omp/agent/mcp.json`, derived from the shared `programs.aiAgents.mcpServers` via the `ompMcpServers` transform), **skills** (mirrored into `~/.omp/agent/skills` by the activation skill-sync), **herdr agent state extension** (`~/.omp/agent/extensions/herdr-omp-agent-state.ts`, fetched from herdr assets at the installed version), and the **`omp` zsh alias + autoupdate**. MCP secrets are patched into `mcp.json` at activation alongside the other agents. Model/provider selection stays with omp's interactive `~/.omp/agent/` config.
+omp (fork of pi-mono) is a coding agent with subagents, LSP/DAP, and hindsight memory. The Nix module manages its **MCP config** (`~/.omp/agent/mcp.json`, derived from the shared `programs.aiAgents.mcpServers` via the `ompMcpServers` transform), **skills** (mirrored into `~/.omp/agent/skills` by the activation skill-sync), **herdr agent state extension** (`~/.omp/agent/extensions/herdr-omp-agent-state.ts`, fetched from herdr assets at the flake input's locked rev), and the **`omp` zsh alias + autoupdate**. MCP secrets are patched into `mcp.json` at activation alongside the other agents. Model/provider selection stays with omp's interactive `~/.omp/agent/` config.
 
 ### Profile-Driven Polymorphism
 
