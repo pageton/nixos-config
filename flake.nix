@@ -94,38 +94,61 @@
         inherit system;
         config = nixpkgsConfig;
         overlays = [
-          inputs.niri.overlays.niri
+          # libdisplay-info_0_2 was removed from nixpkgs-unstable but niri's
+          # overlay still requires exactly 0.2.0. Bridge it from niri's own
+          # pinned nixpkgs (see niri input note: mesa compatibility).
           (_final: prev: {
-            # Disable tests for packages with known flaky/sandbox-incompatible test suites.
-            #
-            # Python font packages: network-based or font-rendering tests don't work
-            # in the Nix build sandbox. The packages themselves are fine.
-            # TODO: Track upstream fixes and remove overrides when tests pass.
-            #   - picosvg: https://github.com/google/picosvg/issues
-            #   - nanoemoji: https://github.com/googlefonts/nanoemoji/issues
-            #   - gftools: https://github.com/googlefonts/gftools/issues
-            # Review periodically (e.g. on each nixpkgs update).
-            #
-            # OpenLDAP: test017-syncreplication-refresh is a known flaky test that
-            # fails intermittently due to timing in sync replication checks.
-            # Pulled in by lutris as a transitive dependency.
-            openldap = prev.openldap.overrideAttrs (_: {
-              doCheck = false;
-            });
-            # python3Packages = prev.python3Packages.overrideScope (
-            #   pyFinal: pyPrev: {
-            #     picosvg = pyPrev.picosvg.overridePythonAttrs (_: {
-            #       doCheck = false;
-            #     });
-            #     nanoemoji = pyPrev.nanoemoji.overridePythonAttrs (_: {
-            #       doCheck = false;
-            #     });
-            #     gftools = pyPrev.gftools.overridePythonAttrs (_: {
-            #       doCheck = false;
-            #     });
-            #   }
-            # );
+            libdisplay-info_0_2 = inputs.niri.inputs.nixpkgs.legacyPackages.${prev.system}.libdisplay-info_0_2;
           })
+          inputs.niri.overlays.niri
+          (
+            final: prev:
+            let
+              # Shared package overrides applied to every python interpreter so that
+              # ALL package set references (python3Packages, python3.pkgs,
+              # python313Packages, python313.pkgs) inherit them.
+              # overrideScope on python3Packages alone only affects that one alias;
+              # jetbrains-mono builds via python313, bypassing a python3-only override.
+              pythonPackageOverrides = pyFinal: pyPrev: {
+                picosvg = pyPrev.picosvg.overridePythonAttrs (_: {
+                  doCheck = false;
+                });
+                # googlefonts moved the v0.16.0 tag upstream; nixpkgs' pinned
+                # src hash is stale and fails on fresh builds (hash mismatch).
+                # Pin the commit the tag currently points at. Remove once
+                # nixpkgs updates the hash.
+                nanoemoji = pyPrev.nanoemoji.overridePythonAttrs (_: {
+                  src = prev.fetchFromGitHub {
+                    owner = "googlefonts";
+                    repo = "nanoemoji";
+                    rev = "4e2ade0ab833eab1cfb6006edbfc96af5aa1d61e";
+                    hash = "sha256-FysyKC01XBnRiur5RR9fcsTxQqE8x0JJHSoe3q6JtKc=";
+                  };
+                  doCheck = false;
+                });
+                gftools = pyPrev.gftools.overridePythonAttrs (_: {
+                  doCheck = false;
+                });
+              };
+            in
+            {
+              # OpenLDAP: test017-syncreplication-refresh is a known flaky test that
+              # fails intermittently due to timing in sync replication checks.
+              # Pulled in by lutris as a transitive dependency.
+              openldap = prev.openldap.overrideAttrs (_: {
+                doCheck = false;
+              });
+              # udiskie: test_keyutils uses kernel keyring syscalls (add_key,
+              # keyctl_read) that fail in the Nix sandbox. Package itself works.
+              udiskie = prev.udiskie.overridePythonAttrs (_: {
+                doCheck = false;
+              });
+              python3 = prev.python3.override { packageOverrides = pythonPackageOverrides; };
+              python3Packages = final.python3.pkgs;
+              python313 = prev.python313.override { packageOverrides = pythonPackageOverrides; };
+              python313Packages = final.python313.pkgs;
+            }
+          )
         ];
       };
 
@@ -145,7 +168,10 @@
       };
 
       makeSystem =
-        { hostname, stateVersion }:
+        {
+          hostname,
+          stateVersion,
+        }:
         nixpkgs.lib.nixosSystem {
           inherit system;
           specialArgs = {

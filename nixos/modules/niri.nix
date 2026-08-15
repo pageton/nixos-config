@@ -9,7 +9,14 @@
   imports = [ inputs.niri.nixosModules.niri ];
 
   # Add niri overlay for mesa compatibility
-  nixpkgs.overlays = [ inputs.niri.overlays.niri ];
+  nixpkgs.overlays = [
+    # libdisplay-info_0_2 was removed from nixpkgs-unstable but niri requires
+    # exactly 0.2.0. Bridge from niri's pinned nixpkgs (see flake.nix niri input).
+    (_final: prev: {
+      libdisplay-info_0_2 = inputs.niri.inputs.nixpkgs.legacyPackages.${prev.system}.libdisplay-info_0_2;
+    })
+    inputs.niri.overlays.niri
+  ];
 
   programs.niri = {
     enable = true;

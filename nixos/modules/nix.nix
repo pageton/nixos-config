@@ -6,26 +6,42 @@
   # These apply to ALL package sets in the NixOS build, unlike overlays in flake.nix
   # which only affect the pkgs set passed to Home-Manager.
   nixpkgs.overlays = [
+    # libdisplay-info_0_2 bridge: niri overlay requires 0.2.0 which was
+    # removed from nixpkgs-unstable; source it from niri's pinned nixpkgs.
+    (_final: prev: {
+      libdisplay-info_0_2 = inputs.niri.inputs.nixpkgs.legacyPackages.${prev.system}.libdisplay-info_0_2;
+    })
     inputs.niri.overlays.niri
-    (final: prev: {
-      # OpenLDAP: test017-syncreplication-refresh is a known flaky test that
-      # fails intermittently due to timing in sync replication checks.
-      # Pulled in as a transitive dependency by lutris (via wine → 32-bit openldap).
-      openldap = prev.openldap.overrideAttrs (_: {
-        doCheck = false;
-      });
-
-      # Valkey (python client): test_bgsave races against itself — fires a second
-      # BGSAVE before the first completes on busy builders. Transitive dep of
-      # onionshare-cli → firejail-wrapped-binaries.
-      python3Packages = prev.python3Packages.overrideScope (
-        pyFinal: pyPrev: {
+    (
+      final: prev:
+      let
+        # Shared package overrides applied to every python interpreter so that
+        # ALL package set references inherit them (same pattern as flake.nix).
+        pythonPackageOverrides = pyFinal: pyPrev: {
+          # Valkey (python client): test_bgsave races against itself — fires a
+          # second BGSAVE before the first completes on busy builders.
+          # Transitive dep of onionshare-cli → firejail-wrapped-binaries.
           valkey = pyPrev.valkey.overridePythonAttrs (_: {
             doCheck = false;
           });
-        }
-      );
-    })
+        };
+      in
+      {
+        # OpenLDAP: test017-syncreplication-refresh is a known flaky test that
+        # fails intermittently due to timing in sync replication checks.
+        # Pulled in as a transitive dependency by lutris (via wine → 32-bit openldap).
+        openldap = prev.openldap.overrideAttrs (_: {
+          doCheck = false;
+        });
+        # mat2: MP4 metadata cleaning test fails due to ffmpeg version differences
+        # in the sandbox. Package itself works fine.
+        mat2 = prev.mat2.overridePythonAttrs (_: {
+          doCheck = false;
+        });
+        python3 = prev.python3.override { packageOverrides = pythonPackageOverrides; };
+        python3Packages = final.python3.pkgs;
+      }
+    )
   ];
 
   nix = {
