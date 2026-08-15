@@ -126,8 +126,6 @@ in
       "fs.protected_hardlinks" = 1; # Prevent hardlink-based privilege escalation
       "fs.protected_symlinks" = 1; # Prevent symlink-based privilege escalation
 
-      # PRIVACY: Prevent remote uptime fingerprinting
-      "net.ipv4.tcp_timestamps" = 0;
       "kernel.perf_event_paranoid" = 3; # Prevent side-channel attacks
 
       # Operational security: Prevent runtime kernel replacement
@@ -138,10 +136,12 @@ in
       "vm.unprivileged_userfaultfd" = 0;
       "kernel.ftrace_enabled" = 1; # Required by Netdata, perf, bpftrace — access gated by perf_event_paranoid=3
 
-      # TCP SACK disabling — reduces TCP stack attack surface
-      "net.ipv4.tcp_sack" = 0;
-      "net.ipv4.tcp_dsack" = 0;
-      "net.ipv4.tcp_fack" = 0;
+      # TCP loss recovery: SACK/DSACK/timestamps must stay enabled.
+      # Disabling them collapses WAN throughput — every packet loss becomes
+      # an RTO timeout instead of a fast retransmit.
+      "net.ipv4.tcp_sack" = 1;
+      "net.ipv4.tcp_dsack" = 1;
+      "net.ipv4.tcp_timestamps" = 1;
 
       # ASLR hardening
       "vm.mmap_rnd_bits" = 28;
