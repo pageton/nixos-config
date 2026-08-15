@@ -86,7 +86,7 @@ System/
 | `scripts/ai/_agent-registry.sh`   | SSOT for all AI agent aliases, command mappings, and workflow suffixes                                  |
 | `scripts/build/modules-check.sh`  | Validates every .nix file is imported by its parent default.nix                                         |
 | `home/programs/activitywatch.nix` | ActivityWatch time tracking for Wayland                                                                 |
-| `home/programs/t3code.nix`        | T3 Code AI editor (ghgrab-managed release)                                                              |
+| `home/packages/custom/t3code.nix` | T3 Code AI editor (fetchurl-pinned AppImage release)                                                    |
 | `shared/_hm-systemd-helpers.nix`  | Shared HM timer helpers (mkHmTimer, mkWeeklyTimer)                                                      |
 
 ## Module Map
@@ -189,7 +189,6 @@ scripts/ai/_agent-registry.sh (alias → command mapping)
 | `nixcord`          | latest   | Discord theming                                            |
 | `nvf`              | latest   | Neovim configuration framework                             |
 | `nix-wallpaper`    | latest   | Nix-themed wallpaper generator                             |
-| `ghgrab`           | latest   | GitHub release downloader                                  |
 | `zellij-tui`       | latest   | Zellij TUI extension                                       |
 | `zen-browser`      | latest   | Zen Browser flake (beta channel)                           |
 

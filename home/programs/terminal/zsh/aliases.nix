@@ -57,7 +57,6 @@ let
     nfu = "nix flake update";
     nfs = "nix flake show";
     nfi = "nix flake init";
-    ghg = "ghgrab --token \"$(gh auth token)\"";
 
     # Dev environment templates
     nfib = "nfi -t '${nixTemplates}bun'";

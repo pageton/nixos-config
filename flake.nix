@@ -54,10 +54,6 @@
       url = "github:lunik1/nix-wallpaper";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    ghgrab = {
-      url = "github:abhixdd/ghgrab/main";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     zellij-tui = {
       url = "github:pageton/zellij-tui";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -66,7 +62,6 @@
       url = "github:ogulcancelik/herdr";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
   };
 
   outputs =

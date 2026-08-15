@@ -225,7 +225,6 @@ This configuration uses the following flakes:
 | **noctalia**       | Noctalia shell integration                                                                                |
 | **nixcord**        | Discord theming                                                                                           |
 | **nvf**            | Neovim configuration framework                                                                            |
-| **ghgrab**         | GitHub release downloader utility                                                                         |
 
 ---
 
