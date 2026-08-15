@@ -31,7 +31,7 @@
     };
   };
 
-  services.gpg-agent = lib.mkIf (!pkgsStable.stdenv.isDarwin) {
+  services.gpg-agent = lib.mkIf (!pkgsStable.stdenv.hostPlatform.isDarwin) {
     enable = true;
     defaultCacheTtl = 86400;
     # Avoid gpg-agent hijacking SSH auth; OpenSSH should use ~/.ssh/id_ed25519 directly.
