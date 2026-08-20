@@ -15,7 +15,7 @@ let
     video = [ "mpv.desktop" ];
     directory = [ "thunar.desktop" ]; # Using Thunar as file manager
     pdf = [ "zathura.desktop" ]; # Using Zathura as PDF viewer
-    terminal = [ "Alacritty.desktop" ]; # Using Alacritty as terminal
+    terminal = [ "com.mitchellh.ghostty.desktop" ];
     discord = [ "discord.desktop" ]; # Using Discord for Discord
     archive = [ "ark.desktop" ]; # Using KDE Ark as archive manager
   };

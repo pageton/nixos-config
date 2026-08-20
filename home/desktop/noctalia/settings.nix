@@ -110,6 +110,7 @@ in
           "bluetooth"
           "battery-compact"
           "volume-compact"
+          "calculator"
           "control-center"
           "session"
         ];
@@ -151,6 +152,13 @@ in
     };
 
     system.monitor.enabled = true;
+
+    # === Plugins ===
+    # Community calculator by yuuto — expression calculator with a bar widget
+    # (glyph + last result; click opens the panel) and a keypad panel. Fetched
+    # from the default `community` git source (plugin API 3, v5-compatible).
+    # Settings (precision, angle_unit, bar value length) left at plugin defaults.
+    plugins.enabled = [ "yuuto/calculator" ];
 
     widget = {
       clock-compact = {
@@ -285,6 +293,10 @@ in
       volume-compact = {
         type = "volume";
         show_label = false;
+      };
+
+      calculator = {
+        type = "yuuto/calculator:bar";
       };
       control-center = {
         custom_image = "${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake.svg";

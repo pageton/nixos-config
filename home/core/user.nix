@@ -6,7 +6,8 @@
   inputs,
   constants,
   ...
-}: {
+}:
+{
   home = {
     username = user;
     homeDirectory = "/home/${user}";
@@ -16,16 +17,14 @@
   nixpkgs.config = {
     allowUnfree = true; # needed by HM — flake-level nixpkgsConfig does NOT propagate to HM's nixpkgs.config
     # nodejs-slim-20.20.2: permitted because <add reason here>
-    permittedInsecurePackages = ["nodejs-slim-20.20.2"];
+    permittedInsecurePackages = [ "nodejs-slim-20.20.2" ];
   };
 
-  home.packages = let
-    Pkgs = import ../packages {inherit pkgs pkgsStable constants;};
-  in
-    Pkgs
-    ++ [
-      inputs.zellij-tui.packages.${pkgs.stdenv.hostPlatform.system}.default
-    ];
+  home.packages =
+    let
+      Pkgs = import ../packages { inherit pkgs pkgsStable constants; };
+    in
+    Pkgs ++ [ inputs.zellij-tui.packages.${pkgs.stdenv.hostPlatform.system}.default ];
 
   home.file.".face" = {
     source = ../assets/profile_picture.png;

@@ -1,8 +1,7 @@
 # Qt theming and configuration.
 # Uses pkgs (unstable) — qt5ct/qt6ct are small config tools; no benefit from stable.
 
-{ pkgs, ... }:
-{
+{ pkgs, ... }: {
   qt = {
     enable = true;
     platformTheme.name = "qtct";
