@@ -4,7 +4,11 @@ with lib;
 let
   defaultApps = {
     # check desktop files here: `ls $(echo $XDG_DATA_DIRS| sed "s/:/ /g")`
-    browser = [ "brave.desktop" ];
+    # brave-browser.desktop is the Home-Manager entry from
+    # home/core/desktop-entries.nix (exec includes %U so URLs reach the
+    # browser). The legacy stray ~/.local/share/applications/brave.desktop
+    # (Exec=brave, no %U) drops the URL and must not be referenced here.
+    browser = [ "brave-browser.desktop" ];
     text = [ "code.desktop" ]; # Using VSCode as text editor
     image = [ "imv-dir.desktop" ];
     audio = [ "mpv.desktop" ];

@@ -1,7 +1,7 @@
 { config, ... }: {
-# NOTE: Entries referencing /run/current-system/sw/bin/ (Telegram, AyuGram,
-# Celluloid) require mySystem.sandboxing.enableWrappedBinaries = true.
-# Without it, these firejail-wrapped binaries don't exist.
+  # NOTE: Entries referencing /run/current-system/sw/bin/ (Telegram, AyuGram,
+  # Celluloid) require mySystem.sandboxing.enableWrappedBinaries = true.
+  # Without it, these firejail-wrapped binaries don't exist.
 
   xdg.desktopEntries = {
     "org.telegram.desktop" = {
@@ -65,16 +65,19 @@
     };
 
     "brave-browser" = {
-      # NOTE: ~/.local/bin/brave is a user-managed wrapper script — not Nix-managed.
-      # If deleted, this desktop entry silently breaks.
       name = "Brave Web Browser";
-      exec = "${config.home.homeDirectory}/.local/bin/brave %U";
+      # Firejail-wrapped system binary — requires
+      # mySystem.sandboxing.enableWrappedBinaries = true (see nixos/modules/sandboxing.nix).
+      exec = "/run/current-system/sw/bin/brave %U";
       icon = "brave-browser";
       comment = "Fast, private web browser";
       categories = [
         "Network"
         "WebBrowser"
       ];
+      settings = {
+        StartupWMClass = "Brave-browser";
+      };
       mimeType = [
         "text/html"
         "text/xml"
