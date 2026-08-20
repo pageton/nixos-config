@@ -9,6 +9,49 @@
 let
   mesaEglVendorFile = "/run/opengl-driver/share/glvnd/egl_vendor.d/50_mesa.json";
   mesaEglFirejailArg = "--env=__EGL_VENDOR_LIBRARY_FILENAMES=${mesaEglVendorFile}";
+
+  # xdg-open replacement used inside firejail jails. Qt's QDesktopServices
+  # only talks to the XDG portal from Flatpak/Snap builds; everywhere else it
+  # spawns `xdg-open`, which inside a jail resolves the default browser and
+  # launches it *inside* the sandbox — where Chromium aborts on startup
+  # because its SUID/userns sandbox cannot initialize under the jail's
+  # nonewprivs + caps.drop all. This shim forwards every open request to the
+  # OpenURI portal instead, so the URL opens in the host's default browser
+  # outside the jail. Lives in the store: /nix/store is always visible
+  # inside the jail, while $HOME and /tmp are whitelisted/private tmpfs.
+  portalXdgOpen = pkgs.writeShellScriptBin "xdg-open" ''
+    set -eu
+    if [ "$#" -ne 1 ]; then
+      echo "usage: xdg-open <url|path>" >&2
+      exit 1
+    fi
+    url=$1
+    case "$url" in
+      [a-zA-Z]*:*) ;; # has a URI scheme (https://, mailto:, tg://, …)
+      /*) url="file://$url" ;;
+      *) url="file://$PWD/$url" ;;
+    esac
+    options="{}"
+    token=''${XDG_ACTIVATION_TOKEN:-}
+    if [ -n "$token" ] && [[ "$token" =~ ^[A-Za-z0-9._~+-]+$ ]]; then
+      options="{\"activation_token\": <\"$token\">}"
+    fi
+    exec ${lib.getBin pkgs.glib}/bin/gdbus call --session \
+      --dest org.freedesktop.portal.Desktop \
+      --object-path /org/freedesktop/portal/desktop \
+      --method org.freedesktop.portal.OpenURI.OpenURI \
+      --timeout 10 "" "$url" "$options"
+  '';
+
+  # Firejail entry point that shadows xdg-open with the portal shim by
+  # putting it first in PATH inside the jail (private-bin cannot do this on
+  # NixOS — binaries live in the store, outside the dirs it privatizes).
+  withPortalXdgOpen =
+    name: executable:
+    pkgs.writeShellScript "${name}-portal-entry" ''
+      export PATH="${lib.getBin portalXdgOpen}/bin:$PATH"
+      exec ${executable} "$@"
+    '';
 in
 {
   options.mySystem.sandboxing = {
@@ -64,12 +107,12 @@ in
         };
 
         telegram-desktop = {
-          executable = "${pkgs.lib.getBin pkgs.telegram-desktop}/bin/Telegram";
+          executable = withPortalXdgOpen "telegram-desktop" "${lib.getBin pkgs.telegram-desktop}/bin/Telegram";
           profile = "${pkgs.firejail}/etc/firejail/telegram-desktop.profile";
         };
 
         ayugram-desktop = {
-          executable = "${pkgs.lib.getBin pkgs.ayugram-desktop}/bin/AyuGram";
+          executable = withPortalXdgOpen "ayugram-desktop" "${lib.getBin pkgs.ayugram-desktop}/bin/AyuGram";
           profile = "${pkgs.firejail}/etc/firejail/telegram-desktop.profile";
         };
 
@@ -212,10 +255,12 @@ in
           whitelist ''${HOME}/Music
           whitelist ''${HOME}/Desktop
 
-          # Link opening: allow D-Bus access to xdg-desktop-portal OpenURI.
-          # The upstream profile uses dbus-user filter (whitelist mode) which
-          # blocks portal calls. This allows Telegram to delegate URL handling
-          # to the host browser via the portal, without granting broad D-Bus access.
+          # Link opening: the portalXdgOpen shim (see top of this file)
+          # delegates URL handling to xdg-desktop-portal's OpenURI
+          # interface, so the browser launches on the host, outside the
+          # jail. The upstream profile uses dbus-user filter (whitelist
+          # mode) which blocks portal calls, so the portal must be allowed
+          # explicitly.
           dbus-user.talk org.freedesktop.portal.Desktop
           dbus-user.talk org.freedesktop.impl.portal.FileChooser
         '';
