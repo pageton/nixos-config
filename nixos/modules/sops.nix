@@ -48,6 +48,10 @@
         owner = user;
         mode = "0400";
       };
+      opencode_zen_api_key = {
+        owner = user;
+        mode = "0400";
+      };
       deepseek_api_key = {
         owner = user;
         mode = "0400";
