@@ -78,6 +78,11 @@ in
       GOSUMDB = "sum.golang.org";
     };
 
+    # Global golangci-lint anti-slop config. golangci-lint walks up parent
+    # dirs, so ~/.golangci.yml is the fallback default for every Go project
+    # under $HOME without its own .golangci.yml (repo-local configs win).
+    file.".golangci.yml".source = ./golangci-anti-slop.yml;
+
     sessionPath = [ "${config.home.homeDirectory}/go/bin" ];
 
     # Go creates ~/go/{bin,pkg,src} on demand — no activation needed

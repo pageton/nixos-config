@@ -1,0 +1,107 @@
+# Global anti-slop lint policy for Go — deterministic guardrails against
+# low-evidence LLM-generated patterns. Go equivalent of dmmulroy/anti-slop
+# (Oxlint, TS/JS): oxlint cannot lint Go; golangci-lint v2 is the tool.
+# Policy: code may be generated quickly, but it must preserve evidence it is
+# correct.
+#
+# GLOBAL SEMANTICS: golangci-lint v2 walks up parent directories from the
+# working directory, so ~/.golangci.yml (this file, via Home-Manager) is the
+# default for every Go project under $HOME that has no own .golangci.yml.
+# Repo-local configs always win (e.g. dbview vendors its own for CI).
+#
+# golangci-lint v2.12 facts (verified 2026-08): no XDG ~/.config fallback,
+# GOLANGCI_LINT_CONFIG env var is ignored; parent walk-up is the only global
+# mechanism.
+version: "2"
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  default: none
+  enable:
+    # Base correctness
+    - govet
+    - staticcheck
+    - errcheck
+    - unused
+    - ineffassign
+
+    # Error evidence: handled, wrapped, compared correctly
+    - errorlint      # errors.Is/As, %w — not == / %v
+    - nilerr         # if err != nil { return nil } — classic agent bug
+    - nilnil         # return nil, nil where error expected
+    - durationcheck  # time.Duration * time.Duration
+
+    # Type evidence: no blind assertions, no unchecked interfaces
+    - forcetypeassert # x.(T) without comma-ok
+    - gochecksumtype  # non-exhaustive switches on sealed interfaces
+    - asasalint       # passing ...any through (slice leak bugs)
+
+    # Resource + context slop: agents forget cleanup and propagation
+    - bodyclose
+    - rowserrcheck
+    - sqlclosecheck
+    - noctx         # http.Client without context
+    - contextcheck  # context dropped between calls
+    - fatcontext    # ctx enrichment inside loops
+
+    # Dead weight left behind by refactors
+    - unparam       # unused params, always-same return
+    - unconvert
+    - wastedassign
+    - prealloc
+    - predeclared   # shadowing builtins
+    - perfsprint    # fmt.Sprintf where strconv/concat works
+    - dogsled
+    - nakedret
+
+    # Modern Go: LLMs trained on pre-1.21 emit outdated idioms
+    - modernize     # slices/maps funcs, min/max, for range int
+    - intrange
+    - copyloopvar
+    - exptostd
+
+    # Copy-paste and structure slop
+    - dupl          # duplicated blocks
+    - goconst       # repeated string literals
+    - gocognit      # cognitive complexity gate
+    - interfacebloat
+    - gocritic
+
+    # Security tier (deterministic): SQL concat, path injection, weak random
+    - gosec
+
+  settings:
+    dupl:
+      threshold: 180
+    gocognit:
+      min-complexity: 40
+    goconst:
+      min-occurrences: 5
+    interfacebloat:
+      max: 10
+    gocritic:
+      enabled-tags: [diagnostic, style, performance]
+      disabled-checks:
+        - importShadow  # legal and common in tight scopes
+        - hugeParam     # fires on struct-by-value TUI code
+        - rangeValCopy  # same
+
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - dupl
+          - goconst
+          - gocognit
+          - unparam
+          - interfacebloat
+          - perfsprint
+          - prealloc
+          - gosec
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
