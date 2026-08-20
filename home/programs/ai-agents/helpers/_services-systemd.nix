@@ -16,12 +16,20 @@ let
       binary,
       npmPackage,
       label,
+      cleanup ? "",
     }:
     {
       Unit.Description = "Auto-update ${label}";
       Service = {
         Type = "oneshot";
-        ExecStart = "${autoUpdate.mkScript { inherit binary npmPackage label; }}";
+        ExecStart = "${autoUpdate.mkScript {
+          inherit
+            binary
+            npmPackage
+            label
+            cleanup
+            ;
+        }}";
       };
     };
 in

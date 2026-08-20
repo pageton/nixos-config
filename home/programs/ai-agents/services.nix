@@ -4,7 +4,6 @@
   config,
   constants,
   hmSystemdHelpers,
-  inputs,
   lib,
   pkgs,
   ...
@@ -108,17 +107,15 @@ let
 
   autoUpdateAllScript = pkgs.writeShellScript "update-ai-agents" (
     lib.concatMapStringsSep "\n" (tool: toString (autoUpdate.mkScript tool)) autoUpdate.tools
-    + lib.optionalString cfg.serena.enable ''
-
-      ${pkgs.uv}/bin/uv tool install -p 3.13 --prerelease=allow ${cfg.serena.package}@latest 2>/dev/null && echo "Updated Serena" || true
-    ''
   );
 
-  serena = pkgs.writeShellScriptBin "serena" ''
-    if ! ${pkgs.uv}/bin/uv tool list 2>/dev/null | ${pkgs.gnugrep}/bin/grep -q '${cfg.serena.package}'; then
-      ${pkgs.uv}/bin/uv tool install -p 3.13 --prerelease=allow ${cfg.serena.package}@latest
-    fi
-    exec ${pkgs.uv}/bin/uv tool run ${cfg.serena.package} "$@"
+  # DeepSeek Harness launcher. The bun-global bin shim runs plain node, but the
+  # shipped dsh-base bundle mounts cordis-plugin-hmr, which requires node
+  # --expose-internals (rc.7 launcher does not re-exec itself with the flag).
+  # Wrapper execs the bun-installed bin.js with the flag; version updates stay
+  # with the bun-global autoupdate flow.
+  dshLauncher = pkgs.writeShellScriptBin "dsh" ''
+    exec ${pkgs.nodejs}/bin/node --expose-internals "$HOME/.bun/install/global/node_modules/@deepseek-ai/dsh/lib/bin.js" "$@"
   '';
 
   logCleanupCommand = ''
@@ -151,7 +148,7 @@ in
     ]
     ++ scriptWrappers
     ++ (lib.optional cfg.agentmemory.enable agentmemoryRuntime.iiiEngine)
-    ++ (lib.optional cfg.serena.enable serena)
+    ++ (lib.optional cfg.dsh.enable dshLauncher)
     ++ (lib.optional cfg.speckit.enable pkgs.spec-kit)
     ++ androidReLaunchers
     ++ webReLaunchers
@@ -175,6 +172,18 @@ in
     home.activation.updateAiAgentCLIs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       $DRY_RUN_CMD ${autoUpdateAllScript}
     '';
+
+    # The dsh-tui profile is machine state created by `dsh plugin` (community
+    # TUI @deepseek-harness-tui/dsh-tui), not Nix-managed. Recreate it only if
+    # missing so the `dst` alias survives a wiped ~/.dsh. Best-effort.
+    home.activation.setupDshTuiProfile = lib.mkIf cfg.dsh.enable (
+      lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        if [[ ! -d "$HOME/.dsh/profiles/dsh-tui" ]] && command -v dsh >/dev/null 2>&1; then
+          dsh plugin --profile dsh-tui add @deepseek-harness-tui/dsh-tui \
+            || echo "⚠ dsh-tui profile setup failed — run: dsh plugin --profile dsh-tui add @deepseek-harness-tui/dsh-tui"
+        fi
+      ''
+    );
     systemd.user = aiSystemdUser;
   };
 }

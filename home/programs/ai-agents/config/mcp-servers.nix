@@ -200,20 +200,7 @@ in
             "--mcp"
           ];
         };
-      }
-      // lib.optionalAttrs cfg.serena.enable {
-        serena = {
-          enable = true;
-          command = "serena";
-          args = [
-            "start-mcp-server"
-            "--context"
-            "claude-code"
-            "--project-from-cwd"
-          ];
-        };
       };
-
     logging = {
       enable = true;
       directory = "${config.xdg.dataHome}/ai-agents/logs";

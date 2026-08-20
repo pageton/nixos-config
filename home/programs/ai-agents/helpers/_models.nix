@@ -27,9 +27,9 @@
   openrouter-raw = "openrouter/tencent/hy3-preview:free";
 
   # ZAI / other
-  glm = "zai-coding-plan/glm-5.2";
+  glm = "zai-coding-plan/glm-5.3";
   "glm-5" = "zai-coding-plan/glm-5";
-  glm-raw = "zai/glm-5.2";
+  glm-raw = "zai/glm-5.3";
   gemini = "google/gemini-3-pro-preview";
   gemini-raw = "google/gemini-3-pro-preview";
   zen = "opencode/deepseek-v4-flash-free";

@@ -22,7 +22,7 @@ START_LOG="${START_LOG:-${HOME}/Downloads/android-re-tools/re-avd-start.log}"
 # Resolve model flag for the chosen profile
 case "${PROFILE}" in
 	glm)
-		MODEL_FLAGS="--model zai-coding-plan/glm-5.2"
+		MODEL_FLAGS="--model zai-coding-plan/glm-5.3"
 		;;
 	deepseek)
 		MODEL_FLAGS="--model deepseek/deepseek-v4-pro"

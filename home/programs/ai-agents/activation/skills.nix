@@ -229,6 +229,10 @@ lib.mkIf true (
       mirror_skills_to "$HOME/.omp/agent/skills"
       mirror_count=$((mirror_count + 1))
 
+      # DeepSeek Harness (dsh scans ~/.dsh/skills; <name>/SKILL.md layout matches Claude's)
+      mirror_skills_to "$HOME/.dsh/skills"
+      mirror_count=$((mirror_count + 1))
+
 
       echo "✓ Mirrored skills to $mirror_count agent directories"
     else
@@ -239,7 +243,7 @@ lib.mkIf true (
         mkdir -p "$HOME/.config/$profile/skills"
       done
       rm -rf "$HOME/.codex/skills" "$HOME/.gemini/skills" "$HOME/.omp/agent/skills" 2>/dev/null || true
-      echo "✓ Agent skill directories cleaned"
+      rm -rf "$HOME/.dsh/skills" 2>/dev/null || true
     fi
   ''
 )

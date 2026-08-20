@@ -340,8 +340,8 @@ let
       command = "mimo_glm";
       workflowPromptMode = "positional";
       envMarker = "ZAI";
-      interactiveCommand = "mimo -m zai-coding-plan/glm-5.2";
-      headlessCommand = "mimo run -m zai-coding-plan/glm-5.2";
+      interactiveCommand = "mimo -m zai-coding-plan/glm-5.3";
+      headlessCommand = "mimo run -m zai-coding-plan/glm-5.3";
       tool = "mimo";
       launcherSimple = false;
     }
@@ -375,6 +375,36 @@ let
       interactiveCommand = "omp";
       headlessCommand = "omp -p";
       tool = "omp";
+      launcherSimple = true;
+    }
+
+    # DeepSeek Harness (dsh) — headless CLI is the primary interface; web UI on dsw
+    {
+      alias = "ds";
+      command = "dsh --profile headless";
+      workflowPromptMode = "positional";
+      envMarker = "DSH";
+      interactiveCommand = "dsh --profile headless";
+      headlessCommand = "dsh --profile headless";
+      tool = "dsh";
+      launcherSimple = true;
+    }
+    {
+      alias = "dsw";
+      command = "dsh web";
+      envMarker = "DSH";
+      interactiveCommand = "dsh web";
+      headlessCommand = "dsh --profile headless";
+      tool = "dsh";
+      launcherSimple = false;
+    }
+    {
+      alias = "dst";
+      command = "dsh --profile dsh-tui";
+      envMarker = "DSH";
+      interactiveCommand = "dsh --profile dsh-tui";
+      headlessCommand = "dsh --profile headless";
+      tool = "dsh";
       launcherSimple = true;
     }
 
@@ -528,6 +558,7 @@ let
     antigravity = "Antigravity";
     mimo = "MiMoCode";
     omp = "Oh My Pi";
+    dsh = "DeepSeek Harness";
   };
   providerLabelEntries = lib.mapAttrsToList (tool: label: "  [${tool}]=\"${label}\"") providerLabels;
 
@@ -539,6 +570,7 @@ let
     "antigravity"
     "mimo"
     "omp"
+    "dsh"
   ];
 
   generatedBashRegistry = builtins.concatStringsSep "\n" (

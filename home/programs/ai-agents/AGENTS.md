@@ -1,6 +1,6 @@
 # AI Agents Infrastructure
 
-High-density orchestration for Claude Code, OpenCode, Codex CLI, Antigravity, MiMoCode, and Oh My Pi (omp). This module manages dynamic provider switching, shared MCP servers, skill mirroring, and secure secret injection.
+High-density orchestration for Claude Code, OpenCode, Codex CLI, Antigravity, MiMoCode, Oh My Pi (omp), and DeepSeek Harness (dsh). This module manages dynamic provider switching, shared MCP servers, skill mirroring, and secure secret injection.
 
 ---
 
@@ -30,6 +30,10 @@ OMC is a Claude Code marketplace plugin that provides multi-agent orchestration.
 
 omp (fork of pi-mono) is a coding agent with subagents, LSP/DAP, and hindsight memory. The Nix module manages its **MCP config** (`~/.omp/agent/mcp.json`, derived from the shared `programs.aiAgents.mcpServers` via the `ompMcpServers` transform), **skills** (mirrored into `~/.omp/agent/skills` by the activation skill-sync), **herdr agent state extension** (`~/.omp/agent/extensions/herdr-omp-agent-state.ts`, fetched from herdr assets at the flake input's locked rev), and the **`omp` zsh alias + autoupdate**. MCP secrets are patched into `mcp.json` at activation alongside the other agents. Model/provider selection stays with omp's interactive `~/.omp/agent/` config.
 
+### ZCode
+
+ZCode (Z.AI desktop app) owns its config: `~/.zcode/v2/config.json` is rewritten by the running app, so managed providers are injected by the `setupZcodeConfig` activation step as an idempotent jq merge (never a `home.file` declaration). The registry lives in `helpers/_zcode-providers.nix` and covers three providers: OpenCode Zen (kind `openai-compatible` — Zen free models only answer on `chat/completions`), OpenRouter (kind `anthropic`, free-tier models deep-merged into any existing entry), and DeepSeek (kind `anthropic`, api.deepseek.com/anthropic). Entries are matched by baseURL substring so UI-created provider UUIDs are reused, not duplicated. API keys come from sops (`opencode_zen_api_key`, `openrouter_api_key`, `deepseek_api_key`) with a fallback to keys already stored by the app. Restart ZCode after activation; the app holds providers in memory.
+
 ### Profile-Driven Polymorphism
 
 OpenCode profiles switch the primary model across all OpenCode config directories. Each profile re-maps the model field via `helpers/_settings-builders.nix`, allowing instant provider migration with zero configuration redundancy.
@@ -39,7 +43,7 @@ Seven OpenCode profiles are defined in `helpers/_opencode-profiles.nix`:
 | Profile Directory     | Provider/Model                                    |
 | --------------------- | ------------------------------------------------- |
 | `opencode`            | Default (from `programs.aiAgents.opencode.model`) |
-| `opencode-glm`        | Z.AI GLM-5.2                                      |
+| `opencode-glm`        | Z.AI GLM-5.3                                      |
 | `opencode-gemini`     | Google Gemini 3 Pro Preview                       |
 | `opencode-gpt`        | OpenAI GPT-5.4                                    |
 | `opencode-openrouter` | OpenRouter Hunter Alpha                           |
@@ -90,6 +94,7 @@ ai-agents/
 │   ├── _plugin-everything-claude-code.nix # ECC skill install
 │   ├── _plugin-oh-my-claudecode.nix # OMC config generation (jq merge)
 │   ├── _cleanup-agency-agents.nix # Agency agents cleanup on disable
+│   ├── zcode-setup.nix    # ZCode provider merge (OpenCode Zen + OpenRouter free models)
 │   ├── _cleanup-everything-claude-code.nix # ECC cleanup on disable
 │   └── skills.nix           # Skill installations and omissions
 ├── android-re/              # Android RE workflow prompts and config

@@ -19,6 +19,7 @@ in
       "mi-log" = "ai-agent-log-wrapper mimo mimo";
       "omp-log" = "ai-agent-log-wrapper omp omp";
 
+      "dsh-log" = "ai-agent-log-wrapper dsh dsh web";
       "ai-logs" = "tail -f ${al}/*.log ${ol}/*.log ${cl}/*.log 2>/dev/null";
       "ai-errors" = "ai-agent-analyze errors";
       "ai-errors-all" = "ai-agent-analyze patterns";

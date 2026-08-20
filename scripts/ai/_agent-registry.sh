@@ -26,8 +26,8 @@ else
   ZAI_API_ROOT="${ZAI_API_ROOT:-https://api.z.ai/api}"
   ZAI_TIMEOUT="${ZAI_TIMEOUT:-3000000}"
   ZAI_MODEL_HAIKU="${ZAI_MODEL_HAIKU:-glm-5-turbo}"
-  ZAI_MODEL_SONNET="${ZAI_MODEL_SONNET:-glm-5.1}"
-  ZAI_MODEL_OPUS="${ZAI_MODEL_OPUS:-glm-5.1}"
+  ZAI_MODEL_SONNET="${ZAI_MODEL_SONNET:-glm-5.3[1m]}"
+  ZAI_MODEL_OPUS="${ZAI_MODEL_OPUS:-glm-5.3[1m]}"
 fi
 
 # --- Workflow prompt env vars (set defaults for set -u safety) ---
@@ -164,6 +164,13 @@ deepseek_claude_env() {
   printf '%s\n' "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1"
 }
 
+# DeepSeek env vars for dsh harness (native deepseek-official provider + web search).
+deepseek_dsh_env() {
+  local key
+  key="$(deepseek_key)"
+  printf '%s\n' "DEEPSEEK_API_KEY=${key}"
+}
+
 # MiMo (Xiaomi) API key resolution.
 mimo_key_path() {
   printf '%s\n' "${MIMO_API_KEY_FILE:-/run/secrets/mimo_api_key}"
@@ -216,6 +223,7 @@ resolve_workflow_prompt() {
 #     "-"           = no extra env vars (outputs empty string)
 #     "ZAI"         = resolve Z.AI API vars at runtime
 #     "DEEPSEEK"    = resolve DeepSeek API vars for Claude Code
+#     "DSH"         = resolve DeepSeek API key for dsh harness
 #     "MIMO"        = resolve MiMo API vars for Claude Code
 #     "OPENROUTER"  = resolve OpenRouter API key + OpenCode config dir
 #     otherwise     = literal env string (e.g. "FOO=bar BAZ=qux")
@@ -224,8 +232,8 @@ resolve_env_marker() {
 	case "$env_marker" in
 	"-") ;;
 	"ZAI") zai_claude_env | tr '\n' ' ' ;;
-	"ZAI_OMP") zai_omp_env | tr '\n' ' ' ;;
 	"DEEPSEEK") deepseek_claude_env | tr '\n' ' ' ;;
+	"DSH") deepseek_dsh_env | tr '\n' ' ' ;;
 	"MIMO") mimo_claude_env | tr '\n' ' ' ;;
 	"OPENROUTER") openrouter_opencode_env | tr '\n' ' ' ;;
 	*) printf '%s' "$env_marker" ;;

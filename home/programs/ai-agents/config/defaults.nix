@@ -18,8 +18,8 @@ in
     antigravity.enable = true;
     zcode.enable = true;
     omp.enable = true;
+    dsh.enable = true;
     codegraph.enable = true;
-    serena.enable = false;
 
     inherit (skillDefs) skills;
   };

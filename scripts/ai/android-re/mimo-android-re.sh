@@ -24,7 +24,7 @@ START_LOG="${START_LOG:-${HOME}/Downloads/android-re-tools/re-avd-start.log}"
 BASE_MIMO_CONFIG_DIR="$HOME/.config/mimocode"
 case "${PROFILE}" in
 	glm)
-		MODEL_FLAGS="-m zai-coding-plan/glm-5.2"
+		MODEL_FLAGS="-m zai-coding-plan/glm-5.3"
 		;;
 	deepseek)
 		MODEL_FLAGS="-m deepseek/deepseek-v4-pro"

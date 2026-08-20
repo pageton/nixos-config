@@ -119,6 +119,7 @@ in
       context7ApiKeyFile = mkNullOrStrOption "/run/secrets/context7-api-key" "Path to sops-decrypted Context7 API key file";
       deepseekApiKeyFile = mkNullOrStrOption "/run/secrets/deepseek_api_key" "Path to sops-decrypted DeepSeek API key file";
       mimoApiKeyFile = mkNullOrStrOption "/run/secrets/mimo_api_key" "Path to sops-decrypted Xiaomi MiMo API key file";
+      opencodeZenApiKeyFile = mkNullOrStrOption "/run/secrets/opencode_zen_api_key" "Path to sops-decrypted OpenCode Zen API key file";
     };
 
     skills = lib.mkOption {
@@ -177,11 +178,6 @@ in
     codegraph = {
       enable = mkBoolOption false "Enable CodeGraph pre-indexed code knowledge graph MCP server";
       npmPackage = mkStrOption "@colbymchenry/codegraph" "CodeGraph npm package name";
-    };
-
-    serena = {
-      enable = mkBoolOption false "Enable Serena MCP coding toolkit (semantic retrieval, editing, refactoring)";
-      package = mkStrOption "serena-agent" "Serena Python package name (installed via uv)";
     };
 
     everythingClaudeCode = {
@@ -356,6 +352,8 @@ in
       enable = lib.mkEnableOption "Oh My Pi (omp) coding agent configuration";
     };
 
+    # === DeepSeek Harness (dsh) ===
+    dsh.enable = lib.mkEnableOption "DeepSeek Harness (dsh) agent (model/provider config stays in the dsh Web UI)";
 
     # === ZCode ===
     zcode.enable = lib.mkEnableOption "ZCode Desktop App from Z.AI";
