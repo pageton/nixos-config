@@ -36,7 +36,7 @@ let
   '';
 
   # Import helper modules
-  # modules-check: manual-helper ./secrets.nix ./codex-setup.nix ./claude-setup.nix ./plugins.nix ./skills.nix
+  # modules-check: manual-helper ./secrets.nix ./codex-setup.nix ./claude-setup.nix ./plugins.nix ./skills.nix ./zcode-setup.nix
   secretPatching = import ./secrets.nix {
     inherit
       cfg
@@ -71,6 +71,8 @@ let
       claudeMcpServers
       ;
   };
+
+  zcodeSetup = import ./zcode-setup.nix { inherit cfg pkgs lib; };
   opencodeProfileNames = opencodeProfiles.names;
 
   pluginInstalls = import ./plugins.nix {
@@ -133,6 +135,9 @@ in
       # Real files (not symlinks) so plugins can modify them.
       setupClaudeConfig = claudeConfig;
 
+      # === ZCode Providers ===
+      # Idempotent jq merge into ZCode's app-owned ~/.zcode/v2/config.json.
+      setupZcodeConfig = zcodeSetup;
 
       # === Plugin Installation ===
       inherit (pluginInstalls)
