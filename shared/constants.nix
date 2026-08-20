@@ -38,8 +38,8 @@ in
   };
 
   # Terminal emulator
-  terminal = "alacritty";
-  terminalAppId = "org.alacritty.Alacritty"; # Wayland app-id — used in window rules and dock
+  terminal = "ghostty";
+  terminalAppId = "com.mitchellh.ghostty"; # Wayland app-id — used in window rules and dock
 
   # Default text editor
   editor = "nvim";
@@ -158,8 +158,8 @@ in
       timeout = 3000000; # API timeout in ms
       models = {
         haiku = "glm-5-turbo";
-        sonnet = "glm-5.2[1m]";
-        opus = "glm-5.2[1m]";
+        sonnet = "glm-5.3[1m]";
+        opus = "glm-5.3[1m]";
       };
     };
     deepseek = {
