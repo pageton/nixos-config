@@ -143,6 +143,13 @@
               udiskie = prev.udiskie.overridePythonAttrs (_: {
                 doCheck = false;
               });
+              # redisinsight 3.6.0's build boots its NestJS API to generate
+              # the OpenAPI spec; on nodejs 24.19.0 the node process SIGABRTs
+              # on exit inside better-sqlite3's Statement destructor
+              # (RemoveEnvironmentCleanupHook with null env). 24.18.x built
+              # fine; the pending upstream 3.8.0 bump moves to nodejs 26.
+              # Remove once nixpkgs ships redisinsight 3.8.0+.
+              redisinsight = prev.redisinsight.override { nodejs-slim_24 = final.nodejs-slim_26; };
               python3 = prev.python3.override { packageOverrides = pythonPackageOverrides; };
               python3Packages = final.python3.pkgs;
               python313 = prev.python313.override { packageOverrides = pythonPackageOverrides; };
@@ -168,10 +175,7 @@
       };
 
       makeSystem =
-        {
-          hostname,
-          stateVersion,
-        }:
+        { hostname, stateVersion }:
         nixpkgs.lib.nixosSystem {
           inherit system;
           specialArgs = {
