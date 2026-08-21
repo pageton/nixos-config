@@ -33,7 +33,7 @@
 
       scrolling = {
         history = 50000;
-        multiplier = 1;
+        multiplier = 5;
       };
 
       selection = {
