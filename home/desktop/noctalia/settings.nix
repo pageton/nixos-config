@@ -1,5 +1,4 @@
 # Noctalia v5 declarative settings (Nix attrset -> TOML via the HM module).
-#
 # v5 has NO Stylix target (v4 had noctalia-shell.enable). We hand-mirror the
 # Catppuccin Mocha palette + wallpaper here. v5's two-layer model: this TOML is
 # the base; GUI overrides land in ~/.local/state/noctalia/settings.toml (which
@@ -7,6 +6,7 @@
 {
   config,
   inputs,
+  lib,
   pkgs,
   system,
   ...
@@ -40,8 +40,12 @@ in
 
     # === Wallpaper ===
     # Same nix-wallpaper derivation stylix uses (home/themes/stylix.nix).
-    # default.path is the per-output fallback; v5 also supports a wallpaper
-    # directory for rotation (left at v5 defaults — configure via GUI later).
+    # NOTE: since noctalia rev a9cd1c8 the effective wallpaper resolves ONLY
+    # from app-managed state (~/.local/state/noctalia/settings.toml); this
+    # config.toml key is tolerated but inert (upstream schema: "app-managed
+    # state, not settings"). home.activation.seedNoctaliaWallpaper below seeds
+    # the state layer from the same derivation — kept here as the declarative
+    # record and future-proofing in case upstream restores the fallback.
     wallpaper = {
       enabled = true;
       fill_mode = "crop"; # center | crop | fit | stretch | repeat | span
@@ -304,4 +308,12 @@ in
       };
     };
   };
+
+  # Auto-set the wallpaper: seed Noctalia's app-managed state so the
+  # declarative derivation actually applies (see script header for the
+  # state-vs-config semantics and the never-fight-the-GUI policy).
+  home.activation.seedNoctaliaWallpaper = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    $DRY_RUN_CMD ${pkgs.python3}/bin/python3 ${./noctalia-wallpaper-seed.py} \
+      "${wallpaper}/share/wallpapers/nixos-wallpaper.png"
+  '';
 }
