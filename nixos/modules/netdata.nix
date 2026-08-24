@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   pkgsStable,
   ...
 }:
@@ -13,7 +14,7 @@
   config = lib.mkIf config.mySystem.netdata.enable {
     services.netdata = {
       enable = true;
-      package = pkgsStable.netdataCloud;
+      package = pkgs.netdata;
 
       config = {
         global = {
