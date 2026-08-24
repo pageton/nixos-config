@@ -14,6 +14,7 @@ _: {
     ./tailscale.nix # Tailscale VPN packages
     ./ssh.nix # SSH client configuration
     ./discord.nix # Discord/Vesktop theming via nixcord
+    ./telegram.nix # Second Telegram Desktop instance (unsandboxed, separate profile)
     ./spicetify.nix # Spotify customization via spicetify-nix
     ./thunar.nix # Thunar file manager custom actions
     ./activitywatch.nix # ActivityWatch time tracking
