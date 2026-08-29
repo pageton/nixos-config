@@ -35,11 +35,36 @@ let
     export GST_PLUGIN_PATH="${gstPluginPath}:''${GST_PLUGIN_PATH:-}"
   '';
 
+  # The session theme env is QT_QPA_PLATFORMTHEME=qt5ct, which Qt6 cannot
+  # load, so the send/receive file dialog falls back to a bare theme with an
+  # empty sidebar (only Home + "Computer"). The gtk3 platform theme's dialog
+  # reads ~/.config/gtk-3.0/bookmarks and the XDG user dirs, restoring the
+  # normal sidebar. Scoped to Telegram only — the rest of the session keeps
+  # qt5ct styling.
+  fileDialogThemeEnv = ''
+    export QT_QPA_PLATFORMTHEME=gtk3
+  '';
+
+  # The GTK3 file dialog (QT_QPA_PLATFORMTHEME=gtk3 below) is a native GTK
+  # window whose Wayland app-id GLib derives from /proc/self/exe — the store
+  # ELF's literal name `.Telegram-wrapped` — so it showed up iconless in the
+  # bar/overview while every Qt window correctly reported
+  # org.telegram.desktop. Renaming the ELF (the symlink keeps nixpkgs' C
+  # wrapper working) makes the GTK dialog report org.telegram.desktop too,
+  # matching the desktop entry and its icon.
+  telegramDesktopPkg = pkgs.telegram-desktop.overrideAttrs (old: {
+    postFixup = (old.postFixup or "") + ''
+      mv "$out/bin/.Telegram-wrapped" "$out/bin/org.telegram.desktop"
+      ln -s org.telegram.desktop "$out/bin/.Telegram-wrapped"
+    '';
+  });
+
   telegramDesktop = pkgs.writeShellScriptBin "telegram-desktop" ''
     set -euo pipefail
     ${nvidiaEglEnv}
     ${gstEnv}
-    exec ${lib.getBin pkgs.telegram-desktop}/bin/Telegram "$@"
+    ${fileDialogThemeEnv}
+    exec ${lib.getBin telegramDesktopPkg}/bin/Telegram "$@"
   '';
 
   telegramDesktopSecond = pkgs.writeShellScriptBin "telegram-desktop-second" ''
@@ -48,7 +73,8 @@ let
     mkdir -p "$workdir"
     ${nvidiaEglEnv}
     ${gstEnv}
-    exec ${lib.getBin pkgs.telegram-desktop}/bin/Telegram -workdir "$workdir" "$@"
+    ${fileDialogThemeEnv}
+    exec ${lib.getBin telegramDesktopPkg}/bin/Telegram -workdir "$workdir" "$@"
   '';
 in
 {

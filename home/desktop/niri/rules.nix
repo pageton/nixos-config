@@ -118,7 +118,7 @@ in
     # renamed ELF (home/programs/telegram.nix) the native GTK dialog reports
     # org.telegram.desktop; the .Telegram-wrapped match is a fallback. No
     # default-floating-position → opens centered like the other Telegram
-    # floats; size pinned to its natural 958x790.
+    # floats; size pinned to its natural 958x790; takes focus on open.
     {
       matches = [
         {
@@ -134,6 +134,24 @@ in
       open-focused = true;
       default-column-width.fixed = 958;
       default-window-height.fixed = 790;
+    }
+
+    # Telegram main + call windows, both as centered floats. The main window
+    # is titled "<account> (<id>)"; calls carry the bare chat name. Pop-outs
+    # ("<chat> @ <account> (<id>)"), Instant View, editors, mini apps, and
+    # the file dialog have their own markers and rules, so they're excluded
+    # here. Applies at window-open time — already-open windows keep their
+    # state (toggle manually with Mod+Shift+Space).
+    {
+      matches = [ { app-id = "^org\\.telegram\\.desktop$"; } ];
+      excludes = [
+        { title = " @ "; } # pop-out chats (own rule above)
+        { title = "^(Article|Editing)\\b"; }
+        { title = "^Mini App:"; }
+        { title = "^Choose Files"; }
+      ];
+      open-floating = true;
+      open-focused = true;
     }
 
     # Floating: Android Emulator windows, docked top-right at their current position
