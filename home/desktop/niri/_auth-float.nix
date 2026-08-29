@@ -4,13 +4,19 @@
     text = ''
       #!/usr/bin/env bash
       # niri-auth-float — automatically float popup windows that change title
-      # after creation. Handles browser auth/OAuth popups and Telegram Mini Apps.
+      # after creation: browser auth/OAuth popups, Telegram Mini Apps, and
+      # Telegram separate chat windows (title settles post-map).
       # Static window-rules can't catch title changes; this script does.
 
       set -euo pipefail
 
       # Browser auth patterns
       AUTH_PATTERN='(sign.?in|log.?in|تسجيل الدخول|connexion|anmelden|autenticación|authenticate|oauth|authorize|bitwarden.*vault|accounts\.google|login\.microsoft|github\.com/(login|oauth|sessions))'
+
+      # Telegram separate chat windows: "<chat> @ <account> (<id>)" — kept in a
+      # variable because [[ =~ ]] chokes on inline escaped spaces.
+      TG_CHAT_TITLE_RE=' @ .*\([0-9]+\)$'
+
 
       declare -A floated=()
 
@@ -41,6 +47,17 @@
         # Telegram Mini Apps — match by title prefix
         if [[ "$title" == "Mini App: "* ]]; then
           niri msg action toggle-window-floating --id "$win_id" 2>/dev/null || true
+          niri msg action center-window --id "$win_id" 2>/dev/null || true
+          floated[$win_id]=1
+          return 0
+        fi
+
+        # Telegram separate chat windows ("<chat> @ <account> (<id>)") — the
+        # title settles AFTER the window maps, so the static window-rule
+        # (home/desktop/niri/rules.nix) can't catch them at open time.
+        if [[ "$app_id" == "org.telegram.desktop" ]] && [[ "$title" =~ $TG_CHAT_TITLE_RE ]]; then
+          niri msg action toggle-window-floating --id "$win_id" 2>/dev/null || true
+          niri msg action center-window --id "$win_id" 2>/dev/null || true
           floated[$win_id]=1
           return 0
         fi

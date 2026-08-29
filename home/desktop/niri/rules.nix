@@ -37,6 +37,7 @@ in
         }
       ];
       open-floating = true;
+      open-focused = true;
       default-floating-position = {
         x = 32;
         y = 32;
@@ -57,6 +58,7 @@ in
         { title = "^Save File$"; }
       ];
       open-floating = true;
+      open-focused = true;
     }
 
     # Floating: browser extension popups (Bitwarden, etc.)
@@ -67,11 +69,7 @@ in
         { app-id = "^librewolf-[a-z]{32}"; }
       ];
       open-floating = true;
-      default-floating-position = {
-        x = -0.5;
-        y = -0.5;
-        relative-to = "bottom-right";
-      };
+      open-focused = true;
       default-column-width.fixed = 380;
       default-window-height.fixed = 580;
     }
@@ -80,13 +78,96 @@ in
     {
       matches = [ { title = "^Mini App:.*$"; } ];
       open-floating = true;
-      default-floating-position = {
-        x = -0.5;
-        y = -0.5;
-        relative-to = "bottom-right";
-      };
+      open-focused = true;
       default-column-width.fixed = 400;
       default-window-height.fixed = 600;
+    }
+
+    # Floating: Telegram secondary windows, centered on screen
+    # - Article (Instant View), Editing (edit-in-window), and separate chat windows
+    #   ("<chat> @ <account> (<id>)" — the " @ " separates them from the main window).
+    # - ".Telegram-wrapped" — legacy fallback: all tdesktop windows report
+    #   org.telegram.desktop now (Qt windows via the desktop file name; the GTK
+    #   file dialog via the renamed ELF in home/programs/telegram.nix), so this
+    #   only fires if a window ever slips through with the raw store name.
+    # No default-floating-position → niri centers new floats by default
+    # (default-floating-position x/y are PIXELS from the relative-to corner, so
+    #  any value we set can only anchor to a corner/edge, never true center).
+    # niri has no window pinning — floats render above tiled windows on their workspace.
+    {
+      matches = [
+        {
+          app-id = "^org\\.telegram\\.desktop$";
+          title = "^Article\\b";
+        }
+        {
+          app-id = "^org\\.telegram\\.desktop$";
+          title = "^Editing\\b";
+        }
+        {
+          app-id = "^org\\.telegram\\.desktop$";
+          title = " @ .*\\(\\d+\\)$";
+        }
+        { app-id = "^\\.Telegram-wrapped$"; }
+      ];
+      open-floating = true;
+      open-focused = true;
+    }
+
+    # Telegram file dialog ("Choose Files" — send/receive picker). With the
+    # renamed ELF (home/programs/telegram.nix) the native GTK dialog reports
+    # org.telegram.desktop; the .Telegram-wrapped match is a fallback. No
+    # default-floating-position → opens centered like the other Telegram
+    # floats; size pinned to its natural 958x790.
+    {
+      matches = [
+        {
+          app-id = "^org\\.telegram\\.desktop$";
+          title = "^Choose Files";
+        }
+        {
+          app-id = "^\\.Telegram-wrapped$";
+          title = "^Choose Files";
+        }
+      ];
+      open-floating = true;
+      open-focused = true;
+      default-column-width.fixed = 958;
+      default-window-height.fixed = 790;
+    }
+
+    # Floating: Android Emulator windows, docked top-right at their current position
+    # (NOT centered). Offsets are working-area px: noctalia bar reserves 40px top, so
+    # output y=58 → y=18. Phone window 76px from right edge, side toolbar 6px.
+    {
+      matches = [
+        {
+          app-id = "^Emulator$";
+          title = "^Android Emulator";
+        }
+      ];
+      open-floating = true;
+      open-focused = true;
+      default-floating-position = {
+        x = 76;
+        y = 18;
+        relative-to = "top-right";
+      };
+    }
+    {
+      matches = [
+        {
+          app-id = "^Emulator$";
+          title = "^Emulator$";
+        }
+      ];
+      open-floating = true;
+      open-focused = true;
+      default-floating-position = {
+        x = 6;
+        y = 18;
+        relative-to = "top-right";
+      };
     }
 
     # Floating: browser auth/OAuth popups (title-based, language-stable keywords)
@@ -108,6 +189,7 @@ in
         { title = ".*[Bb]itwarden.*[Vv]ault.*"; }
       ];
       open-floating = true;
+      open-focused = true;
     }
 
     # Block password managers from screencasts
@@ -140,6 +222,7 @@ in
     {
       matches = [ { app-id = "^clientdx\\.exe$"; } ];
       open-floating = true;
+      open-focused = true;
     }
   ];
 }

@@ -106,10 +106,10 @@ in
           profile = "${pkgs.firejail}/etc/firejail/signal-desktop.profile";
         };
 
-        telegram-desktop = {
-          executable = withPortalXdgOpen "telegram-desktop" "${lib.getBin pkgs.telegram-desktop}/bin/Telegram";
-          profile = "${pkgs.firejail}/etc/firejail/telegram-desktop.profile";
-        };
+        # NOTE: telegram-desktop intentionally NOT firejail-wrapped (user
+        # request 2026-08-29 — runs unsandboxed). AyuGram (below) still uses
+        # the telegram profile + telegram.local, which is why that profile's
+        # local overrides stay in place.
 
         ayugram-desktop = {
           executable = withPortalXdgOpen "ayugram-desktop" "${lib.getBin pkgs.ayugram-desktop}/bin/AyuGram";
@@ -263,6 +263,14 @@ in
           # explicitly.
           dbus-user.talk org.freedesktop.portal.Desktop
           dbus-user.talk org.freedesktop.impl.portal.FileChooser
+
+          # NVIDIA EGL webview fix (mini apps): force the NVIDIA GBM backend and
+          # EGL vendor so WebKitGTK's renderer doesn't fall back to Mesa on the
+          # NVIDIA device ("driver (null)" → qt.waylandcompositor EGL failure).
+          # Matches the env in home/programs/telegram.nix (telegram-desktop
+          # wrappers); kept here so AyuGram's webview gets it too.
+          env GBM_BACKEND=nvidia-drm
+          env __EGL_VENDOR_LIBRARY_FILENAMES=/run/opengl-driver/share/glvnd/egl_vendor.d/10_nvidia.json
         '';
       };
 
