@@ -154,6 +154,19 @@ in
       open-focused = true;
     }
 
+    # xdg-desktop-portal FileChooser dialogs ("Open Files", "Save Files", …).
+    # The window belongs to the portal process, so the app-id is stable
+    # regardless of which app opened it; portals.conf routes only
+    # FileChooser to the gtk portal, so every window it spawns is a chooser.
+    # Same treatment as the Telegram dialog: centered float at 958x790.
+    {
+      matches = [ { app-id = "^xdg-desktop-portal-gtk$"; } ];
+      open-floating = true;
+      open-focused = true;
+      default-column-width.fixed = 958;
+      default-window-height.fixed = 790;
+    }
+
     # Floating: Android Emulator windows, docked top-right at their current position
     # (NOT centered). Offsets are working-area px: noctalia bar reserves 40px top, so
     # output y=58 → y=18. Phone window 76px from right edge, side toolbar 6px.
