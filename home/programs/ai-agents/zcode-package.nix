@@ -1,4 +1,5 @@
-{pkgs, ...}: let
+{ pkgs, ... }:
+let
   version = "3.10.1";
 
   src = pkgs.fetchurl {
@@ -25,7 +26,7 @@
       pkgs.xdg-utils # open URLs/files from in-app
     ];
 
-    passthru = {inherit appContents;};
+    passthru = { inherit appContents; };
 
     extraInstallCommands = ''
       # Desktop file — rewrite Exec line with required flags
@@ -51,4 +52,5 @@
       fi
     '';
   };
-in [zcode]
+in
+[ zcode ]
