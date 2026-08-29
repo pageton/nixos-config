@@ -11,8 +11,15 @@
       obs-vkcapture # Vulkan/OpenGL game capture
       obs-gstreamer # GStreamer integration for more sources
       obs-vaapi # VA-API hardware encoding (AMD/Intel)
-      obs-move-transition # Smooth animated transitions between scenes
-      obs-shaderfilter # Custom shader effects
+      # obs-studio 32 marks obs_properties_add_button OBS_DEPRECATED; exeldro
+      # plugins still call it and vendor -Werror via obs-plugintemplate.
+      # Drop these overrides once upstream releases 32-compatible versions.
+      (obs-move-transition.overrideAttrs (_: {
+        env.NIX_CFLAGS_COMPILE = "-Wno-error=deprecated-declarations";
+      }))
+      (obs-shaderfilter.overrideAttrs (_: {
+        env.NIX_CFLAGS_COMPILE = "-Wno-error=deprecated-declarations";
+      }))
       obs-source-record # Record individual sources separately
       advanced-scene-switcher # Automate scene switching
     ];
