@@ -28,3 +28,6 @@ pyghidra_mcp_projects/
 # On first clone: cp servers.nix.example servers.nix && git add -f servers.nix
 inventory/permanent/servers.nix
 inventory/ephemeral/servers.nix
+
+# Mimosa security-scan hook session state
+.mimosa/
