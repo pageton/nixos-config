@@ -36,7 +36,7 @@
     defaultCacheTtl = 86400;
     # Avoid gpg-agent hijacking SSH auth; OpenSSH should use ~/.ssh/id_ed25519 directly.
     enableSshSupport = false;
-    pinentry.package = pkgsStable.pinentry-qt;
+    pinentry.package = pkgsStable.pinentry-curses;
     # Allow loopback mode for non-interactive environments (e.g., CI, scripts without TTY)
     extraConfig = ''
       allow-loopback-pinentry
