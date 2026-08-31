@@ -434,7 +434,7 @@ These launch automatically when Niri starts:
 | Alacritty + Zellij          | Terminal with multiplexer                    | spawn-at-startup     |
 | Vesktop (Discord)           | Discord client                               | spawn-at-startup     |
 | Telegram                    | Messaging                                    | spawn-at-startup     |
-| swayidle                    | Idle management (dim → lock → DPMS)          | systemd user service |
+| swayidle                    | Idle management (dim → lock → DPMS → suspend) | systemd user service |
 
 ---
 

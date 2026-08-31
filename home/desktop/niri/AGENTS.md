@@ -11,7 +11,7 @@ Niri scrollable-tiling Wayland compositor — Home Manager configuration split i
 | `layout.nix`      | Window layout rules, column widths, gaps, struts                                       |
 | `rules.nix`       | Per-window/open rules (floating, fullscreen, workspace assignment)                     |
 | `animations.nix`  | Transition and motion animations                                                       |
-| `idle.nix`        | swayidle timeouts: dim (3m) → lock (8m) → DPMS off (20m)                               |
+| `idle.nix`        | swayidle timeouts: dim (3m) → lock (8m) → DPMS off (20m) → suspend (30m)               |
 | `lock.nix`        | swaylock screen lock config (fallback; primary lock is Noctalia's lockscreen)          |
 | `input.nix`       | Keyboard, mouse, touchpad, trackpoint settings                                         |
 | `_auth-float.nix` | Auth dialog floating window rule (private/internal)                                    |

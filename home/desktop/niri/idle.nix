@@ -1,5 +1,5 @@
 # Idle management (swayidle).
-# Chain: 3min dim -> 8min lock (Noctalia v5) -> 20min DPMS off.
+# Chain: 3min dim -> 8min lock (Noctalia v5) -> 20min DPMS off -> 30min suspend.
 #
 # NOTE: clipboard history is intentionally NEVER cleared. The previous config
 # ran `cliphist wipe` on every screen lock (an OPSEC measure), but the user
@@ -26,6 +26,10 @@ in
         timeout = 1200;
         command = "${pkgs.niri}/bin/niri msg action power-off-monitors";
         resumeCommand = "${pkgs.niri}/bin/niri msg action power-on-monitors";
+      }
+      {
+        timeout = 1800;
+        command = "${pkgs.systemd}/bin/systemctl suspend";
       }
     ];
 
