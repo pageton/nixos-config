@@ -1,4 +1,4 @@
-{ pkgs, ... }: {
+_: {
   home.file.".local/bin/niri-auth-float" = {
     executable = true;
     text = ''
@@ -55,7 +55,9 @@
         # Telegram separate chat windows ("<chat> @ <account> (<id>)") — the
         # title settles AFTER the window maps, so the static window-rule
         # (home/desktop/niri/rules.nix) can't catch them at open time.
-        if [[ "$app_id" == "org.telegram.desktop" ]] && [[ "$title" =~ $TG_CHAT_TITLE_RE ]]; then
+        # Official-build Qt windows append "._<workdir-hash>" to the app-id,
+        # so prefix-match; the plain form stays covered too.
+        if [[ "$app_id" == "org.telegram.desktop"* ]] && [[ "$title" =~ $TG_CHAT_TITLE_RE ]]; then
           niri msg action toggle-window-floating --id "$win_id" 2>/dev/null || true
           niri msg action center-window --id "$win_id" 2>/dev/null || true
           floated[$win_id]=1

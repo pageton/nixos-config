@@ -86,10 +86,10 @@ in
     # Floating: Telegram secondary windows, centered on screen
     # - Article (Instant View), Editing (edit-in-window), and separate chat windows
     #   ("<chat> @ <account> (<id>)" — the " @ " separates them from the main window).
-    # - ".Telegram-wrapped" — legacy fallback: all tdesktop windows report
-    #   org.telegram.desktop now (Qt windows via the desktop file name; the GTK
-    #   file dialog via the renamed ELF in home/programs/telegram.nix), so this
-    #   only fires if a window ever slips through with the raw store name.
+    # - Official-build Qt windows append a per-workdir hash to the app-id
+    #   ("org.telegram.desktop._<md5>"), so all Telegram app-ids here
+    #   prefix-match; the GTK file dialog still reports the plain form
+    #   (app-id derives from the ELF name in home/programs/telegram.nix).
     # No default-floating-position → niri centers new floats by default
     # (default-floating-position x/y are PIXELS from the relative-to corner, so
     #  any value we set can only anchor to a corner/edge, never true center).
@@ -97,15 +97,15 @@ in
     {
       matches = [
         {
-          app-id = "^org\\.telegram\\.desktop$";
+          app-id = "^org\\.telegram\\.desktop";
           title = "^Article\\b";
         }
         {
-          app-id = "^org\\.telegram\\.desktop$";
+          app-id = "^org\\.telegram\\.desktop";
           title = "^Editing\\b";
         }
         {
-          app-id = "^org\\.telegram\\.desktop$";
+          app-id = "^org\\.telegram\\.desktop";
           title = " @ .*\\(\\d+\\)$";
         }
         { app-id = "^\\.Telegram-wrapped$"; }
@@ -122,7 +122,7 @@ in
     {
       matches = [
         {
-          app-id = "^org\\.telegram\\.desktop$";
+          app-id = "^org\\.telegram\\.desktop";
           title = "^Choose Files";
         }
         {
@@ -143,7 +143,7 @@ in
     # here. Applies at window-open time — already-open windows keep their
     # state (toggle manually with Mod+Shift+Space).
     {
-      matches = [ { app-id = "^org\\.telegram\\.desktop$"; } ];
+      matches = [ { app-id = "^org\\.telegram\\.desktop"; } ];
       excludes = [
         { title = " @ "; } # pop-out chats (own rule above)
         { title = "^(Article|Editing)\\b"; }
