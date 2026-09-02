@@ -109,7 +109,7 @@
               # python313Packages, python313.pkgs) inherit them.
               # overrideScope on python3Packages alone only affects that one alias;
               # jetbrains-mono builds via python313, bypassing a python3-only override.
-              pythonPackageOverrides = pyFinal: pyPrev: {
+              pythonPackageOverrides = _: pyPrev: {
                 picosvg = pyPrev.picosvg.overridePythonAttrs (_: {
                   doCheck = false;
                 });

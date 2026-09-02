@@ -1,4 +1,4 @@
-{ ... }: {
+_: {
   # NOTE: The Telegram main entry moved to home/programs/telegram.nix (it
   # execs that module's telegram-desktop wrapper: unsandboxed + NVIDIA EGL +
   # GStreamer plugin env). AyuGram/Celluloid below still reference

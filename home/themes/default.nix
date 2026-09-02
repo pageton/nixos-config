@@ -1,5 +1,6 @@
 # Theme configuration — options and Stylix theming.
 # Palette is a plain attrset (not a module) imported directly by stylix.nix.
+# modules-check: manual-helper ./palette.nix
 { ... }: {
   imports = [
     ./options.nix # Theme submodule options (rounding, gaps, opacity, bar, etc.)

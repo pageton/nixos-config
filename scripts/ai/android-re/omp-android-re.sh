@@ -151,10 +151,12 @@ if command -v alacritty >/dev/null 2>&1; then
 		title="android-re (${PROFILE})"
 	fi
 
+	# shellcheck disable=SC2086 # OMP_ARGS is an intentional flags string
 	PI_CODING_AGENT_DIR="${RUNTIME_AGENT_DIR}" \
 		exec alacritty --title "${title}" -e omp ${OMP_ARGS} "$@"
 else
 	# Fallback: run directly in current terminal
+	# shellcheck disable=SC2086 # OMP_ARGS is an intentional flags string
 	PI_CODING_AGENT_DIR="${RUNTIME_AGENT_DIR}" \
 		exec omp ${OMP_ARGS} "$@"
 fi

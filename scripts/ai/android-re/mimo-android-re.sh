@@ -97,10 +97,12 @@ if command -v alacritty >/dev/null 2>&1; then
 		title="android-re (${PROFILE})"
 	fi
 
+	# shellcheck disable=SC2086 # MODEL_FLAGS is an intentional flags string
 	MIMOCODE_CONFIG_DIR="${RUNTIME_CONFIG_DIR}" \
 		exec alacritty --title "${title}" -e mimo ${MODEL_FLAGS} "$@"
 else
 	# Fallback: run directly in current terminal
+	# shellcheck disable=SC2086 # MODEL_FLAGS is an intentional flags string
 	MIMOCODE_CONFIG_DIR="${RUNTIME_CONFIG_DIR}" \
 		exec mimo ${MODEL_FLAGS} "$@"
 fi

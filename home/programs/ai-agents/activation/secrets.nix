@@ -4,8 +4,6 @@
   cfg,
   pkgs,
   lib,
-  config,
-  constants,
   opencodeConfigPathList,
   opencodeZaiFilter,
   claudeZaiFilter,
@@ -14,9 +12,6 @@
   openrouterPlaceholderFilter,
   context7PlaceholderFilter,
 }:
-let
-  zaiApiRoot = constants.services.zai.apiRoot;
-in
 lib.hm.dag.entryAfter [ "writeBoundary" "linkGeneration" "setupCodexConfig" "setupClaudeConfig" ] ''
   patch_json_file() {
     local file="$1"

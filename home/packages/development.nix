@@ -1,10 +1,6 @@
 # Development tools and programming languages for software development,
 # debugging, database management, and reverse engineering.
-{
-  pkgs,
-  pkgsStable,
-  constants,
-}:
+{ pkgs, pkgsStable, ... }:
 let
   zedNvidiaXwayland = pkgs.symlinkJoin {
     name = "zed-editor-nvidia-xwayland";

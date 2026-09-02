@@ -10,7 +10,6 @@
 # you can still log in via TTY (Ctrl+Alt+F2) and `nh os switch` to revert.
 {
   lib,
-  user,
   constants,
   pkgs,
   ...

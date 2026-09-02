@@ -1,8 +1,4 @@
-{
-  pkgs,
-  pkgsStable,
-  constants,
-}:
+{ pkgs, ... }:
 
 let
   version = "1.4.137";

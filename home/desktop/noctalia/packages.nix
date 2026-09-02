@@ -1,7 +1,7 @@
 # Noctalia v5 package wiring + runtime dependencies.
 # The HM module (inputs.noctalia.homeModules.default) installs the `noctalia`
 # binary when programs.noctalia.enable = true; no manual package install needed.
-{ ... }: {
+_: {
   programs.noctalia.enable = true;
 
   # Runtime deps not bundled by the noctalia package. v5 ships its own clipboard

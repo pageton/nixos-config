@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }: {
+{ pkgs, ... }: {
   programs.nvf.settings.vim = {
     diagnostics = {
       enable = true;

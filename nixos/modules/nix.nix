@@ -17,7 +17,7 @@
       let
         # Shared package overrides applied to every python interpreter so that
         # ALL package set references inherit them (same pattern as flake.nix).
-        pythonPackageOverrides = pyFinal: pyPrev: {
+        pythonPackageOverrides = _: pyPrev: {
           # Valkey (python client): test_bgsave races against itself — fires a
           # second BGSAVE before the first completes on busy builders.
           # Transitive dep of onionshare-cli → firejail-wrapped-binaries.

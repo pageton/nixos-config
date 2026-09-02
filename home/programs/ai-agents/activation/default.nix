@@ -42,8 +42,6 @@ let
       cfg
       pkgs
       lib
-      config
-      constants
       opencodeConfigPathList
       opencodeZaiFilter
       claudeZaiFilter
@@ -81,7 +79,6 @@ let
       pkgs
       lib
       opencodeProfileNames
-      config
       ;
   };
   skillInstallation = import ./skills.nix {

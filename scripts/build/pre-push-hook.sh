@@ -4,7 +4,9 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve symlinks: git runs this via .git/hooks/pre-push -> ../../scripts/build/
+SELF="$(readlink -f "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(cd "$(dirname "$SELF")" && pwd)"
 # shellcheck source=scripts/lib/logging.sh
 source "${SCRIPT_DIR}/../lib/logging.sh"
 

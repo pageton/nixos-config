@@ -1,8 +1,4 @@
-{
-  pkgs,
-  pkgsStable,
-  constants,
-}:
+{ pkgs, ... }:
 
 let
   antigravityCli = pkgs.stdenvNoCC.mkDerivation rec {

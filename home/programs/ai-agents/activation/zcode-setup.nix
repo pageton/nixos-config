@@ -24,12 +24,9 @@ lib.mkIf cfg.zcode.enable (
     mkModel =
       m:
       {
-        limit = {
-          context = m.context;
-          output = m.output;
-        };
+        limit = { inherit (m) context output; };
         modalities = {
-          input = m.input;
+          inherit (m) input;
           output = [ "text" ];
         };
         zcode.modified = true;

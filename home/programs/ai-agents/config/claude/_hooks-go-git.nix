@@ -5,7 +5,7 @@
 # PreToolUse:       Go preflight before git/gh mutations + block destructive GitHub
 # PostToolUse:      go mod tidy diff on go.mod/go.sum, actionlint on workflow edits
 
-{ }:
+_:
 
 let
   findGoRoot = ''

@@ -1,6 +1,6 @@
 # Local system packages for the 'desktop' host.
 
-{ pkgs, pkgsStable, ... }:
+{ pkgs, ... }:
 
 {
   environment.systemPackages = with pkgs; [

@@ -129,32 +129,34 @@
         ];
       };
 
-      plugin.prepend_fetchers = [
-        {
-          url = "*";
-          run = "git";
-          group = "git";
-        }
-        {
-          url = "*/";
-          run = "git";
-          group = "git";
-        }
-      ];
+      plugin = {
+        prepend_fetchers = [
+          {
+            url = "*";
+            run = "git";
+            group = "git";
+          }
+          {
+            url = "*/";
+            run = "git";
+            group = "git";
+          }
+        ];
 
-      plugin.prepend_previewers = [
-        {
-          url = "*.md";
-          run = ''piper -- CLICOLOR_FORCE=1 glow -w=$w -s=dark "$1"'';
-        }
-      ];
+        prepend_previewers = [
+          {
+            url = "*.md";
+            run = ''piper -- CLICOLOR_FORCE=1 glow -w=$w -s=dark "$1"'';
+          }
+        ];
 
-      plugin.prepend_openers = [
-        {
-          url = "*.{zip,tar,gz,bz2,xz,7z,rar}";
-          run = "ouch";
-        }
-      ];
+        prepend_openers = [
+          {
+            url = "*.{zip,tar,gz,bz2,xz,7z,rar}";
+            run = "ouch";
+          }
+        ];
+      };
     };
   };
 }

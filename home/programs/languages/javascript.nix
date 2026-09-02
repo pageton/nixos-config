@@ -107,31 +107,37 @@ in
     # Wrapper sets system Chromium path before every playwright-cli invocation.
     # ~/.local/bin (pos 3 in PATH) takes priority over ~/.bun/bin (pos 6),
     # so this intercepts all calls regardless of env var inheritance.
-    file.".local/bin/playwright-cli" = {
-      executable = true;
-      text = ''
-        #!/usr/bin/env bash
-        export PLAYWRIGHT_MCP_BROWSER=chromium
-        export PLAYWRIGHT_MCP_EXECUTABLE_PATH=/run/current-system/sw/bin/chromium
-        exec "$HOME/.bun/bin/playwright-cli" "$@"
-      '';
-    };
-
-    file.".local/bin/bun" = {
-      executable = true;
-      text = ''
-        #!/usr/bin/env bash
-        exec ${bunPackage}/bin/bun "$@"
-      '';
-    };
-
-    file.".local/bin/bunx" = {
-      executable = true;
-      text = ''
-        #!/usr/bin/env bash
-        exec ${bunPackage}/bin/bunx "$@"
-      '';
-    };
+    file = lib.mkMerge [
+      {
+        ".local/bin/playwright-cli" = {
+          executable = true;
+          text = ''
+            #!/usr/bin/env bash
+            export PLAYWRIGHT_MCP_BROWSER=chromium
+            export PLAYWRIGHT_MCP_EXECUTABLE_PATH=/run/current-system/sw/bin/chromium
+            exec "$HOME/.bun/bin/playwright-cli" "$@"
+          '';
+        };
+      }
+      {
+        ".local/bin/bun" = {
+          executable = true;
+          text = ''
+            #!/usr/bin/env bash
+            exec ${bunPackage}/bin/bun "$@"
+          '';
+        };
+      }
+      {
+        ".local/bin/bunx" = {
+          executable = true;
+          text = ''
+            #!/usr/bin/env bash
+            exec ${bunPackage}/bin/bunx "$@"
+          '';
+        };
+      }
+    ];
 
     packages = with pkgs; [
       nodejs_22

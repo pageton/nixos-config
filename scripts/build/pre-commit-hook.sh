@@ -4,7 +4,9 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve symlinks: git runs this via .git/hooks/pre-commit -> ../../scripts/build/
+SELF="$(readlink -f "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(cd "$(dirname "$SELF")" && pwd)"
 # shellcheck source=scripts/lib/logging.sh
 source "${SCRIPT_DIR}/../lib/logging.sh"
 
@@ -25,7 +27,10 @@ statix check --ignore '.git/**'
 deadnix --fail --exclude "${DEADNIX_EXCLUDES[@]}" .
 
 print_info "Checking formatting..."
-nix fmt -- --fail-on-change --no-cache . 2>/dev/null || {
+# fd-based, not `nix fmt .`: nix fmt walks gitignored files too (e.g. the
+# private inventory/permanent/servers.nix) and would fail the hook forever;
+# fd honors .gitignore, matching `just format`.
+fd -e nix -X nixfmt --strict --check 2>/dev/null || {
 	print_error "Formatting check failed. Run 'just format' first."
 	exit 1
 }

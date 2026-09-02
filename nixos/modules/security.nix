@@ -108,7 +108,8 @@ in
 
       "net.ipv4.conf.all.log_martians" = 1; # Log spoofed packets
 
-      # IPv6 privacy extensions (defense-in-depth — IPv6 disabled in networking.nix)
+      # IPv6 privacy extensions (defense-in-depth — IPv6 remains enabled;
+      # rogue-router protection comes from accept_ra=0 and the firewall below)
       "net.ipv6.conf.all.use_tempaddr" = lib.mkForce 2;
       "net.ipv6.conf.default.use_tempaddr" = lib.mkForce 2;
 
@@ -214,19 +215,21 @@ in
     allowedTCPPorts = [ ]; # No public-facing ports — SSH restricted to Tailscale below
     allowedUDPPorts = [ ];
     allowedTCPPortRanges = [ ];
-    interfaces."lo".allowedTCPPortRanges = [
-      {
-        from = 1024;
-        to = 65535;
-      }
-    ]; # Dev servers on loopback only
-    interfaces."tailscale0".allowedTCPPorts = [ ]; # All ports trusted on Tailscale VPN
-    interfaces."tailscale0".allowedTCPPortRanges = [
-      {
-        from = 1;
-        to = 65535;
-      }
-    ];
+    # Dev servers on loopback only; all ports trusted on Tailscale VPN
+    interfaces = {
+      lo.allowedTCPPortRanges = [
+        {
+          from = 1024;
+          to = 65535;
+        }
+      ];
+      tailscale0.allowedTCPPortRanges = [
+        {
+          from = 1;
+          to = 65535;
+        }
+      ];
+    };
     allowedUDPPortRanges = [ ];
   };
 

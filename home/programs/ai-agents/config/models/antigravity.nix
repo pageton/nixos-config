@@ -1,11 +1,10 @@
 # Antigravity CLI (agy) model, theme, hooks, and settings configuration.
 # agy reads from ~/.gemini/settings.json — inherits the Gemini CLI config layout.
 
-{ config, lib, ... }:
+_:
 
 let
   formatters = import ../../helpers/_formatters.nix;
-  destructiveRules = import ../../helpers/_destructive-rules.nix;
 
   formatterCaseBranches = builtins.concatStringsSep "\n                    " (
     map (

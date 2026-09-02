@@ -1,5 +1,5 @@
 # Local system packages for the 'thinkpad' host.
-{ pkgs, pkgsStable, ... }: {
+{ pkgs, ... }: {
   environment.systemPackages = with pkgs; [
     tlp # Power management
     smartmontools # Disk monitoring

@@ -1,10 +1,6 @@
 # General desktop applications including browsers, communication tools,
 # productivity software, and theming packages.
-{
-  pkgs,
-  pkgsStable,
-  constants,
-}:
+{ pkgs, pkgsStable, ... }:
 with pkgs;
 with pkgsStable;
 [

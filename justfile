@@ -20,7 +20,7 @@ lint:
     @nix run nixpkgs#time -- -f "⏱ Completed in %E" nix run nixpkgs#statix -- check --ignore '.git/**'
     @echo "✔ Nix linting passed!"
     @echo -e "\n➤ Checking Bash scripts…"
-    @nix run nixpkgs#time -- -f "⏱ Completed in %E" find . -name "*.sh" -not -path "./.git/*" -exec nix run nixpkgs#shellcheck -- {} +
+    @nix run nixpkgs#time -- -f "⏱ Completed in %E" find . -name "*.sh" -not -path "./.git/*" -exec nix run nixpkgs#shellcheck -- -x {} +
     @echo "✔ ShellCheck passed!"
 
 # Check all missing imports
@@ -37,6 +37,17 @@ security:
 perf top="15":
     @echo -e "\n➤ Running performance audit"
     @nix run nixpkgs#time -- -f "⏱ Completed in %E" bash ./scripts/build/performance-audit.sh {{top}}
+
+# Install repo quality-gate git hooks (pre-commit + pre-push)
+install-hooks:
+    @ln -sf ../../scripts/build/pre-commit-hook.sh .git/hooks/pre-commit
+    @ln -sf ../../scripts/build/pre-push-hook.sh .git/hooks/pre-push
+    @echo "✔ Installed pre-commit and pre-push hooks"
+
+# Remove installed git hooks
+remove-hooks:
+    @rm -f .git/hooks/pre-commit .git/hooks/pre-push
+    @echo "✔ Removed git hooks"
 
 # Systemd service hardening exposure report
 hardening:

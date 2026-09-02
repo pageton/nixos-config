@@ -1,7 +1,7 @@
 # AGENTS.md — NixOS System Configuration
 
-**Generated:** 2026-05-05
-**Commit:** 75feab4
+**Generated:** 2026-09-02
+**Commit:** 66061f2
 **Branch:** main
 
 ## Role
@@ -72,7 +72,7 @@ System/
 
 | File                              | Purpose                                                                                                 |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `flake.nix`                       | Flake entry: 15 inputs, makeSystem/makeHome factories, inventory-driven host loop                       |
+| `flake.nix`                       | Flake entry: 14 inputs, makeSystem/makeHome factories, inventory-driven host loop                       |
 | `justfile`                        | All task automation (`just all`, `just qa`, `just nixos`, `just home`, `just sops-*`)                   |
 | `shared/constants.nix`            | SSOT for user identity, fonts, Catppuccin Mocha colors, keyboard layout, service ports, proxy endpoints |
 | `shared/option-helpers.nix`       | NixOS option type constructors used by system modules                                                   |
@@ -301,7 +301,8 @@ just secrets-add <key>  # Add a new secret
 9. **Secret decryption** — `just sops-edit` writes decrypted file to `$XDG_RUNTIME_DIR` (tmpfs). If interrupted, OS reclaims automatically.
 10. **Desktop vs thinkpad differences** — thinkpad has no gaming/virtualization/Mullvad; desktop has no Bluetooth/TLP/NVIDIA-dGPU-specific modules.
 
-11. **Orphaned modules** — `fwupd.nix`, `printing.nix`, `secure-boot.nix`, `vnc.nix`, `yggdrasil.nix`, `i2pd.nix` exist in `nixos/modules/` but are not imported by any category `default.nix`. They will not be included in any build until wired up.
+11. **Flat module imports are globally verified** — `modules-check.sh` now performs a tree-wide import check (not just per-`default.nix`), so any `.nix` module not referenced by at least one `default.nix` (or a `# modules-check: manual-helper` comment) fails `just modules`. Plain-`import`ed helpers still need a manual-helper marker in their directory's `default.nix`. Always add the marker when adding a helper.
+12. **CodeGraph daemon blocks nix evals** — while `codegraph serve` is running, `.codegraph/daemon.sock` is a Unix socket that makes every `nix` flake `path:` fetch fail with "file '.codegraph/daemon.sock' has an unsupported type" (breaks `just check`, `just eval-*`, pre-commit). Stop it before evaluating: `kill "$(cat .codegraph/daemon.pid)" && rm -f .codegraph/daemon.sock`. The socket reappears when the daemon restarts.
 
 ## Security Considerations
 

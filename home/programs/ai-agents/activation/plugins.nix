@@ -7,7 +7,6 @@
   pkgs,
   lib,
   opencodeProfileNames,
-  config,
 }:
 
 let

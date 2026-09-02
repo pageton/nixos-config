@@ -190,9 +190,7 @@ collect_omp() {
 		# Collect custom providers from models.yml
 		local models_yml="$profile_dir/models.yml"
 		local models_json="$profile_dir/models.json"
-		local models_file=""
 		if [[ -f "$models_yml" ]]; then
-			models_file="$models_yml"
 			if command -v yq >/dev/null 2>&1; then
 				local prov_name
 				while IFS= read -r prov_name; do
@@ -203,7 +201,6 @@ collect_omp() {
 				done < <(yq '.providers // {} | keys[]' "$models_yml" 2>/dev/null)
 			fi
 		elif [[ -f "$models_json" ]]; then
-			models_file="$models_json"
 			local prov_name
 			while IFS= read -r prov_name; do
 				[[ -n "$prov_name" ]] || continue

@@ -221,20 +221,44 @@ main() {
 			fi
 			if [[ -z "${imported_set[$module_file]:-}" ]]; then
 				print_error "Missing import: $dir/$module_file"
-				((error_count++))
+				error_count=$((error_count + 1))
 			fi
 		done
 
 		# Validate import paths
 		for import_path in "${unique_imports[@]}"; do
 			if ! validate_import_path "$dir" "$import_path"; then
-				((error_count++))
+				error_count=$((error_count + 1))
 			fi
 		done
 
 		unset imported_set manual_helper_set
 		((proc_idx++)) || true
 	done
+
+	# Global import coverage — the per-dir comparison above only sees imports
+	# listed by a directory's own default.nix. Flat modules imported by a
+	# SIBLING category default (e.g. nixos/modules/core/default.nix importing
+	# ../security.nix) are attributed to that sibling, so unimported flat
+	# modules in the same dir are never compared and silently pass as "OK".
+	# Verify every eligible module file is referenced by at least one
+	# default.nix import or manual-helper comment anywhere in the tree.
+	declare -A global_imported=()
+	local gd gt gp
+	while IFS=$'\t' read -r gd gt gp; do
+		if [[ "$gt" == "nix" ]] || [[ "$gt" == "manual" ]]; then
+			global_imported["$(realpath -m "$(dirname "$gd")/$gp")"]=1
+		fi
+	done < <(sort -u "$TMP_DIR/all-extracts.txt")
+
+	while IFS=$'\t' read -r ldir lfile; do
+		local gabs
+		gabs="$(realpath -m "$ldir/$lfile")"
+		if [[ -z "${global_imported[$gabs]:-}" ]]; then
+			print_error "Missing import (global): $ldir/$lfile"
+			error_count=$((error_count + 1))
+		fi
+	done < <(printf '%s\n' "${all_local_modules[@]}")
 
 	if ((error_count > 0)); then
 		print_error "Found $error_count import error(s)."

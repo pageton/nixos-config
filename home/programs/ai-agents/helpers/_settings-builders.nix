@@ -15,11 +15,11 @@ let
   # Built-in agents (build/plan/...) remain; default_agent stays unset so plain `mi` uses `build`.
   mimoAndroidReAgent = import ../config/models/_mimo-android-re.nix {
     inherit config lib;
-    yoloPermission = opencodeAgents.yoloPermission;
+    inherit (opencodeAgents) yoloPermission;
   };
   mimoWebReAgent = import ../config/models/_mimo-web-re.nix {
     inherit config lib;
-    yoloPermission = opencodeAgents.yoloPermission;
+    inherit (opencodeAgents) yoloPermission;
   };
   inherit (mcpTransforms)
     opencodeMcpServers

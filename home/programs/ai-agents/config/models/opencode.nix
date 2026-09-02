@@ -15,7 +15,7 @@ let
     inherit config lib;
     inherit (opencodeAgents) yoloPermission;
   };
-  baseAgents = opencodeAgents.baseAgents;
+  inherit (opencodeAgents) baseAgents;
 in
 {
   programs.aiAgents.opencode = {

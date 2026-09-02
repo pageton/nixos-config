@@ -1,6 +1,6 @@
 # AI coding agents configuration (Claude Code, OpenCode, Codex, Antigravity CLI).
-
-{ ... }: {
+# modules-check: manual-helper ./zcode-package.nix
+_: {
   imports = [
     ./options.nix # Option definitions for programs.aiAgents
     ./activation # Activation scripts (secret patching, config setup, plugin installs)

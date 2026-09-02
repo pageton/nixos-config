@@ -5,7 +5,7 @@
 #   - torCheckPort:    detects running Tor SOCKS proxy (port 9150 or 9050)
 #   - torUserJs:       LibreWolf/Firefox preferences for Tor proxy hardening
 #   - torLaunchLW:     launches LibreWolf with a given profile directory
-{ pkgs, pkgsStable, ... }:
+{ pkgsStable, ... }:
 let
   mkPersistentProfile = profileName: ''
     PROFILE_DIR="$HOME/${profileName}"

@@ -2,10 +2,12 @@
 # NOTE: Firewall rules live in security.nix to keep all hardening in one place.
 { lib, pkgs, ... }: {
   # NetworkManager for GUI networking
-  networking.networkmanager.enable = lib.mkDefault true;
-  networking.networkmanager.dns = lib.mkDefault "systemd-resolved";
-  networking.networkmanager.wifi.macAddress = "random";
-  networking.networkmanager.ethernet.macAddress = "random";
+  networking.networkmanager = {
+    enable = lib.mkDefault true;
+    dns = lib.mkDefault "systemd-resolved";
+    wifi.macAddress = "random";
+    ethernet.macAddress = "random";
+  };
 
   # Let NetworkManager and VPN software manage DNS through resolved.
   services.resolved.enable = lib.mkDefault true;
