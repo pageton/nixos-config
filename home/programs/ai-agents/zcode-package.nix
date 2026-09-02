@@ -1,14 +1,12 @@
 { pkgs, ... }:
 let
-  version = "3.10.1";
+  version = "3.10.2";
 
   src = pkgs.fetchurl {
     url = "https://cdn-zcode.z.ai/zcode/electron/releases/${version}/linux-x64/ZCode-${version}-linux-x64.AppImage";
-    # NOTE: lib.fakeSha256 is a placeholder. On first build, Nix will fail with
-    # "hash mismatch" and print the actual SRI hash. Copy that hash here, then
-    # rebuild. Alternatively, run:
-    #   nix-prefetch-url "https://cdn-zcode.z.ai/zcode/electron/releases/3.7.5/linux-x64/ZCode-3.7.5-linux-x64.AppImage" | xargs nix hash to-sri --type sha256
-    sha256 = "sha256-9T/d0uf3roTimyZgy0oMaHyUmdZbmKdOIifAAWdOI1o=";
+    # Auto-bumped by scripts/apps/zcode-update.sh (zcode-update.timer):
+    # scrapes the latest version from zcode.z.ai and prefetches this hash.
+    sha256 = "sha256-b0utaKoaaQJuikXQqd8l8YaDvJpBevSDEF3L70SLqz8=";
   };
 
   appContents = pkgs.appimageTools.extract {

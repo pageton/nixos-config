@@ -139,51 +139,84 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
-    home.packages = [
-      agentLogWrapper
-      agentIter
-      aiAgentLauncher
-      aiAgentInventory
-      pkgs.bubblewrap
-    ]
-    ++ scriptWrappers
-    ++ (lib.optional cfg.agentmemory.enable agentmemoryRuntime.iiiEngine)
-    ++ (lib.optional cfg.dsh.enable dshLauncher)
-    ++ (lib.optional cfg.speckit.enable pkgs.spec-kit)
-    ++ androidReLaunchers
-    ++ webReLaunchers
-    ++ mimoAndroidReLaunchers
-    ++ mimoWebReLaunchers
-    ++ ompAndroidReLaunchers
-    ++ (lib.optional cfg.zcode.enable zcodeDrv)
-    ++ (lib.optional cfg.logging.enable (
-      pkgs.writeShellScriptBin "ai-agent-log-cleanup" ''
-        ${logCleanupCommand}
-        echo "Cleaned up logs older than ${toString cfg.logging.retentionDays} days"
-      ''
-    ));
+    home = {
+      packages = [
+        agentLogWrapper
+        agentIter
+        aiAgentLauncher
+        aiAgentInventory
+        pkgs.bubblewrap
+      ]
+      ++ scriptWrappers
+      ++ (lib.optional cfg.agentmemory.enable agentmemoryRuntime.iiiEngine)
+      ++ (lib.optional cfg.dsh.enable dshLauncher)
+      ++ (lib.optional cfg.speckit.enable pkgs.spec-kit)
+      ++ androidReLaunchers
+      ++ webReLaunchers
+      ++ mimoAndroidReLaunchers
+      ++ mimoWebReLaunchers
+      ++ ompAndroidReLaunchers
+      ++ (lib.optional cfg.zcode.enable zcodeDrv)
+      ++ (lib.optional cfg.logging.enable (
+        pkgs.writeShellScriptBin "ai-agent-log-cleanup" ''
+          ${logCleanupCommand}
+          echo "Cleaned up logs older than ${toString cfg.logging.retentionDays} days"
+        ''
+      ));
 
-    home.sessionVariables = lib.mkMerge [
-      (lib.mkIf cfg.opencode.enable { OPENCODE_EXPERIMENTAL_LSP_TOOL = "true"; })
-    ];
+      sessionVariables = lib.mkMerge [
+        (lib.mkIf cfg.opencode.enable { OPENCODE_EXPERIMENTAL_LSP_TOOL = "true"; })
+      ];
+
+      activation = {
+        updateAiAgentCLIs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          $DRY_RUN_CMD ${autoUpdateAllScript}
+        '';
+
+        # The dsh-tui profile is machine state created by `dsh plugin` (community
+        # TUI @deepseek-harness-tui/dsh-tui), not Nix-managed. Recreate it only if
+        # missing so the `dst` alias survives a wiped ~/.dsh. Best-effort.
+        setupDshTuiProfile = lib.mkIf cfg.dsh.enable (
+          lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+            if [[ ! -d "$HOME/.dsh/profiles/dsh-tui" ]] && command -v dsh >/dev/null 2>&1; then
+              dsh plugin --profile dsh-tui add @deepseek-harness-tui/dsh-tui \
+                || echo "⚠ dsh-tui profile setup failed — run: dsh plugin --profile dsh-tui add @deepseek-harness-tui/dsh-tui"
+            fi
+          ''
+        );
+      };
+    };
 
     programs.zsh.shellAliases = shellAliases;
 
-    home.activation.updateAiAgentCLIs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      $DRY_RUN_CMD ${autoUpdateAllScript}
-    '';
-
-    # The dsh-tui profile is machine state created by `dsh plugin` (community
-    # TUI @deepseek-harness-tui/dsh-tui), not Nix-managed. Recreate it only if
-    # missing so the `dst` alias survives a wiped ~/.dsh. Best-effort.
-    home.activation.setupDshTuiProfile = lib.mkIf cfg.dsh.enable (
-      lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        if [[ ! -d "$HOME/.dsh/profiles/dsh-tui" ]] && command -v dsh >/dev/null 2>&1; then
-          dsh plugin --profile dsh-tui add @deepseek-harness-tui/dsh-tui \
-            || echo "⚠ dsh-tui profile setup failed — run: dsh plugin --profile dsh-tui add @deepseek-harness-tui/dsh-tui"
-        fi
-      ''
-    );
-    systemd.user = aiSystemdUser;
+    # ZCode Desktop pin bump — scripts/apps/zcode-update.sh scrapes the latest
+    # linux-x64 version from zcode.z.ai, prefetches the AppImage hash, rewrites
+    # the pin in zcode-package.nix and (tree-clean permitting) switches. Same
+    # contract as telegram-update in home/programs/telegram.nix; the two
+    # switches serialize via flock in the scripts.
+    systemd.user = lib.mkMerge [
+      aiSystemdUser
+      (lib.mkIf cfg.zcode.enable {
+        services.zcode-update = {
+          Unit = {
+            Description = "Bump ZCode Desktop pin to the latest release";
+            After = [ "network-online.target" ];
+          };
+          Service = {
+            Type = "oneshot";
+            Environment = [
+              "PATH=%h/.nix-profile/bin:/run/current-system/sw/bin:/usr/bin:/bin"
+              "HOME=%h"
+            ];
+            ExecStart = "${pkgs.bash}/bin/bash %h/System/scripts/apps/zcode-update.sh";
+          };
+        };
+        timers.zcode-update = hmSystemdHelpers.mkHmTimer {
+          description = "Daily ZCode Desktop pin bump";
+          onCalendar = "daily";
+          randomizedDelaySec = "45m";
+        };
+      })
+    ];
   };
 }
