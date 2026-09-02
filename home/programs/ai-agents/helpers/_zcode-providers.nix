@@ -6,9 +6,9 @@
 # OpenCode Zen free models only answer on chat/completions (the Anthropic-style
 # /zen/v1/messages returns 400 for them), so the Zen entry MUST stay
 # openai-compatible. Live free-model list: GET https://opencode.ai/zen/v1/models
+# (rotates: deepseek-v4-flash-free absent 2026-08, present again 2026-09).
 # OpenRouter free tiers: GET https://openrouter.ai/api/v1/models (pricing 0/0).
-# NOTE: no deepseek-v4-flash-free in Zen — paid DeepSeek goes through the
-# dedicated api.deepseek.com provider below.
+# NOTE: paid DeepSeek goes through the dedicated api.deepseek.com provider below.
 {
   opencodeZen = {
     name = "OpenCode Zen";
@@ -190,19 +190,13 @@
   };
 
   deepseek = {
-    name = "DeepSeek";
+    name = "deepseek";
     kind = "anthropic";
     baseURL = "https://api.deepseek.com/anthropic";
-    # Merged into any existing DeepSeek provider entry (limits mirror the
-    # values the app already stored for these models).
+    # Merged into any existing DeepSeek provider entry. V4 family only —
+    # legacy aliases (deepseek-chat, deepseek-reasoner) are intentionally
+    # not registered.
     models = {
-      deepseek-v4-pro = {
-        context = 1000000;
-        output = 384000;
-        input = [ "text" ];
-        reasoning = true;
-        reasoningDefault = "max";
-      };
       deepseek-v4-flash = {
         context = 1000000;
         output = 384000;
@@ -210,17 +204,57 @@
         reasoning = true;
         reasoningDefault = "max";
       };
-      deepseek-reasoner = {
+      deepseek-v4-flash-0731 = {
         context = 1000000;
         output = 384000;
         input = [ "text" ];
-        reasoning = false;
+        reasoning = true;
+        reasoningDefault = "max";
       };
-      deepseek-chat = {
+      deepseek-v4-flash-0731-fast = {
         context = 1000000;
         output = 384000;
         input = [ "text" ];
-        reasoning = false;
+        reasoning = true;
+        reasoningDefault = "max";
+      };
+      deepseek-v4-flash-latest = {
+        context = 1000000;
+        output = 384000;
+        input = [ "text" ];
+        reasoning = true;
+        reasoningDefault = "max";
+      };
+      deepseek-v4-flash-vision-exp = {
+        context = 1000000;
+        output = 384000;
+        input = [
+          "text"
+          "image"
+        ];
+        reasoning = true;
+        reasoningDefault = "max";
+      };
+      deepseek-v4-pro = {
+        context = 1000000;
+        output = 384000;
+        input = [ "text" ];
+        reasoning = true;
+        reasoningDefault = "max";
+      };
+      deepseek-v4-pro-0423 = {
+        context = 1000000;
+        output = 384000;
+        input = [ "text" ];
+        reasoning = true;
+        reasoningDefault = "max";
+      };
+      deepseek-v4-pro-0813 = {
+        context = 1000000;
+        output = 384000;
+        input = [ "text" ];
+        reasoning = true;
+        reasoningDefault = "max";
       };
     };
   };
