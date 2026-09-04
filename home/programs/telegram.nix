@@ -25,9 +25,9 @@
 
 let
   # ── Pin — auto-updated by scripts/apps/telegram-update.sh (keep attr names) ──
-  tgVersion = "7.1.4";
+  tgVersion = "7.1.5";
   # sha256 of tsetup.<tgVersion>.tar.xz from the release asset's `digest`.
-  tgHash = "sha256-SUyCRbEp70qYh8rPgncheRiF+Y1X8yRZqM4MG7quPrs=";
+  tgHash = "sha256-hhWMnNpeQjEPimWGmpMp2r1gFo50vooy1ZchAew0Wys=";
 
   # NVIDIA EGL fix for mini apps (WebKitGTK webview) — see
   # home/core/desktop-entries.nix for the rationale.
