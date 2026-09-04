@@ -77,7 +77,7 @@
     DefaultTimeoutStopSec = "30s";
     DefaultTimeoutStartSec = "180s"; # Long enough for heavy user-manager startup on cold boot
     DefaultDeviceTimeoutSec = "30s";
-    DefaultLimitNOFILE = 200000;
+    DefaultLimitNOFILE = 1048576; # Esync/wine headroom (1M = fs.nr_open default ceiling)
     DefaultLimitNPROC = 65536;
     # Disable hardware watchdog — prevents "watchdog did not stop!" and 10-min fallback timer
     RuntimeWatchdogSec = "0";
@@ -88,6 +88,7 @@
   # Keep user-session app scopes from delaying reboot for the default 90s.
   systemd.user.settings.Manager = {
     DefaultTimeoutStopSec = "30s";
+    DefaultLimitNOFILE = 1048576; # Session apps (Lutris/esync) inherit from user manager
   };
 
   # Real-time kit for multimedia tasks (workstations only)
@@ -105,7 +106,7 @@
       domain = "*";
       type = "-";
       item = "nofile";
-      value = 200000;
+      value = 1048576;
     }
     {
       domain = "*";
