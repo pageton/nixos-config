@@ -16,9 +16,10 @@
 #   nsswitch routes getaddrinfo through systemd-resolved
 #   which knows nothing about warp's pseudo-domains. The post-connect check
 #   (resolves connectivity-check.warp-svc.) therefore loops at "Performing
-#   connectivity checks" even though the tunnel carries traffic fine — the
-#   MDM key seeded below skips it (verify the tunnel live via
-#   https://www.cloudflare.com/cdn-cgi/trace, expecting `warp=on`).
+#   connectivity checks" even though the tunnel carries traffic fine. Skip
+#   it permanently: `warp-cli debug connectivity-check disable` (runtime) or
+#   the MDM key seeded below (declarative). Verify the tunnel live via
+#   https://www.cloudflare.com/cdn-cgi/trace, expecting `warp=on`.
 # - The GUI "Mode" must stay "Traffic and DNS". The "1.1.1.1" entry is
 #   DNS-over-TLS only: it shows "Connected" but creates NO tunnel.
 #
