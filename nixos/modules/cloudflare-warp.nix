@@ -14,9 +14,11 @@
 #   "-<distro>" suffix it expects), so it falls back to file-based DNS and
 #   rewrites /etc/resolv.conf to its local proxy (127.0.2.2/.3). Because
 #   nsswitch routes getaddrinfo through systemd-resolved
-#   (hosts: … resolve [!UNAVAIL=return] … dns), the daemon's post-connect
-#   check can still loop in "Performing connectivity checks" even though
-#   the tunnel carries traffic fine; disconnect/connect again if stuck.
+#   which knows nothing about warp's pseudo-domains. The post-connect check
+#   (resolves connectivity-check.warp-svc.) therefore loops at "Performing
+#   connectivity checks" even though the tunnel carries traffic fine — the
+#   MDM key seeded below skips it (verify the tunnel live via
+#   https://www.cloudflare.com/cdn-cgi/trace, expecting `warp=on`).
 # - The GUI "Mode" must stay "Traffic and DNS". The "1.1.1.1" entry is
 #   DNS-over-TLS only: it shows "Connected" but creates NO tunnel.
 #
@@ -26,7 +28,12 @@
 # lockdown blocks WARP too. While WARP is connected it rewrites
 # /etc/resolv.conf to Cloudflare DNS (1.1.1.1); when it disconnects cleanly
 # the file is restored.
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.mySystem.cloudflareWarp;
 in
@@ -47,5 +54,22 @@ in
       # hosts unsolicited inbound is blocked regardless).
       openFirewall = false;
     };
+
+    # Seed the MDM file with disable_connectivity_checks on first start (see
+    # gotcha above). Written once; manual edits under /var/lib are preserved.
+    systemd.services.cloudflare-warp.serviceConfig.ExecStartPre = [
+      (lib.getExe (
+        pkgs.writeShellScriptBin "cloudflare-warp-mdm-seed" ''
+          if [ ! -f /var/lib/cloudflare-warp/mdm.xml ]; then
+            install -D -m 0644 ${pkgs.writeText "cloudflare-warp-mdm.xml" ''
+              <dict>
+                <key>disable_connectivity_checks</key>
+                <true/>
+              </dict>
+            ''} /var/lib/cloudflare-warp/mdm.xml
+          fi
+        ''
+      ))
+    ];
   };
 }
