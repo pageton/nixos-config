@@ -22,6 +22,13 @@
         path = "/home/${user}/.gnupg/public.key";
         mode = "0400";
       };
+      # Signing-key passphrase, fed to gpg-agent at login by the
+      # gpg-preset-passphrase user service (home/programs/gpg.nix) so commit
+      # signing never prompts. Requires allow-preset-passphrase in the agent.
+      gpg-passphrase = {
+        owner = user;
+        mode = "0400";
+      };
       ssh-private-key = {
         owner = user;
         path = "/home/${user}/.ssh/id_ed25519";
