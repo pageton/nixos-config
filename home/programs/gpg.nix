@@ -41,9 +41,13 @@
     maxCacheTtl = 604800;
     # Avoid gpg-agent hijacking SSH auth; OpenSSH should use ~/.ssh/id_ed25519 directly.
     enableSshSupport = false;
-    pinentry.package = pkgsStable.pinentry-curses;
+    # qt: GUI prompt on Wayland/Niri. grab: pinentry grabs keyboard focus.
+    # Both were hand-edits in a mutable ~/.gnupg/gpg-agent.conf that blocked
+    # every HM switch with "would be clobbered" — ported here instead.
+    pinentry.package = pkgsStable.pinentry-qt;
     # Allow loopback mode for non-interactive environments (e.g., CI, scripts without TTY)
     extraConfig = ''
+      grab
       allow-loopback-pinentry
       allow-preset-passphrase
     '';
