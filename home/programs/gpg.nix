@@ -27,7 +27,12 @@
 
   services.gpg-agent = lib.mkIf (!pkgsStable.stdenv.hostPlatform.isDarwin) {
     enable = true;
-    defaultCacheTtl = 86400;
+    # Passphrase once per boot: the cache lives in RAM only (cleared when the
+    # agent restarts), so a long TTL is safe relative to disk-based caches.
+    # maxCacheTtl must be raised explicitly — GnuPG caps caching at 2h by
+    # default, silently overriding defaultCacheTtl.
+    defaultCacheTtl = 604800;
+    maxCacheTtl = 604800;
     # Avoid gpg-agent hijacking SSH auth; OpenSSH should use ~/.ssh/id_ed25519 directly.
     enableSshSupport = false;
     pinentry.package = pkgsStable.pinentry-curses;

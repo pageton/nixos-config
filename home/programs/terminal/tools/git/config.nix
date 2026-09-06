@@ -28,7 +28,11 @@
         pull.rebase = true; # clean history by default
         push = {
           autoSetupRemote = true; # no more --set-upstream
-          gpgSign = "if-asked"; # sign pushes when server supports it
+          # No push.gpgSign: GitHub doesn't support signed pushes, so git built
+          # the push certificate (unlocking the GPG key), then discarded it with
+          # "receiving end does not support --signed push" — a passphrase
+          # prompt per push for nothing. Per-commit signatures (above) +
+          # scripts/build/pre-push-hook.sh already cover integrity.
         };
 
         # === Merge / Rebase ===
