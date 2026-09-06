@@ -21,6 +21,9 @@ with pkgsStable;
 
   # === Gaming and Compatibility ===
   (bottles.override { removeWarningPopup = true; }) # Run Windows applications on Linux
+  lutris # Open gaming platform with community installer scripts
+  prismlauncher # Minecraft launcher (wraps JDKs 8/17/21/25)
+  luanti # Free open-source voxel game engine (formerly Minetest)
 
   # === Music and Media ===
   pear-desktop # YouTube Music desktop client
