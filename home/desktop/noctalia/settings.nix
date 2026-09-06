@@ -316,4 +316,27 @@ in
     $DRY_RUN_CMD ${pkgs.python3}/bin/python3 ${./noctalia-wallpaper-seed.py} \
       "${wallpaper}/share/wallpapers/nixos-wallpaper.png"
   '';
+
+  # Session-start re-seed: a stale store path in the state file (e.g. written
+  # by an older noctalia build running across a switch, before its state-dir
+  # watcher existed) survives reboots — noctalia only falls back to its
+  # bundled asset when the state has NO path at all. Re-running the seed after
+  # login keeps the stylix derivation authoritative until the next switch,
+  # with the same never-fight-the-GUI policy as the activation step.
+  systemd.user.services.noctalia-wallpaper-seed = {
+    Unit = {
+      Description = "Seed Noctalia wallpaper from the declarative nix-wallpaper derivation";
+      After = [ "graphical-session.target" ];
+      PartOf = [ "graphical-session.target" ];
+    };
+    Service = {
+      Type = "oneshot";
+      # Let noctalia (spawned by niri at startup) finish loading state and arm
+      # its settings.toml watcher first, so this write lands via the watcher
+      # instead of racing noctalia's own startup state serialization.
+      ExecStartPre = "${pkgs.coreutils}/bin/sleep 5";
+      ExecStart = "${pkgs.python3}/bin/python3 ${./noctalia-wallpaper-seed.py} ${wallpaper}/share/wallpapers/nixos-wallpaper.png";
+    };
+    Install.WantedBy = [ "graphical-session.target" ];
+  };
 }

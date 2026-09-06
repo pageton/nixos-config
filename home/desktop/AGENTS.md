@@ -28,6 +28,7 @@ home/desktop/
 - **Binary**: `noctalia` (was `noctalia-shell` in v4). **IPC**: `noctalia msg <command>` (kebab-case single string; was `noctalia-shell ipc call <ns> <method>`).
 - **Config**: TOML in `~/.config/noctalia/*.toml` (base layer) merged with GUI state at `~/.local/state/noctalia/settings.toml` (wins on conflict). Existing `config_version 12` state is preserved across switches.
 - **No Stylix target** (v4 had `noctalia-shell.enable`). Catppuccin Mocha + wallpaper are hand-mirrored via `programs.noctalia.settings` in `noctalia/settings.nix`, reusing the same `nix-wallpaper` derivation as `themes/stylix.nix`.
+- **Wallpaper seeding**: the effective wallpaper resolves only from app-managed state (`~/.local/state/noctalia/settings.toml`); `noctalia/settings.nix` seeds it via `home.activation.seedNoctaliaWallpaper` on switch **and** a `noctalia-wallpaper-seed.service` oneshot at `graphical-session.target` (login), so stale state written by an older noctalia build cannot outlive a reboot. Explicit non-store-path GUI selections are never touched.
 - **Plugins**: v5 uses Luau (not v4's QML). The v4 clipboard/usb/port/screen QML plugins do NOT carry over; v5's built-in clipboard panel (`panel-toggle clipboard`) covers the core use case. Deferred: rebuild custom features as Luau plugins.
 
 ## Conventions
