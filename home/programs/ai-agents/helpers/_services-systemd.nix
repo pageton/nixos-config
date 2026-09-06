@@ -11,27 +11,23 @@
 let
   inherit (hmSystemdHelpers) mkWeeklyTimer;
   bunPackage = import ../../../_helpers/_bun-package.nix { inherit pkgs; };
-  mkAutoUpdateService =
-    {
-      binary,
-      npmPackage,
-      label,
-      cleanup ? "",
-    }:
-    {
-      Unit.Description = "Auto-update ${label}";
-      Service = {
-        Type = "oneshot";
-        ExecStart = "${autoUpdate.mkScript {
-          inherit
-            binary
-            npmPackage
-            label
-            cleanup
-            ;
-        }}";
-      };
-    };
+  # All agent CLI updates in ONE serialized oneshot. Per-tool services fired
+  # concurrently (same weekly OnCalendar / same boot on Persistent catch-up)
+  # and raced on bun's global package.json: last writer won, bun pruned the
+  # other tools' packages, and ~/.bun/bin kept broken symlinks. Each tool's
+  # script exits 1 on install failure without aborting the rest.
+  aiAgentsAutoupdate = pkgs.writeShellScript "ai-agents-autoupdate" (
+    ''
+      fail=0
+    ''
+    + lib.concatMapStringsSep "\n" (
+      tool: "${toString (autoUpdate.mkScript tool)} || fail=1"
+    ) autoUpdate.tools
+    + ''
+
+      exit $fail
+    ''
+  );
 in
 lib.mkMerge [
   (lib.mkIf cfg.agentmemory.enable {
@@ -72,6 +68,31 @@ lib.mkMerge [
     };
   }
 
+  # ── Serialized CLI auto-update (agents enabled) ──
+  # Not gated on cfg.logging: updates must run whenever the agents exist, or
+  # a logging-disabled host silently loses every CLI after a global prune.
+  (lib.mkIf cfg.enable {
+    services.ai-agents-autoupdate = {
+      Unit = {
+        Description = "Install/update all AI agent CLIs (serialized)";
+        # Boot-time Persistent catch-up can precede full network readiness;
+        # the per-tool retry loop inside the script covers the residual gap.
+        After = [ "network-online.target" ];
+        Wants = [ "network-online.target" ];
+      };
+      Service = {
+        Type = "oneshot";
+        ExecStart = "${aiAgentsAutoupdate}";
+        # Worst case: 14 tools x 3 attempts x 15s backoff + installs.
+        TimeoutStartSec = "30m";
+      };
+    };
+    timers.ai-agents-autoupdate = mkWeeklyTimer {
+      description = "Weekly AI agent CLI updates";
+      randomizedDelaySec = "15m";
+    };
+  })
+
   # ── Logging-gated services and timers ──
   (lib.mkIf cfg.logging.enable {
     tmpfiles.rules = [ "d ${cfg.logging.directory} 0755 - - -" ];
@@ -98,24 +119,11 @@ lib.mkMerge [
           ''}";
         };
       };
-    }
-    // builtins.listToAttrs (
-      map (
-        tool: lib.nameValuePair "${tool.binary}-autoupdate" (mkAutoUpdateService tool)
-      ) autoUpdate.tools
-    );
+    };
 
     timers = {
       ai-agent-log-cleanup = mkWeeklyTimer { description = "Weekly AI agent log cleanup"; };
       opencode-db-vacuum = mkWeeklyTimer { description = "Weekly OpenCode database vacuum"; };
-    }
-    // builtins.listToAttrs (
-      map (
-        tool:
-        lib.nameValuePair "${tool.binary}-autoupdate" (mkWeeklyTimer {
-          description = "Weekly ${tool.label} auto-update";
-        })
-      ) autoUpdate.tools
-    );
+    };
   })
 ]

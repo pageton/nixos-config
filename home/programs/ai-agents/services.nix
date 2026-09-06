@@ -97,17 +97,13 @@ let
   };
   inherit (aliasLib) aiAliases aiAgentLauncher aiAgentInventory;
   agentmemoryRuntime = import ./helpers/_agentmemory-runtime.nix { inherit pkgs; };
-  autoUpdate = import ./helpers/_mk-cli-autoupdate-script.nix { inherit pkgs; };
+  autoUpdate = import ./helpers/_mk-cli-autoupdate-script.nix { inherit lib pkgs; };
   shellAliases = import ./helpers/_services-shell-aliases.nix { inherit cfg aiAliases constants; };
   zcodeDrv =
     let
       zcodeList = import ./zcode-package.nix { inherit pkgs lib; };
     in
     builtins.head zcodeList;
-
-  autoUpdateAllScript = pkgs.writeShellScript "update-ai-agents" (
-    lib.concatMapStringsSep "\n" (tool: toString (autoUpdate.mkScript tool)) autoUpdate.tools
-  );
 
   # DeepSeek Harness launcher. The bun-global bin shim runs plain node, but the
   # shipped dsh-base bundle mounts cordis-plugin-hmr, which requires node
@@ -169,8 +165,13 @@ in
       ];
 
       activation = {
-        updateAiAgentCLIs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-          $DRY_RUN_CMD ${autoUpdateAllScript}
+        # Heal-on-switch: reinstall any agent CLI whose bun package went missing
+        # (e.g. pruned by a concurrent global install). No-op without network when
+        # healthy — unlike the old updateAiAgentCLIs, this does no version checks;
+        # freshness is the weekly ai-agents-autoupdate timer's job.
+        installAiAgentCLIs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          $DRY_RUN_CMD ${autoUpdate.installIfMissingScript} \
+            || echo "⚠ AI agent CLI heal failed — retry with: systemctl --user start ai-agents-autoupdate"
         '';
 
         # The dsh-tui profile is machine state created by `dsh plugin` (community

@@ -1,4 +1,4 @@
-{ pkgs }:
+{ lib, pkgs }:
 let
   # All globally-installed CLI tools tracked for auto-update.
   # Each entry: { binary, npmPackage, label }
@@ -94,8 +94,22 @@ let
       export PATH="$HOME/.nix-profile/bin:$HOME/.bun/bin:$HOME/.local/bin:$BUN_INSTALL/bin:$PATH"
       if ! command -v ${binary} >/dev/null 2>&1; then
         echo "Installing ${label}..."
-        bun install -g ${npmPackage}@latest
-        echo "Installed ${label}"
+        # Retry: Persistent timer catch-up can fire before the network is up
+        # (seen as ConnectionRefused at boot). Without the verify+exit below,
+        # a failed install still echoed "Installed" and exited 0, so systemd
+        # reported SUCCESS and nothing retried for a week.
+        ok=0
+        for attempt in 1 2 3; do
+          if bun install -g ${npmPackage}@latest; then ok=1; break; fi
+          echo "  ${label}: attempt $attempt failed — retrying in 15s"
+          sleep 15
+        done
+        if [[ $ok == 1 ]] && command -v ${binary} >/dev/null 2>&1; then
+          echo "Installed ${label}"
+        else
+          echo "ERROR: failed to install ${label} (${npmPackage})" >&2
+          exit 1
+        fi
       else
         # Version check: read installed version from package.json instead of executing
         # the binary — copilot --version crashes (ERR_MODULE_NOT_FOUND) and omp is a
@@ -127,7 +141,25 @@ let
       fi
       ${cleanup}
     '';
+  # Presence heal used by home activation: installs every tool whose bun
+  # package dir is missing, in ONE bun invocation. The package dir (not
+  # command -v) is the truth — a pruned package leaves a broken bin symlink
+  # (command -v correctly fails) or, for dsh, a valid Nix wrapper pointing at
+  # a nonexistent node_modules path. No version checks, no network when
+  # healthy; freshness is the weekly timer's job.
+  installIfMissingScript = pkgs.writeShellScript "ai-agents-install-missing" ''
+      export PATH="$HOME/.nix-profile/bin:$HOME/.bun/bin:$HOME/.local/bin:$BUN_INSTALL/bin:$PATH"
+      missing=()
+    ${lib.concatMapStringsSep "\n" (tool: ''
+      [[ -d "$HOME/.bun/install/global/node_modules/${tool.npmPackage}" ]] || missing+=(${tool.npmPackage})
+    '') tools}
+      if ((''${#missing[@]} > 0)); then
+        echo "Installing missing AI agent CLIs: ''${missing[*]}"
+        bun install -g "''${missing[@]}" \
+          || echo "⚠ bun install failed — retry with: systemctl --user start ai-agents-autoupdate"
+      fi
+  '';
 in
 {
-  inherit tools mkScript;
+  inherit tools mkScript installIfMissingScript;
 }
