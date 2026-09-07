@@ -30,8 +30,8 @@
       enableWrappedBinaries = true;
     };
     bluetooth = {
-      enable = false;
-      powerOnBoot = false;
+      enable = true;
+      powerOnBoot = true;
     };
     flatpak = {
       enable = true;

@@ -31,7 +31,7 @@ Gaming/workstation PC host. Enables full virtualization stack, gaming with Games
 | `macchanger` | `enable = true` |
 | `tailscale` | `enable = true` |
 | `amdRyzenThermal` | `enable = true` |
-| `bluetooth` | Explicitly disabled (`enable = false`) |
+| `bluetooth` | `enable = true`, `powerOnBoot = true` |
 | `webRe` | `enable = true` |
 | `vaultwarden` | `enable = true` |
 ## Conventions

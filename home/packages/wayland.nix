@@ -9,7 +9,20 @@
   wtype # Wayland keyboard and mouse input simulation
 
   # === Desktop Integration ===
-  libnotify # Desktop notification library
+  # libnotify's notify-send carries no gdk-pixbuf runpath (resolution relies
+  # on the host /lib FHS hack), so it dies with "libgdk_pixbuf-2.0.so.0:
+  # cannot open shared object file" in clean contexts (systemd user services,
+  # sandboxes). Wrap it with the real loader path.
+  (pkgsStable.symlinkJoin {
+    name = "libnotify-wrapped";
+    paths = [ pkgsStable.libnotify ];
+    buildInputs = [ pkgsStable.makeWrapper ];
+    postBuild = ''
+      wrapProgram "$out/bin/notify-send" --prefix LD_LIBRARY_PATH : ${
+        pkgsStable.lib.makeLibraryPath [ pkgsStable.gdk-pixbuf ]
+      }
+    '';
+  })
   # playerctl is provided by services.playerctld (home/desktop/niri/default.nix)
 
   # === Screenshot and Capture ===

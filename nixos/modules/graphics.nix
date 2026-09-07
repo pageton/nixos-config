@@ -44,6 +44,16 @@ in
           LIBVA_DRIVER_NAME = "nvidia";
           GBM_BACKEND = "nvidia-drm";
           __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+
+          # libnvidia-egl-wayland's external-platform configs and the glvnd
+          # vendor JSONs live in /run/opengl-driver/share, which the NVIDIA
+          # EGL loader (only /etc/egl + /usr/share/egl) and glvnd (only its
+          # /etc + /usr/share dirs) never search — so EGL fell back to
+          # llvmpipe on every platform (GBM, Wayland, X11). Both loaders
+          # honor these overrides; verified with eglinfo that all platforms
+          # then report the NVIDIA GPU.
+          __EGL_VENDOR_LIBRARY_DIRS = "/run/opengl-driver/share/glvnd/egl_vendor.d";
+          __EGL_EXTERNAL_PLATFORM_CONFIG_DIRS = "/run/opengl-driver/share/egl/egl_external_platform.d";
         }
     );
 

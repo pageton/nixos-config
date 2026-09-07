@@ -36,7 +36,7 @@ hosts/
 | Gaming (Gamescope) | ✅ | ❌ |
 | Virtualization | ✅ | ❌ |
 | Mullvad VPN | ✅ | ❌ |
-| Bluetooth | ❌ | ✅ |
+| Bluetooth | ✅ | ✅ |
 | TLP power mgmt | ❌ | ✅ |
 | NVIDIA dGPU control | ❌ | ✅ (modules/nvidia.nix) |
 
