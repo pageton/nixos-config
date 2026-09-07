@@ -83,72 +83,17 @@ in
       default-window-height.fixed = 600;
     }
 
-    # Floating: Telegram secondary windows, centered on screen
-    # - Article (Instant View), Editing (edit-in-window), and separate chat windows
-    #   ("<chat> @ <account> (<id>)" — the " @ " separates them from the main window).
-    # - Official-build Qt windows append a per-workdir hash to the app-id
-    #   ("org.telegram.desktop._<md5>"), so all Telegram app-ids here
-    #   prefix-match; the GTK file dialog still reports the plain form
-    #   (app-id derives from the ELF name in home/programs/telegram.nix).
-    # No default-floating-position → niri centers new floats by default
-    # (default-floating-position x/y are PIXELS from the relative-to corner, so
-    #  any value we set can only anchor to a corner/edge, never true center).
-    # niri has no window pinning — floats render above tiled windows on their workspace.
+    # Telegram pageton fork window classes — the fork assigns each popup type
+    # its own app-id (article/Instant View viewer, debug inspector, separate
+    # chat windows, call windows). Matched by app-id, not title, so windows
+    # whose titles settle late are still caught at open time. No
+    # default-floating-position → opens centered.
     {
       matches = [
-        {
-          app-id = "^org\\.telegram\\.desktop";
-          title = "^Article\\b";
-        }
-        {
-          app-id = "^org\\.telegram\\.desktop";
-          title = "^Editing\\b";
-        }
-        {
-          app-id = "^org\\.telegram\\.desktop";
-          title = " @ .*\\(\\d+\\)$";
-        }
-        { app-id = "^\\.Telegram-wrapped$"; }
-      ];
-      open-floating = true;
-      open-focused = true;
-    }
-
-    # Telegram file dialog ("Choose Files" — send/receive picker). With the
-    # renamed ELF (home/programs/telegram.nix) the native GTK dialog reports
-    # org.telegram.desktop; the .Telegram-wrapped match is a fallback. No
-    # default-floating-position → opens centered like the other Telegram
-    # floats; size pinned to its natural 958x790; takes focus on open.
-    {
-      matches = [
-        {
-          app-id = "^org\\.telegram\\.desktop";
-          title = "^Choose Files";
-        }
-        {
-          app-id = "^\\.Telegram-wrapped$";
-          title = "^Choose Files";
-        }
-      ];
-      open-floating = true;
-      open-focused = true;
-      default-column-width.fixed = 958;
-      default-window-height.fixed = 790;
-    }
-
-    # Telegram main + call windows, both as centered floats. The main window
-    # is titled "<account> (<id>)"; calls carry the bare chat name. Pop-outs
-    # ("<chat> @ <account> (<id>)"), Instant View, editors, mini apps, and
-    # the file dialog have their own markers and rules, so they're excluded
-    # here. Applies at window-open time — already-open windows keep their
-    # state (toggle manually with Mod+Shift+Space).
-    {
-      matches = [ { app-id = "^org\\.telegram\\.desktop"; } ];
-      excludes = [
-        { title = " @ "; } # pop-out chats (own rule above)
-        { title = "^(Article|Editing)\\b"; }
-        { title = "^Mini App:"; }
-        { title = "^Choose Files"; }
+        { app-id = "^org\\.telegram\\.desktop\\.article"; }
+        { app-id = "^org\\.telegram\\.org\\.inspector"; }
+        { app-id = "^org\\.telegram\\.desktop\\.chat"; }
+        { app-id = "^org\\.telegram\\.desktop\\.call"; }
       ];
       open-floating = true;
       open-focused = true;

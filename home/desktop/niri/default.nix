@@ -63,7 +63,9 @@
         command = [
           "${pkgs.bash}/bin/bash"
           "-c"
-          "pgrep -f 'niri-auth-float' > /dev/null || exec niri-auth-float"
+          # Bracket trick: pgrep -f would otherwise match its own bash -c
+          # command line and the guard would never fall through to exec.
+          "pgrep -f 'niri-auth-fl[o]at' > /dev/null || exec niri-auth-float"
         ];
       }
       { argv = [ "${config.home.profileDirectory}/bin/noctalia" ]; }
