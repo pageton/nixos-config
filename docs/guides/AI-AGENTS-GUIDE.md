@@ -267,21 +267,21 @@ Routes through Z.AI's Anthropic-compatible proxy (`https://api.z.ai/api/anthropi
 | `ANTHROPIC_AUTH_TOKEN`           | Z.AI API key (from sops)          |
 | `ANTHROPIC_BASE_URL`             | `https://api.z.ai/api/anthropic`  |
 | `API_TIMEOUT_MS`                 | `3000000` (50 min, per Z.AI docs) |
-| `ANTHROPIC_DEFAULT_HAIKU_MODEL`  | `glm-4.5-air`                     |
-| `ANTHROPIC_DEFAULT_SONNET_MODEL` | `glm-5`                           |
-| `ANTHROPIC_DEFAULT_OPUS_MODEL`   | `glm-5`                           |
+| `ANTHROPIC_DEFAULT_HAIKU_MODEL`  | `glm-5-turbo`                     |
+| `ANTHROPIC_DEFAULT_SONNET_MODEL` | `glm-5.3-flash[1m]`               |
+| `ANTHROPIC_DEFAULT_OPUS_MODEL`   | `glm-5.3[1m]`                     |
+| `CLAUDE_CODE_AUTO_COMPACT_WINDOW`| `1000000` (required for `[1m]`)   |
 
 Also passes `--dangerously-skip-permissions` for autonomous operation.
 
 ### GLM Model Reference
 
-| Model ID      | Parameters            | Context | Use Case                    |
-| ------------- | --------------------- | ------- | --------------------------- |
-| glm-5         | 744B (40B active MoE) | 200K    | Flagship reasoning          |
-| glm-4.7       | —                     | —       | Previous gen, stable coding |
-| glm-4.7-flash | —                     | —       | Fast/cheap variant          |
-| glm-4.5-air   | —                     | —       | Lightest, haiku tier        |
-| glm-4.6v      | —                     | —       | Vision variant              |
+| Model ID       | Parameters | Context  | Use Case                    |
+| -------------- | ---------- | -------- | --------------------------- |
+| glm-5.3        | Flagship   | 1M `[1m]`| Primary reasoning (opus)    |
+| glm-5.3-flash  | —          | 1M `[1m]`| Fast/cheap variant (sonnet) |
+| glm-5-turbo    | —          | 200K     | Lightest, haiku tier        |
+| glm-5          | 744B (40B active MoE) | 200K | Previous flagship |
 
 Provider prefixes: `zai-coding-plan/` (premium), `zai/` (standard), `opencode/` (free tier).
 

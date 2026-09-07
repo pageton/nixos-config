@@ -158,7 +158,7 @@ in
       timeout = 3000000; # API timeout in ms
       models = {
         haiku = "glm-5-turbo";
-        sonnet = "glm-5.3[1m]";
+        sonnet = "glm-5.3-flash[1m]";
         opus = "glm-5.3[1m]";
       };
     };

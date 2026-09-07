@@ -30,6 +30,11 @@ let
       name = "ANTHROPIC_DEFAULT_OPUS_MODEL";
       value = opus;
     }
+    {
+      # Required by Z.AI docs when using [1m] context models
+      name = "CLAUDE_CODE_AUTO_COMPACT_WINDOW";
+      value = "1000000";
+    }
   ];
 in
 {

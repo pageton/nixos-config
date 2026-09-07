@@ -26,7 +26,7 @@ else
   ZAI_API_ROOT="${ZAI_API_ROOT:-https://api.z.ai/api}"
   ZAI_TIMEOUT="${ZAI_TIMEOUT:-3000000}"
   ZAI_MODEL_HAIKU="${ZAI_MODEL_HAIKU:-glm-5-turbo}"
-  ZAI_MODEL_SONNET="${ZAI_MODEL_SONNET:-glm-5.3[1m]}"
+  ZAI_MODEL_SONNET="${ZAI_MODEL_SONNET:-glm-5.3-flash[1m]}"
   ZAI_MODEL_OPUS="${ZAI_MODEL_OPUS:-glm-5.3[1m]}"
 fi
 
