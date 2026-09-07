@@ -124,7 +124,7 @@ in
         ".claude/hooks/herdr-agent-state.sh" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/herdrdev/herdr/${herdrAssetRev}/src/integration/assets/claude/herdr-agent-state.sh";
-            sha256 = "sha256-TeqqexI5k1jZUG225u4/6bbvBqvelJIvkZBWhUUR2bo=";
+            sha256 = "sha256-phu+JhmjFmaUBjFt4mDBO2wa5SXa/W9PSVbiZkYmgQU=";
           };
           executable = true;
           force = true;
