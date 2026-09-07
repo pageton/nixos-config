@@ -62,6 +62,8 @@
   # Runs at each `nh home switch` — reads servers.nix via nix eval --impure
   # (shell command, bypasses Nix pure-eval gitignore limitation).
   home.activation.generateSshInventory = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    # Subshell so the skip-exit below only ends this unit, not the whole activation.
+    (
     PERM="''${HOME}/System/inventory/permanent/servers.nix"
     EPHE="''${HOME}/System/inventory/ephemeral/servers.nix"
     OUT="''${HOME}/.ssh/config.local"
@@ -95,5 +97,6 @@
     } > "''${OUT}"
 
     chmod 600 "''${OUT}"
+    )
   '';
 }
