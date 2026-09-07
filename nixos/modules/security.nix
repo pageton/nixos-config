@@ -252,18 +252,18 @@ in
     dbus.implementation = "broker";
 
     # Journald hardening — rate limiting, storage caps, no forwarding
-    journald.extraConfig = ''
-      RateLimitIntervalSec=30s
-      RateLimitBurst=200
-      SystemMaxUse=500M
-      SystemMaxFileSize=50M
-      SystemKeepFree=1G
-      MaxRetentionSec=7day
-      ForwardToSyslog=no
-      ForwardToWall=no
-      Compress=yes
-      SplitMode=uid
-    '';
+    journald.settings.Journal = {
+      RateLimitIntervalSec = "30s";
+      RateLimitBurst = 200;
+      SystemMaxUse = "500M";
+      SystemMaxFileSize = "50M";
+      SystemKeepFree = "1G";
+      MaxRetentionSec = "7day";
+      ForwardToSyslog = false;
+      ForwardToWall = false;
+      Compress = true;
+      SplitMode = "uid";
+    };
   };
 
   # === Security Audit Timer ===
