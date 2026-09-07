@@ -14,7 +14,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=../../lib/logging.sh
+# shellcheck source=scripts/lib/logging.sh
 source "$SCRIPT_DIR/../lib/logging.sh"
 
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -83,8 +83,9 @@ if (( ! was_clean )); then
   exit 0
 fi
 
-# Serialize against telegram-update.sh: whoever holds the lock rebuilds the
-# whole flake, so the other's fresh pin rides along in the same switch.
+# Serialize against other home-switch automations: whoever holds the lock
+# rebuilds the whole flake, so the other's fresh pin rides along in the same
+# switch.
 lock_file="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/hm-auto-switch.lock"
 exec 9>"$lock_file"
 if ! flock -n 9; then

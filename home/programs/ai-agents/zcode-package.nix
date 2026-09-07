@@ -1,12 +1,12 @@
 { pkgs, ... }:
 let
-  version = "3.10.2";
+  version = "3.11.2";
 
   src = pkgs.fetchurl {
     url = "https://cdn-zcode.z.ai/zcode/electron/releases/${version}/linux-x64/ZCode-${version}-linux-x64.AppImage";
     # Auto-bumped by scripts/apps/zcode-update.sh (zcode-update.timer):
     # scrapes the latest version from zcode.z.ai and prefetches this hash.
-    sha256 = "sha256-b0utaKoaaQJuikXQqd8l8YaDvJpBevSDEF3L70SLqz8=";
+    sha256 = "sha256-/EzIUShqQOqAkM6/qsGp+b3ETqs0njbu8NOzIZ85MD8=";
   };
 
   appContents = pkgs.appimageTools.extract {

@@ -192,9 +192,9 @@ in
 
     # ZCode Desktop pin bump — scripts/apps/zcode-update.sh scrapes the latest
     # linux-x64 version from zcode.z.ai, prefetches the AppImage hash, rewrites
-    # the pin in zcode-package.nix and (tree-clean permitting) switches. Same
-    # contract as telegram-update in home/programs/telegram.nix; the two
-    # switches serialize via flock in the scripts.
+    # the pin in zcode-package.nix and (tree-clean permitting) switches. The
+    # switch serializes against other home-switch automations via
+    # hm-auto-switch.lock.
     systemd.user = lib.mkMerge [
       aiSystemdUser
       (lib.mkIf cfg.zcode.enable {

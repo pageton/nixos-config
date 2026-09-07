@@ -10,7 +10,7 @@ let
   mcpTransforms = import ./_mcp-transforms.nix { inherit cfg lib; };
   formatterRegistry = import ./_formatters.nix;
   opencodeProfiles = import ./_opencode-profiles.nix { inherit config; };
-  opencodeAgents = import ../config/models/_opencode-agents.nix { };
+  opencodeAgents = import ../config/models/_opencode-agents.nix;
   # MiMoCode RE agents (mimo shares opencode's agent schema). Merged into mimoSettings.agent.
   # Built-in agents (build/plan/...) remain; default_agent stays unset so plain `mi` uses `build`.
   mimoAndroidReAgent = import ../config/models/_mimo-android-re.nix {
@@ -155,7 +155,11 @@ let
     # android-re/web-re agents (mirrors opencode). The launcher pins default_agent
     # per-session via MIMOCODE_CONFIG_DIR overlay, so plain `mi` still defaults to `build`.
     agent = mimoAndroidReAgent // mimoWebReAgent;
-  };
+  }
+  # MiMoCode reads the same `instructions` field as OpenCode.
+  // (lib.optionalAttrs (cfg.globalInstructions != "") {
+    instructions = [ cfg.globalInstructions ];
+  });
 
   # Oh My Pi (omp) reads MCP servers from ~/.omp/agent/mcp.json
   # using the same { command, args, env } | { type, url, headers } shape as Claude.

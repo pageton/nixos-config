@@ -5,7 +5,7 @@
 let
   models = import ../../helpers/_models.nix;
   workflowPrompts = import ../../helpers/_workflow-prompts.nix { };
-  opencodeAgents = import ./_opencode-agents.nix { inherit models; };
+  opencodeAgents = import ./_opencode-agents.nix;
   opencodeCommands = import ./_opencode-commands.nix { inherit workflowPrompts; };
   androidReAgent = import ./_opencode-android-re.nix {
     inherit config lib;
@@ -15,7 +15,6 @@ let
     inherit config lib;
     inherit (opencodeAgents) yoloPermission;
   };
-  inherit (opencodeAgents) baseAgents;
 in
 {
   programs.aiAgents.opencode = {
@@ -28,7 +27,9 @@ in
 
     command = opencodeCommands;
 
-    agent = baseAgents // androidReAgent // webReAgent;
+    # Only RE agents are defined; build/plan use opencode's native agents
+    # (top-level yolo permission merges into them).
+    agent = androidReAgent // webReAgent;
 
     lsp = import ./_opencode-lsp.nix;
 

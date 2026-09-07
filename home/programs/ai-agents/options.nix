@@ -111,7 +111,7 @@ in
     # === Core Options ===
     enable = lib.mkEnableOption "AI coding agents configuration";
 
-    globalInstructions = mkLinesOption "" "Global instructions injected into all AI agents (Claude CLAUDE.md, OpenCode instructions, Codex developer_instructions, Antigravity systemInstruction)";
+    globalInstructions = mkLinesOption "" "Global instructions injected into all AI agents (Claude CLAUDE.md, OpenCode/MiMoCode instructions, Codex developer_instructions, Antigravity systemInstruction, omp ~/.omp/agent/AGENTS.md, ZCode ~/.zcode/AGENTS.md)";
 
     secrets = {
       zaiApiKeyFile = mkNullOrStrOption "/run/secrets/zai_api_key" "Path to sops-decrypted Z.AI API key file";

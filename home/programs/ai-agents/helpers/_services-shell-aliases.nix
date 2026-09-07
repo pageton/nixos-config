@@ -54,8 +54,9 @@ in
       "hd-opencode" = "herdr integration install opencode";
       "hd-copilot" = "herdr integration install copilot";
       "hd-omp" = "herdr integration install omp";
+      "hd-antigravity" = "herdr integration install antigravity-cli";
       "hd-all" =
-        "herdr integration install claude && herdr integration install codex && herdr integration install opencode && herdr integration install copilot && herdr integration install omp";
+        "herdr integration install claude && herdr integration install codex && herdr integration install opencode && herdr integration install copilot && herdr integration install omp && herdr integration install antigravity-cli";
     }
   else
     { }

@@ -15,6 +15,7 @@ let
   # tag: the input follows master, and release tags regularly lag the locked
   # rev's assets (v0.8.0 tag ships claude/codex v7 while the rev ships v8), so
   # tag URLs drift out of sync with the installed binary's expected versions.
+  # Upstream repo lives at herdrdev/herdr (transferred from ogulcancelik).
   herdrAssetRev = inputs.herdr.rev;
 
   inherit (builtins) toJSON;
@@ -122,7 +123,7 @@ in
       (lib.mkIf cfg.herdr.enable {
         ".claude/hooks/herdr-agent-state.sh" = {
           source = pkgs.fetchurl {
-            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/${herdrAssetRev}/src/integration/assets/claude/herdr-agent-state.sh";
+            url = "https://raw.githubusercontent.com/herdrdev/herdr/${herdrAssetRev}/src/integration/assets/claude/herdr-agent-state.sh";
             sha256 = "sha256-TeqqexI5k1jZUG225u4/6bbvBqvelJIvkZBWhUUR2bo=";
           };
           executable = true;
@@ -130,7 +131,7 @@ in
         };
         ".codex/herdr-agent-state.sh" = {
           source = pkgs.fetchurl {
-            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/${herdrAssetRev}/src/integration/assets/codex/herdr-agent-state.sh";
+            url = "https://raw.githubusercontent.com/herdrdev/herdr/${herdrAssetRev}/src/integration/assets/codex/herdr-agent-state.sh";
             sha256 = "sha256-OKkKKpmHLQbcvJeOdhNAbN2FLbsHUDq9ehE/UY1ZUfM=";
           };
           executable = true;
@@ -138,10 +139,39 @@ in
         };
         ".copilot/herdr-agent-state.sh" = {
           source = pkgs.fetchurl {
-            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/${herdrAssetRev}/src/integration/assets/copilot/herdr-agent-state.sh";
+            url = "https://raw.githubusercontent.com/herdrdev/herdr/${herdrAssetRev}/src/integration/assets/copilot/herdr-agent-state.sh";
             sha256 = "sha256-GXRg50I9JDhiaQ7rLa2qDursPULzEGxZckg7Apt5eCU=";
           };
           executable = true;
+          force = true;
+        };
+      })
+
+      # === herdr Antigravity CLI integration ===
+      # Antigravity discovers global hooks from ~/.gemini/config: the hook
+      # script plus its hooks.json registration under herdr's owned "herdr"
+      # block. Byte-matches `herdr integration install antigravity-cli` output
+      # (canonical command: bash '<abs-path>' session, timeout 10) so
+      # `herdr integration status` reports it healthy.
+      (lib.mkIf (cfg.herdr.enable && cfg.antigravity.enable) {
+        ".gemini/config/hooks/herdr-agent-state.sh" = {
+          source = pkgs.fetchurl {
+            url = "https://raw.githubusercontent.com/herdrdev/herdr/${herdrAssetRev}/src/integration/assets/antigravity_cli/herdr-agent-state.sh";
+            sha256 = "sha256-vfgHOiPeKqkZoj0ATBeI8q8wgkhKyxROL2c1aZmV7Ak=";
+          };
+          executable = true;
+          force = true;
+        };
+        ".gemini/config/hooks.json" = {
+          text = toJSON {
+            herdr.PreInvocation = [
+              {
+                type = "command";
+                command = "bash '${config.home.homeDirectory}/.gemini/config/hooks/herdr-agent-state.sh' session";
+                timeout = 10;
+              }
+            ];
+          };
           force = true;
         };
       })
@@ -180,21 +210,42 @@ in
         // (mkTextFiles ".gemini/policies" geminiPolicies)
       ))
 
-      # === Oh My Pi (omp): MCP config (~/.omp/agent/mcp.json) ===
-      (lib.mkIf cfg.omp.enable {
-        ".omp/agent/mcp.json" = {
-          text = toJSON ompSettings;
-          force = true;
-        };
-      })
+      # === Oh My Pi (omp): MCP config + global instructions (~/.omp/agent/) ===
+      (lib.mkIf cfg.omp.enable (
+        {
+          ".omp/agent/mcp.json" = {
+            text = toJSON ompSettings;
+            force = true;
+          };
+        }
+        // (lib.optionalAttrs (cfg.globalInstructions != "") {
+          # omp native user context file — highest discovery priority, shadows
+          # ~/.claude/CLAUDE.md etc. for omp sessions (same content, no loss).
+          ".omp/agent/AGENTS.md" = {
+            text = cfg.globalInstructions;
+            force = true;
+          };
+        })
+      ))
 
       # === Oh My Pi (omp): herdr agent state extension ===
       (lib.mkIf (cfg.herdr.enable && cfg.omp.enable) {
         ".omp/agent/extensions/herdr-omp-agent-state.ts" = {
           source = pkgs.fetchurl {
-            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/${herdrAssetRev}/src/integration/assets/omp/herdr-agent-state.ts";
+            url = "https://raw.githubusercontent.com/herdrdev/herdr/${herdrAssetRev}/src/integration/assets/omp/herdr-agent-state.ts";
             sha256 = "sha256-TP0eMtofFe+6BSHFL+47pLI8NtwjaneuqSIiD976Ak4=";
           };
+          force = true;
+        };
+      })
+
+      # === ZCode: user-global instructions (~/.zcode/AGENTS.md) ===
+      # ZCode reads user-global AGENTS.md at task start. The app owns
+      # ~/.zcode/v2/config.json (providers are jq-merged by activation),
+      # but AGENTS.md is only ever read, never rewritten by the app.
+      (lib.mkIf (cfg.zcode.enable && cfg.globalInstructions != "") {
+        ".zcode/AGENTS.md" = {
+          text = cfg.globalInstructions;
           force = true;
         };
       })
@@ -261,14 +312,14 @@ in
       (lib.mkIf (cfg.herdr.enable && cfg.opencode.enable) {
         "opencode/plugins/herdr-agent-state.js" = {
           source = pkgs.fetchurl {
-            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/${herdrAssetRev}/src/integration/assets/opencode/herdr-agent-state.js";
+            url = "https://raw.githubusercontent.com/herdrdev/herdr/${herdrAssetRev}/src/integration/assets/opencode/herdr-agent-state.js";
             sha256 = "sha256-XLFeBZpfgSog/P1ktDMD77qmPBtIdLEk4l32TcAjoV4=";
           };
           force = true;
         };
         "opencode/herdr-tui-session.js" = {
           source = pkgs.fetchurl {
-            url = "https://raw.githubusercontent.com/ogulcancelik/herdr/${herdrAssetRev}/src/integration/assets/opencode/herdr-tui-session.js";
+            url = "https://raw.githubusercontent.com/herdrdev/herdr/${herdrAssetRev}/src/integration/assets/opencode/herdr-tui-session.js";
             sha256 = "sha256-3Hm5bBzRI/8iVO/Rgwshz7TAVXqwH4uZcv3/bfioVAA=";
           };
           force = true;

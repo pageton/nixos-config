@@ -5,19 +5,19 @@
 {
   "commit-split" = {
     description = "Split current changes into minimal logical signed commits";
-    agent = "patch";
+    agent = "build";
     subtask = true;
     template = workflowPrompts.commitSplit;
   };
   refactor = {
     description = "Raise maintainability without behavior drift";
-    agent = "patch";
+    agent = "build";
     subtask = true;
     template = workflowPrompts.refactorMaintainability;
   };
   "security-audit" = {
     description = "Run an evidence-first security review";
-    agent = "review";
+    agent = "build";
     subtask = true;
     template = workflowPrompts.securityAudit;
   };
@@ -29,13 +29,13 @@
   };
   "runtime-perf" = {
     description = "Measure and improve runtime/code bottlenecks";
-    agent = "optimize";
+    agent = "build";
     subtask = true;
     template = workflowPrompts.runtimePerformance;
   };
   "markdown-sync" = {
     description = "Sync docs with current repository behavior";
-    agent = "patch";
+    agent = "build";
     subtask = true;
     template = workflowPrompts.markdownSync;
   };

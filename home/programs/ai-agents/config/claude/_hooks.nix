@@ -2,6 +2,7 @@
 
 {
   includeHerdr ? true,
+  homeDirectory ? null,
 }:
 
 let
@@ -18,7 +19,7 @@ let
   postToolUse = import ./_hooks-post-tool-use.nix { inherit mkFormatterHook formatterRegistry; };
   session = import ./_hooks-session.nix { inherit mkPassthroughHook; };
   fileSafety = import ./_hooks-file-safety.nix;
-  herdr = import ./_hooks-herdr.nix { };
+  herdr = import ./_hooks-herdr.nix { inherit homeDirectory; };
   security = import ./_hooks-security.nix { inherit mkCommandHook; };
   projectGuards = import ./_hooks-project-guards.nix { inherit mkCommandHook; };
 
