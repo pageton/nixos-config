@@ -67,6 +67,14 @@
         owner = user;
         mode = "0400";
       };
+      telegram-api-id = {
+        owner = user;
+        mode = "0400";
+      };
+      telegram-api-hash = {
+        owner = user;
+        mode = "0400";
+      };
     };
   };
 }
