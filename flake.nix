@@ -58,8 +58,17 @@
       url = "github:pageton/zellij-tui";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Telegram Desktop client: pageton/tdesktop fork built from source in
+    # home/programs/telegram.nix. Tracks the fork's default branch (it tags
+    # releases but publishes none) — update with
+    # `nix flake lock update pageton-tdesktop`. submodules=1 is mandatory:
+    # tdesktop vendors its support libraries (lib_base, lib_ui, tgcalls, …)
+    # as git submodules.
+    pageton-tdesktop.url = "git+https://github.com/pageton/tdesktop?submodules=1";
     herdr = {
-      url = "github:ogulcancelik/herdr";
+      # repo transferred from ogulcancelik/herdr to herdrdev/herdr; use the
+      # canonical owner (the old owner only works via GitHub redirect)
+      url = "github:herdrdev/herdr";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
