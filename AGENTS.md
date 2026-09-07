@@ -1,321 +1,90 @@
-# AGENTS.md — NixOS System Configuration
+# AGENTS.md — NixOS System Flake
 
-**Generated:** 2026-09-02
-**Commit:** 66061f2
-**Branch:** main
+Declarative NixOS flake managing two hosts (`desktop`, `thinkpad`) with Home-Manager, SOPS-encrypted secrets, Niri Wayland compositor with the Noctalia shell, and a multi-agent AI orchestration layer (Claude Code, OpenCode ×7 profiles, Codex, Antigravity, MiMoCode, omp, ZCode). ~309 Nix files, ~86 shell scripts.
 
-## Role
+## Scoped AGENTS.md
 
-Declarative, modular NixOS flake managing two hosts (desktop + thinkpad) with Home-Manager, SOPS secrets, Niri Wayland compositor, DankMaterialShell, and a comprehensive AI agent orchestration layer. 286 Nix files, 74 shell scripts, 10 JS hooks.
+Almost every directory carries its own `AGENTS.md` with local conventions (42 total). **Read the nearest scoped file before editing inside a directory.** Key entry points:
+
+| Path                             | Covers                                                       |
+| -------------------------------- | ------------------------------------------------------------ |
+| `home/programs/ai-agents/`       | AI agent orchestration: options → config → helpers → files → activation → services |
+| `nixos/modules/AGENTS.md`        | System module conventions and category layout                |
+| `scripts/AGENTS.md` (+ subdirs)  | Shell tooling, shared libs, `*-test.sh` conventions          |
+| `docs/guides/AI-AGENTS-GUIDE.md` | User-facing guide to the agent aliases and workflows         |
 
 ## Architecture
 
 ```
-System/
-├── flake.nix                    # Flake entry: inputs, makeSystem/makeHome factories, inventory-driven host loop
-├── flake.lock                   # Pinned input hashes
-├── justfile                     # Task runner: format, lint, modules, security, check, nixos, home, qa, sops-*
-├── .sops.yaml                   # SOPS age key binding + path regex rules
-├── secrets/secrets.yaml         # Age-encrypted secrets (SOPS)
-├── shared/                      # Cross-boundary Nix helpers (NixOS ↔ Home-Manager)
-│   ├── constants.nix            # SSOT: user identity, fonts, colors, keyboard, ports, proxies, paths
-│   ├── option-helpers.nix       # Typed NixOS option constructors (mkBoolOption, mkStrOption, etc.)
-│   ├── alias-helpers.nix        # Shared shell alias injection (zsh + bash)
-│   ├── _hm-systemd-helpers.nix # Shared Home-Manager systemd timer helpers (mkHmTimer, mkWeeklyTimer)
-│   └── *(secret-loader.nix → home/_helpers/_secret-loader.nix)*
-├── hosts/
-│   ├── _inventory.nix           # Host list → flake.nix (single source of truth)
-│   ├── desktop/                 # Desktop PC: gaming, full virt, Mullvad
-│   └── thinkpad/                # Laptop: Bluetooth, TLP, NVIDIA dGPU, power mgmt
-├── nixos/modules/               # System-level modules (two-level import pattern)
-│   ├── default.nix              # Root loader → 10 category dirs
-│   ├── core/                    # Bootloader, Nix, users, SOPS, timezone, i18n, env, stability, validation
-│   ├── hardware/                # Audio, Android, Bluetooth, GPU, libinput, upower, thermal, fwupd, printing
-│   ├── desktop/                 # Niri compositor, SDDM, X11 disabled, XDG portals
-│   ├── network/                 # NetworkManager, DNSCrypt, Mullvad VPN, Tailscale, Tor
-│   ├── security-stack/          # Kernel/sysctl hardening, firewall, AIDE, AppArmor, Firejail, OpenSnitch, MAC, opsec, web-re
-│   ├── apps/                    # Browser deps, Flatpak, Gaming (Steam/Proton/MangoHud), Syncthing
-│   ├── virtualization/          # Docker, VirtualBox, libvirt, nix-ld
-│   ├── observability/           # Netdata, Scrutiny, Glance, Loki, monitoring
-│   ├── performance/             # Boot optimization
-│   ├── maintenance/             # Cleanup timers, Restic backup, nh helper
-│   └── helpers/                 # Shared module helpers (systemd service hardening, timer factories)
-├── home/                        # Home-Manager user-space configuration
-│   ├── home.nix                 # Entry point → core, programs, scripts, desktop, themes
-│   ├── core/                    # User account, session vars, GTK/dconf, activation scripts, desktop entries
-│   ├── packages/                # 13 package lists: cli, applications, development, multimedia, privacy, wayland, etc.
-│   ├── programs/
-│   │   ├── terminal/            # Zsh, Alacritty, Zellij, 20+ CLI tools (fzf, bat, eza, yazi, starship, etc.)
-│   │   ├── ai-agents/           # Claude Code, Codex, OpenCode, Pi wrappers + config + services
-│   │   ├── nvf/                 # Neovim via NVF framework
-│   │   ├── zen-browser/         # Zen Browser multi-profile with per-profile Mullvad SOCKS5 proxies
-│   │   ├── languages/           # Go, Python, JS/Node, LSP servers, mise version manager
-│   │   ├── isolation/           # Wayland browser sandbox wrappers
-│   │   └── *.nix                # brave, discord (nixcord), gpg, obs, spicetify, ssh, tailscale, thunar, activitywatch, t3code, etc.
-│   ├── desktop/                 # Niri config (bindings/layout/rules/animations/idle/lock), DankMaterialShell, MIME, Qt, udiskie
-│   ├── themes/                  # Stylix engine, Catppuccin Mocha palette, theme options
-│   └── scripts/                 # User-level scripts (nerdfont-fzf, build helpers)
-├── scripts/
-│   ├── ai/                      # Agent launcher, iter, log analyzer, dashboard, inventory, registry, skills-sync
-│   │   ├── android-re/          # Full Android RE toolkit: AVD mgmt, Frida hooks, mitmproxy, static analysis
-│   │   └── web-re/              # Web RE toolkit: Chrome DevTools, mitmproxy, TOTP generation
-│   ├── apps/                    # Desktop wrappers: youtube-mpv, xdg-open, playwright-mcp
-│   ├── build/                   # Quality gates: modules-check, packages-check, pre-commit/push hooks, shellcheck-nix-inline
-│   ├── hardware/                # nvidia-fans control
-│   ├── lib/                     # Shared shell libs: logging, test-helpers, fzf-theme, AWK utils, require
-│   ├── sops/                    # SOPS editing helpers (tmpfs-backed)
-│   └── system/report/           # Modular health report: core, observability, security collectors
-└── docs/guides/                 # User guides: AI agents, Alacritty, Neovim, Niri, Yazi, Zellij
+flake.nix                  # 14 inputs; makeSystem/makeHome factories; loops over hosts/_inventory.nix
+hosts/_inventory.nix       # Host registry — add a host here + hosts/<name>/, flake picks it up
+shared/constants.nix       # SSOT: user, fonts, colors, keyboard, ports, proxies — never hardcode these
+nixos/modules/             # System modules: flat .nix files + category dirs (core, hardware, desktop,
+                           #   network, security-stack, apps, virtualization, observability,
+                           #   performance, maintenance, helpers), each with a default.nix import hub
+hosts/<name>/              # Per-host configuration.nix + hardware config + ./modules overrides
+home/                      # Home-Manager: core, packages, programs (ai-agents, terminal, nvf,
+                           #   librewolf, languages, isolation), desktop (niri, noctalia), themes
+scripts/                   # ai (agents + android-re/web-re RE toolkits), build (quality gates),
+                           #   apps, hardware, inventory, lib, sops, system
+inventory/                 # Server inventory (permanent/ + ephemeral/ are GITIGNORED — real IPs, never push)
+secrets/secrets.yaml       # SOPS age-encrypted secrets
+justfile                   # All task automation
 ```
 
-## Key Files
+Build pipeline: `hosts/_inventory.nix` → `flake.nix` → `nixosConfigurations.<host>` (imports `nixos/modules` + host `./modules`) and `homeConfigurations.<user>@<host>` → `home/home.nix` → core/programs/desktop/themes. `shared/constants.nix` reaches every module via `specialArgs.constants`.
 
-| File                              | Purpose                                                                                                 |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `flake.nix`                       | Flake entry: 14 inputs, makeSystem/makeHome factories, inventory-driven host loop                       |
-| `justfile`                        | All task automation (`just all`, `just qa`, `just nixos`, `just home`, `just sops-*`)                   |
-| `shared/constants.nix`            | SSOT for user identity, fonts, Catppuccin Mocha colors, keyboard layout, service ports, proxy endpoints |
-| `shared/option-helpers.nix`       | NixOS option type constructors used by system modules                                                   |
-| `hosts/_inventory.nix`            | Host registry — add/remove hosts here, flake.nix reads it automatically                                 |
-| `nixos/modules/default.nix`       | Root loader importing 10 category directories                                                           |
-| `nixos/modules/validation.nix`    | Cross-module conflict assertions (audio, GPU, VPN, firewall, sandboxing, display manager)               |
-| `nixos/modules/security.nix`      | Kernel hardening, sysctl, nftables firewall, AIDE, AppArmor, journald config                            |
-| `home/programs/ai-agents/`        | AI agent wrappers for Claude Code, Codex, OpenCode, Pi — config, helpers, services, activation          |
-| `home/programs/zen-browser/`      | Multi-profile browser with per-profile Mullvad SOCKS5 proxy routing                                     |
-| `home/desktop/niri/`              | Niri compositor config split: bindings, layout, rules, animations, idle, lock, input                    |
-| `scripts/ai/_agent-registry.sh`   | SSOT for all AI agent aliases, command mappings, and workflow suffixes                                  |
-| `scripts/build/modules-check.sh`  | Validates every .nix file is imported by its parent default.nix                                         |
-| `home/programs/activitywatch.nix` | ActivityWatch time tracking for Wayland                                                                 |
-| `home/packages/custom/t3code.nix` | T3 Code AI editor (fetchurl-pinned AppImage release)                                                    |
-| `shared/_hm-systemd-helpers.nix`  | Shared HM timer helpers (mkHmTimer, mkWeeklyTimer)                                                      |
+Secrets flow: `secrets/secrets.yaml` → sops-nix decrypts at activation → `/run/secrets/<key>` (tmpfs) → consumed by services, scripts via `_load_secret()`, or `sops.placeholder.*`. AI-agent MCP keys are written as placeholders and jq-patched into configs at activation — real keys never enter the Nix store.
 
-## Module Map
+AI agents: `programs.aiAgents.*` options (`options.nix`) → values (`config/`) → shared logic (`helpers/`) → file declarations (`files.nix`) → activation-time secret/plugin/skill setup (`activation/`) → packages/services/aliases (`services.nix`). `config/global-instructions.md` is injected into every agent (Claude `~/.claude/CLAUDE.md`, OpenCode/MiMoCode `instructions`, Codex `developer_instructions`, Antigravity `systemInstruction`, omp `~/.omp/agent/AGENTS.md`, ZCode `~/.zcode/AGENTS.md`). Shared MCP servers are defined once in `programs.aiAgents.mcpServers` and transformed per-agent by `helpers/_mcp-transforms.nix` — never define them per-agent.
 
-### NixOS System Modules (opt-in via `mySystem.*`)
+## Commands
 
-All NixOS modules use `options.mySystem.<module>` for per-host enablement. Import pattern: flat `.nix` files at `nixos/modules/` level, organized into category subdirs via their `default.nix`.
-
-| Category          | Modules                                                                                                                                                                     | Scope                          |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| `core/`           | bootloader, nix daemon, users, sops, timezone, i18n, environment, stability (earlyoom/BBR/inotify), validation                                                              | Always active                  |
-| `hardware/`       | PipeWire audio, Android (ADB), Bluetooth (opt-in), NVIDIA proprietary + VA-API, libinput, upower, thermald                                                                  | Always active except Bluetooth |
-| `desktop/`        | Niri scrollable-tiling, SDDM Wayland, X11 disabled, XDG portals                                                                                                             | Always active                  |
-| `network/`        | NetworkManager + resolved, DNSCrypt (opt-in), Mullvad VPN lockdown (opt-in), Tailscale, Tor (opt-in)                                                                        | Mixed                          |
-| `security-stack/` | Kernel/sysctl hardening, nftables firewall, AIDE, AppArmor, Firejail (opt-in), OpenSnitch (opt-in), MAC randomization (opt-in), opsec (session lock, zram), web-re (opt-in) | Mixed                          |
-| `apps/`           | Browser deps (Widevine), Flatpak (opt-in), Gaming/Steam/Proton (opt-in), Syncthing (opt-in)                                                                                 | Mixed                          |
-| `virtualization/` | Docker/VBox/libvirt (opt-in), nix-ld (always)                                                                                                                               | Mixed                          |
-| `observability/`  | Netdata (opt-in), Scrutiny SMART (opt-in), Glance dashboard (opt-in), Loki log aggregation, monitoring (base tools)                                                         | All opt-in                     |
-| `performance/`    | Boot optimization                                                                                                                                                           | Always active                  |
-| `maintenance/`    | Cleanup timers (opt-in), Restic backup (opt-in), nh helper                                                                                                                  | Mixed                          |
-
-### Home-Manager Modules
-
-| Category                | Contents                                                                                               |
-| ----------------------- | ------------------------------------------------------------------------------------------------------ |
-| `core/`                 | User account, session vars, GTK/dconf, activation, desktop entries                                     |
-| `packages/`             | 13 package category files (cli, applications, development, multimedia, privacy, wayland, etc.)         |
-| `programs/terminal/`    | Zsh (aliases/functions/config), Alacritty, Zellij, 20+ CLI tools (fzf, bat, eza, yazi, starship, etc.) |
-| `programs/ai-agents/`   | Multi-provider AI agent orchestration: config, helpers, services, activation, log analysis             |
-| `programs/nvf/`         | Neovim via NVF framework                                                                               |
-| `programs/zen-browser/` | Multi-profile Zen Browser with per-profile Mullvad SOCKS5 proxy                                        |
-| `programs/languages/`   | Go, Python, JS/Node, LSP servers, mise version manager                                                 |
-| `programs/isolation/`   | Wayland browser sandbox wrappers                                                                       |
-| `desktop/`              | Niri (8 sub-modules incl. \_auth-float), DankMaterialShell (bar/launcher), MIME, Qt, udiskie           |
-| `themes/`               | Stylix engine, Catppuccin Mocha palette, theme options                                                 |
-
-### Host-Specific Overrides
-
-- **desktop**: Gaming (Gamescope), full virtualization, Mullvad VPN
-- **thinkpad**: Bluetooth, TLP power management, NVIDIA dGPU power switching, thermal control
-
-## Data Flow
-
-### Build Pipeline
-
-```
-hosts/_inventory.nix → flake.nix (makeSystem/makeHome factories)
-  → nixosConfigurations.<hostname> (nixpkgs.lib.nixosSystem)
-    → hosts/<hostname>/configuration.nix
-      → ../../nixos/modules (all system modules via default.nix chain)
-      → ./modules (host-specific overrides)
-  → homeConfigurations.<user>@<hostname> (home-manager.lib.homeManagerConfiguration)
-    → home/home.nix
-      → core, programs, scripts, desktop, themes
+```bash
+just format      # nixfmt --strict on all .nix
+just lint        # statix + shellcheck
+just modules     # verify every .nix is imported by a default.nix (tree-wide)
+just security    # risky-pattern and plaintext-secret scan
+just check       # nix flake check (eval all outputs)
+just eval-current# eval timing for the current host only
+just qa-fast     # modules + security + eval-current in parallel (pre-commit parity)
+just qa          # modules + security + check + eval-audit
+just nixos       # nh os switch (current host); `just nixos <host>` to target
+just home        # nh home switch
+just install-hooks   # symlink repo pre-commit/pre-push hooks into .git/
+just sops-edit   # edit secrets (decrypts to tmpfs only)
+just secrets-add <key>  # add one secret (value from stdin)
 ```
 
-### Secrets Flow
-
-```
-secrets/secrets.yaml (age-encrypted)
-  → sops-nix decrypts at activation time
-  → /run/secrets/<key> (tmpfs, never on disk)
-  → consumed by: systemd services, shell scripts via _load_secret(), Nix config via sops.placeholder.*
-```
-
-### Constants Propagation
-
-```
-shared/constants.nix
-  → imported directly by flake.nix
-  → passed via specialArgs.constants to all NixOS modules and Home-Manager modules
-  → used for: terminal, editor, fonts, colors, keyboard, ports, proxy endpoints, paths
-```
-
-### AI Agent Orchestration Flow
-
-```
-scripts/ai/_agent-registry.sh (alias → command mapping)
-  → agent-launcher.sh (interactive fzf) or agent-iter.sh (headless)
-  → agent-log-wrapper.sh (stdout/stderr split + timestamps)
-  → agent-analyze.sh / agent-dashboard.sh (log analysis)
-  → home/programs/ai-agents/ (Nix wrappers provide env vars, profiles, config files)
-```
-
-## Dependencies
-
-### External Flake Inputs
-
-| Input              | Version  | Notes                                                      |
-| ------------------ | -------- | ---------------------------------------------------------- |
-| `nixpkgs`          | unstable | Primary package set                                        |
-| `nixpkgs-stable`   | 25.11    | Select stable packages via `pkgsStable`                    |
-| `home-manager`     | master   | User environment management                                |
-| `sops-nix`         | latest   | Age-encrypted secret management                            |
-| `stylix`           | latest   | System-wide theming (Catppuccin Mocha)                     |
-| `niri`             | latest   | ⚠️ Does NOT follow nixpkgs — pinned mesa for compatibility |
-| `noctalia`         | latest   | Noctalia v5 desktop shell (C++ native, TOML config)        |
-| `noctalia-greeter` | latest   | greetd-based display manager matching the Noctalia shell   |
-| `spicetify-nix`    | latest   | Spotify customization                                      |
-| `nixcord`          | latest   | Discord theming                                            |
-| `nvf`              | latest   | Neovim configuration framework                             |
-| `nix-wallpaper`    | latest   | Nix-themed wallpaper generator                             |
-| `zellij-tui`       | latest   | Zellij TUI extension                                       |
-| `zen-browser`      | latest   | Zen Browser flake (beta channel)                           |
-
-### Internal Dependency Graph
-
-```
-flake.nix
-  ├── shared/constants.nix (used everywhere via specialArgs)
-  ├── shared/option-helpers.nix (used by nixos/modules/*.nix for option definitions)
-  ├── home/_helpers/_secret-loader.nix (used by terminal/zsh + ai-agents)
-  ├── shared/alias-helpers.nix (used by terminal/zsh)
-  │
-  ├── hosts/_inventory.nix → hosts/<name>/configuration.nix
-  │     ├── ../../nixos/modules → 10 categories → ~50 flat module files
-  │     └── ./modules → host-specific hardware/power overrides
-  │
-  └── home/home.nix → core, programs (16 subdirs), desktop, themes
-      └── programs/ai-agents → references scripts/ai/*, home/_helpers/_secret-loader.nix
-```
-
-### Script Dependency Graph
-
-```
-scripts/lib/logging.sh ← sourced by almost all scripts
-scripts/lib/test-helpers.sh ← sourced by all *-test.sh files
-scripts/lib/fzf-theme.sh ← sourced by agent-launcher, agent-inventory, agent-dashboard
-scripts/lib/error-patterns.sh ← sourced by agent-analyze, report-collectors-core
-scripts/lib/require.sh ← sourced by android-re helpers
-scripts/lib/awk-utils.awk + extract-nix-shell.awk ← composed by shellcheck-nix-inline.sh
-scripts/ai/_agent-registry.sh ← sourced by agent-launcher.sh, agent-iter.sh
-```
-
-## CodeGraph
-
-This project has `.codegraph/` initialized. **Always use CodeGraph MCP tools as the primary exploration mechanism** before falling back to grep/glob/Read.
-
-**Answer directly with CodeGraph — don't delegate exploration to a file-reading sub-agent or a grep/read loop.** CodeGraph is the pre-built search index; re-deriving its answers with grep + Read repeats work it already did and costs more for the same result. For read-only questions about how code works, architecture, traces, or symbol locations, answer in a handful of CodeGraph calls and stop — typically with **zero native file reads**. The returned source is complete and authoritative; do not re-open files merely to verify it. For mutation tasks, CodeGraph replaces exploratory reads, not the native write guard: during every user turn, call native Read on each existing target path immediately before its first Edit or Write. Reads from earlier turns and CodeGraph results do not satisfy that turn-local guard.
-
-**Tool selection by intent:**
-
-| Tool                                      | Use For                                                                                                 |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `codegraph_context`                       | Map a task / feature / area first — composes search + node + callers + callees in one call              |
-| `codegraph_trace`                         | "How does X reach Y" — the call path, each hop's body inline (follows dynamic-dispatch hops grep can't) |
-| `codegraph_explore`                       | Survey several related symbols' source in ONE budget-capped call                                        |
-| `codegraph_search`                        | Find a symbol by name                                                                                   |
-| `codegraph_callers` / `codegraph_callees` | Walk call flow one hop at a time                                                                        |
-| `codegraph_impact`                        | Check what's affected before editing                                                                    |
-| `codegraph_node`                          | Get a single symbol's source / signature                                                                |
-| `codegraph_files`                         | Project file structure from the index (faster than Glob/filesystem scanning)                            |
-
-A direct CodeGraph answer is a handful of calls; a grep/read exploration is dozens.
+Shell tests: `bash <script>-test.sh` next to the script under test. Docs: `just --list` for everything.
 
 ## Conventions
 
-- **Nix formatting**: `nixfmt --strict` (run via `just format`)
-- **Nix linting**: `statix check` (run via `just lint`)
-- **Shell linting**: `shellcheck` on all `.sh` files + inline Nix shell snippets
-- **Commits**: GPG-signed (enforced by pre-push hook), semantic prefixes (`feat:`, `fix:`, `refactor:`, `chore:`)
-- **Module pattern**: Flat `.nix` files at `nixos/modules/` level, organized into category subdirs via `default.nix`
-- **Options**: All NixOS modules expose `mySystem.<module>.enable` for per-host opt-in
-- **Constants**: `shared/constants.nix` is the SSOT — never hardcode values that belong there
-- **Scripts**: `#!/usr/bin/env bash` + `set -euo pipefail`; sourced libraries (lib/) omit `set -euo pipefail`
-- **Tests**: `*-test.sh` suffix alongside the script under test; run with `bash <script>-test.sh`
-- **Secrets**: Never in plaintext on disk; always via SOPS → `/run/secrets/` → `_load_secret()` or `sops.placeholder.*`
-- **Host config**: Add host to `hosts/_inventory.nix`, create `hosts/<name>/` directory, done
-- **Git hooks**: `ln -sf ../../scripts/build/pre-commit-hook.sh .git/hooks/pre-commit` and `pre-push-hook.sh`
-
-## Build & Test
-
-```bash
-just                    # List all tasks
-just format             # Format .nix with nixfmt
-just lint               # statix + shellcheck
-just modules            # Verify all .nix files are imported by parent default.nix
-just security           # Scan for risky patterns and plaintext secret leaks
-just check              # nix flake check (eval all outputs)
-just eval-audit         # Measure eval time for all host outputs
-just eval-current       # Measure eval time for current host only
-just qa                 # Full QA: modules + security + check + eval-audit
-just qa-fast            # Fast QA: modules + security + eval-current (parallel)
-just nixos              # nh os switch (current host)
-just nixos desktop      # nh os switch --hostname desktop
-just nixos-fast         # Skip validation, no NOM
-just home               # nh home switch
-just all                # Full pipeline: modules + lint + format + security + check + nixos + home
-just hardening          # systemd-analyze security report
-just perf               # Boot/session performance diagnostics
-just clean              # Clean build artifacts and caches
-just update             # Update all flake inputs
-just update-pkgs        # Update nixpkgs unstable
-just update-pkgs-stable # Update nixpkgs stable
-just sops-key           # Generate SOPS age key
-just sops-view          # View decrypted secrets
-just secrets-add <key>  # Add a new secret
-```
-
-**Shell tests**: `bash scripts/build/modules-check-test.sh`, `bash scripts/ai/agent-launcher-test.sh`, etc.
+- **Module pattern**: every NixOS module exposes `mySystem.<module>.enable` for per-host opt-in; Home-Manager uses `programs.*`. Flat `.nix` modules live at `nixos/modules/` level and are imported by their category `default.nix`.
+- **Import hubs**: `default.nix` is always the import hub; `_*.nix` files are plain helpers imported directly by consumers, never listed in hubs.
+- **Formatting/lint**: `nixfmt --strict`, `statix`, `shellcheck` — all via `just`. Commits are GPG-signed with semantic prefixes (`feat:`, `fix:`, `chore:`, `refactor:`).
+- **Scripts**: `#!/usr/bin/env bash` + `set -euo pipefail`; sourced libs in `scripts/lib/` omit `set -euo pipefail`.
+- **Secrets**: never plaintext on disk, never in the Nix store, never in git. SOPS → `/run/secrets/` → `_load_secret()` or `sops.placeholder.*` only.
+- **Constants**: check `shared/constants.nix` before hardcoding any port, path, font, color, or proxy.
+- **New hosts**: append to `hosts/_inventory.nix`, create `hosts/<name>/configuration.nix` — done.
 
 ## Gotchas
 
-1. **Niri flake input does NOT follow nixpkgs** — pinned mesa version required. Changing this breaks GPU rendering. See `flake.nix` comment on niri input.
-2. **Python test overrides in flake.nix** — `picosvg`, `nanoemoji`, `gftools` have `doCheck = false` due to sandbox-incompatible font tests. Track upstream fixes.
-3. **Two-level import pattern** — flat `.nix` files at `nixos/modules/` level must be imported from the correct category `default.nix`. Running `just modules` catches missing imports.
-4. **Cross-module assertions** — `nixos/modules/validation.nix` enforces mutual exclusion (TLP vs power-profiles-daemon, PulseAudio vs PipeWire, Mullvad vs DNSCrypt, etc.).
-5. **High-churn files** (from git history): `flake.nix` (26 commits), `home/programs/default.nix` (21), `home/packages/applications.nix` (18), `nixos/modules/graphics.nix` (15), `nixos/modules/default.nix` (16).
-6. **Android RE spoof sync** — `_spoof-table.sh` and `frida-spoof-build.js` define Pixel 7 spoof independently; must be kept in sync.
-7. **Agent registry** — `_agent-registry.sh` is sourced by both launcher and iter; must be sourced AFTER `logging.sh`.
-8. **Pre-commit hook** hardcodes deadnix exclude for `zellij/layouts.nix`.
-9. **Secret decryption** — `just sops-edit` writes decrypted file to `$XDG_RUNTIME_DIR` (tmpfs). If interrupted, OS reclaims automatically.
-10. **Desktop vs thinkpad differences** — thinkpad has no gaming/virtualization/Mullvad; desktop has no Bluetooth/TLP/NVIDIA-dGPU-specific modules.
+1. **Niri flake input does NOT follow nixpkgs** — it pins its own mesa for GPU compatibility (see comment in `flake.nix`). Do not "fix" this.
+2. **New `.nix` files must be `git add`-ed before `nix`/flake evals can see them** — path: flakes only see tracked files.
+3. **CodeGraph daemon breaks nix evals** — while `codegraph serve` runs, `.codegraph/daemon.sock` makes every flake `path:` fetch fail ("unsupported type"), killing `just check`/`eval-*`/pre-commit. Stop it first: `kill "$(cat .codegraph/daemon.pid)" && rm -f .codegraph/daemon.sock`.
+4. **Tree-wide import check** — `just modules` fails for any `.nix` module not referenced by a `default.nix`. Plain-imported helpers need a `# modules-check: manual-helper <files>` comment in their directory's `default.nix` (see `activation/default.nix` for the pattern).
+5. **Cross-module assertions** — `nixos/modules/validation.nix` enforces mutual exclusions (TLP vs power-profiles-daemon, PipeWire vs PulseAudio, Mullvad vs DNSCrypt, firewall/AppArmor always-on). Check it before enabling conflicting modules.
+6. **Python test overrides in flake.nix** — `picosvg`, `nanoemoji`, `gftools` carry `doCheck = false` (sandbox-incompatible font tests). Track upstream fixes.
+7. **Android RE spoof sync** — `scripts/ai/android-re/_spoof-table.sh` and `frida-spoof-build.js` define the Pixel 7 spoof independently; change them together.
+8. **`_agent-registry.sh` must be sourced AFTER `scripts/lib/logging.sh`** — it depends on logging functions.
+9. **ZCode's config is app-owned** — `~/.zcode/v2/config.json` is rewritten by the running app; managed providers are jq-merged at activation (`activation/zcode-setup.nix`), never declared as `home.file`. Restart ZCode after activation.
+10. **`inventory/permanent/` and `inventory/ephemeral/` are gitignored on purpose** (real IPs, force-added locally). Never commit, push, or inline their contents.
+11. **Host deltas** — thinkpad has no gaming/virtualization/Mullvad; desktop has no Bluetooth/TLP/dGPU power modules. `result/` is a build artifact.
+12. **Pre-commit hook** escalates modules → lint → format check → flake check, and hardcodes a deadnix exclude for the zellij `layouts.nix` (verify the path still matches if files move).
 
-11. **Flat module imports are globally verified** — `modules-check.sh` now performs a tree-wide import check (not just per-`default.nix`), so any `.nix` module not referenced by at least one `default.nix` (or a `# modules-check: manual-helper` comment) fails `just modules`. Plain-`import`ed helpers still need a manual-helper marker in their directory's `default.nix`. Always add the marker when adding a helper.
-12. **CodeGraph daemon blocks nix evals** — while `codegraph serve` is running, `.codegraph/daemon.sock` is a Unix socket that makes every `nix` flake `path:` fetch fail with "file '.codegraph/daemon.sock' has an unsupported type" (breaks `just check`, `just eval-*`, pre-commit). Stop it before evaluating: `kill "$(cat .codegraph/daemon.pid)" && rm -f .codegraph/daemon.sock`. The socket reappears when the daemon restarts.
+## Security
 
-## Security Considerations
-
-- **SOPS + age encryption** for all secrets at rest; plaintext only in `/run/secrets/` (tmpfs)
-- **Kernel hardening**: sysctl params, ALSR, restrict dmesg, disable uncommon protocols
-- **Firewall**: nftables-based, enabled by default (asserted in validation.nix)
-- **AppArmor**: mandatory access control (asserted as always-on)
-- **Firejail sandboxing**: wrapped binaries for high-risk apps (opt-in per host)
-- **OpenSnitch**: per-app network firewall with eBPF monitoring (opt-in)
-- **MAC randomization**: on boot via macchanger (opt-in)
-- **Mullvad VPN**: lockdown mode + quantum-resistant key exchange (desktop only)
-- **Tor**: client + torsocks (opt-in per host)
-- **GPG-signed commits**: enforced by pre-push hook
-- **Gitignore**: blocks `.key`, `.pem`, `.p12`, `.env`, `id_rsa`, `id_ed25519`, `*-decrypted.*`
-- **Proxy isolation**: each browser profile gets a dedicated Mullvad SOCKS5 exit — never mixed
-- **DNS**: DNSCrypt available (opt-in), conflicts with Mullvad DNS (asserted)
+- Firewall (nftables) and AppArmor are asserted always-on; Mullvad runs lockdown mode with quantum-resistant keys (desktop); each browser profile gets a dedicated Mullvad SOCKS5 exit — never mix exits across profiles.
+- `.gitignore` blocks key/material patterns (`.key`, `.pem`, `.p12`, `.env`, `id_rsa`, `id_ed25519`, `*-decrypted.*`); SOPS decrypted output only ever lives in `$XDG_RUNTIME_DIR` tmpfs.
+- `just security` must stay clean — treat new findings as blockers, not noise.
