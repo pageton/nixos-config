@@ -45,9 +45,16 @@ _: {
           *) return 0 ;;
         esac
 
-        # Check title against auth patterns
+        # Check title against auth patterns. These popups settle late, so
+        # they're floated AFTER being tiled — the toggle keeps the tiled
+        # geometry. Pin the old dialog float size (958x790, same as the
+        # portal filechooser rule) and center, matching what the old
+        # open-time static rule looked like.
         if echo "$title" | grep -qiE "$AUTH_PATTERN"; then
           niri msg action toggle-window-floating --id "$win_id" 2>/dev/null || true
+          niri msg action set-window-width --id "$win_id" 958 2>/dev/null || true
+          niri msg action set-window-height --id "$win_id" 790 2>/dev/null || true
+          niri msg action center-window --id "$win_id" 2>/dev/null || true
           floated[$win_id]=1
         fi
       }
