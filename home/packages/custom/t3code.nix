@@ -1,6 +1,6 @@
 { pkgs, ... }:
 let
-  version = "0.0.38";
+  version = "0.0.40";
 
   src = pkgs.fetchurl {
     url = "https://github.com/pingdotgg/t3code/releases/download/v${version}/T3-Code-${version}-x86_64.AppImage";
@@ -8,7 +8,7 @@ let
     # "hash mismatch" and print the actual SRI hash. Copy that hash here, then
     # rebuild. Alternatively, run:
     #   nix-prefetch-url "https://github.com/pingdotgg/t3code/releases/download/v0.0.28/T3-Code-0.0.28-x86_64.AppImage" | xargs nix hash to-sri --type sha256
-    sha256 = "sha256-HxzNkisu+v/VBEewKO4NbiUlUCkFCHz4rj/kHv6+NG8=";
+    sha256 = "sha256-i/X9RMt/rQxDGR1U/v35dKgifVBQXsuKvPdjJiCfJko=";
   };
 
   appContents = pkgs.appimageTools.extract {
