@@ -141,25 +141,23 @@ let
       fi
       ${cleanup}
     '';
-  # Presence heal used by home activation: installs every tool whose bun
-  # package dir is missing, in ONE bun invocation. The package dir (not
-  # command -v) is the truth — a pruned package leaves a broken bin symlink
-  # (command -v correctly fails) or, for dsh, a valid Nix wrapper pointing at
-  # a nonexistent node_modules path. No version checks, no network when
-  # healthy; freshness is the weekly timer's job.
-  installIfMissingScript = pkgs.writeShellScript "ai-agents-install-missing" ''
-      export PATH="$HOME/.nix-profile/bin:$HOME/.bun/bin:$HOME/.local/bin:$BUN_INSTALL/bin:$PATH"
-      missing=()
-    ${lib.concatMapStringsSep "\n" (tool: ''
-      [[ -d "$HOME/.bun/install/global/node_modules/${tool.npmPackage}" ]] || missing+=(${tool.npmPackage})
-    '') tools}
-      if ((''${#missing[@]} > 0)); then
-        echo "Installing missing AI agent CLIs: ''${missing[*]}"
-        bun install -g "''${missing[@]}" \
-          || echo "⚠ bun install failed — retry with: systemctl --user start ai-agents-autoupdate"
-      fi
-  '';
+  # Full serialized update: every tool's mkScript in ONE script, run
+  # sequentially (never concurrently — bun's global package.json is shared,
+  # and concurrent installs prune each other's packages). Failure is
+  # aggregated so one broken tool doesn't abort the rest but the script still
+  # exits nonzero. Used by BOTH the weekly timer and the update-on-switch
+  # home activation — single source for the update path.
+  updateAllScript = pkgs.writeShellScript "ai-agents-autoupdate" (
+    ''
+      fail=0
+    ''
+    + lib.concatMapStringsSep "\n" (tool: "${toString (mkScript tool)} || fail=1") tools
+    + ''
+
+      exit $fail
+    ''
+  );
 in
 {
-  inherit tools mkScript installIfMissingScript;
+  inherit tools mkScript updateAllScript;
 }

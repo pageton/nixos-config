@@ -11,23 +11,12 @@
 let
   inherit (hmSystemdHelpers) mkWeeklyTimer;
   bunPackage = import ../../../_helpers/_bun-package.nix { inherit pkgs; };
-  # All agent CLI updates in ONE serialized oneshot. Per-tool services fired
-  # concurrently (same weekly OnCalendar / same boot on Persistent catch-up)
-  # and raced on bun's global package.json: last writer won, bun pruned the
-  # other tools' packages, and ~/.bun/bin kept broken symlinks. Each tool's
-  # script exits 1 on install failure without aborting the rest.
-  aiAgentsAutoupdate = pkgs.writeShellScript "ai-agents-autoupdate" (
-    ''
-      fail=0
-    ''
-    + lib.concatMapStringsSep "\n" (
-      tool: "${toString (autoUpdate.mkScript tool)} || fail=1"
-    ) autoUpdate.tools
-    + ''
-
-      exit $fail
-    ''
-  );
+  # All agent CLI updates in ONE serialized oneshot (shared with the
+  # update-on-switch activation). Per-tool services fired concurrently (same
+  # weekly OnCalendar / same boot on Persistent catch-up) and raced on bun's
+  # global package.json: last writer won, bun pruned the other tools'
+  # packages, and ~/.bun/bin kept broken symlinks.
+  inherit (autoUpdate) updateAllScript;
 in
 lib.mkMerge [
   (lib.mkIf cfg.agentmemory.enable {
@@ -82,7 +71,7 @@ lib.mkMerge [
       };
       Service = {
         Type = "oneshot";
-        ExecStart = "${aiAgentsAutoupdate}";
+        ExecStart = "${updateAllScript}";
         # Worst case: 14 tools x 3 attempts x 15s backoff + installs.
         TimeoutStartSec = "30m";
       };

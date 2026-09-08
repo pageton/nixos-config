@@ -165,13 +165,15 @@ in
       ];
 
       activation = {
-        # Heal-on-switch: reinstall any agent CLI whose bun package went missing
-        # (e.g. pruned by a concurrent global install). No-op without network when
-        # healthy — unlike the old updateAiAgentCLIs, this does no version checks;
-        # freshness is the weekly ai-agents-autoupdate timer's job.
-        installAiAgentCLIs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-          $DRY_RUN_CMD ${autoUpdate.installIfMissingScript} \
-            || echo "⚠ AI agent CLI heal failed — retry with: systemctl --user start ai-agents-autoupdate"
+        # Update-on-switch: run the full serialized updater (version check +
+        # reinstall) after every switch, like the pre-2026-09-06 behavior. The
+        # weekly ai-agents-autoupdate timer remains as a backstop for long
+        # stretches without a switch. Non-fatal on failure so an offline switch
+        # still completes; each tool's script skips its update when the npm
+        # registry can't be reached.
+        updateAiAgentCLIs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          $DRY_RUN_CMD ${autoUpdate.updateAllScript} \
+            || echo "⚠ AI agent CLI update failed — retry with: systemctl --user start ai-agents-autoupdate"
         '';
 
         # The dsh-tui profile is machine state created by `dsh plugin` (community
