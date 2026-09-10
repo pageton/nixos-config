@@ -6,6 +6,7 @@
     enableTreesitter = true;
 
     rust.enable = true;
+    zig.enable = true;
     go = {
       enable = true;
       extraDiagnostics.enable = false;
