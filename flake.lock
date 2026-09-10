@@ -504,22 +504,6 @@
         "type": "github"
       }
     },
-    "nixpkgs_3": {
-      "locked": {
-        "lastModified": 1788316716,
-        "narHash": "sha256-bc7rSpXIdn9QWGNqfWcPZWOhEVF8NoeAZkWq0XWnf/k=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "3ed67ec0a4d3c7ab4ae1f04f8ee8df07bfa506a2",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "noctalia": {
       "inputs": {
         "nixpkgs": [
@@ -607,26 +591,6 @@
         "type": "github"
       }
     },
-    "pageton-tdesktop": {
-      "inputs": {
-        "nixpkgs": "nixpkgs_3"
-      },
-      "locked": {
-        "lastModified": 1788758287,
-        "narHash": "sha256-MMqTTBED3v1UAVxIcGAP2wXSpaJVMPkDugUoZ0telZg=",
-        "ref": "refs/heads/dev",
-        "rev": "af59b22a88fb4146e024f275afdf80afe0e93e41",
-        "revCount": 26254,
-        "submodules": true,
-        "type": "git",
-        "url": "https://github.com/pageton/tdesktop"
-      },
-      "original": {
-        "submodules": true,
-        "type": "git",
-        "url": "https://github.com/pageton/tdesktop"
-      }
-    },
     "pre-commit-hooks": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -662,7 +626,6 @@
         "noctalia": "noctalia",
         "noctalia-greeter": "noctalia-greeter",
         "nvf": "nvf",
-        "pageton-tdesktop": "pageton-tdesktop",
         "sops-nix": "sops-nix",
         "spicetify-nix": "spicetify-nix",
         "stylix": "stylix",

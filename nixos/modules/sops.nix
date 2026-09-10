@@ -74,14 +74,6 @@ in
         owner = user;
         mode = "0400";
       };
-      telegram-api-id = {
-        owner = user;
-        mode = "0400";
-      };
-      telegram-api-hash = {
-        owner = user;
-        mode = "0400";
-      };
     }
     // lib.optionalAttrs (hasSecret "gpg-passphrase") {
       # Signing-key passphrase, fed to gpg-agent at login by the

@@ -1,106 +1,102 @@
-# Telegram Desktop — pageton/tdesktop fork, built from source.
+# Telegram Desktop — pageton/tdesktop fork, prebuilt release binary.
 #
-# Source: the pageton/tdesktop fork of telegramdesktop/tdesktop, fetched with
-# submodules by the pageton-tdesktop flake input (see flake.nix). The input
-# tracks the fork's default branch; updates land via
-# `nix flake lock update pageton-tdesktop` — no update script or pin to
-# maintain.
+# Source: the fork's GitHub release tarball
+# (https://github.com/pageton/tdesktop/releases — td-setup-linux-x64), pinned
+# by tgVersion below. Updates land by bumping tgVersion + the fetchurl hash
+# (nix-prefetch-url the new URL, convert to SRI with `nix hash convert`).
+# No source build: the tarball ships a mostly-static binary (Qt, tgcalls,
+# lib_ui, ffmpeg baked in).
 #
-# The build is nixpkgs' telegram-desktop derivation swapped onto the fork
-# source. API credentials never enter the repo or the store: the build bakes
-# in Telegram's TEST-ONLY pair (the fork's own TDESKTOP_API_TEST cmake
-# fallback — too limited to deploy, so a missing secret fails at login
-# instead of silently impersonating another client), and the wrappers export
-# the real pair at runtime as TG_API_ID/TG_API_HASH from sops-decrypted
-# /run/secrets (keys telegram-api-id/telegram-api-hash — see
-# nixos/modules/sops.nix). config.h is patched to prefer the env pair over
-# the compile-time constants.
+# Two non-obvious constraints, both worked around in this file:
+#
+# 1. patchelf is unusable. Any --set-interpreter/--set-rpath rewrite of this
+#    ~280MB multi-segment static binary corrupts it — the patched binary
+#    jumps into its own ELF headers during init_array (SIGILL/SIGSEGV,
+#    verified). Instead the stock PT_INTERP payload "/lib64/ld-linux-x86-64.so.2"
+#    (27 bytes) is overwritten IN PLACE with a shorter path (tgLoaderPath)
+#    and NUL-padded: pure string rewrite, no header/segment/size changes.
+#    The wrapper keeps a symlink at tgLoaderPath pointing at the pinned nix
+#    glibc loader, so the kernel can exec the binary directly.
+#
+# 2. Running through nix-ld instead is NOT an option: nix-ld execs the real
+#    glibc loader as the process image, so /proc/self/exe is the LOADER, not
+#    Telegram. The app derives its executable path from /proc/self/exe and
+#    re-execs itself to spawn the mini-apps webview helper — with the loader
+#    as the image the helper spawn execs "/path/to/ld.so -webviewhelper …"
+#    and the loader dies trying to open a file named "-webviewhelper". With
+#    the byte-patched interpreter the kernel execs Telegram itself and
+#    /proc/self/exe is correct in the app AND the helper.
+#
+# API credentials are whatever the fork bakes into its release (their
+# production pair, built from CI secrets). The config.h env-override hack the
+# old source build used is compile-time only and cannot apply to a prebuilt
+# binary — the sops telegram-api-id/telegram-api-hash secrets are unused.
+# This is standard fork behavior; login works normally with the fork's pair
+# (the first start after this switch may ask to log in again, since the
+# existing sessions were authenticated under a different api_id).
+#
+# App-id: the release build has its internal updater enabled at compile time,
+# which makes it derive its Wayland app-id as org.telegram.desktop._<hash>
+# instead of the plain org.telegram.desktop the niri rules match. The
+# wrappers drop an external-updater marker (<workdir>/externalupdater.d/)
+# containing the executable path; the app reads it at startup, sets
+# UpdaterDisabled, and keeps the plain app-id (niri rules, pop-out windows,
+# and the auth-float script all match on the unsuffixed id).
 #
 # Telegram is single-instance per workdir: the second wrapper points at its
 # own workdir, making it a fully separate instance (own tdata, settings,
 # accounts) instead of just focusing the already-running one.
-{
-  lib,
-  pkgs,
-  inputs,
-  ...
-}:
+{ lib, pkgs, ... }:
 
 let
-  # Fork source tree (flake input, fetched with submodules).
-  pagetonSrc = inputs.pageton-tdesktop;
+  # Release version pin; the tarball URL is derived from it.
+  tgVersion = "7.2.7";
 
-  # Version carried by the tree's Telegram/build/version (parsed at eval so a
-  # lock update moves the store path name along).
-  tgVersion = builtins.head (
-    builtins.head (
-      builtins.filter (m: m != null) (
-        builtins.map (builtins.match "AppVersionStr[[:space:]]+([0-9][.0-9]*)") (
-          lib.strings.splitString "\n" (builtins.readFile (pagetonSrc + "/Telegram/build/version"))
-        )
-      )
-    )
-  );
+  # Short path the PT_INTERP payload is byte-patched to (must stay shorter
+  # than the stock 27-byte "/lib64/ld-linux-x86-64.so.2"). The wrapper
+  # creates/verifies a symlink here on every launch — see the header.
+  tgLoaderPath = "/tmp/tgld";
 
-  # Runtime override appended to config.h: the inline functions read the
-  # compile-time (TEST) constants, then the trailing #defines shadow ApiId /
-  # ApiHash so every downstream call site resolves to the env-provided pair.
-  # Defining the functions before the macros is what keeps them referring to
-  # the constexprs rather than themselves.
-  tgConfigHEnvOverride = pkgs.writeText "pageton-config-h-env-override.inc" ''
-    // --- nix (home/programs/telegram.nix): runtime API credentials ---
-    // Compile-time pair is Telegram's TEST-ONLY credentials; the real pair
-    // arrives via TG_API_ID / TG_API_HASH (wrapper exports from sops-managed
-    // /run/secrets). Unset/empty env falls back to the TEST pair, which the
-    // API server rejects.
-    #include <cstdlib>
-    inline const char *tgApiHashFromEnv() {
-      const char *fromEnv = std::getenv("TG_API_HASH");
-      return (fromEnv && *fromEnv) ? fromEnv : ApiHash;
-    }
-    inline int tgApiIdFromEnv() {
-      const char *fromEnv = std::getenv("TG_API_ID");
-      return (fromEnv && *fromEnv) ? std::atoi(fromEnv) : int(ApiId);
-    }
-    #define ApiId (tgApiIdFromEnv())
-    #define ApiHash (tgApiHashFromEnv())
-  '';
-
-  # nixpkgs' tdesktop build (same pinned nixpkgs), swapped onto the fork
-  # source. The Qt wrapper on top brings the image
-  # format plugins, the webkitgtk mini-apps webview on LD_LIBRARY_PATH, and
-  # the dbus service fixup.
-  tdUnwrappedNix = "${pkgs.path}/pkgs/applications/networking/instant-messengers/telegram/telegram-desktop/unwrapped.nix";
-  # kdePackages.callPackage: the scope nixpkgs itself uses for tdesktop —
-  # it supplies qtbase/qtsvg/qtwayland/qtshadertools/kcoreaddons (top-level
-  # Qt attrs no longer exist in current nixpkgs).
-  pagetonUnwrapped = (pkgs.kdePackages.callPackage tdUnwrappedNix { }).overrideAttrs (old: {
-    pname = "pageton-desktop-unwrapped";
-    version = tgVersion;
-    src = pagetonSrc;
-    # The fork's (newer) lib_ui pulls desktop-app::external_pango — provide
-    # pangocairo/pangoft2 via pkg-config.
-    buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.pango ];
-    # settings.h uses QDir/QFile through transitive includes only; the td_iv
-    # precompiled header doesn't pull them in, so include them explicitly.
-    postPatch = (old.postPatch or "") + ''
-      sed -i 's|#include "base/integration.h"| #include <QDir>\n#include <QFile>\n#include "base/integration.h"|' \
-        Telegram/SourceFiles/settings.h
-      cat ${tgConfigHEnvOverride} >> Telegram/SourceFiles/config.h
-    '';
-    # Collect every compile error in one pass instead of one per rebuild.
-    NINJAFLAGS = "-k 0";
-    # Drop nixpkgs' Snap credentials; keep the rest
-    # (e.g. DESKTOP_APP_DISABLE_SWIFT6) untouched. TDESKTOP_API_TEST makes
-    # the fork's cmake bake in Telegram's TEST-ONLY pair as the compile-time
-    # fallback — the real credentials are runtime env (config.h patch above).
-    cmakeFlags =
-      builtins.filter (f: !lib.hasInfix "TDESKTOP_API" (toString f)) (old.cmakeFlags or [ ])
-      ++ [ (lib.cmakeBool "TDESKTOP_API_TEST" true) ];
-  });
-  telegramDesktopPkg = pkgs.telegram-desktop.override {
+  telegramDesktopPkg = pkgs.stdenvNoCC.mkDerivation {
     pname = "pageton-desktop";
-    unwrapped = pagetonUnwrapped;
+    version = tgVersion;
+
+    src = pkgs.fetchurl {
+      url = "https://github.com/pageton/tdesktop/releases/download/v${tgVersion}/td-setup-linux-x64-${tgVersion}.tar.xz";
+      hash = "sha256-oL4NANuPZX0sWSK4Sicwnak4ib/idFY/nFvLXZ31a/k=";
+    };
+
+    dontConfigure = true;
+    dontBuild = true;
+
+    # The tarball's only entry is the Telegram/ directory (binary + Updater).
+    # Updater is dropped on purpose: the wrappers run -noupdate and the
+    # store is read-only, so the built-in updater can never work.
+    sourceRoot = "Telegram";
+
+    installPhase = ''
+      runHook preInstall
+      install -Dm755 Telegram $out/libexec/Telegram
+
+      # Byte-patch the PT_INTERP payload in place (see header): find the
+      # stock interpreter string, assert it is unique, overwrite it with
+      # tgLoaderPath and NUL-pad the remainder.
+      from='/lib64/ld-linux-x86-64.so.2'
+      to='${tgLoaderPath}'
+      if (( ''${#to} > ''${#from} )); then
+        echo "tgLoaderPath (''${#to} bytes) must not be longer than $from (''${#from} bytes)" >&2
+        exit 1
+      fi
+      interpOff=$(grep -abo "$from" $out/libexec/Telegram | head -1 | cut -d: -f1)
+      test -n "$interpOff" || { echo "interpreter string not found" >&2; exit 1; }
+      test "$(grep -abo "$from" $out/libexec/Telegram | wc -l)" -eq 1 \
+        || { echo "interpreter string is not unique" >&2; exit 1; }
+      printf '%s' "$to" | dd of=$out/libexec/Telegram bs=1 seek="$interpOff" conv=notrunc status=none
+      dd if=/dev/zero bs=1 count=$(( ''${#from} - ''${#to} )) \
+        | dd of=$out/libexec/Telegram bs=1 seek=$(( interpOff + ''${#to} )) conv=notrunc status=none
+
+      runHook postInstall
+    '';
   };
 
   # NVIDIA EGL fix for mini apps (WebKitGTK webview) — see
@@ -117,43 +113,92 @@ let
 
   # The session theme env is QT_QPA_PLATFORMTHEME=qt5ct, which Qt6 cannot
   # load, so the send/receive file dialog falls back to a bare theme with an
-  # empty sidebar (only Home + "Computer"). This build ships the QGtk3Theme
-  # platform theme (libqgtk3.so in nixpkgs qtbase), so the gtk3 dialog keeps
-  # reading ~/.config/gtk-3.0/bookmarks and the XDG user dirs. Scoped to
-  # Telegram only — the rest of the session keeps qt5ct styling.
+  # empty sidebar (only Home + "Computer"). The static build ships the
+  # QGtk3Theme platform theme, so with gtk3 dlopenable (see runtimeLibsEnv)
+  # the gtk3 dialog keeps reading ~/.config/gtk-3.0/bookmarks and the XDG
+  # user dirs. Scoped to Telegram only — the rest of the session keeps qt5ct
+  # styling.
   fileDialogThemeEnv = ''
     export QT_QPA_PLATFORMTHEME=gtk3
+  '';
+
+  # NixOS has no ld.so.cache and the binary is unpatched (see header), so
+  # EVERYTHING resolves from here: DT_NEEDED (glib/pango/cairo/fontconfig/
+  # freetype), the .note.dlopen metadata (pipewire/pulseaudio/alsa backends +
+  # dbus), and plain dlopens (wayland + xkbcommon at startup, webkitgtk for
+  # mini apps, gtk3 for QGtk3Theme, geoclue2 for location, libglvnd + mesa
+  # for the EGL/GL/OpenGL/GBM dispatchers, libva for hardware video decode).
+  runtimeLibsEnv = ''
+    export LD_LIBRARY_PATH="${
+      lib.makeLibraryPath [
+        pkgs.alsa-lib
+        pkgs.cairo
+        pkgs.dbus
+        pkgs.fontconfig
+        pkgs.freetype
+        pkgs.geoclue2
+        pkgs.glib
+        pkgs.gtk3
+        pkgs.libglvnd
+        pkgs.libpulseaudio
+        pkgs.libva
+        pkgs.libxkbcommon
+        pkgs.mesa
+        pkgs.pango
+        pkgs.pipewire
+        pkgs.wayland
+        pkgs.webkitgtk_4_1
+      ]
+    }''${LD_LIBRARY_PATH:+:''${LD_LIBRARY_PATH}}"
+  '';
+
+  # Webview runtime: glib-networking's GIO modules give WebKit TLS, and the
+  # gsettings schemas (gtk3 + desktop schemas) keep the webview and gtk3 file
+  # dialog from erroring on missing settings. Same effect as nixpkgs'
+  # gappsWrapperArgs on the old wrapper.
+  webviewEnv = ''
+    export GIO_EXTRA_MODULES="${pkgs.glib-networking}/lib/gio/modules"
+    export XDG_DATA_DIRS="${
+      lib.makeSearchPath "share/gsettings-schemas" [
+        pkgs.gsettings-desktop-schemas
+        pkgs.gtk3
+      ]
+    }''${XDG_DATA_DIRS:+:''${XDG_DATA_DIRS}}"
+  '';
+
+  # Maintain the loader symlink the byte-patched PT_INTERP points at. The
+  # kernel resolves it at every exec — including the webview helper the app
+  # re-execs later — so it must exist before launch and stay valid. Sticky
+  # /tmp: ln -sfn can only replace our own symlink; a foreign file there
+  # makes the check below fail loudly instead of running a hijacked loader.
+  loaderEnv = ''
+    tgld_target="${pkgs.glibc}/lib/ld-linux-x86-64.so.2"
+    ln -sfn "$tgld_target" "${tgLoaderPath}"
+    if [[ ! -x "${tgLoaderPath}" || "$(readlink -f "${tgLoaderPath}")" != "$tgld_target" ]]; then
+      echo "telegram-desktop: ${tgLoaderPath} does not resolve to $tgld_target — remove it and relaunch" >&2
+      exit 1
+    fi
   '';
 
   # Common wrapper env — see the blocks above for what each export fixes.
   # Store is read-only, so the built-in updater could never install anything
   # anyway; -noupdate keeps it from asking.
   wrapperEnv = ''
+    ${loaderEnv}
     ${nvidiaEglEnv}
     ${fileDialogThemeEnv}
-    # API credentials from sops (nixos/modules/sops.nix decrypts them to
-    # /run/secrets at system activation). Hard-fail when missing: without
-    # them the app would silently run on the TEST-ONLY pair.
-    for secret in /run/secrets/telegram-api-id /run/secrets/telegram-api-hash; do
-      if [[ ! -r $secret ]]; then
-        echo "telegram-desktop: missing/unreadable $secret — apply the system config (just nixos) first" >&2
-        exit 1
-      fi
-    done
-    export TG_API_ID="$(< /run/secrets/telegram-api-id)"
-    export TG_API_HASH="$(< /run/secrets/telegram-api-hash)"
+    ${runtimeLibsEnv}
+    ${webviewEnv}
     # Session-wide for Kvantum-styled Qt apps, but this build only ships
     # Fusion/Windows styles — the override can never load and just prints a
     # warning on every start.
     unset QT_STYLE_OVERRIDE
     export XKB_CONFIG_ROOT=${pkgs.xkeyboard_config}/share/X11/xkb
-    # Mini-apps webview runtime, per the fork's own flake.nix devShell (the
-    # webview dlopens webkitgtk-4.1 — the nixpkgs Qt wrapper already
-    # LD_LIBRARY_PATHs it with geoclue2 — and the helper inherits this env):
-    # a session GDK_BACKEND pin breaks the helper's own backend pinning, and
-    # WebKit's DMABUF renderer fails to allocate GBM buffers on the
-    # proprietary NVIDIA driver (mini apps render empty) — shared-memory
-    # buffers via the UI-process switch instead.
+    # Mini-apps webview runtime (the webview dlopens webkitgtk-4.1 and the
+    # helper inherits this env): a session GDK_BACKEND pin breaks the
+    # helper's own backend pinning, and WebKit's DMABUF renderer fails to
+    # allocate GBM buffers on the proprietary NVIDIA driver (mini apps render
+    # empty) — shared-memory buffers via the UI-process switch instead.
     unset GDK_BACKEND
     export WEBKIT_DISABLE_DMABUF_RENDERER=1
   '';
@@ -161,7 +206,14 @@ let
   telegramDesktop = pkgs.writeShellScriptBin "telegram-desktop" ''
     set -euo pipefail
     ${wrapperEnv}
-    exec ${lib.getBin telegramDesktopPkg}/bin/Telegram -noupdate "$@"
+    # Mark the app as externally updated (see the app-id note in the header):
+    # the release build's internal updater is enabled at compile time, which
+    # also suffixes its Wayland app-id with an instance hash — the marker
+    # flips it back to the plain org.telegram.desktop the niri rules match.
+    updaterDir="''${XDG_DATA_HOME:-$HOME/.local/share}/TelegramDesktop/externalupdater.d"
+    mkdir -p "$updaterDir"
+    printf '%s\n' '${telegramDesktopPkg}/libexec/Telegram' > "$updaterDir/pageton"
+    exec ${telegramDesktopPkg}/libexec/Telegram -noupdate "$@"
   '';
 
   telegramDesktopSecond = pkgs.writeShellScriptBin "telegram-desktop-second" ''
@@ -169,7 +221,12 @@ let
     workdir="''${XDG_DATA_HOME:-$HOME/.local/share}/TelegramDesktopSecond"
     mkdir -p "$workdir"
     ${wrapperEnv}
-    exec ${lib.getBin telegramDesktopPkg}/bin/Telegram -noupdate -workdir "$workdir" "$@"
+    # Same external-updater marker as the primary wrapper, in this workdir
+    # (the app checks cWorkingDir()/externalupdater.d at startup).
+    updaterDir="$workdir/externalupdater.d"
+    mkdir -p "$updaterDir"
+    printf '%s\n' '${telegramDesktopPkg}/libexec/Telegram' > "$updaterDir/pageton"
+    exec ${telegramDesktopPkg}/libexec/Telegram -noupdate -workdir "$workdir" "$@"
   '';
 in
 {
