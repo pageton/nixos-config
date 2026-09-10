@@ -6,6 +6,7 @@
     ./javascript.nix # JS/TS tooling, LSP servers, and aliases
     ./python.nix # Python tooling, LSP servers, and aliases
     ./lua.nix # LuaJIT runtime
+    ./zig.nix # Zig compiler + build system
     ./lsp-servers.nix # Language servers for editors
     ./mise.nix # Mise polyglot runtime manager
   ];

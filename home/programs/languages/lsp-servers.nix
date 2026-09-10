@@ -25,6 +25,7 @@
     # === Systems Languages ===
     clang-tools # C/C++ LSP (clangd) + formatter (clang-format)
     rust-analyzer # Rust support
+    zls # Zig support
 
     # === Data ===
     sqls # SQL language server (Postgres, MySQL, SQLite)

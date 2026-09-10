@@ -10,6 +10,8 @@ Programming language runtimes, LSP servers, and version management. Each file co
 | `go.nix` | Go toolchain, env vars, aliases |
 | `javascript.nix` | JS/TS tooling, LSP servers, aliases |
 | `python.nix` | Python tooling, LSP servers, aliases |
+| `lua.nix` | LuaJIT runtime |
+| `zig.nix` | Zig compiler + build system |
 | `lsp-servers.nix` | Cross-language LSP servers for editors |
 | `mise.nix` | Mise polyglot runtime manager (replaces asdf) |
 
