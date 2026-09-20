@@ -44,7 +44,7 @@ in
     default = [ ];
     description = ''
       Services to defer from multi-user.target to a post-boot timer.
-      Written by: netdata.nix, scrutiny.nix, loki.nix.
+      Written by: netdata.nix, scrutiny.nix, loki.nix, prometheus-grafana/.
     '';
   };
 

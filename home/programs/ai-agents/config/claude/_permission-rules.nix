@@ -4,6 +4,10 @@ let
   destructiveRules = import ../../helpers/_destructive-rules.nix;
 in
 {
+  # Modern location for the default permission mode (top-level `defaultMode`
+  # is not part of the Claude Code settings schema and is silently ignored).
+  defaultMode = "bypassPermissions";
+
   allow = [
     "Bash(git *)"
     "Bash(gh *)"
@@ -52,12 +56,14 @@ in
     destructiveRules.mkClaudeDenyRules destructiveRules.systemCommands
     ++ destructiveRules.mkClaudeDenyRules destructiveRules.gitCommands
     ++ [
-      # File read restrictions (not shell commands — Claude-specific)
+      # File read restrictions (not shell commands — Claude-specific).
+      # In user settings `/path` anchors at ~/.claude, so home-directory
+      # patterns need `~/` or the `//` absolute prefix.
       "Read(.env)"
       "Read(.env.*)"
       "Read(./secrets/**)"
-      "Read(.ssh/*)"
-      "Read(**/id_rsa*)"
-      "Read(**/id_ed25519*)"
+      "Read(~/.ssh/**)"
+      "Read(//**/id_rsa*)"
+      "Read(//**/id_ed25519*)"
     ];
 }

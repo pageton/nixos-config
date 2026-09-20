@@ -34,7 +34,11 @@ lib.mkIf cfg.claude.enable (
   lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     mkdir -p "$HOME/.claude"
 
-    ${mergeJsonFile "$HOME/.claude/settings.json" claudeSettingsFile ".[0] * .[1]"}
+    # Strip keys retired from the managed set: top-level defaultMode (invalid,
+    # now permissions.defaultMode) and the shortened API_TIMEOUT_MS.
+    ${mergeJsonFile "$HOME/.claude/settings.json" claudeSettingsFile
+      "(.[0] | del(.defaultMode) | .env |= del(.API_TIMEOUT_MS)) as $cur | $cur * .[1]"
+    }
     echo "✓ Claude settings.json configured"
 
     ${mergeJsonFile "$HOME/.mcp.json" claudeMcpFile

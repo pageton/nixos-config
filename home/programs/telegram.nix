@@ -47,10 +47,9 @@
 # own workdir, making it a fully separate instance (own tdata, settings,
 # accounts) instead of just focusing the already-running one.
 { lib, pkgs, ... }:
-
 let
   # Release version pin; the tarball URL is derived from it.
-  tgVersion = "7.2.7";
+  tgVersion = "7.2.8";
 
   # Short path the PT_INTERP payload is byte-patched to (must stay shorter
   # than the stock 27-byte "/lib64/ld-linux-x86-64.so.2"). The wrapper
@@ -63,7 +62,7 @@ let
 
     src = pkgs.fetchurl {
       url = "https://github.com/pageton/tdesktop/releases/download/v${tgVersion}/td-setup-linux-x64-${tgVersion}.tar.xz";
-      hash = "sha256-oL4NANuPZX0sWSK4Sicwnak4ib/idFY/nFvLXZ31a/k=";
+      hash = "sha256-/jPP13GmShNKok4u334qRqGRKfIwUYPxJOTsFr/rv2E=";
     };
 
     dontConfigure = true;

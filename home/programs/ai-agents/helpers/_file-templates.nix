@@ -374,12 +374,16 @@ in
     '';
   };
 
-  antigravityCommands = {
-    "review-staged.toml" = ''
-      description = "Review staged git changes"
-      prompt = """
-      Review staged changes from:
-      !{git diff --staged}
+  # Antigravity CLI global skills: flat markdown files under
+  # ~/.gemini/antigravity-cli/skills/ (agy auto-registers each as a slash command).
+  antigravitySkills = {
+    "review-staged.md" = ''
+      ---
+      name: review-staged
+      description: Review staged git changes
+      ---
+
+      Review the staged changes (run `git diff --staged`).
 
       Classify findings by severity:
       - CRITICAL
@@ -387,11 +391,13 @@ in
       - SUGGESTION
 
       Include concrete file references and recommended fixes.
-      """
     '';
-    "repo-recon.toml" = ''
-      description = "Map the codebase before changing anything"
-      prompt = """
+    "repo-recon.md" = ''
+      ---
+      name: repo-recon
+      description: Map the codebase before changing anything
+      ---
+
       Perform static repository reconnaissance.
 
       Focus on:
@@ -401,11 +407,13 @@ in
       - risky areas and likely side effects
 
       Distinguish verified facts from inference and cite file paths.
-      """
     '';
-    "artifact-triage.toml" = ''
-      description = "Static reverse-engineering triage for artifacts and suspicious files"
-      prompt = """
+    "artifact-triage.md" = ''
+      ---
+      name: artifact-triage
+      description: Static reverse-engineering triage for artifacts and suspicious files
+      ---
+
       Perform static reverse-engineering triage.
 
       Prioritize:
@@ -414,11 +422,13 @@ in
       - what can be concluded statically without executing samples
 
       Report verified facts first, then constrained inference.
-      """
     '';
-    "security-sweep.toml" = ''
-      description = "Review the current repo or diff for security issues"
-      prompt = """
+    "security-sweep.md" = ''
+      ---
+      name: security-sweep
+      description: Review the current repo or diff for security issues
+      ---
+
       Run a focused security review.
 
       Prioritize:
@@ -429,11 +439,13 @@ in
       - dependency and network trust issues
 
       Classify findings by severity and include file references.
-      """
     '';
-    "plan-change.toml" = ''
-      description = "Research first and propose an implementation plan"
-      prompt = """
+    "plan-change.md" = ''
+      ---
+      name: plan-change
+      description: Research first and propose an implementation plan
+      ---
+
       Research the request in read-only mode first.
 
       Then produce:
@@ -442,7 +454,6 @@ in
       - validation steps
 
       Do not start editing until the plan is explicit.
-      """
     '';
   };
 }

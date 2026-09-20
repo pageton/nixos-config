@@ -21,7 +21,6 @@ with pkgsStable;
   vscode-fhs # Visual Studio Code editor (FHS wrapper for extension compatibility)
   zedNvidiaXwayland # Zed editor, forced away from unstable NVIDIA Wayland path
   sqlitebrowser # SQLite database browser GUI
-  pkgs.redisinsight # Redis GUI
 
   # === API Development and Testing ===
   burpsuite # Web application security testing tool

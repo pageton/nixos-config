@@ -7,6 +7,7 @@
     ./python.nix # Python tooling, LSP servers, and aliases
     ./lua.nix # LuaJIT runtime
     ./zig.nix # Zig compiler + build system
+    ./mojo.nix # Mojo compiler + tooling (uv tool install, PyPI wheel)
     ./lsp-servers.nix # Language servers for editors
     ./mise.nix # Mise polyglot runtime manager
   ];

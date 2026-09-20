@@ -12,6 +12,7 @@ Programming language runtimes, LSP servers, and version management. Each file co
 | `python.nix` | Python tooling, LSP servers, aliases |
 | `lua.nix` | LuaJIT runtime |
 | `zig.nix` | Zig compiler + build system |
+| `mojo.nix` | Mojo toolchain (uv tool install, PyPI wheel) |
 | `lsp-servers.nix` | Cross-language LSP servers for editors |
 | `mise.nix` | Mise polyglot runtime manager (replaces asdf) |
 

@@ -1,13 +1,18 @@
-# ZCode provider sync — merges managed providers into ZCode's app-owned config.
+# ZCode config sync — merges managed providers + settings into ZCode's
+# app-owned files.
 #
-# ~/.zcode/v2/config.json is rewritten by the running ZCode app, so it cannot be
-# a home.file declaration. This activation step instead performs an idempotent
-# jq merge over the provider registry in helpers/_zcode-providers.nix: entries
-# are matched by baseURL substring and merged into place (models optionally
-# deep-merged so UI-added models survive). API keys come from sops with a
-# fallback to whatever the app already stored.
+# ~/.zcode/v2/config.json (providers/models) and ~/.zcode/v2/setting.json
+# (settings) are both rewritten by the running ZCode app, so neither can be a
+# home.file declaration. This activation step instead performs idempotent jq
+# merges over the registries in cfg.zcode.providers (helpers/_zcode-providers.nix
+# by default) and cfg.zcode.extraSettings:
+#   - providers are matched by baseURL substring and merged into place
+#     (models optionally deep-merged so UI-added models survive);
+#   - settings are deep-merged with managed keys winning and app keys
+#     (recentProjects, window state, device pairing, ...) surviving.
+# API keys come from sops with a fallback to whatever the app already stored.
 # Restart ZCode after activation — the app holds providers in memory and would
-# otherwise overwrite this file on its next in-app settings change.
+# otherwise overwrite these files on its next in-app settings change.
 
 {
   cfg,
@@ -16,8 +21,6 @@
 }:
 lib.mkIf cfg.zcode.enable (
   let
-    providers = import ../helpers/_zcode-providers.nix;
-
     jq = "${pkgs.jq}/bin/jq";
 
     # Expand a registry model entry into ZCode's provider.models shape.
@@ -39,55 +42,73 @@ lib.mkIf cfg.zcode.enable (
             "high"
             "max"
           ];
-          defaultVariant = m.reasoningDefault or "off";
+          defaultVariant = m.reasoningDefault;
         };
       };
 
-    # match: baseURL substring identifying the provider entry to merge into.
-    # mergeModels: deep-merge our models with existing ones (true) or replace (false).
-    # keyFile: sops-decrypted key path; falls back to the app-stored key.
-    managedProviders = [
-      {
-        match = "opencode.ai/zen";
-        fallbackKey = "opencode-zen"; # entry name for a fresh config (existing entries are matched by baseURL)
-        mergeModels = false;
-        keyFile = cfg.secrets.opencodeZenApiKeyFile or "/run/secrets/opencode_zen_api_key";
-        inherit (providers.opencodeZen) name kind baseURL;
-        models = lib.mapAttrs (_: mkModel) providers.opencodeZen.models;
-      }
-      {
-        match = "openrouter.ai";
-        fallbackKey = "openrouter";
-        mergeModels = true;
-        keyFile = cfg.secrets.openrouterApiKeyFile or "/run/secrets/openrouter_api_key";
-        inherit (providers.openrouter) name kind baseURL;
-        models = lib.mapAttrs (_: mkModel) providers.openrouter.models;
-      }
-      {
-        match = "api.deepseek.com";
-        fallbackKey = "deepseek";
-        mergeModels = true;
-        keyFile = cfg.secrets.deepseekApiKeyFile or "/run/secrets/deepseek_api_key";
-        inherit (providers.deepseek) name kind baseURL;
-        models = lib.mapAttrs (_: mkModel) providers.deepseek.models;
-      }
-    ];
+    # Resolve the sops key file for one provider: explicit keyFile wins,
+    # then the programs.aiAgents.secrets option named by `secret`, then "".
+    mkKeyFile =
+      p:
+      if p.keyFile != null then
+        p.keyFile
+      else if
+        p.secret != null && builtins.hasAttr p.secret cfg.secrets && cfg.secrets.${p.secret} != null
+      then
+        cfg.secrets.${p.secret}
+      else
+        "";
 
-    providersJson = builtins.toJSON (
-      map (p: {
-        inherit (p)
-          match
-          fallbackKey
-          mergeModels
-          name
-          kind
-          baseURL
-          models
-          ;
-      }) managedProviders
-    );
-    # Order matches providersJson entries.
-    keyFilesList = lib.concatMapStringsSep " " (p: lib.escapeShellArg p.keyFile) managedProviders;
+    managedProviders = lib.mapAttrsToList (_: p: {
+      inherit (p)
+        match
+        fallbackKey
+        mergeModels
+        name
+        kind
+        baseURL
+        ;
+      keyFile = mkKeyFile p;
+      models = lib.mapAttrs (_: mkModel) p.models;
+    }) cfg.zcode.providers;
+
+    providersJson = builtins.toJSON managedProviders;
+    settingsJson = builtins.toJSON cfg.zcode.extraSettings;
+
+    # Key file paths in the same order as providersJson entries; bash reads
+    # each file's content into a parallel JSON array.
+    keyFilesList = lib.concatMapStringsSep " " (p: lib.escapeShellArg (mkKeyFile p)) managedProviders;
+
+    # Array-safe recursive merge: objects merge key-by-key, everything else
+    # (arrays, scalars) is replaced wholesale by the managed value. jq's "*"
+    # is not usable here — it errors when two arrays have different lengths.
+    deepmergeDef = ''
+      def deepmerge($base; $m):
+        if ($base | type) == "object" and ($m | type) == "object" then
+          reduce ($m | keys[]) as $k ($base;
+            .[$k] = deepmerge(.[$k] // {}; $m[$k]))
+        else $m end;
+    '';
+
+    settingsBlock =
+      if cfg.zcode.extraSettings != { } then
+        ''
+          zcode_settings="$HOME/.zcode/v2/setting.json"
+          if [[ -f "$zcode_settings" ]]; then
+            if ${jq} --argjson managed '${settingsJson}' '
+              ${deepmergeDef}
+              deepmerge(.; $managed)
+            ' "$zcode_settings" > "$zcode_settings.tmp" && mv "$zcode_settings.tmp" "$zcode_settings"; then
+              chmod 600 "$zcode_settings"
+              echo "✓ ZCode settings synced (managed keys win, app keys survive)"
+            else
+              rm -f "$zcode_settings.tmp"
+              echo "⚠ ZCode settings sync failed — leaving $zcode_settings untouched"
+            fi
+          fi
+        ''
+      else
+        "";
   in
   lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     zcode_cfg="$HOME/.zcode/v2/config.json"
@@ -96,13 +117,13 @@ lib.mkIf cfg.zcode.enable (
       printf '{"provider":{}}' > "$zcode_cfg"
     fi
 
-    # Read sops keys (empty string when the secret file is absent yet).
+    # Read sops keys (empty string when a path is blank or the file is absent).
     key_files=(${keyFilesList})
     keys_json="["
     keys_sep=""
     for f in "''${key_files[@]}"; do
       k=""
-      if [[ -f "$f" ]]; then
+      if [[ -n "$f" && -f "$f" ]]; then
         k="$(tr -d '[:space:]' < "$f")"
       fi
       keys_json="$keys_json$keys_sep$(${jq} -Rn --arg v "$k" '$v')"
@@ -113,12 +134,11 @@ lib.mkIf cfg.zcode.enable (
     if ${jq} \
       --argjson prov '${providersJson}' \
       --argjson keys "$keys_json" '
+      ${deepmergeDef}
       .provider = (.provider // {}) |
       reduce range(0; ($prov | length)) as $i (.;
         ($prov[$i]) as $p |
         ([.provider | to_entries[] | select((.value.options.baseURL // "") | contains($p.match)) | .key][0] // $p.fallbackKey) as $k |
-        # jq "*" deep-merges nested objects, so models is assigned separately
-        # below to honor mergeModels=false (replace) semantics.
         .provider[$k] = ((.provider[$k] // {}) * {
           name: $p.name,
           kind: $p.kind,
@@ -128,14 +148,16 @@ lib.mkIf cfg.zcode.enable (
             apiKey: (if ($keys[$i] // "") != "" then $keys[$i] else (.provider[$k].options.apiKey? // "") end)
           }
         }) |
-        .provider[$k].models = (if $p.mergeModels then ((.provider[$k].models? // {}) * $p.models) else $p.models end)
+        .provider[$k].models = (if $p.mergeModels then deepmerge((.provider[$k].models? // {}); $p.models) else $p.models end)
       )
     ' "$zcode_cfg" > "$zcode_cfg.tmp" && mv "$zcode_cfg.tmp" "$zcode_cfg"; then
       chmod 600 "$zcode_cfg"
-      echo "✓ ZCode providers synced (OpenCode Zen + OpenRouter free + DeepSeek) — restart ZCode to load"
+      echo "✓ ZCode providers synced — restart ZCode to load"
     else
       rm -f "$zcode_cfg.tmp"
       echo "⚠ ZCode provider sync failed — leaving $zcode_cfg untouched"
     fi
+
+    ${settingsBlock}
   ''
 )

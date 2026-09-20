@@ -6,5 +6,6 @@
     ../scrutiny.nix # S.M.A.R.T. disk health monitoring (opt-in via mySystem.scrutiny)
     ../glance # Glance infrastructure dashboard (opt-in via mySystem.glance)
     ../loki.nix # Loki log aggregation for journald
+    ./prometheus-grafana # Prometheus + Alertmanager + Grafana stack (opt-in via mySystem.observability)
   ];
 }

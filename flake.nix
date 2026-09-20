@@ -145,13 +145,14 @@
               udiskie = prev.udiskie.overridePythonAttrs (_: {
                 doCheck = false;
               });
-              # redisinsight 3.6.0's build boots its NestJS API to generate
-              # the OpenAPI spec; on nodejs 24.19.0 the node process SIGABRTs
-              # on exit inside better-sqlite3's Statement destructor
-              # (RemoveEnvironmentCleanupHook with null env). 24.18.x built
-              # fine; the pending upstream 3.8.0 bump moves to nodejs 26.
-              # Remove once nixpkgs ships redisinsight 3.8.0+.
-              redisinsight = prev.redisinsight.override { nodejs-slim_24 = final.nodejs-slim_26; };
+              # cloudflared 2026.8.x: TestReadClientEvent_InvalidWebSocketMessageType
+              # panics with "Fail in goroutine after test has completed" — upstream
+              # test race (a goroutine asserts via require.NoError after the test
+              # returned). Deterministic under go 1.26.7. Remove once
+              # upstream/nixpkgs ships the test fix.
+              cloudflared = prev.cloudflared.overrideAttrs (_: {
+                doCheck = false;
+              });
               python3 = prev.python3.override { packageOverrides = pythonPackageOverrides; };
               python3Packages = final.python3.pkgs;
               python313 = prev.python313.override { packageOverrides = pythonPackageOverrides; };

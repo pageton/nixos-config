@@ -49,5 +49,6 @@
   w3m # Another text-based web browser
 
   # === Network Security ===
-  hydra # Network login cracker
+  # thc-hydra, not pkgs.hydra — `hydra` is the NixOS Hydra CI server
+  thc-hydra # Network login cracker
 ]

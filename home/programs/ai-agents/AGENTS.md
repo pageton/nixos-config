@@ -28,11 +28,15 @@ OMC is a Claude Code marketplace plugin that provides multi-agent orchestration.
 
 ### Oh My Pi (omp)
 
-omp (fork of pi-mono) is a coding agent with subagents, LSP/DAP, and hindsight memory. The Nix module manages its **MCP config** (`~/.omp/agent/mcp.json`, derived from the shared `programs.aiAgents.mcpServers` via the `ompMcpServers` transform), **global instructions** (`~/.omp/agent/AGENTS.md` from `cfg.globalInstructions` — omp's native user context file, highest discovery priority), **skills** (mirrored into `~/.omp/agent/skills` by the activation skill-sync), **herdr agent state extension** (`~/.omp/agent/extensions/herdr-omp-agent-state.ts`, fetched from herdr assets at the flake input's locked rev), and the **`omp` zsh alias + autoupdate**. MCP secrets are patched into `mcp.json` at activation alongside the other agents. Model/provider selection stays with omp's interactive `~/.omp/agent/` config.
+omp (fork of pi-mono) is a coding agent with subagents, LSP/DAP, and hindsight memory. The Nix module manages its **MCP config** (`~/.omp/agent/mcp.json`, derived from the shared `programs.aiAgents.mcpServers` via the `ompMcpServers` transform), **global instructions** (`~/.omp/agent/AGENTS.md` from `cfg.globalInstructions` — omp's native user context file, highest discovery priority), **skills** (mirrored into `~/.omp/agent/skills` by the activation skill-sync), **herdr agent state extension** (`~/.omp/agent/extensions/herdr-omp-agent-state.ts`, fetched from herdr assets at the flake input's locked rev), and the **`omp` zsh alias + autoupdate**. MCP secrets are patched into `mcp.json` at activation alongside the other agents. Model/provider selection stays with omp's interactive `~/.omp/agent/` config. omp owns `~/.omp/agent/config.yml` (YAML, sparse writes): the `setupOmpConfig` activation step yq-merges managed keys (currently `mcp.enableProjectConfig: false`, which blocks project-level MCP sources) while preserving app/user settings.
+
+### Antigravity CLI (agy)
+
+agy owns its config and uses the Antigravity-native layout, not the legacy Gemini CLI layout: settings live in `~/.gemini/antigravity-cli/settings.json` (sparse persistence), MCP servers in `~/.gemini/config/mcp_config.json` (remote transports require `serverUrl`, not `url`/`httpUrl`), global skills in `~/.gemini/antigravity-cli/skills/`, and global context in `~/.gemini/GEMINI.md`. The `setupAntigravityConfig` activation step jq-merges managed settings and MCP servers into the app-owned files (managed keys win, app keys survive) and removes a legacy `~/.gemini/settings.json` when it still carries the Home-Manager signature. Global skills are flat markdown files with `name`/`description` frontmatter (see `_file-templates.nix` `antigravitySkills`); activation mirrors Claude skills into the same directory. Terminal sandboxing (`enableTerminalSandbox`) stays off because nsjail is not installed.
 
 ### ZCode
 
-ZCode (Z.AI desktop app) owns its config: `~/.zcode/v2/config.json` is rewritten by the running app, so managed providers are injected by the `setupZcodeConfig` activation step as an idempotent jq merge (never a `home.file` declaration). User-global instructions land in `~/.zcode/AGENTS.md` (ZCode reads it but never rewrites it, so a `home.file` declaration is safe). The registry lives in `helpers/_zcode-providers.nix` and covers three providers: OpenCode Zen (kind `openai-compatible` — Zen free models only answer on `chat/completions`), OpenRouter (kind `anthropic`, free-tier models deep-merged into any existing entry), and DeepSeek (kind `anthropic`, api.deepseek.com/anthropic). Entries are matched by baseURL substring so UI-created provider UUIDs are reused, not duplicated. API keys come from sops (`opencode_zen_api_key`, `openrouter_api_key`, `deepseek_api_key`) with a fallback to keys already stored by the app. Restart ZCode after activation; the app holds providers in memory.
+ZCode (Z.AI desktop app) owns its config: `~/.zcode/v2/config.json` (providers/models) and `~/.zcode/v2/setting.json` (settings) are rewritten by the running app, so managed keys are injected by the `setupZcodeConfig` activation step as idempotent jq merges (never `home.file` declarations). Providers come from the `programs.aiAgents.zcode.providers` option (defaults in `helpers/_zcode-providers.nix`): entries are matched by baseURL substring so UI-created provider UUIDs are reused, not duplicated; models are deep-merged (array-safe recursive merge — jq `*` errors on differing-length arrays) so UI-added models survive unless `mergeModels = false`. Settings come from `programs.aiAgents.zcode.extraSettings` (defaults in `config/models/zcode.nix`): deep-merged with managed keys winning, volatile UI state (recentProjects, window size, device pairing, locale) stays app-owned. The registry covers three providers: OpenCode Zen (kind `openai-compatible` — Zen free models only answer on `chat/completions`), OpenRouter (kind `anthropic`, free-tier models), and DeepSeek (kind `anthropic`, api.deepseek.com/anthropic). API keys come from sops via the per-provider `secret` (a `programs.aiAgents.secrets` option name) or explicit `keyFile`, with a fallback to keys already stored by the app. User-global instructions land in `~/.zcode/AGENTS.md` (ZCode reads it but never rewrites it, so a `home.file` declaration is safe). Restart ZCode after activation; the app holds providers in memory.
 
 ### Profile-Driven Polymorphism
 
@@ -61,6 +65,7 @@ ai-agents/
 ├── files.nix                # home.file + xdg.configFile declarations
 ├── services.nix             # Packages, zsh aliases, systemd user services/timers
 ├── log-analyzer.nix         # AI agent log analysis and dashboard
+├── zcode-package.nix        # ZCode Desktop App package
 ├── helpers/                 # Shared logic (not modules, imported by others)
 │   ├── _settings-builders.nix   # Per-agent settings + profile variant overrides
 │   ├── _mcp-transforms.nix      # Unified MCP abstraction (shared → agent-specific schemas)
@@ -68,7 +73,6 @@ ai-agents/
 │   ├── _aliases.nix             # Zsh alias generation for agent launchers/workflows
 │   ├── _destructive-rules.nix   # Destructive action allow/deny rules per agent
 │   ├── _file-templates.nix      # Config file templates
-│   ├── _gemini-policies.nix     # Gemini CLI safety policy definitions
 │   ├── _workflow-prompts.nix    # Workflow prompt definitions
 │   ├── _zai-services.nix        # Z.AI MCP service registry
 │   ├── _zai-filters.nix         # Z.AI MCP jq filter generation
@@ -87,14 +91,17 @@ ai-agents/
 │   ├── default.nix          # Aggregation: wires all activation steps
 │   ├── secrets.nix          # Secret patching (placeholder → real key injection)
 │   ├── claude-setup.nix     # Claude Code config file writes
-│   ├── codex-setup.nix      # Codex CLI config file writes
+│   ├── codex-setup.nix      # Codex CLI config.toml + profile files + custom agents
+│   ├── antigravity-setup.nix # agy settings + mcp_config.json jq merge
+│   ├── omp-setup.nix        # omp config.yml yq merge
 │   ├── plugins.nix          # Plugin aggregation (impeccable, agency-agents, ECC)
 │   ├── _plugin-impeccable.nix # Impeccable skill install
 │   ├── _plugin-agency-agents.nix # Agency agents install
 │   ├── _plugin-everything-claude-code.nix # ECC skill install
 │   ├── _plugin-oh-my-claudecode.nix # OMC config generation (jq merge)
 │   ├── _cleanup-agency-agents.nix # Agency agents cleanup on disable
-│   ├── zcode-setup.nix    # ZCode provider merge (OpenCode Zen + OpenRouter free models)
+│   ├── zcode-setup.nix    # ZCode provider/model merge (cfg.zcode.providers) + setting.json merge (cfg.zcode.extraSettings)
+│   ├── herdr-setup.nix    # herdr OpenCode V2 plugin registration (jq merge into app-owned cli.json)
 │   ├── _cleanup-everything-claude-code.nix # ECC cleanup on disable
 │   └── skills.nix           # Skill installations and omissions
 ├── android-re/              # Android RE workflow prompts and config
@@ -121,10 +128,10 @@ ai-agents/
     │   └── _permission-rules.nix # Claude allow/deny rules
     └── models/              # Model/provider registries
         ├── default.nix      # Import hub + shared toggles (agencyAgents, impeccable)
-        ├── codex.nix        # Codex CLI configuration
-        ├── gemini.nix       # Gemini CLI configuration (imports ../../helpers/_formatters.nix)
-        ├── opencode.nix      # OpenCode configuration (agents, LSP, providers)
-        ├── pi.nix            # Pi coding agent configuration
+        ├── antigravity.nix  # Antigravity CLI (agy) native settings + permissions
+        ├── codex.nix        # Codex CLI configuration (profiles, custom agents, features)
+        ├── opencode.nix     # OpenCode configuration (agents, LSP, providers)
+        ├── zcode.nix        # ZCode managed settings (extraSettings defaults)
         └── _opencode-lsp.nix # OpenCode LSP tool configuration
 ```
 

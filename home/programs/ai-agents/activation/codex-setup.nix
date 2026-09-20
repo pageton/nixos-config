@@ -85,6 +85,7 @@ lib.mkIf cfg.codex.enable (
         reasoningEffort ? null,
         approvalPolicy ? null,
         sandboxMode ? null,
+        enableSearch ? false,
         developerInstructions ? "",
         extraToml ? "",
       }:
@@ -93,27 +94,46 @@ lib.mkIf cfg.codex.enable (
       ++ lib.optional (reasoningEffort != null) ''model_reasoning_effort = "${reasoningEffort}"''
       ++ lib.optional (approvalPolicy != null) ''approval_policy = "${approvalPolicy}"''
       ++ lib.optional (sandboxMode != null) ''sandbox_mode = "${sandboxMode}"''
+      ++ lib.optional enableSearch "tools.web_search = true"
       ++ lib.optional (developerInstructions != "") ''
         developer_instructions = """
         ${developerInstructions}
         """
       ''
       ++ lib.optional (extraToml != "") extraToml;
-    renderProfile = name: profile: ''
-      [profiles.${name}]
-      ${lib.concatStringsSep "\n" (mkEntityTomlFields {
-        inherit (profile)
-          model
-          personality
-          reasoningEffort
-          approvalPolicy
-          sandboxMode
-          developerInstructions
-          extraToml
-          ;
-      })}
-    '';
-    profilesToml = lib.concatStringsSep "\n\n" (lib.mapAttrsToList renderProfile cfg.codex.profiles);
+    # Codex 0.134+ profiles are standalone $CODEX_HOME/<name>.config.toml layers
+    # selected with `codex --profile <name>`; legacy [profiles.*] tables now make
+    # `--profile` fail outright. Global instructions are appended to profile
+    # developer_instructions so a profile never drops the shared rules.
+    profileNames = builtins.attrNames cfg.codex.profiles;
+    profileNamesArg = lib.concatMapStringsSep " " lib.escapeShellArg profileNames;
+    renderProfileFile =
+      name: profile:
+      let
+        devInstructions =
+          if profile.developerInstructions == "" then
+            ""
+          else
+            "${profile.developerInstructions}\n${cfg.globalInstructions}";
+      in
+      ''
+        cat > "$HOME/.codex/${name}.config.toml" << 'CODEX_PROFILE_EOF'
+        ${lib.concatStringsSep "\n" (mkEntityTomlFields {
+          inherit (profile)
+            model
+            personality
+            reasoningEffort
+            approvalPolicy
+            sandboxMode
+            enableSearch
+            extraToml
+            ;
+          developerInstructions = devInstructions;
+        })}
+        CODEX_PROFILE_EOF
+        ${pkgs.gnused}/bin/sed -i 's/^        //' "$HOME/.codex/${name}.config.toml"
+      '';
+    profilesWrite = lib.concatStringsSep "\n" (lib.mapAttrsToList renderProfileFile cfg.codex.profiles);
     renderCustomAgent = name: agent: ''
       cat > "$HOME/.codex/agents/${name}.toml" << 'CODEX_AGENT_EOF'
       ${lib.concatStringsSep "\n" (
@@ -127,6 +147,7 @@ lib.mkIf cfg.codex.enable (
             reasoningEffort
             approvalPolicy
             sandboxMode
+            enableSearch
             developerInstructions
             extraToml
             ;
@@ -149,6 +170,7 @@ lib.mkIf cfg.codex.enable (
     model_reasoning_summary = "concise"
     approval_policy = "${cfg.codex.approvalPolicy}"
     sandbox_mode = "${cfg.codex.sandboxMode}"
+    web_search = "${if cfg.codex.enableSearch then "live" else "cached"}"
     allow_login_shell = false
     check_for_update_on_startup = true
     suppress_unstable_features_warning = true
@@ -177,7 +199,6 @@ lib.mkIf cfg.codex.enable (
 
     ${mcpToml}
     ${projectsToml}
-    ${profilesToml}
 
     [shell_environment_policy]
     inherit = "core"
@@ -189,6 +210,22 @@ lib.mkIf cfg.codex.enable (
     ${pkgs.gnused}/bin/sed -i 's/^          //' "$HOME/.codex/config.toml"
     find "$HOME/.codex/agents" -maxdepth 1 -type f -name '*.toml' ! -name 'ecc-*.toml' -delete
     ${customAgentsWrite}
+
+    # Profile layers: remove files for profiles that are no longer configured,
+    # then write the current set. Tracked in .hm-managed-profiles so
+    # user-created profiles are never deleted.
+    managed_profiles="$HOME/.codex/.hm-managed-profiles"
+    if [[ -f "$managed_profiles" ]]; then
+      while IFS= read -r stale_profile; do
+        [[ -n "$stale_profile" ]] || continue
+        case " ${profileNamesArg} " in
+          *" $stale_profile "*) ;;
+          *) rm -f "$HOME/.codex/$stale_profile.config.toml" ;;
+        esac
+      done < "$managed_profiles"
+    fi
+    printf '%s\n' ${profileNamesArg} > "$managed_profiles"
+    ${profilesWrite}
     echo "✓ Codex config.toml configured"
   ''
 )

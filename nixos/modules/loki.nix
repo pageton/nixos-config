@@ -110,9 +110,6 @@
       '';
     };
 
-    # Alloy needs journal access
-    users.users.alloy.extraGroups = [ "systemd-journal" ];
-
     mySystem.boot.deferServices = lib.mkIf config.mySystem.loki.enable [
       "loki"
       "alloy"
@@ -135,6 +132,8 @@
         };
 
         alloy.serviceConfig = {
+          # Alloy (DynamicUser in 26.05) needs journal access via supplementary group
+          SupplementaryGroups = [ "systemd-journal" ];
           MemoryMax = "128M";
           MemoryHigh = "64M";
           PrivateTmp = lib.mkForce true;

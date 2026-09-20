@@ -80,6 +80,7 @@ let
       args = mkStrListOption [ ] "Arguments for the command";
       url = mkNullOrStrOption null "URL for remote MCP servers";
       headers = mkNullableOption (lib.types.attrsOf lib.types.str) null "Headers for remote MCP servers";
+      excludeForAntigravity = mkBoolOption false "Exclude this server from Antigravity (its remote MCP schema cannot express auth headers)";
       env = mkAttrsOfStrOption { } "Environment variables for the server";
       timeout =
         mkTypedOption (lib.types.nullOr lib.types.int) null
@@ -91,6 +92,36 @@ let
     type = lib.types.attrsOf mcpServerType;
     default = { };
     inherit description;
+  };
+
+  # ZCode (~/.zcode/v2/config.json) provider/model option shapes.
+  zcodeModelType = lib.types.submodule {
+    options = {
+      context = mkIntOption 0 "Context window size";
+      output = mkIntOption 0 "Max output tokens";
+      input = mkStrListOption [ "text" ] "Input modalities";
+      reasoning = mkBoolOption false "Model supports reasoning variants";
+      reasoningDefault = mkStrOption "off" "Default reasoning variant";
+    };
+  };
+
+  zcodeProviderType = lib.types.submodule {
+    options = {
+      name = mkStrOption "" "Display name";
+      kind = mkTypedOption (lib.types.enum [
+        "anthropic"
+        "openai-compatible"
+      ]) "anthropic" "Provider kind";
+      baseURL = mkStrOption "" "API base URL";
+      match = mkStrOption "" "Substring of baseURL identifying an existing app entry ('' = always use fallbackKey)";
+      fallbackKey = mkStrOption "" "Provider key used when no existing entry matches";
+      mergeModels = mkBoolOption true "Deep-merge managed models into existing entries (false replaces)";
+      keyFile = mkNullOrStrOption null "Explicit sops key file path (overrides secret lookup)";
+      secret = mkNullOrStrOption null "Name of the programs.aiAgents.secrets option holding the key file path";
+      models =
+        mkTypedOption (lib.types.attrsOf zcodeModelType) { }
+          "Models registered under this provider";
+    };
   };
 
   # Default spec-kit command set — shared across Claude, Codex, and OpenCode.
@@ -342,8 +373,8 @@ in
     antigravity = {
       enable = lib.mkEnableOption "Antigravity CLI (agy) configuration";
 
-      theme = mkStrOption "Default" "Theme for Antigravity CLI";
-      sandboxMode = mkStrOption "cautious" "Sandbox mode (none, cautious, strict)";
+      # Values are jq-merged into the agy-native settings file; see
+      # config/models/antigravity.nix and activation/antigravity-setup.nix.
       extraSettings = mkAttrsOption { } "Additional Antigravity CLI settings";
     };
 
@@ -356,6 +387,20 @@ in
     dsh.enable = lib.mkEnableOption "DeepSeek Harness (dsh) agent (model/provider config stays in the dsh Web UI)";
 
     # === ZCode ===
-    zcode.enable = lib.mkEnableOption "ZCode Desktop App from Z.AI";
+    zcode = {
+      enable = lib.mkEnableOption "ZCode Desktop App from Z.AI";
+
+      # Deep-merged (managed keys win, app keys survive) into
+      # ~/.zcode/v2/setting.json at activation. Volatile UI state
+      # (recentProjects, window size, device pairing) stays app-owned.
+      extraSettings = mkAttrsOption { } "Additional ZCode settings";
+
+      # Provider registry merged into ~/.zcode/v2/config.json at activation.
+      # Defaults come from helpers/_zcode-providers.nix; extend with
+      # `zcode.providers.<key> = { ... }` or override wholesale.
+      providers =
+        mkTypedOption (lib.types.attrsOf zcodeProviderType) (import ./helpers/_zcode-providers.nix)
+          "ZCode provider registry";
+    };
   };
 }

@@ -40,6 +40,7 @@ config/
     ├── default.nix              # Import hub + shared toggles
     ├── codex.nix                # Codex CLI configuration
     ├── opencode.nix             # OpenCode configuration (agents, LSP, providers)
+    └── zcode.nix                # ZCode managed settings (extraSettings defaults)
 ```
 
 ---

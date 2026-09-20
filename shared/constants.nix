@@ -25,6 +25,12 @@ let
     activitywatch = 5600;
     vnc = 5900;
     vnc-web = 6080;
+    prometheus = 9090; # Prometheus metrics (observability stack)
+    grafana = 3000; # Grafana dashboards (observability stack)
+    alertmanager = 9093; # Alertmanager alert routing (observability stack)
+    loki = 3100; # Loki log aggregation
+    netdata = 19999; # Netdata metrics
+    alertmanager-ntfy = 8090; # Alertmanager → ntfy.sh bridge (observability stack)
   };
 in
 {

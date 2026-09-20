@@ -14,10 +14,10 @@ let
   inherit (builtins) toJSON;
 
   mcpTransforms = import ../helpers/_mcp-transforms.nix { inherit cfg lib; };
-  inherit (mcpTransforms) sharedMcpServers claudeMcpServers;
+  inherit (mcpTransforms) sharedMcpServers claudeMcpServers antigravityMcpServers;
 
   settingsBuilders = import ../helpers/_settings-builders.nix { inherit cfg config lib; };
-  inherit (settingsBuilders) claudeSettings;
+  inherit (settingsBuilders) claudeSettings antigravitySettings;
 
   opencodeProfiles = import ../helpers/_opencode-profiles.nix { inherit config; };
   opencodeConfigPaths = map opencodeProfiles.configPath opencodeProfiles.names;
@@ -36,7 +36,7 @@ let
   '';
 
   # Import helper modules
-  # modules-check: manual-helper ./secrets.nix ./codex-setup.nix ./claude-setup.nix ./plugins.nix ./skills.nix ./zcode-setup.nix
+  # modules-check: manual-helper ./secrets.nix ./codex-setup.nix ./claude-setup.nix ./antigravity-setup.nix ./plugins.nix ./skills.nix ./zcode-setup.nix ./herdr-setup.nix ./omp-setup.nix
   secretPatching = import ./secrets.nix {
     inherit
       cfg
@@ -70,7 +70,20 @@ let
       ;
   };
 
+  antigravityConfig = import ./antigravity-setup.nix {
+    inherit
+      cfg
+      pkgs
+      lib
+      toJSON
+      antigravitySettings
+      antigravityMcpServers
+      ;
+  };
+
   zcodeSetup = import ./zcode-setup.nix { inherit cfg pkgs lib; };
+  herdrSetup = import ./herdr-setup.nix { inherit cfg pkgs lib; };
+  ompSetup = import ./omp-setup.nix { inherit cfg pkgs lib; };
   opencodeProfileNames = opencodeProfiles.names;
 
   pluginInstalls = import ./plugins.nix {
@@ -132,9 +145,21 @@ in
       # Real files (not symlinks) so plugins can modify them.
       setupClaudeConfig = claudeConfig;
 
+      # === Antigravity Configuration ===
+      # Idempotent jq merge into agy's app-owned settings + MCP config.
+      setupAntigravityConfig = antigravityConfig;
+
+      # === Oh My Pi (omp) Configuration ===
+      # Idempotent YAML merge into omp's app-owned config.yml.
+      setupOmpConfig = ompSetup;
+
       # === ZCode Providers ===
       # Idempotent jq merge into ZCode's app-owned ~/.zcode/v2/config.json.
       setupZcodeConfig = zcodeSetup;
+
+      # === herdr OpenCode V2 Registration ===
+      # Idempotent jq merge into OpenCode's app-owned ~/.config/opencode/cli.json.
+      setupHerdrOpenCodeCli = herdrSetup;
 
       # === Plugin Installation ===
       inherit (pluginInstalls)

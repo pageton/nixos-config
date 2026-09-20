@@ -46,11 +46,11 @@ let
     # Claude Code
     {
       alias = "cl";
-      command = "claude";
+      command = "claude --dangerously-skip-permissions";
       workflowPromptMode = "positional";
       envMarker = "-";
       interactiveCommand = "claude --dangerously-skip-permissions";
-      headlessCommand = "claude --print";
+      headlessCommand = "claude --dangerously-skip-permissions --print";
       tool = "claude";
       launcherSimple = true;
     }
@@ -96,21 +96,21 @@ let
     }
     {
       alias = "ocl";
-      command = "claude --model opus";
+      command = "claude --dangerously-skip-permissions --model opus";
       workflowPromptMode = "positional";
       envMarker = "-";
       interactiveCommand = "claude --dangerously-skip-permissions --model opus";
-      headlessCommand = "claude --model opus --print";
+      headlessCommand = "claude --dangerously-skip-permissions --model opus --print";
       tool = "claude";
       launcherSimple = true;
     }
     {
       alias = "hcl";
-      command = "claude --model haiku";
+      command = "claude --dangerously-skip-permissions --model haiku";
       workflowPromptMode = "positional";
       envMarker = "-";
       interactiveCommand = "claude --dangerously-skip-permissions --model haiku";
-      headlessCommand = "claude --model haiku --print";
+      headlessCommand = "claude --dangerously-skip-permissions --model haiku --print";
       tool = "claude";
       launcherSimple = true;
     }

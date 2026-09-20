@@ -47,17 +47,9 @@ in
   # Generate Claude permission deny rules: "Bash(prefix*)" glob patterns.
   mkClaudeDenyRules = commands: map (cmd: "Bash(${cmd}*)") commands;
 
-  # Generate Gemini TOML deny rules from command list.
-  mkGeminiDenyRules =
-    commands:
-    builtins.concatStringsSep "\n\n" (
-      map (cmd: ''
-        [[rule]]
-        toolName = "run_shell_command"
-        commandPrefix = "${cmd}"
-        decision = "deny"
-        priority = 900'') commands
-    );
+  # Generate Antigravity CLI permission deny rules. Targets use the
+  # `command(prefix)` resource syntax; Deny > Ask > Allow.
+  mkAntigravityDenyRules = commands: map (cmd: "command(${cmd})") commands;
 
   # Generate a grep -E regex alternation for PreToolUse hook matching.
   # Each canonical command is mapped to its hook-specific regex form.

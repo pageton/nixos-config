@@ -54,6 +54,12 @@
     glance = {
       enable = true;
     };
+    observability = {
+      enable = true;
+    };
+    loki = {
+      enable = true;
+    };
     macchanger = {
       enable = true;
     };

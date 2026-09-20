@@ -9,11 +9,22 @@
 # (rotates: deepseek-v4-flash-free absent 2026-08, present again 2026-09).
 # OpenRouter free tiers: GET https://openrouter.ai/api/v1/models (pricing 0/0).
 # NOTE: paid DeepSeek goes through the dedicated api.deepseek.com provider below.
+#
+# Entry fields consumed by activation/zcode-setup.nix:
+#   match        baseURL substring identifying an existing app entry ("" = always fallbackKey)
+#   fallbackKey  provider key used when no existing entry matches
+#   mergeModels  deep-merge managed models into existing entries (false replaces)
+#   secret       programs.aiAgents.secrets option name holding the sops key file path
+# (keyFile can override `secret` per provider in the option set.)
 {
   opencodeZen = {
     name = "OpenCode Zen";
     kind = "openai-compatible";
     baseURL = "https://opencode.ai/zen/v1";
+    match = "opencode.ai/zen";
+    fallbackKey = "opencode-zen";
+    mergeModels = false;
+    secret = "opencodeZenApiKeyFile";
     models = {
       "big-pickle" = {
         context = 200000;
@@ -58,6 +69,10 @@
     name = "OpenRouter";
     kind = "anthropic";
     baseURL = "https://openrouter.ai/api";
+    match = "openrouter.ai";
+    fallbackKey = "openrouter";
+    mergeModels = true;
+    secret = "openrouterApiKeyFile";
     # Merged (not replaced) into any existing OpenRouter provider entry, so
     # UI-added models survive activation.
     models = {
@@ -193,6 +208,10 @@
     name = "deepseek";
     kind = "anthropic";
     baseURL = "https://api.deepseek.com/anthropic";
+    match = "api.deepseek.com";
+    fallbackKey = "deepseek";
+    mergeModels = true;
+    secret = "deepseekApiKeyFile";
     # Merged into any existing DeepSeek provider entry. V4 family only —
     # legacy aliases (deepseek-chat, deepseek-reasoner) are intentionally
     # not registered.

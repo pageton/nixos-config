@@ -13,7 +13,6 @@
     approvalPolicy = "never";
     features = {
       apps = false;
-      child_agents_md = true;
       hooks = true;
       multi_agent = true;
       plugins = true;
@@ -72,32 +71,45 @@
           Do not mutate files or run samples unless explicitly asked.
         '';
       };
+      explorer = {
+        description = "Read-heavy codebase exploration, file tracing, and evidence gathering.";
+        reasoningEffort = "medium";
+        approvalPolicy = "never";
+        sandboxMode = "read-only";
+        developerInstructions = ''
+          Stay in exploration mode. Trace the real execution path, cite files and symbols,
+          and do not edit files. Return concise evidence summaries with exact paths.
+        '';
+      };
+      worker = {
+        description = "Targeted implementation and fixes after the task is understood.";
+        reasoningEffort = "medium";
+        approvalPolicy = "never";
+        sandboxMode = "danger-full-access";
+        developerInstructions = ''
+          Own the fix once the task is understood. Make the smallest defensible change,
+          keep unrelated files untouched, and validate only the behavior you changed.
+        '';
+      };
+      monitor = {
+        description = "Long-running command, build, and polling monitor with concise status updates.";
+        reasoningEffort = "low";
+        approvalPolicy = "never";
+        sandboxMode = "danger-full-access";
+        developerInstructions = ''
+          Monitor long-running commands and builds. Poll efficiently instead of idle-waiting,
+          and report concise status with exact commands and observed output.
+        '';
+      };
     };
     extraToml = ''
       plan_mode_reasoning_effort = "high"
-      web_search = "cached"
       model_verbosity = "low"
 
       [agents]
-      max_threads = 6
-
-      [agents.explorer]
-      description = "Read-only style codebase exploration, file tracing, and evidence gathering."
-      sandbox_mode = "danger-full-access"
-      approval_policy = "never"
-      model_reasoning_effort = "medium"
-
-      [agents.worker]
-      description = "Targeted implementation and fixes after the task is understood."
-      sandbox_mode = "danger-full-access"
-      approval_policy = "never"
-      model_reasoning_effort = "medium"
-
-      [agents.monitor]
-      description = "Long-running command, build, and polling monitor with concise status updates."
-      sandbox_mode = "danger-full-access"
-      approval_policy = "never"
-      model_reasoning_effort = "low"
+      enabled = true
+      max_concurrent_threads_per_session = 6
+      default_subagent_reasoning_effort = "medium"
     '';
   };
 }

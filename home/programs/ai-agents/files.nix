@@ -21,7 +21,6 @@ let
   inherit (builtins) toJSON;
 
   fileTemplates = import ./helpers/_file-templates.nix;
-  geminiPolicies = import ./helpers/_gemini-policies.nix;
   herdrMimoPlugin = import ./helpers/_herdr-mimo-plugin.nix;
   impeccable = import ./helpers/_impeccable-commands.nix;
   models = import ./helpers/_models.nix;
@@ -36,7 +35,6 @@ let
   };
   settingsBuilders = import ./helpers/_settings-builders.nix { inherit cfg config lib; };
   inherit (settingsBuilders)
-    antigravitySettings
     opencodeSettingsByProfile
     opencodeAndroidReMcpServers
     opencodeWebReMcpServers
@@ -198,17 +196,12 @@ in
         };
       }
 
-      # === Antigravity Files (Settings, Commands, Policies) ===
-      (lib.mkIf cfg.antigravity.enable (
-        {
-          ".gemini/settings.json" = {
-            text = toJSON antigravitySettings;
-            force = true;
-          };
-        }
-        // (mkTextFiles ".gemini/commands" fileTemplates.antigravityCommands)
-        // (mkTextFiles ".gemini/policies" geminiPolicies)
-      ))
+      # Antigravity settings/commands/skills are written by activation
+      # (activation/antigravity-setup.nix merges ~/.gemini/antigravity-cli/
+      # settings.json; activation/skills.nix mirrors skills into
+      # ~/.gemini/antigravity-cli/skills). The legacy Gemini layout
+      # (~/.gemini/settings.json + .gemini/commands + .gemini/policies) is
+      # no longer read by agy.
 
       # === Oh My Pi (omp): MCP config + global instructions (~/.omp/agent/) ===
       (lib.mkIf cfg.omp.enable (

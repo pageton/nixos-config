@@ -5,5 +5,6 @@
     ./antigravity.nix # Antigravity CLI (agy) configuration
     ./codex.nix # Codex CLI configuration
     ./opencode.nix # OpenCode configuration
+    ./zcode.nix # ZCode Desktop App managed settings
   ];
 }

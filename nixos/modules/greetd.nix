@@ -15,26 +15,28 @@
   ...
 }:
 {
-  # Disable SDDM — only one display manager may be active (asserted in
-  # nixos/modules/validation.nix: SDDM && greetd is rejected).
-  services.displayManager.sddm.enable = lib.mkForce false;
+  services.displayManager = {
+    # Disable SDDM — only one display manager may be active (asserted in
+    # nixos/modules/validation.nix: SDDM && greetd is rejected).
+    sddm.enable = lib.mkForce false;
 
-  # Noctalia Greeter. The module auto-enables services.greetd and sets the
-  # default_session command to noctalia-greeter-session. niri is the greeter's
-  # compositor (matches the session compositor). Appearance flows from the
-  # shell sync; cursor is pinned here for parity with constants.theme.
-  programs.noctalia-greeter = {
-    enable = true;
-    settings = {
-      cursor = {
-        theme = constants.theme.cursor;
-        size = constants.theme.cursorSize;
-        path = "${pkgs.bibata-cursors}/share/icons";
+    # Noctalia Greeter. The module auto-enables services.greetd and sets the
+    # default_session command to noctalia-greeter-session. niri is the greeter's
+    # compositor (matches the session compositor). Appearance flows from the
+    # shell sync; cursor is pinned here for parity with constants.theme.
+    noctalia-greeter = {
+      enable = true;
+      settings = {
+        cursor = {
+          theme = constants.theme.cursor;
+          size = constants.theme.cursorSize;
+          path = "${pkgs.bibata-cursors}/share/icons";
+        };
+        session.default = "niri";
       };
-      session.default = "niri";
     };
-  };
 
-  # Default session after login = niri.
-  services.displayManager.defaultSession = lib.mkDefault "niri";
+    # Default session after login = niri.
+    defaultSession = lib.mkDefault "niri";
+  };
 }

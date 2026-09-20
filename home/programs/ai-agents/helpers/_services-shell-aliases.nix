@@ -11,7 +11,7 @@ in
 (
   if cfg.logging.enable then
     {
-      "cl-log" = "ai-agent-log-wrapper claude claude";
+      "cl-log" = "ai-agent-log-wrapper claude claude --dangerously-skip-permissions";
       "oc-log" = "ai-agent-log-wrapper opencode opencode";
       "oc-port" = "opencode --port 4096";
       "codex-log" = "ai-agent-log-wrapper codex codex";

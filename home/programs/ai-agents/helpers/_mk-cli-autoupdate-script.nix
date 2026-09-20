@@ -22,6 +22,21 @@ let
       binary = "codegraph";
       npmPackage = "@colbymchenry/codegraph";
       label = "CodeGraph CLI";
+      # Keep the daemon's AF_UNIX socket out of the project tree: nix `path:`
+      # flake fetches copy the whole working tree and abort on sockets
+      # ("unsupported type"), which breaks `just check` / eval-audit /
+      # pre-commit while the daemon runs. daemon-paths.js already supports a
+      # tmpdir socket (candidates are [in-project, tmpdir]); prefer tmpdir.
+      # Runs on every autoupdate path, so it survives `bun install -g` bumps —
+      # warn loudly if a future codegraph reshapes the candidate list.
+      cleanup = ''
+        for cg_paths in "$HOME"/.bun/install/global/node_modules/@colbymchenry/codegraph*/lib/dist/mcp/daemon-paths.js; do
+          [[ -e "$cg_paths" ]] || continue
+          if grep -q 'return \[inProject, tmp\];' "$cg_paths"; then
+            sed -i 's/return \[inProject, tmp\];/return [tmp];/' "$cg_paths"
+          fi
+        done
+      '';
     }
     {
       binary = "copilot";
