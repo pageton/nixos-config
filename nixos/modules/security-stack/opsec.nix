@@ -1,6 +1,5 @@
-# Operational security (session locking, zram, NTS time).
-# Extracted from security.nix — swapDevices = [ ] in hardware-configuration.nix
-# references this module (zram replaces encrypted disk swap).
+# Operational security (session locking, NTS time).
+# Extracted from security.nix.
 
 { lib, ... }:
 
@@ -28,10 +27,15 @@
     };
   };
 
-  # RAM-only swap — prevents sensitive data leaking to unencrypted partitions
+  # RAM-only swap — prevents sensitive data leaking to unencrypted partitions.
+  # memoryPercent = 100 sizes the compressed device to match installed RAM
+  # (30G on this host). zstd compresses ~3:1 on typical data, so effective
+  # capacity is well above RAM; worst case (incompressible pages) the device
+  # can still exhaust RAM, so vm.swappiness stays low (stability.nix) and
+  # earlyoom guards the rest.
   zramSwap = {
     enable = true;
     algorithm = "zstd";
-    memoryPercent = 50;
+    memoryPercent = 100;
   };
 }

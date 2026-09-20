@@ -56,6 +56,8 @@
 
     # Memory management
     "vm.swappiness" = 10;
+    # zram swap: fault in only the needed page (no read-ahead decompression)
+    "vm.page-cluster" = 0;
     # Dirty ratios tuned for DRAM-less SSD + LUKS — flush writes sooner in smaller
     # bursts to avoid saturating the device when the SLC cache fills.
     "vm.dirty_ratio" = 5;
