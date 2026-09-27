@@ -177,14 +177,13 @@ in
       block-out-from = "screencast";
     }
 
-    # Terminal transparency
+    # Terminal: border rendering (fully opaque)
     {
       matches = [
         { app-id = "^Alacritty$"; }
         { app-id = "^kitty$"; }
         { app-id = "^foot$"; }
       ];
-      opacity = 0.95;
       draw-border-with-background = false;
     }
 

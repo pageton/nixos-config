@@ -5,27 +5,15 @@
 # already exists at config_version 12 and is preserved).
 {
   config,
-  inputs,
   lib,
   pkgs,
-  system,
   ...
 }:
 let
   palette = import ../../themes/palette.nix;
-  # Reuse the exact stylix-managed nix-wallpaper derivation as the wallpaper
-  # source — single source of truth, matches the login/desktop/screenshot bg.
-  wallpaper = inputs.nix-wallpaper.packages.${system}.default.override {
-    backgroundColor = "#${palette.base00}";
-    logoColors = {
-      color0 = "#${palette.base0D}"; # Blue
-      color1 = "#${palette.base0E}"; # Mauve
-      color2 = "#${palette.base0C}"; # Teal
-      color3 = "#${palette.base09}"; # Peach
-      color4 = "#${palette.base0B}"; # Green
-      color5 = "#${palette.base0F}"; # Pink
-    };
-  };
+  # Repo-tracked wallpaper (current user pick, promoted to default) — single
+  # source of truth, matches the login/desktop/screenshot bg.
+  wallpaper = ../../assets/wallhaven_x6x3gz.png;
 in
 {
   programs.noctalia.settings = {
@@ -39,17 +27,17 @@ in
     };
 
     # === Wallpaper ===
-    # Same nix-wallpaper derivation stylix uses (home/themes/stylix.nix).
+    # Repo-tracked image, same one stylix uses (home/themes/stylix.nix).
     # NOTE: since noctalia rev a9cd1c8 the effective wallpaper resolves ONLY
     # from app-managed state (~/.local/state/noctalia/settings.toml); this
     # config.toml key is tolerated but inert (upstream schema: "app-managed
     # state, not settings"). home.activation.seedNoctaliaWallpaper below seeds
-    # the state layer from the same derivation — kept here as the declarative
+    # the state layer from the same path — kept here as the declarative
     # record and future-proofing in case upstream restores the fallback.
     wallpaper = {
       enabled = true;
       fill_mode = "crop"; # center | crop | fit | stretch | repeat | span
-      default.path = "${wallpaper}/share/wallpapers/nixos-wallpaper.png";
+      default.path = "${wallpaper}";
     };
 
     # === Shell defaults ===
@@ -310,11 +298,11 @@ in
   };
 
   # Auto-set the wallpaper: seed Noctalia's app-managed state so the
-  # declarative derivation actually applies (see script header for the
+  # declarative image actually applies (see script header for the
   # state-vs-config semantics and the never-fight-the-GUI policy).
   home.activation.seedNoctaliaWallpaper = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     $DRY_RUN_CMD ${pkgs.python3}/bin/python3 ${./noctalia-wallpaper-seed.py} \
-      "${wallpaper}/share/wallpapers/nixos-wallpaper.png"
+      "${wallpaper}"
   '';
 
   # Session-start re-seed: a stale store path in the state file (e.g. written
@@ -325,7 +313,7 @@ in
   # with the same never-fight-the-GUI policy as the activation step.
   systemd.user.services.noctalia-wallpaper-seed = {
     Unit = {
-      Description = "Seed Noctalia wallpaper from the declarative nix-wallpaper derivation";
+      Description = "Seed Noctalia wallpaper from the declarative repo-tracked image";
       After = [ "graphical-session.target" ];
       PartOf = [ "graphical-session.target" ];
     };
@@ -335,7 +323,7 @@ in
       # its settings.toml watcher first, so this write lands via the watcher
       # instead of racing noctalia's own startup state serialization.
       ExecStartPre = "${pkgs.coreutils}/bin/sleep 5";
-      ExecStart = "${pkgs.python3}/bin/python3 ${./noctalia-wallpaper-seed.py} ${wallpaper}/share/wallpapers/nixos-wallpaper.png";
+      ExecStart = "${pkgs.python3}/bin/python3 ${./noctalia-wallpaper-seed.py} ${wallpaper}";
     };
     Install.WantedBy = [ "graphical-session.target" ];
   };

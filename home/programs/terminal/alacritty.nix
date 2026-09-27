@@ -4,7 +4,7 @@
     enable = true;
     settings = {
       window = {
-        opacity = lib.mkForce 0.95;
+        opacity = lib.mkForce 1.0;
         padding = {
           x = 8;
           y = 8;

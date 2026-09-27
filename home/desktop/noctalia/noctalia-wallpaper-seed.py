@@ -6,13 +6,13 @@ Noctalia v5 (rev a9cd1c8+) resolves the effective wallpaper ONLY from
 [wallpaper.monitors.*]); the base config.toml [wallpaper.default] key is
 tolerated but inert (upstream schema marks it "app-managed state, not
 settings"). This script seeds that state layer so the declarative
-nix-wallpaper derivation actually applies, including on fresh profiles.
+repo-tracked wallpaper actually applies, including on fresh profiles.
 
 Policy:
 - Explicit user selections (any non-/nix/store path, e.g. ~/Pictures/...)
   are never touched — GUI choices always win.
 - Store-pathed values previously seeded by us are updated to the current
-  derivation, so palette/nix-wallpaper changes propagate on next switch.
+  path, so declarative wallpaper changes propagate on next switch.
 - Noctalia's state-file watcher applies changes live; no reload nudge needed.
 """
 
@@ -58,7 +58,9 @@ def main():
         sys.exit("usage: noctalia-wallpaper-seed.py <wallpaper-path>")
     desired = sys.argv[1]
     state = Path(
-        os.environ.get("NOCTALIA_STATE", Path.home() / ".local/state/noctalia/settings.toml")
+        os.environ.get(
+            "NOCTALIA_STATE", Path.home() / ".local/state/noctalia/settings.toml"
+        )
     )
 
     text = state.read_text() if state.exists() else ""
@@ -67,7 +69,9 @@ def main():
         try:
             data = tomllib.loads(text)
         except tomllib.TOMLDecodeError as exc:
-            sys.exit(f"noctalia wallpaper seed: {state} unparseable ({exc}); not touching it")
+            sys.exit(
+                f"noctalia wallpaper seed: {state} unparseable ({exc}); not touching it"
+            )
 
     present = wallpaper_paths(data)
     if any(not p.startswith(OURS_PREFIX) for p in present):
@@ -93,7 +97,9 @@ def main():
 
     if has_default_table(data):
         # Default exists with a different quoting style; appending would duplicate the table.
-        print("noctalia wallpaper seed: WARNING [wallpaper.default] already present; leaving untouched")
+        print(
+            "noctalia wallpaper seed: WARNING [wallpaper.default] already present; leaving untouched"
+        )
         return
 
     state.parent.mkdir(parents=True, exist_ok=True)

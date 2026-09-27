@@ -3,8 +3,6 @@
   pkgs,
   config,
   constants,
-  inputs,
-  system,
   ...
 }:
 let
@@ -47,7 +45,7 @@ in
       # Noctalia v5 has NO stylix target (unlike v4's noctalia-shell.enable).
       # Theme + wallpaper are hand-mirrored via programs.noctalia.settings in
       # home/desktop/noctalia/settings.nix (Catppuccin builtin palette + the
-      # same nix-wallpaper derivation referenced below).
+      # same repo-tracked image referenced below).
       librewolf = {
         enable = true;
         profileNames = [
@@ -102,20 +100,8 @@ in
 
     polarity = "dark";
 
-    # Wallpaper — references palette for DRY color usage.
-    # Uses all 6 logo slots with distinct Catppuccin Mocha accent colors.
-    image = "${
-      inputs.nix-wallpaper.packages.${system}.default.override {
-        backgroundColor = "#${palette.base00}";
-        logoColors = {
-          color0 = "#${palette.base0D}"; # Blue
-          color1 = "#${palette.base0E}"; # Mauve
-          color2 = "#${palette.base0C}"; # Teal
-          color3 = "#${palette.base09}"; # Peach
-          color4 = "#${palette.base0B}"; # Green
-          color5 = "#${palette.base0F}"; # Pink
-        };
-      }
-    }/share/wallpapers/nixos-wallpaper.png";
+    # Wallpaper — repo-tracked image (current user pick, promoted to default).
+    # Replaces the generated nix-wallpaper derivation.
+    image = ../../assets/wallhaven_x6x3gz.png;
   };
 }
