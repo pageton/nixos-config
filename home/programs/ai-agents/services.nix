@@ -109,6 +109,11 @@ let
   # --expose-internals (rc.7 launcher does not re-exec itself with the flag).
   # Wrapper execs the bun-installed bin.js with the flag; version updates stay
   # with the bun-global autoupdate flow.
+  # --max-old-space-size: dsh keeps session state in memory with no retention
+  # policy (upstream: deepseek-ai/deepseek-harness discussions #4722/#5696/#6889),
+  # so long agentic turns grow the heap until the ~4GB V8 default kills the TUI
+  # ("Ineffective mark-compacts"). 6GB adds headroom on a 30GB machine without
+  # starving other agents; it delays, not fixes, until upstream ships eviction.
   dshLauncher = pkgs.writeShellScriptBin "dsh" ''
     # Default permission mode: danger-full-access = sandbox disabled and
     # approval policy never (no prompts). Must come from the launching
@@ -116,7 +121,7 @@ let
     # bootstrap-only name and refuses to boot otherwise. An explicit user
     # export still wins.
     export DSH_PERMISSION_MODE="''${DSH_PERMISSION_MODE:-danger-full-access}"
-    exec ${pkgs.nodejs}/bin/node --expose-internals "$HOME/.bun/install/global/node_modules/@deepseek-ai/dsh/lib/bin.js" "$@"
+    exec ${pkgs.nodejs}/bin/node --expose-internals --max-old-space-size=6144 "$HOME/.bun/install/global/node_modules/@deepseek-ai/dsh/lib/bin.js" "$@"
   '';
 
   logCleanupCommand = ''
