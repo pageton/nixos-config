@@ -3,12 +3,11 @@
 let
   antigravityCli = pkgs.stdenvNoCC.mkDerivation rec {
     pname = "antigravity-cli";
-    version = "1.0.1";
-    releaseId = "5826024320139264";
+    version = "1.2.9";
 
     src = pkgs.fetchurl {
-      url = "https://storage.googleapis.com/antigravity-public/antigravity-cli/${version}-${releaseId}/linux-x64/cli_linux_x64.tar.gz";
-      hash = "sha512-vhF0oWXQa/Qf+3yxMAABRncfOEhrAFpopDxeYJH6gDIbOovNXTJeGJgftkiHC1lf9WMQgC1/kbsO2OdDJmhFOg==";
+      url = "https://github.com/google-antigravity/antigravity-cli/releases/download/${version}/agy_cli_linux_x64.tar.gz";
+      hash = "sha256-2YUDc/PfhmARAkqWH6l0DMStqsBg7r6ccPvyY6xrJiQ=";
     };
 
     nativeBuildInputs = [ pkgs.autoPatchelfHook ];
