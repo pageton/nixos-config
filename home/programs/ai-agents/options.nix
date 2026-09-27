@@ -123,19 +123,6 @@ let
           "Models registered under this provider";
     };
   };
-
-  # Default spec-kit command set — shared across Claude, Codex, and OpenCode.
-  speckitCommands = [
-    "specify"
-    "plan"
-    "tasks"
-    "analyze"
-    "checklist"
-    "clarify"
-    "constitution"
-    "implement"
-    "taskstoissues"
-  ];
 in
 {
   options.programs.aiAgents = {
@@ -194,14 +181,6 @@ in
       enable = mkBoolOption false "Install pbakaus/impeccable skills for Claude and OpenCode";
     };
 
-    agentmemory = {
-      enable = mkBoolOption false "Enable shared persistent memory via agentmemory MCP";
-      version = mkStrOption "0.9.16" "agentmemory npm package version for the service and MCP shim";
-      url = mkStrOption "http://localhost:3111" "Base URL for the local agentmemory server";
-      viewerUrl = mkStrOption "http://localhost:3113" "URL for the local agentmemory viewer";
-      timeout = mkIntOption 300000 "MCP tool timeout in milliseconds (default 5 minutes)";
-    };
-
     herdr = {
       enable = mkBoolOption false "Install herdr agent multiplexer";
     };
@@ -244,25 +223,6 @@ in
         installInstructions = mkBoolOption true "Install the upstream OpenCode instruction bundle from Everything Claude Code";
       };
 
-    };
-
-    speckit = {
-      enable = mkBoolOption false "Install github/spec-kit spec-driven-development slash commands";
-
-      claude = {
-        enable = mkBoolOption true "Install spec-kit commands into Claude Code";
-        commands = mkStrListOption speckitCommands "Spec-kit command templates to install for Claude Code (stems under templates/commands/*.md)";
-      };
-
-      codex = {
-        enable = mkBoolOption true "Install spec-kit commands into Codex";
-        commands = mkStrListOption speckitCommands "Spec-kit command templates to install for Codex (stems under templates/commands/*.md)";
-      };
-
-      opencode = {
-        enable = mkBoolOption true "Install spec-kit commands into OpenCode command dirs";
-        commands = mkStrListOption speckitCommands "Spec-kit command templates to install for OpenCode (stems under templates/commands/*.md)";
-      };
     };
 
     mcpServers = lib.mkOption (mkMcpServersOption "Shared MCP server definitions used by all agents");

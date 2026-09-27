@@ -60,7 +60,27 @@ let
       # bun's shim runs plain node; dsh-base mounts cordis-plugin-hmr which
       # requires --expose-internals. The Nix dsh wrapper provides it — drop the
       # shim so it cannot shadow the wrapper (~/.bun/bin precedes the profile).
-      cleanup = ''rm -f "$HOME/.bun/bin/dsh"'';
+      # bun global updates also leave stale hoisted @deepseek-ai dirs behind,
+      # and dsh loads those from disk, warning about mixed engine versions —
+      # prune same-version-line stragglers (e.g. 0.1.5-rc.2 while the engine is
+      # 0.1.5-rc.3). Other version lines (cordis, schemastery, 0.0.x
+      # subengines) are independent and kept.
+      cleanup = ''
+        rm -f "$HOME/.bun/bin/dsh"
+        root_ver="$(grep -oE '"version"[[:space:]]*:[[:space:]]*"[^"]+"' "$HOME/.bun/install/global/node_modules/@deepseek-ai/dsh/package.json" 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)+(-[0-9A-Za-z.]+)?(\+[0-9A-Za-z.]+)?' | head -1)"
+        if [[ -n "$root_ver" ]]; then
+          base="''${root_ver%%-*}"
+          for d in "$HOME/.bun/install/global/node_modules/@deepseek-ai"/*/; do
+            name="$(basename "$d")"
+            [ "$name" = "dsh" ] && continue
+            v="$(grep -oE '"version"[[:space:]]*:[[:space:]]*"[^"]+"' "$d/package.json" 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)+(-[0-9A-Za-z.]+)?(\+[0-9A-Za-z.]+)?' | head -1)"
+            if [[ -n "$v" && "$v" != "$root_ver" && "$v" == "$base"-* ]]; then
+              rm -rf "$d"
+              echo "Pruned stale dsh engine dep @deepseek-ai/$name ($v != $root_ver)"
+            fi
+          done
+        fi
+      '';
     }
     {
       binary = "playwright-cli";

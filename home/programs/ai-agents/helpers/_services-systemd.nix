@@ -6,7 +6,6 @@
   hmSystemdHelpers,
   logCleanupCommand,
   autoUpdate,
-  agentmemoryRuntime,
 }:
 let
   inherit (hmSystemdHelpers) mkWeeklyTimer;
@@ -19,30 +18,6 @@ let
   inherit (autoUpdate) updateAllScript;
 in
 lib.mkMerge [
-  (lib.mkIf cfg.agentmemory.enable {
-    services.agentmemory = {
-      Unit = {
-        Description = "Shared persistent memory server for AI agents";
-        After = [ "network-online.target" ];
-      };
-      Service = {
-        Type = "simple";
-        WorkingDirectory = "%h";
-        Environment = [
-          "AGENTMEMORY_URL=${cfg.agentmemory.url}"
-          "CI=1"
-          "BUN_INSTALL_CACHE_DIR=%h/.cache/bun"
-          "PATH=${agentmemoryRuntime.iiiEngine}/bin:${bunPackage}/bin:/run/current-system/sw/bin"
-        ];
-        ExecStart = "${bunPackage}/bin/bunx @agentmemory/agentmemory@${cfg.agentmemory.version}";
-        Restart = "always";
-        RestartSec = "10s";
-        TimeoutStartSec = "300";
-        TimeoutStopSec = "30";
-      };
-      Install.WantedBy = [ "default.target" ];
-    };
-  })
   # ── AI agents resource slice (always active when agents enabled) ──
   # Caps collective memory of all agent processes so they cannot starve
   # the compositor, terminal, or browser during large output generation.

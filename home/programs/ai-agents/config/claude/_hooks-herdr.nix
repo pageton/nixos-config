@@ -4,7 +4,8 @@
 # pane PTY + screen detection, not hooks.
 #
 # Registration mirrors herdr's canonical claude_settings.rs install (protocol
-# v9): single SessionStart entry, matcher "*", timeout 10, command
+# v10): single SessionStart entry, matcher "^...$" restricted to Claude's
+# documented SessionStart sources, timeout 10, command
 # `bash '<abs-path>' session` — byte-exact so `herdr integration
 # install/uninstall claude` recognizes it instead of duplicating it.
 {
@@ -22,7 +23,7 @@ in
 {
   SessionStart = [
     {
-      matcher = "*";
+      matcher = "^(startup|resume|clear|compact|fork)$";
       hooks = [
         {
           type = "command";

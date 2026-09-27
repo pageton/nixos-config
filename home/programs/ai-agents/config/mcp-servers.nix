@@ -28,7 +28,7 @@ let
     }) zai.services
   );
 
-  # Allowed paths for terminal and filesystem MCP servers.
+  # Allowed paths for the filesystem MCP server.
   mcpAllowedPaths = [
     "${config.home.homeDirectory}/Documents"
     "${config.home.homeDirectory}/Downloads"
@@ -75,12 +75,6 @@ in
           args = [ "chrome-devtools-mcp@1.5.0" ];
         };
 
-        sequential-thinking = {
-          enable = true;
-          command = "bunx";
-          args = [ "@modelcontextprotocol/server-sequential-thinking@2026.7.4" ];
-        };
-
         playwright = {
           enable = true;
           command = "bunx";
@@ -104,16 +98,6 @@ in
         };
 
         # ── General-purpose MCP servers (available to all agents) ──
-
-        terminal = {
-          enable = true;
-          command = "bunx";
-          args = [
-            "@dillip285/mcp-terminal"
-            "--allowed-paths"
-            "${builtins.concatStringsSep ":" mcpAllowedPaths}"
-          ];
-        };
 
         tmux = {
           enable = true;
@@ -141,12 +125,6 @@ in
           ];
         };
 
-        superpowers = {
-          enable = true;
-          command = "bunx";
-          args = [ "superpowers-mcp" ];
-        };
-
         ssh = {
           enable = false;
           command = "bunx";
@@ -170,20 +148,6 @@ in
           ];
         };
 
-      }
-      // lib.optionalAttrs cfg.agentmemory.enable {
-        agentmemory = {
-          enable = true;
-          timeout = cfg.agentmemory.timeout;
-          command = "bunx";
-          args = [
-            "--silent"
-            "@agentmemory/mcp@${cfg.agentmemory.version}"
-          ];
-          env = {
-            AGENTMEMORY_URL = cfg.agentmemory.url;
-          };
-        };
       }
       // lib.optionalAttrs cfg.codegraph.enable {
         codegraph = {

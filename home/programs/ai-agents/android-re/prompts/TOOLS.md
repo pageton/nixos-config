@@ -21,8 +21,6 @@ claude-code, omp) and are available in every session:
 
 ### General Purpose
 
-- **terminal** — secure terminal command execution within allowed paths
-  (`~/Documents`, `~/Downloads`, `~/.cache/android-re`)
 - **ripgrep** — fast code search via ripgrep MCP: search source code,
   jadx/apktool output, and any text files for patterns and strings
 - **fetch** — web content fetcher: retrieve and convert documentation, API

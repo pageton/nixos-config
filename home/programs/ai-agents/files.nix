@@ -99,30 +99,12 @@ in
       # === Claude Agent Definitions ===
       (lib.mkIf cfg.claude.enable (mkTextFiles ".claude/agents" fileTemplates.claudeAgents))
 
-      # === agentmemory Bootstrap ===
-      (lib.mkIf cfg.agentmemory.enable {
-        ".agentmemory/preferences.json" = {
-          text = toJSON {
-            schemaVersion = 1;
-            lastAgent = null;
-            lastAgents = [ ];
-            lastProvider = null;
-            skipSplash = true;
-            skipNpxHint = true;
-            skipGlobalInstall = true;
-            skipConsoleInstall = true;
-            firstRunAt = "1970-01-01T00:00:00.000Z";
-          };
-          force = true;
-        };
-      })
-
       # === herdr Agent State Integrations ===
       (lib.mkIf cfg.herdr.enable {
         ".claude/hooks/herdr-agent-state.sh" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/herdrdev/herdr/${herdrAssetRev}/src/integration/assets/claude/herdr-agent-state.sh";
-            sha256 = "sha256-phu+JhmjFmaUBjFt4mDBO2wa5SXa/W9PSVbiZkYmgQU=";
+            sha256 = "sha256-fxF8MD/8GmaXW3bdqBidcLcY/ASvTPfLEUSeTuW0roY=";
           };
           executable = true;
           force = true;
@@ -135,7 +117,10 @@ in
           executable = true;
           force = true;
         };
-        ".copilot/herdr-agent-state.sh" = {
+        # herdr's copilot status check expects the hook under ~/.copilot/hooks/.
+        # The SessionStart registration in settings.json is merged by activation
+        # (herdr-copilot-setup.nix) since the app owns that file.
+        ".copilot/hooks/herdr-agent-state.sh" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/herdrdev/herdr/${herdrAssetRev}/src/integration/assets/copilot/herdr-agent-state.sh";
             sha256 = "sha256-GXRg50I9JDhiaQ7rLa2qDursPULzEGxZckg7Apt5eCU=";
@@ -162,7 +147,7 @@ in
         };
         ".gemini/config/hooks.json" = {
           text = toJSON {
-            herdr.PreInvocation = [
+            PreInvocation = [
               {
                 type = "command";
                 command = "bash '${config.home.homeDirectory}/.gemini/config/hooks/herdr-agent-state.sh' session";
@@ -226,7 +211,7 @@ in
         ".omp/agent/extensions/herdr-omp-agent-state.ts" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/herdrdev/herdr/${herdrAssetRev}/src/integration/assets/omp/herdr-agent-state.ts";
-            sha256 = "sha256-TP0eMtofFe+6BSHFL+47pLI8NtwjaneuqSIiD976Ak4=";
+            sha256 = "sha256-48ZQdSu5wuuLwe7MnOhFwnQ09rczGvFhNT3QbKbeSLc=";
           };
           force = true;
         };
@@ -238,6 +223,17 @@ in
       # but AGENTS.md is only ever read, never rewritten by the app.
       (lib.mkIf (cfg.zcode.enable && cfg.globalInstructions != "") {
         ".zcode/AGENTS.md" = {
+          text = cfg.globalInstructions;
+          force = true;
+        };
+      })
+
+      # === DeepSeek Harness (dsh): user-global instructions (~/.dsh/AGENTS.md) ===
+      # dsh-agent-instructions treats ~/.dsh/AGENTS.md as the user-global
+      # instruction file, layered above workspace AGENTS.md/CLAUDE.md
+      # discovery. Only read by dsh, never rewritten.
+      (lib.mkIf (cfg.dsh.enable && cfg.globalInstructions != "") {
+        ".dsh/AGENTS.md" = {
           text = cfg.globalInstructions;
           force = true;
         };
@@ -299,21 +295,30 @@ in
         };
       })
       # herdr integration for OpenCode: state plugin (auto-discovered from
-      # plugins/), TUI session plugin, and its tui.jsonc registration. herdr
-      # 0.8.0 requires all three or `herdr integration status` reports
-      # "needs repair".
+      # plugins/), V1 TUI session plugin + tui.jsonc registration, and the V2
+      # TUI plugin dir (herdr-opencode/tui.js, a shim re-exporting the V1
+      # plugin). herdr requires all of them or `herdr integration status`
+      # reports "needs repair" once cli.json exists; the cli.json plugins
+      # entry itself is merged by activation (herdr-setup.nix).
       (lib.mkIf (cfg.herdr.enable && cfg.opencode.enable) {
         "opencode/plugins/herdr-agent-state.js" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/herdrdev/herdr/${herdrAssetRev}/src/integration/assets/opencode/herdr-agent-state.js";
-            sha256 = "sha256-XLFeBZpfgSog/P1ktDMD77qmPBtIdLEk4l32TcAjoV4=";
+            sha256 = "sha256-Gmrr9mMjJP7GPR3iJnN7n6azXz3bUc5odDnma2x8tHU=";
           };
           force = true;
         };
         "opencode/herdr-tui-session.js" = {
           source = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/herdrdev/herdr/${herdrAssetRev}/src/integration/assets/opencode/herdr-tui-session.js";
-            sha256 = "sha256-3Hm5bBzRI/8iVO/Rgwshz7TAVXqwH4uZcv3/bfioVAA=";
+            sha256 = "sha256-+bXC2xabDww4p4vCyDQReGc7wNAOX3BXdlrqc93Ff5U=";
+          };
+          force = true;
+        };
+        "opencode/herdr-opencode/tui.js" = {
+          source = pkgs.fetchurl {
+            url = "https://raw.githubusercontent.com/herdrdev/herdr/${herdrAssetRev}/src/integration/assets/opencode/tui.js";
+            sha256 = "sha256-lLjRB+GrW/+iMg47fxVNGEiiFniHhaKbhtc1urNa+eg=";
           };
           force = true;
         };

@@ -37,10 +37,9 @@ Parent: `home/programs/ai-agents/AGENTS.md`
 | ------------------------------- | ---------------------------------------------------------------------------------- |
 | `_aliases.nix`                  | Zsh alias generation for agent launchers and workflow combos                       |
 | `_workflow-prompts.nix`         | Aggregator — imports each `workflows/_*.nix` and exposes them as an attrset        |
-| `_services-systemd.nix`         | Systemd user services/timers: log cleanup, DB vacuum, CLI auto-update, agentmemory |
+| `_services-systemd.nix`         | Systemd user services/timers: log cleanup, DB vacuum, CLI auto-update              |
 | `_services-shell-aliases.nix`   | Shell aliases for logging/analytics (ai-logs, ai-errors, ai-stats)                 |
 | `_mk-cli-autoupdate-script.nix` | Generates shell script for auto-updating a CLI binary via bun/npm                  |
-| `_agentmemory-runtime.nix`      | agentmemory npm service + MCP shim packaging                                       |
 | `_git-clone-update.nix`         | Generates Bash snippet for git clone/update under `~/.local/share/`                |
 | `_herdr-mimo-plugin.nix`        | Vendored herdr integration plugin for MiMoCode (herdr has no mimo target)          |
 

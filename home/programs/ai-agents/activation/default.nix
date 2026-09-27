@@ -36,7 +36,7 @@ let
   '';
 
   # Import helper modules
-  # modules-check: manual-helper ./secrets.nix ./codex-setup.nix ./claude-setup.nix ./antigravity-setup.nix ./plugins.nix ./skills.nix ./zcode-setup.nix ./herdr-setup.nix ./omp-setup.nix
+  # modules-check: manual-helper ./secrets.nix ./codex-setup.nix ./claude-setup.nix ./antigravity-setup.nix ./plugins.nix ./skills.nix ./zcode-setup.nix ./herdr-setup.nix ./herdr-copilot-setup.nix ./omp-setup.nix ./dsh-setup.nix
   secretPatching = import ./secrets.nix {
     inherit
       cfg
@@ -83,7 +83,9 @@ let
 
   zcodeSetup = import ./zcode-setup.nix { inherit cfg pkgs lib; };
   herdrSetup = import ./herdr-setup.nix { inherit cfg pkgs lib; };
+  herdrCopilotSetup = import ./herdr-copilot-setup.nix { inherit cfg pkgs lib; };
   ompSetup = import ./omp-setup.nix { inherit cfg pkgs lib; };
+  dshSetup = import ./dsh-setup.nix { inherit cfg pkgs lib; };
   opencodeProfileNames = opencodeProfiles.names;
 
   pluginInstalls = import ./plugins.nix {
@@ -125,6 +127,18 @@ in
         ''
       );
 
+      # One-time cleanup for the retired github/spec-kit integration: previous
+      # activations wrote speckit-*/speckit.* command files into the agent
+      # command dirs and cloned the repo. Safe to drop once this has run.
+      cleanupRetiredSpecKit = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        rm -f "$HOME/.claude/commands/speckit-"*.md 2>/dev/null || true
+        rm -f "$HOME/.codex/commands/speckit-"*.md 2>/dev/null || true
+        for profile in ${lib.concatMapStringsSep " " lib.escapeShellArg opencodeProfileNames}; do
+          rm -f "$HOME/.config/$profile/commands/speckit."*.md 2>/dev/null || true
+        done
+        rm -rf "$HOME/.local/share/spec-kit"
+      '';
+
       # Remove nested example assets that some skill packs ship under ~/.agents/skills.
       # Codex scans for SKILL.md recursively and warns on these non-skill sample files.
       sanitizeInstalledSkills = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -153,6 +167,11 @@ in
       # Idempotent YAML merge into omp's app-owned config.yml.
       setupOmpConfig = ompSetup;
 
+      # === DeepSeek Harness (dsh) Configuration ===
+      # Idempotent YAML merge of managed MCP entries into each profile's
+      # user-owned cordis.patch.yml (placeholders resolved from /run/secrets).
+      setupDshProfiles = dshSetup;
+
       # === ZCode Providers ===
       # Idempotent jq merge into ZCode's app-owned ~/.zcode/v2/config.json.
       setupZcodeConfig = zcodeSetup;
@@ -161,15 +180,17 @@ in
       # Idempotent jq merge into OpenCode's app-owned ~/.config/opencode/cli.json.
       setupHerdrOpenCodeCli = herdrSetup;
 
+      # === herdr GitHub Copilot CLI Registration ===
+      # Idempotent jq merge into Copilot's app-owned ~/.copilot/settings.json.
+      setupHerdrCopilotCli = herdrCopilotSetup;
+
       # === Plugin Installation ===
       inherit (pluginInstalls)
         installImpeccable
         installAgencyAgents
         installEverythingClaudeCode
-        installSpecKit
         cleanupDisabledAgencyAgents
         cleanupDisabledEverythingClaudeCode
-        cleanupDisabledSpecKit
         ;
     };
   };

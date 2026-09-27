@@ -173,6 +173,19 @@ lib.hm.dag.entryAfter
           echo "✓ Patched mimocode auth.json with DeepSeek key"
         fi
 
+        # dsh (DeepSeek Harness) — inject into ~/.dsh/.env (dsh loads $DSH_HOME/.env
+        # as its user env layer). Update in place or append; never clobber other vars.
+        DSH_ENV_DIR="$HOME/.dsh"
+        DSH_ENV="$DSH_ENV_DIR/.env"
+        mkdir -p "$DSH_ENV_DIR"
+        if [[ -f "$DSH_ENV" ]] && grep -q '^DEEPSEEK_API_KEY=' "$DSH_ENV"; then
+          ${pkgs.gnused}/bin/sed -i "s|^DEEPSEEK_API_KEY=.*|DEEPSEEK_API_KEY=$escaped_deepseek|" "$DSH_ENV"
+        else
+          printf 'DEEPSEEK_API_KEY=%s\n' "$DEEPSEEK_KEY" >> "$DSH_ENV"
+        fi
+        chmod 600 "$DSH_ENV"
+        echo "✓ Patched dsh ~/.dsh/.env with DeepSeek key"
+
         unset DEEPSEEK_KEY escaped_deepseek
       else
         echo "⚠ ${cfg.secrets.deepseekApiKeyFile} not found - run 'just nixos' first"

@@ -83,7 +83,6 @@ ai-agents/
 │   ├── _impeccable-commands.nix          # Impeccable skill command definitions and text renderer
 │   ├── _models.nix                       # Shared model/provider constants (names, aliases)
 │   ├── _agent-env.nix                    # Runtime model/service env vars for shell scripts
-│   ├── _agentmemory-runtime.nix          # agentmemory npm service + MCP shim packaging
 │   ├── _herdr-mimo-plugin.nix            # Vendored herdr plugin for MiMoCode (herdr has no mimo target)
 │   ├── _zai-env.nix                      # Z.AI service env var generation
 │   └── _git-clone-update.nix             # Git clone/update helper for plugin repos
@@ -102,6 +101,7 @@ ai-agents/
 │   ├── _cleanup-agency-agents.nix # Agency agents cleanup on disable
 │   ├── zcode-setup.nix    # ZCode provider/model merge (cfg.zcode.providers) + setting.json merge (cfg.zcode.extraSettings)
 │   ├── herdr-setup.nix    # herdr OpenCode V2 plugin registration (jq merge into app-owned cli.json)
+│   ├── herdr-copilot-setup.nix # herdr Copilot SessionStart hook registration (jq merge into app-owned settings.json)
 │   ├── _cleanup-everything-claude-code.nix # ECC cleanup on disable
 │   └── skills.nix           # Skill installations and omissions
 ├── android-re/              # Android RE workflow prompts and config
@@ -144,6 +144,7 @@ Secure secret injection is handled during the Home Manager activation phase to p
 1. **Placeholders**: Config files are written with unique placeholders (e.g., `__GITHUB_TOKEN_PLACEHOLDER__`, `__OPENROUTER_API_KEY_PLACEHOLDER__`).
 2. **DAG Patching**: The `patchAiAgentSecrets` script runs as a DAG entry after `writeBoundary`.
 3. **Injection**: It uses `jq` with walk filters for JSON files, reading keys directly from `/run/secrets/` or `gh` CLI and overwriting the placeholders in-place.
+4. **dsh**: DeepSeek Harness has no placeholder config — `patchAiAgentSecrets` writes `DEEPSEEK_API_KEY` into `~/.dsh/.env` (dsh's gitignored user env layer, loaded on every boot; env file is created/updated in place so user-added vars survive). Global instructions land in `~/.dsh/AGENTS.md` via `files.nix` (dsh's native user-global file). Shared MCP servers are yq-merged by `setupDshProfiles` (`activation/dsh-setup.nix`) into every existing profile's user-owned `cordis.patch.yml` as cordis entries mounting `@deepseek-ai/dsh-mcp-client` — managed ids are prefixed `dsh-managed-mcp-` so re-merges replace only managed entries; placeholders are resolved in place from `/run/secrets` and the gh CLI. Skills already mirror into `~/.dsh/skills` (`activation/skills.nix`).
 
 ---
 

@@ -156,6 +156,47 @@ let
   # MiMo uses the same MCP format as OpenCode (shared codebase).
   mimoMcpServers = opencodeMcpServers;
 
+  # dsh (DeepSeek Harness) MCP schema: cordis entries mounting
+  # @deepseek-ai/dsh-mcp-client (config: transport stdio { command, args, env }
+  # or streamable-http { url, headers }). Tools register as
+  # mcp__<serverName>__<tool>, so serverName must stay stable — the shared
+  # attrname is used as serverName.
+  #
+  # dsh patch layers are id-targeted overlays: a bare entry only patches an
+  # existing entry and is dropped with a warning when absent. New entries are
+  # mounted with an `insert` list, so the whole managed set ships as one
+  # wrapper `{ managed = true; insert = [...]; }`. dsh ignores unknown patch
+  # keys, and the merger in activation/dsh-setup.nix drops previous wrappers
+  # by the `managed` marker before appending the fresh set — idempotent and
+  # user entries are never touched.
+  dshManagedMcpPatch = [
+    {
+      managed = true;
+      insert = lib.mapAttrsToList (name: server: {
+        id = "dsh-managed-mcp-${name}";
+        name = "@deepseek-ai/dsh-mcp-client";
+        config = {
+          serverName = name;
+        }
+        // (
+          if (server.type or "local") == "local" then
+            {
+              transport = "stdio";
+              inherit (server) command;
+              args = server.args or [ ];
+            }
+            // (lib.optionalAttrs (server.env or { } != { }) { inherit (server) env; })
+          else
+            {
+              transport = "streamable-http";
+              inherit (server) url;
+            }
+            // (lib.optionalAttrs (server.headers or null != null) { inherit (server) headers; })
+        );
+      }) (lib.filterAttrs (_: s: s.enable) sharedMcpServers);
+    }
+  ];
+
 in
 
 {
@@ -169,5 +210,6 @@ in
     mimoMcpServers
     ompMcpServers
     ompAndroidReMcpServers
+    dshManagedMcpPatch
     ;
 }

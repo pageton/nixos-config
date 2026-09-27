@@ -23,7 +23,6 @@ let
     "@upstash/context7-mcp"
     "@modelcontextprotocol/server-filesystem"
     "@modelcontextprotocol/server-memory"
-    "@modelcontextprotocol/server-sequential-thinking"
     "@playwright/cli"
     "@magicuidesign/mcp"
     "@modelcontextprotocol/server-github"

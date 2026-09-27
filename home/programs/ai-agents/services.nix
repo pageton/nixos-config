@@ -96,7 +96,6 @@ let
       ;
   };
   inherit (aliasLib) aiAliases aiAgentLauncher aiAgentInventory;
-  agentmemoryRuntime = import ./helpers/_agentmemory-runtime.nix { inherit pkgs; };
   autoUpdate = import ./helpers/_mk-cli-autoupdate-script.nix { inherit lib pkgs; };
   shellAliases = import ./helpers/_services-shell-aliases.nix { inherit cfg aiAliases constants; };
   zcodeDrv =
@@ -111,6 +110,12 @@ let
   # Wrapper execs the bun-installed bin.js with the flag; version updates stay
   # with the bun-global autoupdate flow.
   dshLauncher = pkgs.writeShellScriptBin "dsh" ''
+    # Default permission mode: danger-full-access = sandbox disabled and
+    # approval policy never (no prompts). Must come from the launching
+    # environment — dsh's .env blocklist rejects DSH_PERMISSION_MODE as a
+    # bootstrap-only name and refuses to boot otherwise. An explicit user
+    # export still wins.
+    export DSH_PERMISSION_MODE="''${DSH_PERMISSION_MODE:-danger-full-access}"
     exec ${pkgs.nodejs}/bin/node --expose-internals "$HOME/.bun/install/global/node_modules/@deepseek-ai/dsh/lib/bin.js" "$@"
   '';
 
@@ -129,7 +134,6 @@ let
       hmSystemdHelpers
       logCleanupCommand
       autoUpdate
-      agentmemoryRuntime
       ;
   };
 in
@@ -144,9 +148,7 @@ in
         pkgs.bubblewrap
       ]
       ++ scriptWrappers
-      ++ (lib.optional cfg.agentmemory.enable agentmemoryRuntime.iiiEngine)
       ++ (lib.optional cfg.dsh.enable dshLauncher)
-      ++ (lib.optional cfg.speckit.enable pkgs.spec-kit)
       ++ androidReLaunchers
       ++ webReLaunchers
       ++ mimoAndroidReLaunchers
