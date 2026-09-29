@@ -140,23 +140,45 @@ System/
 │   │   ├── hardware-configuration.nix
 │   │   └── modules/
 │
-├── nixos/modules/               # Shared NixOS system modules (two-level pattern)
-│   ├── default.nix              # Root loader — imports category directories
-│   ├── core/                    # Boot, Nix daemon, users, SOPS, timezone, locale, stability
-│   │   └── default.nix          #   Imports flat .nix files from parent dir
-│   ├── hardware/                # Audio, Bluetooth, GPU, input, power, thermal
-│   ├── desktop/                 # Niri, SDDM, X11 disabled, XDG portals
-│   ├── network/                 # NetworkManager, DNSCrypt, Mullvad, Tailscale, Tor
-│   ├── security-stack/          # Kernel hardening, Firejail, OpenSnitch, MAC randomization
-│   ├── apps/                    # Browser deps, Flatpak, Gaming, KDE Connect, Syncthing
-│   ├── virtualization/          # Docker, VirtualBox, libvirt, Waydroid, nix-ld
-│   ├── observability/           # Monitoring, Netdata, Scrutiny, Glance, Loki
-│   ├── performance/             # Boot optimization
-│   ├── maintenance/             # Cleanup timers, Restic backup, nh
-│   │
-│   ├── bootloader.nix           # (flat files imported by category default.nix)
-│   ├── security.nix             # Kernel/sysctl hardening, firewall, AIDE, Chrony, AppArmor
-│   └── ...                      # Other system modules
+├── nixos/                         # Shared NixOS system configuration
+│   ├── profiles/
+│   │   └── common.nix             # Modules active on every host (the shared set)
+│   └── modules/                   # Flat feature modules — imported = active
+│       ├── base.nix               # Nix settings, overlays, locale, env, monitoring tools
+│       ├── boot.nix               # GRUB + kernel
+│       ├── users.nix              # User account + SSH keys
+│       ├── sops.nix               # Secrets
+│       ├── tuning.nix             # earlyoom, sysctl, PAM limits
+│       ├── opsec.nix              # Session lock, NTS time, zram
+│       ├── security.nix           # Kernel hardening, firewall, AIDE, AppArmor
+│       ├── network.nix            # NetworkManager, resolved, sshd
+│       ├── macchanger.nix         # MAC randomization
+│       ├── validation.nix         # Conflict assertions
+│       ├── audio.nix              # PipeWire + RNNoise
+│       ├── bluetooth.nix          # BlueZ + Blueman
+│       ├── nvidia.nix             # NVIDIA driver stack
+│       ├── android.nix            # ADB / Android Studio
+│       ├── desktop.nix            # Niri, Noctalia Greeter, portals, xkb
+│       ├── browser-deps.nix       # Chromium / Puppeteer deps
+│       ├── sandboxing.nix         # Firejail wrapped binaries
+│       ├── nix-ld.nix             # Non-NixOS binaries
+│       ├── tailscale.nix          # Mesh VPN (Mullvad-coexistence aware)
+│       ├── tor.nix                # Tor SOCKS/DNS
+│       ├── mullvad.nix            # Mullvad VPN (desktop)
+│       ├── cloudflared.nix        # Cloudflare Tunnel (desktop)
+│       ├── cloudflare-warp.nix    # WARP client (desktop)
+│       ├── flatpak.nix            # Flathub
+│       ├── syncthing.nix          # File sync
+│       ├── glance/                # Dashboard (default.nix + settings.nix)
+│       ├── netdata.nix            # Metrics (boot-deferred)
+│       ├── scrutiny.nix           # Disk health (boot-deferred)
+│       ├── loki.nix               # Log aggregation (boot-deferred)
+│       ├── observability/         # Prometheus + Grafana (desktop, boot-deferred)
+│       ├── gaming.nix             # Steam, gamescope, gamemode (desktop)
+│       ├── virtualisation.nix     # Docker, VirtualBox, libvirt (desktop)
+│       ├── vaultwarden.nix        # Password manager (desktop)
+│       ├── web-re.nix             # Web RE tools (desktop)
+│       └── amd-thermal.nix        # Ryzen thermal watchdog (desktop)
 │
 └── home/                        # Home-Manager user configuration
     ├── home.nix                 # Main Home-Manager entry point
@@ -383,41 +405,43 @@ sudo nixos-generate-config --root /mnt --show-hardware-config > hosts/myhost/har
 
 ### Adding NixOS Modules
 
-1. Create module file in `nixos/modules/` (flat file alongside existing ones):
+Modules are plain NixOS configuration — no custom options, no enable flags.
+A module is active because a host (or the shared profile) imports it.
+
+1. Create a flat module in `nixos/modules/`:
 
 ```nix
 # nixos/modules/my-module.nix
-{ config, lib, pkgs, ... }:
+{ pkgs, ... }:
 {
-  # Define options under mySystem.* for per-host opt-in
-  options.mySystem.myModule = {
-    enable = lib.mkEnableOption "my custom module";
-  };
-
-  config = lib.mkIf config.mySystem.myModule.enable {
-    # Your configuration here
-  };
+  # Your configuration here
+  environment.systemPackages = [ pkgs.hello ];
 }
 ```
 
-2. Import it from the appropriate category `default.nix` (e.g., `nixos/modules/core/default.nix`):
+2. Import it where it belongs:
 
 ```nix
+# nixos/profiles/common.nix        — if every host needs it
+# hosts/desktop/configuration.nix  — if only one host needs it
 {
   imports = [
     # ... existing modules ...
-    ../my-module.nix
+    ../../nixos/modules/my-module.nix
   ];
 }
 ```
 
-3. Enable it in the host configuration (e.g., `hosts/desktop/configuration.nix`):
+Rules of thumb:
 
-```nix
-mySystem.myModule.enable = true;
-```
+- Machine-specific values (bus IDs, thresholds, kernel params) go in
+  `hosts/<name>/`, not in shared modules.
+- Cross-module wiring reads real NixOS options
+  (e.g. `config.services.mullvad-vpn.enable`), not custom toggles.
+- Only declare a custom option when you truly need parameterization,
+  and scope it tightly.
 
-4. Run `just check` to verify the configuration evaluates.
+3. Run `just check` to verify the configuration evaluates.
 
 ### Adding Home-Manager Programs
 
