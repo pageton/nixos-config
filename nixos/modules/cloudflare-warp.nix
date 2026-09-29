@@ -1,7 +1,7 @@
 # Cloudflare WARP (one.one.one.one) client — warp-svc daemon + warp-cli.
 #
 # The GUI (warp-taskbar tray applet) is started per-user via Home-Manager
-# (home/cloudflare-warp) on hosts that enable this module.
+# (home/cloudflare-warp) on hosts that import this module.
 #
 # Gotchas (client 2026.7.1343.0 on NixOS):
 # - The client ships with the MASQUE protocol; on this host its
@@ -30,47 +30,37 @@
 # /etc/resolv.conf to Cloudflare DNS (1.1.1.1); when it disconnects cleanly
 # the file is restored.
 {
-  config,
   lib,
   pkgs,
   ...
 }:
-let
-  cfg = config.mySystem.cloudflareWarp;
-in
 {
-  options.mySystem.cloudflareWarp = {
-    enable = lib.mkEnableOption "Cloudflare WARP client (warp-svc daemon, warp-cli, 1.1.1.1 DNS)";
+  # Upstream module: warp-svc system daemon (root, CAP_NET_ADMIN, nftables),
+  # cloudflare-warp package in systemPackages, /var/lib/cloudflare-warp state.
+  services.cloudflare-warp = {
+    enable = true;
+
+    # WARP is a client-initiated outbound tunnel; replies match the outbound
+    # flow via the stateful firewall. Keep the zero-inbound-ports posture
+    # from security.nix instead of opening UDP 2408 (and on Mullvad lockdown
+    # hosts unsolicited inbound is blocked regardless).
+    openFirewall = false;
   };
 
-  config = lib.mkIf cfg.enable {
-    # Upstream module: warp-svc system daemon (root, CAP_NET_ADMIN, nftables),
-    # cloudflare-warp package in systemPackages, /var/lib/cloudflare-warp state.
-    services.cloudflare-warp = {
-      enable = true;
-
-      # WARP is a client-initiated outbound tunnel; replies match the outbound
-      # flow via the stateful firewall. Keep the zero-inbound-ports posture
-      # from security.nix instead of opening UDP 2408 (and on Mullvad lockdown
-      # hosts unsolicited inbound is blocked regardless).
-      openFirewall = false;
-    };
-
-    # Seed the MDM file with disable_connectivity_checks on first start (see
-    # gotcha above). Written once; manual edits under /var/lib are preserved.
-    systemd.services.cloudflare-warp.serviceConfig.ExecStartPre = [
-      (lib.getExe (
-        pkgs.writeShellScriptBin "cloudflare-warp-mdm-seed" ''
-          if [ ! -f /var/lib/cloudflare-warp/mdm.xml ]; then
-            install -D -m 0644 ${pkgs.writeText "cloudflare-warp-mdm.xml" ''
-              <dict>
-                <key>disable_connectivity_checks</key>
-                <true/>
-              </dict>
-            ''} /var/lib/cloudflare-warp/mdm.xml
-          fi
-        ''
-      ))
-    ];
-  };
+  # Seed the MDM file with disable_connectivity_checks on first start (see
+  # gotcha above). Written once; manual edits under /var/lib are preserved.
+  systemd.services.cloudflare-warp.serviceConfig.ExecStartPre = [
+    (lib.getExe (
+      pkgs.writeShellScriptBin "cloudflare-warp-mdm-seed" ''
+        if [ ! -f /var/lib/cloudflare-warp/mdm.xml ]; then
+          install -D -m 0644 ${pkgs.writeText "cloudflare-warp-mdm.xml" ''
+            <dict>
+              <key>disable_connectivity_checks</key>
+              <true/>
+            </dict>
+          ''} /var/lib/cloudflare-warp/mdm.xml
+        fi
+      ''
+    ))
+  ];
 }

@@ -1,26 +1,15 @@
 # Syncthing decentralized file synchronization.
+{ user, ... }:
 {
-  config,
-  lib,
-  user,
-  ...
-}:
-{
-  options.mySystem.syncthing = {
-    enable = lib.mkEnableOption "Syncthing local file synchronization";
-  };
+  services.syncthing = {
+    enable = true;
+    inherit user;
+    dataDir = "/home/${user}/Sync";
+    configDir = "/home/${user}/.config/syncthing";
+    openDefaultPorts = true;
 
-  config = lib.mkIf config.mySystem.syncthing.enable {
-    services.syncthing = {
-      enable = true;
-      inherit user;
-      dataDir = "/home/${user}/Sync";
-      configDir = "/home/${user}/.config/syncthing";
-      openDefaultPorts = true;
-
-      settings.options = {
-        urAccepted = -1;
-      };
+    settings.options = {
+      urAccepted = -1;
     };
   };
 }

@@ -1,38 +1,24 @@
 # NVIDIA Optimus (hybrid graphics) for ThinkPad.
-{ config, lib, ... }:
-let
-  mkBusIdOption =
-    description: default:
-    lib.mkOption {
-      type = lib.types.str;
-      inherit default description;
-      example = "PCI:0:2:0:0";
-    };
-in
+# Bus IDs in NixOS format (PCI:bus:device:function), hex-free.
+# Verify with: lspci | grep -E 'VGA|3D'
+{ lib, ... }:
 {
-  options.mySystem.nvidia = {
-    intelBusId = mkBusIdOption "Intel GPU PCI bus ID (format: PCI:bus:device:function)." "PCI:0:2:0:0";
+  hardware.nvidia = {
+    powerManagement = {
+      enable = true;
+      finegrained = true; # CRITICAL for battery life
+    };
 
-    nvidiaBusId = mkBusIdOption "NVIDIA GPU PCI bus ID (format: PCI:bus:device:function)." "PCI:2:0:0:0";
-  };
+    prime = {
+      intelBusId = "PCI:0:2:0:0";
+      nvidiaBusId = "PCI:2:0:0:0";
 
-  config = {
-    hardware.nvidia = {
-      powerManagement = {
+      offload = {
         enable = true;
-        finegrained = true; # CRITICAL for battery life
+        enableOffloadCmd = true;
       };
 
-      prime = {
-        inherit (config.mySystem.nvidia) intelBusId nvidiaBusId;
-
-        offload = {
-          enable = true;
-          enableOffloadCmd = true;
-        };
-
-        sync.enable = false;
-      };
+      sync.enable = false;
     };
   };
 }

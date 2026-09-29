@@ -1,6 +1,11 @@
-# Networking configuration module.
-# NOTE: Firewall rules live in security.nix to keep all hardening in one place.
-{ lib, pkgs, ... }: {
+# Networking: NetworkManager, systemd-resolved, SSH server.
+# Firewall rules live in security.nix to keep all hardening in one place.
+{
+  lib,
+  pkgs,
+  ...
+}:
+{
   # NetworkManager for GUI networking
   networking.networkmanager = {
     enable = lib.mkDefault true;

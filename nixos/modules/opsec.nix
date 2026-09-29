@@ -1,8 +1,8 @@
-# Operational security (session locking, NTS time).
-# Extracted from security.nix.
-
-{ lib, ... }:
-
+# Operational security: session lock on idle/lid-close, NTS time sync, RAM-only swap.
+{
+  lib,
+  ...
+}:
 {
   # Session lock on idle and lid-close — physical access protection
   services = {
@@ -31,7 +31,7 @@
   # memoryPercent = 100 sizes the compressed device to match installed RAM
   # (30G on this host). zstd compresses ~3:1 on typical data, so effective
   # capacity is well above RAM; worst case (incompressible pages) the device
-  # can still exhaust RAM, so vm.swappiness stays low (stability.nix) and
+  # can still exhaust RAM, so vm.swappiness stays low (tuning.nix) and
   # earlyoom guards the rest.
   zramSwap = {
     enable = true;

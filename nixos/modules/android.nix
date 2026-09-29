@@ -1,7 +1,6 @@
 # Android device and emulator support (ADB, Fastboot, Android Studio/AVD).
 # The SDK emulator binary (from Google) bundles its own Qt but needs system
 # libraries at load time. We wrap it with LD_LIBRARY_PATH.
-
 {
   pkgs,
   pkgsStable,
@@ -9,7 +8,6 @@
   user,
   ...
 }:
-
 let
   sdkRoot = "/home/${user}/Android/Sdk";
   nvidiaVulkanIcd = "/run/opengl-driver/share/vulkan/icd.d/nvidia_icd.x86_64.json";
@@ -75,9 +73,9 @@ in
   environment = {
     systemPackages = [
       pkgsStable.android-tools
-      # Re-enabled: nix.nix NIX_CURL_FLAGS (--retry 100 -C -) + just fetch-retry
-      # handle the edgedl.me.gvt1.com connection-reset flakiness that previously
-      # broke this FOD download. Run `just fetch-retry` before `just nixos`.
+      # nix.nix NIX_CURL_FLAGS (--retry 100 -C -) handles the
+      # edgedl.me.gvt1.com connection-reset flakiness that previously broke
+      # this FOD download.
       pkgs.android-studio
       pkgs.libpulseaudio
       pkgs.libxcb-cursor

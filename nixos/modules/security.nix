@@ -1,5 +1,5 @@
-# Kernel and system security hardening.
-# Merged from: hardening, firewall, opsec, services, audit, aide.
+# Kernel and system security hardening: kernel params, sysctl, firewall,
+# nftables, AppArmor, sudo, AIDE, journald, audit timers.
 {
   lib,
   pkgs,
@@ -165,8 +165,6 @@ in
     aide # File integrity monitoring
   ];
 
-  # SSH managed by networking.nix — not overridden here.
-
   # === Security Settings ===
   security = {
     apparmor.enable = true;
@@ -207,14 +205,13 @@ in
   systemd.coredump.enable = false;
 
   # === Network Firewall ===
-  # Consolidated here from networking.nix — single source of truth for firewall rules.
+  # Single source of truth for firewall rules.
   networking.firewall = {
     enable = true;
     logRefusedConnections = true;
     rejectPackets = false; # Drop instead of reject for stealth
     allowedTCPPorts = [ ]; # No public-facing ports — SSH restricted to Tailscale below
     allowedUDPPorts = [ ];
-    allowedTCPPortRanges = [ ];
     # Dev servers on loopback only; all ports trusted on Tailscale VPN
     interfaces = {
       lo.allowedTCPPortRanges = [
@@ -230,7 +227,6 @@ in
         }
       ];
     };
-    allowedUDPPortRanges = [ ];
   };
 
   # === Hostname Leak Prevention (nftables OUTPUT chain) ===

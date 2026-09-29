@@ -1,5 +1,8 @@
-# Cross-module conflict assertions and dependency validation.
-{ config, lib, ... }: {
+# Cross-module conflict assertions.
+# Only real NixOS options here — module membership is decided by explicit
+# imports in hosts/<name>/configuration.nix.
+{ config, lib, ... }:
+{
   assertions = [
     # === Power Management Daemon Conflicts ===
     {
@@ -24,59 +27,27 @@
       message = "NVIDIA proprietary and nouveau open-source drivers cannot coexist. Remove nouveau from boot.kernelModules.";
     }
 
-    # === Gaming System Dependencies ===
+    # === Display Manager Conflicts ===
     {
-      assertion = !config.mySystem.gaming.enable || config.hardware.graphics.enable;
-      message = "Gaming requires hardware.graphics.enable = true. Graphics drivers must be configured.";
+      assertion = !(config.services.displayManager.gdm.enable && config.services.greetd.enable);
+      message = "GDM and greetd cannot be enabled simultaneously. Choose one display manager.";
     }
 
+    # === Security Baseline ===
     {
-      assertion = !config.mySystem.gaming.enable || config.services.pipewire.pulse.enable;
-      message = "Gaming requires PipeWire with PulseAudio compatibility layer (services.pipewire.pulse.enable = true).";
+      assertion = config.security.apparmor.enable;
+      message = "AppArmor must be enabled (security.apparmor.enable = true) for mandatory access control.";
     }
 
-    # === VPN/Network Dependencies ===
-    {
-      assertion = !config.mySystem.mullvadVpn.enable || config.networking.networkmanager.enable;
-      message = "Mullvad VPN requires NetworkManager (networking.networkmanager.enable = true).";
-    }
-
-    {
-      assertion = !(config.mySystem.mullvadVpn.enable && config.mySystem.dnscryptProxy.enable);
-      message = "Mullvad VPN and DNSCrypt-Proxy cannot be enabled together. Mullvad manages DNS while connected.";
-    }
-
-    # === Security Configuration Validation ===
     {
       assertion = with config.networking.firewall; enable;
       message = "Firewall must be enabled (networking.firewall.enable = true) for system security.";
-    }
-
-    {
-      assertion = !config.mySystem.sandboxing.enable || config.mySystem.sandboxing.enableUserNamespaces;
-      message = "Sandboxing requires enableUserNamespaces = true when sandboxing is enabled.";
     }
 
     # === Network Service Security ===
     {
       assertion = !config.services.avahi.enable || config.services.avahi.allowInterfaces != [ ];
       message = "Avahi must have explicit allowInterfaces list for security. Don't expose mDNS on all interfaces.";
-    }
-
-    {
-      assertion = !config.mySystem.dnscryptProxy.enable || !config.services.resolved.enable;
-      message = "DNSCrypt-Proxy and systemd-resolved cannot both manage DNS. Disable resolved when using DNSCrypt.";
-    }
-
-    # === Display Manager Conflicts ===
-    {
-      assertion = !(config.services.displayManager.gdm.enable && config.services.greetd.enable);
-      message = "GDM and greetd cannot be enabled simultaneously. Choose one display manager.";
-    }
-    # === Hardening Validation ===
-    {
-      assertion = config.security.apparmor.enable;
-      message = "AppArmor must be enabled (security.apparmor.enable = true) for mandatory access control.";
     }
   ];
 }

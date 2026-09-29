@@ -1,5 +1,6 @@
 # Laptop power management and kernel modules.
-_: {
+{ pkgs, ... }:
+{
   powerManagement.enable = true;
 
   services = {
@@ -11,4 +12,7 @@ _: {
     "thinkpad_acpi"
     "tp_smapi"
   ];
+
+  # ThinkPad battery utilities
+  environment.systemPackages = [ pkgs.tpacpi-bat ];
 }

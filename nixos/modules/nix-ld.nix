@@ -1,7 +1,6 @@
-# Nix-ld configuration for running non-Nix binaries.
-# This module enables nix-ld, which allows running dynamically linked
-# executables that were not built for NixOS by providing common shared libraries.
-{ pkgs, ... }: {
+# Nix-ld: run non-NixOS dynamically linked binaries.
+{ pkgs, ... }:
+{
   programs.nix-ld = {
     enable = true;
 
@@ -21,9 +20,6 @@
       # Printing support
       cups
 
-      # XCB protocol library
-      libxcb
-
       # X11 and graphics
       libxcb
       libx11
@@ -42,15 +38,6 @@
       libxkbfile
       libxshmfence
       libGL
-
-      # Additional X11 libraries for Chrome/Chromium
-      libxcomposite
-      libxdamage
-      libxfixes
-      libxscrnsaver
-      libxtst
-      libxkbfile
-      libxshmfence
 
       # System services
       dbus
@@ -94,7 +81,6 @@
       libwebp # WebP image support
       libtiff # TIFF image support
       librsvg # SVG rendering
-      gdk-pixbuf # Image loading
       harfbuzz # Text shaping
       graphite2 # Smart font rendering
       pcre # Regular expressions
@@ -109,7 +95,6 @@
       libcap # POSIX capabilities
       libseccomp # seccomp filtering
       libapparmor # AppArmor support
-      systemd # Systemd libraries
 
       # Video and audio codecs
       ffmpegthumbnailer # Video thumbnail generation
@@ -117,7 +102,6 @@
       libva # VAAPI support
       libvdpau # VDPAU support
       intel-media-driver # Intel GPU media driver
-      mesa # Mesa GPU drivers
 
       # Python support (for Python applications)
       python3

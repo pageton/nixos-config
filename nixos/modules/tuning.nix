@@ -1,5 +1,7 @@
-# System stability, resource limits, and high-performance networking tuning.
-{ lib, pkgsStable, ... }: {
+# System stability and performance tuning: OOM guard, fstrim, keyring,
+# sysctl, systemd timeouts, PAM limits.
+{ lib, pkgsStable, ... }:
+{
   services = {
     fstrim = {
       enable = true;
@@ -17,16 +19,14 @@
     # We want notifications enabled for earlyoom OOM-kill alerts.
     systembus-notify.enable = lib.mkForce true;
 
-    # Enable udisks2 for automatic mounting of removable media (workstations only)
+    # udisks2 for automatic mounting of removable media
     udisks2.enable = true;
 
-    # DBus packages for GUI keyring and credentials (workstations only)
-    dbus = {
-      packages = with pkgsStable; [
-        gnome-keyring
-        gcr
-      ];
-    };
+    # DBus packages for GUI keyring and credentials
+    dbus.packages = with pkgsStable; [
+      gnome-keyring
+      gcr
+    ];
 
     # Ensure Secret Service daemon is available and started correctly.
     gnome.gnome-keyring.enable = true;
@@ -93,10 +93,10 @@
     DefaultLimitNOFILE = 1048576; # Session apps (Lutris/esync) inherit from user manager
   };
 
-  # Real-time kit for multimedia tasks (workstations only)
+  # Real-time scheduling for multimedia (PipeWire)
   security.rtkit.enable = true;
 
-  # PAM session limits (consolidated — includes core dump disable from security/hardening.nix)
+  # PAM session limits (consolidated — includes core dump disable from security.nix)
   security.pam.loginLimits = [
     {
       domain = "*";

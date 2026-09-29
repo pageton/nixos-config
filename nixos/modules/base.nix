@@ -1,7 +1,12 @@
-# Nix package manager configuration (flakes, GC, etc.).
-# This module configures the Nix package manager with optimized settings
-# for performance, storage management, and development workflow.
-{ inputs, ... }: {
+# System base: Nix settings, overlays, locale, timezone, session env, CLI tools.
+{
+  pkgs,
+  inputs,
+  constants,
+  user,
+  ...
+}:
+{
   # Overlays applied to the NixOS nixpkgs (including pkgsi686Linux for 32-bit deps).
   # These apply to ALL package sets in the NixOS build, unlike overlays in flake.nix
   # which only affect the pkgs set passed to Home-Manager.
@@ -125,16 +130,121 @@
   # high ceiling removes the retry-exhaustion cliff without wasting bandwidth.
   # The ~400 MB NVIDIA .run and ~1.2 GB Android Studio tarball would otherwise
   # burn the default budget on a flaky link and never converge.
-  systemd.services.nix-daemon.environment.NIX_CURL_FLAGS = "--retry 100 --retry-delay 3 -C -";
-
+  #
   # Runtime bridge so the CURRENT `nh os switch` build picks up the http2
-  # substituter setting above without waiting for a successful switch to
+  # substituter setting below without waiting for a successful switch to
   # regenerate /etc/nix/nix.conf (catch-22: the build that would activate it
   # runs under the old daemon, where http2=true still causes the HTTP/2 stream
   # errors). NIX_CONFIG overrides nix.conf for the daemon on restart. Only one
-  # setting here — systemd Environment= cannot hold the newline that NIX_CONFIG
+  # setting there — systemd Environment= cannot hold the newline that NIX_CONFIG
   # needs for multiple — but http2 is the decisive lever; download-attempts
   # takes effect via nix.settings on the next successful switch.
-  # Applied to the running daemon via this systemd environment (NIX_CONFIG).
-  systemd.services.nix-daemon.environment.NIX_CONFIG = "http2 = false";
+  systemd = {
+    services.nix-daemon.environment = {
+      NIX_CURL_FLAGS = "--retry 100 --retry-delay 3 -C -";
+      NIX_CONFIG = "http2 = false";
+    };
+
+    # nh cache directory
+    tmpfiles.rules = [ "d /var/cache/nh 0755 root root -" ];
+  };
+
+  # Locale
+  i18n.defaultLocale = "en_US.UTF-8";
+  i18n.extraLocaleSettings = {
+    LC_ADDRESS = "en_AG";
+    LC_IDENTIFICATION = "en_AG";
+    LC_MEASUREMENT = "en_AG";
+    LC_MONETARY = "en_AG";
+    LC_NAME = "en_AG";
+    LC_NUMERIC = "en_AG";
+    LC_PAPER = "en_AG";
+    LC_TELEPHONE = "en_AG";
+    LC_TIME = "en_AG";
+  };
+
+  time.timeZone = "Asia/Baghdad";
+
+  # Input device handling (touchpad, mouse)
+  services.libinput.enable = true;
+
+  # Power statistics and battery reporting daemon
+  services.upower.enable = true;
+
+  environment = {
+    sessionVariables = {
+      # Default terminal emulator for applications that need one
+      TERMINAL = constants.terminal;
+
+      _JAVA_AWT_WM_NONREPARENTING = "1";
+
+      # Default text editor for applications that need one
+      EDITOR = constants.editor;
+
+      # XDG Base Directory specification for user binaries
+      XDG_BIN_HOME = "$HOME/.local/bin";
+
+      # XDG data directories - include Flatpak exports for app launchers
+      # This ensures launchers can find Flatpak applications
+      XDG_DATA_DIRS = [
+        "/var/lib/flatpak/exports/share"
+        "$HOME/.local/share/flatpak/exports/share"
+        "/run/current-system/sw/share"
+      ];
+
+      # System PATH with additional directories
+      PATH = [ "$HOME/.local/bin" ];
+
+      # SQLite performance and concurrency settings
+      SQLITE_BUSY_TIMEOUT = "10000";
+      SQLITE_RETRY_DELAY = "100";
+
+      # nh (Nix Helper)
+      NH_FLAKE = "/home/${user}/System";
+      NH_SHOW_ACTIVATION_LOGS = "1";
+    };
+
+    systemPackages =
+      with pkgs;
+      [
+        # nh (Nix Helper) for system/home management
+        nh
+
+        # System monitoring and diagnostic tools
+        btop # Modern system monitor (htop alternative)
+        iotop # I/O usage monitor
+        ncdu # Disk usage analyzer
+        sysstat # System performance monitoring tools
+        lm_sensors # Hardware sensor monitoring
+
+        # Power monitoring tools
+        powertop # Power consumption analysis and optimization
+        acpi # ACPI battery and power information
+      ]
+      ++ [
+        (pkgs.writeShellApplication {
+          name = "nix-validate";
+          runtimeInputs = [ pkgs.nix ];
+          text = ''
+            set -euo pipefail
+
+            FLAKE_DIR="''${NH_FLAKE:-/home/${user}/System}"
+            cd "$FLAKE_DIR"
+
+            echo "==> flake check (no build)"
+            nix flake check --no-build
+
+            echo "==> evaluating host configs"
+            nix eval .#nixosConfigurations.desktop.config.system.build.toplevel.drvPath >/dev/null
+            nix eval .#nixosConfigurations.thinkpad.config.system.build.toplevel.drvPath >/dev/null
+
+            echo "==> evaluating home-manager configs"
+            nix eval .#homeConfigurations.${user}@desktop.activationPackage.drvPath >/dev/null
+            nix eval .#homeConfigurations.${user}@thinkpad.activationPackage.drvPath >/dev/null
+
+            echo "OK: flake checks and evaluations passed"
+          '';
+        })
+      ];
+  };
 }

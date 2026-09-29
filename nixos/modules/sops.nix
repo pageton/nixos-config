@@ -1,3 +1,4 @@
+# SOPS secrets: sops-nix module, age key, and declared secrets.
 {
   inputs,
   user,

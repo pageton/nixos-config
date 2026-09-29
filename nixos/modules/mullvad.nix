@@ -1,22 +1,12 @@
-# Mullvad VPN with hardened tunnel settings.
-
+# Mullvad VPN with hardened tunnel settings (desktop host only).
 {
   config,
   lib,
   pkgs,
   ...
 }:
-
 let
   mullvad = "${config.services.mullvad-vpn.package}/bin/mullvad";
-
-  # LAN sharing policy: allow when services need LAN access, block otherwise.
-  # Modules that need LAN append to mySystem.mullvadVpn.lanServices.
-  lanCommand =
-    if config.mySystem.mullvadVpn.lanServices != [ ] then
-      "${mullvad} lan set allow"
-    else
-      "${mullvad} lan set block";
 
   mullvadSettingsScript = pkgs.writeShellScript "mullvad-settings" ''
     # Wait for mullvad daemon RPC socket to be ready
@@ -26,10 +16,9 @@ let
     done
 
     # === DNS ===
-    # Do not set Mullvad-side custom DNS. The host already resolves through
-    # local dnscrypt-proxy via resolv.conf/NetworkManager. Forcing Mullvad's
-    # tunnel DNS to 127.0.0.1 adds unnecessary complexity and can slow tunnel
-    # establishment.
+    # Do not set Mullvad-side custom DNS. The host resolves through
+    # NetworkManager/systemd-resolved. Forcing Mullvad's tunnel DNS adds
+    # unnecessary complexity and can slow tunnel establishment.
     ${mullvad} dns set default
 
     # === Kill Switch ===
@@ -64,56 +53,39 @@ let
     ${mullvad} obfuscation set mode auto
 
     # === Local Network ===
-    # SECURITY: Only allow LAN access when services need it.
-    # On public/hostile networks, LAN access is an attack surface.
-    # See mySystem.mullvadVpn.lanServices for the list of services that need LAN.
-    ${lanCommand}
+    # Allow LAN access: Flatpak apps and local services need it.
+    # On public/hostile networks LAN access is an attack surface — tighten
+    # to `lan set block` if not running local services.
+    ${mullvad} lan set allow
   '';
 in
 {
-  options.mySystem.mullvadVpn = {
-    enable = lib.mkEnableOption "Mullvad VPN service";
-    lanServices = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
-      default = [ ];
-      description = ''
-        Services that require LAN access through the VPN tunnel.
-        Written by: docker.nix, kdeconnect.nix, flatpak.nix, and host configs for Home Manager services.
-      '';
-    };
+  services.mullvad-vpn = {
+    enable = true;
+    gui.enable = true;
   };
 
-  config = lib.mkIf config.mySystem.mullvadVpn.enable {
-    # DNS handled by DNSCrypt-Proxy, not Mullvad's resolver.
-    # Resolved conflict validated in validation.nix.
+  # Mullvad's packaged unit waits for network-online, which adds ~14s of
+  # boot delay via NetworkManager-wait-online. Starting after NetworkManager
+  # is sufficient; the daemon can reconnect as soon as the link is usable.
+  systemd.services.mullvad-daemon = {
+    wants = lib.mkForce [ "network.target" ];
+    after = lib.mkForce [
+      "network.target"
+      "NetworkManager.service"
+    ];
+  };
 
-    services.mullvad-vpn = {
-      enable = true;
-      gui.enable = true;
+  # Declarative settings applied after daemon starts
+  systemd.services.mullvad-settings = {
+    description = "Apply declarative Mullvad VPN settings";
+    after = [ "mullvad-daemon.service" ];
+    requires = [ "mullvad-daemon.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
     };
-
-    # Mullvad's packaged unit waits for network-online, which adds ~14s of
-    # boot delay via NetworkManager-wait-online. Starting after NetworkManager
-    # is sufficient; the daemon can reconnect as soon as the link is usable.
-    systemd.services.mullvad-daemon = {
-      wants = lib.mkForce [ "network.target" ];
-      after = lib.mkForce [
-        "network.target"
-        "NetworkManager.service"
-      ];
-    };
-
-    # Declarative settings applied after daemon starts
-    systemd.services.mullvad-settings = {
-      description = "Apply declarative Mullvad VPN settings";
-      after = [ "mullvad-daemon.service" ];
-      requires = [ "mullvad-daemon.service" ];
-      wantedBy = [ "multi-user.target" ];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-      };
-      script = "${mullvadSettingsScript}";
-    };
+    script = "${mullvadSettingsScript}";
   };
 }

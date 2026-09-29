@@ -1,6 +1,6 @@
 # Main NixOS configuration for the 'desktop' host.
+# Tower: Ryzen 5 7600X + dedicated NVIDIA GPU + AMD thermal watchdog.
 {
-  pkgs,
   stateVersion,
   hostname,
   ...
@@ -9,88 +9,25 @@
   imports = [
     ./hardware-configuration.nix
     ./local-packages.nix
-    ../../nixos/modules
-    ./modules
+    ../../nixos/profiles/common.nix
+
+    # Desktop-only features
+    ../../nixos/modules/amd-thermal.nix
+    ../../nixos/modules/cloudflared.nix
+    ../../nixos/modules/cloudflare-warp.nix
+    ../../nixos/modules/gaming.nix
+    ../../nixos/modules/loki.nix
+    ../../nixos/modules/mullvad.nix
+    ../../nixos/modules/observability
+    ../../nixos/modules/vaultwarden.nix
+    ../../nixos/modules/virtualisation.nix
+    ../../nixos/modules/web-re.nix
   ];
 
   networking.hostName = hostname;
 
-  system = { inherit stateVersion; };
+  system.stateVersion = stateVersion;
 
-  # System module configurations with all options explicitly set
-  mySystem = {
-    virtualisation.enable = true;
-    gaming = {
-      enable = true;
-      enableGamescope = true;
-    };
-    sandboxing = {
-      enable = true;
-      enableUserNamespaces = true;
-      enableWrappedBinaries = true;
-    };
-    bluetooth = {
-      enable = true;
-      powerOnBoot = true;
-    };
-    flatpak = {
-      enable = true;
-    };
-    tor = {
-      enable = true;
-    };
-    dnscryptProxy = {
-      enable = false;
-    };
-    netdata = {
-      enable = true;
-    };
-    scrutiny = {
-      enable = true;
-    };
-    syncthing = {
-      enable = true;
-    };
-    glance = {
-      enable = true;
-    };
-    observability = {
-      enable = true;
-    };
-    loki = {
-      enable = true;
-    };
-    macchanger = {
-      enable = true;
-    };
-    amdRyzenThermal = {
-      enable = true;
-    };
-    mullvadVpn = {
-      enable = true;
-    };
-    tailscale = {
-      enable = true;
-    };
-    webRe = {
-      enable = true;
-    };
-    vaultwarden = {
-      enable = true;
-    };
-    cloudflared = {
-      enable = true;
-      # The dedicated 'vault-desktop' Cloudflare Tunnel (created via `cloudflared
-      # tunnel create vault-desktop`). DNS cutover for vault.sadiq.lol happens last.
-      tunnelId = "0011ea12-dadf-44f9-8eba-1d7a3cc44b68";
-    };
-    cloudflareWarp = {
-      enable = true;
-    };
-    codex = {
-      enable = true;
-    };
-  };
-
-  environment.systemPackages = with pkgs; [ home-manager ];
+  # ThinkPad-only behaviors that the shared modules default differently:
+  # (none — desktop uses the shared defaults, e.g. bluetooth powerOnBoot = true)
 }

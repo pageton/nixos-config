@@ -1,13 +1,12 @@
-# Bootloader configuration (GRUB - no theme).
-{ pkgs, ... }: {
+# Bootloader (GRUB) and kernel selection.
+{ pkgs, ... }:
+{
   boot.kernelPackages = pkgs.linuxPackages_6_18;
 
   boot.loader = {
     systemd-boot.enable = false;
 
-    efi = {
-      canTouchEfiVariables = true;
-    };
+    efi.canTouchEfiVariables = true;
 
     grub = {
       enable = true;

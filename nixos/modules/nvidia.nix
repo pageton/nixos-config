@@ -1,4 +1,5 @@
-# NVIDIA GPU drivers, CUDA, and Wayland integration.
+# NVIDIA GPU drivers, VA-API, and Wayland environment.
+# Host-specific PRIME/bus-id config lives in hosts/<name>/.
 {
   config,
   lib,
@@ -27,7 +28,7 @@ in
       # Fixes black/broken windows with NVIDIA (VK_ERROR_OUT_OF_DATE_KHR).
       GSK_RENDERER = "gl";
 
-      # ELECTRON_OZONE_PLATFORM_HINT is set in niri/main.nix (compositor-level)
+      # ELECTRON_OZONE_PLATFORM_HINT is set in home/niri (compositor-level)
       __GL_GSYNC_ALLOWED = "1";
       __GL_VRR_ALLOWED = "1";
       NVD_BACKEND = "direct";
@@ -69,10 +70,7 @@ in
       modesetting.enable = true; # Required for Wayland compositors
       package = nvidiaDriverChannel;
 
-      powerManagement = {
-        enable = true;
-        # finegrained configured in host-specific modules
-      };
+      powerManagement.enable = true;
     };
 
     graphics = {
