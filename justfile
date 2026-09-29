@@ -8,73 +8,87 @@ host := `hostname`
 _default:
     @{{JUST}} --list-heading "{{header}}" --list
 
-# Format all .nix files
+# Format Nix and shell files
 format:
     @echo -e "\n➤ Formatting Nix files"
     @nix run nixpkgs#time -- -f "⏱ Completed in %E" fd -e nix -X nixfmt --strict
+    @echo "➤ Formatting shell scripts"
+    @files=$(git ls-files --cached --others --exclude-standard -- '*.sh'); \
+      if [ -n "$files" ]; then nix run nixpkgs#shfmt -- -ci -i 2 -w $files; fi
     @echo "✔ Formatting passed!"
 
-# Lint all .nix files and bash scripts
+# Lint Nix and shell files
 lint:
     @echo -e "\n➤ Linting Nix files…"
     @nix run nixpkgs#time -- -f "⏱ Completed in %E" nix run nixpkgs#statix -- check --ignore '.git/**'
-    @echo "✔ Nix linting passed!"
-    @echo -e "\n➤ Checking Bash scripts…"
-    @nix run nixpkgs#time -- -f "⏱ Completed in %E" find . -name "*.sh" -not -path "./.git/*" -exec nix run nixpkgs#shellcheck -- -x {} +
-    @echo "✔ ShellCheck passed!"
+    @echo "➤ Linting shell scripts…"
+    @files=$(git ls-files --cached --others --exclude-standard -- '*.sh'); \
+      if [ -n "$files" ]; then nix run nixpkgs#shellcheck -- -x $files && \
+        nix run nixpkgs#shfmt -- -ci -i 2 -d $files; fi
+    @echo "✔ Linting passed!"
 
-# Check all missing imports
-modules:
-    @echo -e "\n➤ Checking modules"
-    @nix run nixpkgs#time -- -f "⏱ Completed in %E" bash ./scripts/build/modules-check.sh
-
-# Security-focused repository checks
-security:
-    @echo -e "\n➤ Running security audit"
-    @nix run nixpkgs#time -- -f "⏱ Completed in %E" bash ./scripts/build/security-audit.sh
-
-# Performance diagnostics (boot/session/report)
-perf top="15":
-    @echo -e "\n➤ Running performance audit"
-    @nix run nixpkgs#time -- -f "⏱ Completed in %E" bash ./scripts/build/performance-audit.sh {{top}}
-
-# Install repo quality-gate git hooks (pre-commit + pre-push)
-install-hooks:
-    @ln -sf ../../scripts/build/pre-commit-hook.sh .git/hooks/pre-commit
-    @ln -sf ../../scripts/build/pre-push-hook.sh .git/hooks/pre-push
-    @echo "✔ Installed pre-commit and pre-push hooks"
-
-# Remove installed git hooks
-remove-hooks:
-    @rm -f .git/hooks/pre-commit .git/hooks/pre-push
-    @echo "✔ Removed git hooks"
-
-# Systemd service hardening exposure report
-hardening:
-    @echo -e "\n➤ Running systemd hardening audit"
-    @nix run nixpkgs#time -- -f "⏱ Completed in %E" bash ./scripts/build/systemd-hardening-audit.sh
-
-# Evaluate flake outputs without switching
+# Check all flake outputs evaluate
 check:
     @echo -e "\n➤ Evaluating flake"
     @nix run nixpkgs#time -- -f "⏱ Completed in %E" nix flake check "path:$PWD"
 
-# Measure evaluation time for core flake outputs
-eval-audit target="all":
-    @echo -e "\n➤ Running evaluation audit"
-    @nix run nixpkgs#time -- -f "⏱ Completed in %E" bash ./scripts/build/eval-audit.sh {{target}}
+# Local quality gate (no switch)
+qa:
+    @echo -e "\n➤ Running local QA (no switch)…"
+    {{JUST}} lint
+    {{JUST}} check
 
-# Fast eval timing for the current host only
-eval-current:
-    @echo -e "\n➤ Running current-host evaluation audit"
-    @nix run nixpkgs#time -- -f "⏱ Completed in %E" bash ./scripts/build/eval-audit.sh {{host}}
+# Show the desired, saved preview, and active system/home generations (no build or switch)
+status:
+    @echo -e "\n➤ Configuration status…"
+    @./scripts/status.sh
 
-# Switch Home-Manager generation
+# Build and compare the system, then save the reviewed generation
+preview:
+    @echo -e "\n➤ Building system preview…"
+    @set -euo pipefail; \
+      source scripts/config.sh; source scripts/saved-preview-build.sh; select_system; \
+      actual="$(nix build --no-write-lock-file --no-link --print-out-paths "$system_ref.config.system.build.toplevel")"; \
+      nix store diff-closures /run/current-system "$actual"; \
+      result="$(saved_preview_link system "$NIXOS_CONFIG")"; \
+      mkdir -p "$(dirname "$result")"; \
+      ln -sfnT "$actual" "$result"; \
+      echo "✔ Saved preview: $result"
+
+# Activate exactly the built closure; run `just preview` and review it first
+switch:
+    @echo -e "\n➤ Switching to saved system preview…"
+    @set -euo pipefail; \
+      source scripts/config.sh; source scripts/saved-preview-build.sh; select_system; \
+      configured_host="$(nix eval --raw --no-write-lock-file "$system_ref.config.networking.hostName")"; \
+      current_host="$(hostname)"; \
+      test -n "$configured_host" || { echo 'The selected NixOS configuration has no hostname' >&2; exit 1; }; \
+      if [ "$current_host" != "$configured_host" ]; then \
+        test "${ALLOW_HOST_RENAME:-}" = 1 || { \
+          printf 'Host mismatch: running %s, selected %s (%s). To deliberately rename this host, use ALLOW_HOST_RENAME=1 just switch.\n' "$current_host" "$configured_host" "$NIXOS_CONFIG" >&2; exit 1; \
+        }; \
+        printf 'Opted in to hostname change: %s -> %s\n' "$current_host" "$configured_host"; \
+      fi; \
+      result="$(saved_preview_link system "$NIXOS_CONFIG")"; \
+      actual="$(require_saved_preview_build "$system_ref.config.system.build.toplevel.outPath" "$result" preview)"; \
+      sudo nixos-rebuild switch --no-reexec --store-path "$actual"
+
+# Build and compare Home-Manager, then save the reviewed generation
+home-preview:
+    @echo -e "\n➤ Building Home-Manager preview…"
+    @./scripts/home-preview.sh
+
+# Activate only the saved Home-Manager preview; run `just home-preview` first
+home-switch:
+    @echo -e "\n➤ Switching to saved Home-Manager preview…"
+    @./scripts/home-switch.sh
+
+# Switch Home-Manager generation (direct, via nh)
 home:
     @echo -e "\n➤ Switching Home-Manager…"
     nh home switch '.?submodules=1' --diff never --no-update-lock-file --no-write-lock-file
 
-# Switch NixOS generation
+# Switch NixOS generation (direct, via nh)
 nixos target=host:
     @echo -e "\n➤ Rebuilding NixOS…"
     nh os switch . --hostname {{target}} --diff never --no-update-lock-file --no-write-lock-file
@@ -84,52 +98,11 @@ nixos-fast target=host:
     @echo -e "\n➤ Rebuilding NixOS (fast mode)…"
     NH_NO_VALIDATE=1 nh os switch . --hostname {{target}} --diff never --no-update-lock-file --no-write-lock-file --no-nom
 
-# Apply resumable-retry curl flags (NIX_CURL_FLAGS) to the running nix-daemon.
-# Bridges the build catch-22 so large fetches (NVIDIA driver, Android Studio)
-# resume across connection drops instead of restarting from byte 0.
-fetch-retry:
-    @echo -e "\n➤ Applying NIX_CURL_FLAGS to running nix-daemon…"
-    @sudo bash ./scripts/build/fetch-retry.sh
-
-# Live dashboard for the big resumable CDN fetches during `nh os switch`.
-fetch-progress:
-    @sudo bash ./scripts/build/fetch-progress.sh
-
-# Fast local quality gate (no switch)
-qa:
-    @echo -e "\n➤ Running local QA (no switch)…"
-    {{JUST}} modules
-    {{JUST}} security
-    {{JUST}} check
-    {{JUST}} eval-audit
-
-# Fast local QA for iterative work (current host only)
-qa-fast:
-    @echo -e "\n➤ Running fast local QA (current host, no switch)…"
-    {{JUST}} modules
-    @tmp_dir="$(mktemp -d)"; \
-    trap 'rm -rf "${tmp_dir}"' EXIT; \
-    {{JUST}} security >"${tmp_dir}/security.log" 2>&1 & \
-    security_pid=$!; \
-    {{JUST}} eval-current >"${tmp_dir}/eval-current.log" 2>&1 & \
-    eval_pid=$!; \
-    security_status=0; \
-    eval_status=0; \
-    wait "${security_pid}" || security_status=$?; \
-    wait "${eval_pid}" || eval_status=$?; \
-    cat "${tmp_dir}/security.log"; \
-    cat "${tmp_dir}/eval-current.log"; \
-    if [ "${security_status}" -ne 0 ] || [ "${eval_status}" -ne 0 ]; then \
-      exit 1; \
-    fi
-
-# All of the above, in order
+# Full pipeline: lint, format, check, then rebuild
 all:
     @echo -e "\n➤ Running full pipeline…"
-    {{JUST}} modules
     {{JUST}} lint
     {{JUST}} format
-    {{JUST}} security
     {{JUST}} check
     {{JUST}} nixos
     {{JUST}} home
@@ -143,15 +116,11 @@ update:
 update-pkgs:
     @echo -e "\n➤ Updating Nixpkgs…"
     nix flake update nixpkgs
+
 # Update Nixpkgs-stable
 update-pkgs-stable:
     @echo -e "\n➤ Updating Nixpkgs-stable…"
     nix flake update nixpkgs-stable
-
-# Update AppImage packages (opencode-desktop, t3code) to latest GitHub releases
-update-apps:
-    @echo -e "\n➤ Updating AppImage packages…"
-    bash ./scripts/build/update-appimage-packages.sh
 
 # Clean up build artifacts and caches
 clean:
@@ -169,12 +138,12 @@ clean:
 # If interrupted, the OS reclaims tmpfs automatically — no cleanup needed.
 sops-edit:
     @echo -e "\n➤ Editing secrets with SOPS…"
-    @DEC_FILE="$${XDG_RUNTIME_DIR:-/tmp}/secrets-decrypted-$$(date +%s).yaml"; \
-    sops --decrypt secrets/secrets.yaml > "$$DEC_FILE"; \
+    @DEC_FILE="${XDG_RUNTIME_DIR:-/tmp}/secrets-decrypted-$(date +%s).yaml"; \
+    sops --decrypt secrets/secrets.yaml > "$DEC_FILE"; \
     echo "Opening editor (close when done)..."; \
-    code --wait "$$DEC_FILE"; \
-    sops --encrypt "$$DEC_FILE" > secrets/secrets.yaml; \
-    rm -f "$$DEC_FILE"; \
+    code --wait "$DEC_FILE"; \
+    sops --encrypt "$DEC_FILE" > secrets/secrets.yaml; \
+    rm -f "$DEC_FILE"; \
     echo "✔ Encrypted and cleaned up!"
 
 # View decrypted secrets (read-only)
@@ -186,18 +155,18 @@ sops-view:
 # Decrypted file lives in XDG_RUNTIME_DIR (tmpfs) — never written to persistent disk.
 sops-decrypt:
     @echo -e "\n➤ Decrypting secrets to tmpfs…"
-    @DEC_FILE="$${XDG_RUNTIME_DIR:-/tmp}/secrets-decrypted.yaml"; \
-    sops --decrypt secrets/secrets.yaml > "$$DEC_FILE"; \
-    echo "Decrypted to $$DEC_FILE"; \
+    @DEC_FILE="${XDG_RUNTIME_DIR:-/tmp}/secrets-decrypted.yaml"; \
+    sops --decrypt secrets/secrets.yaml > "$DEC_FILE"; \
+    echo "Decrypted to $DEC_FILE"; \
     echo "Edit the file then run: just sops-encrypt"
 
 # Encrypt file back to secrets
 sops-encrypt:
     @echo -e "\n➤ Encrypting decrypted secrets back…"
-    @DEC_FILE="$${XDG_RUNTIME_DIR:-/tmp}/secrets-decrypted.yaml"; \
-    if [ ! -f "$$DEC_FILE" ]; then echo "Error: $$DEC_FILE not found. Run 'just sops-decrypt' first."; exit 1; fi; \
-    sops --encrypt "$$DEC_FILE" > secrets/secrets.yaml; \
-    rm -f "$$DEC_FILE"; \
+    @DEC_FILE="${XDG_RUNTIME_DIR:-/tmp}/secrets-decrypted.yaml"; \
+    if [ ! -f "$DEC_FILE" ]; then echo "Error: $DEC_FILE not found. Run 'just sops-decrypt' first."; exit 1; fi; \
+    sops --encrypt "$DEC_FILE" > secrets/secrets.yaml; \
+    rm -f "$DEC_FILE"; \
     echo "✔ Encrypted and cleaned up!"
 
 # Add a single secret (value read from stdin — never leaks to shell history)
@@ -206,18 +175,8 @@ sops-encrypt:
 secrets-add key:
     @echo -e "\n➤ Adding secret: {{key}}"
     @echo -n "Enter value (hidden): "; read -rs value; echo; \
-    sops --set '["{{key}}"] "'"$$value"'"' secrets/secrets.yaml
+    sops --set '["{{key}}"] "'"$value"'"' secrets/secrets.yaml
     @echo "✔ Secret added!"
-
-# Setup SOPS age key
-sops-setup:
-    @echo -e "\n➤ Setting up SOPS age key…"
-    ./scripts/sops/sops-setup.sh
-
-# Setup SSH and GPG keys from SOPS
-setup-keys:
-    @echo -e "\n➤ Setting up SSH and GPG keys from SOPS…"
-    ./scripts/sops/setup-keys.sh
 
 # Show SOPS public key
 sops-key:
@@ -227,35 +186,5 @@ sops-key:
         echo "Public key:"; \
         nix shell nixpkgs#age -c age-keygen -y ~/.config/sops/age/keys.txt; \
     else \
-        echo "No age key found. Run 'just sops-setup' to create one."; \
+        echo "No age key found. Create one: nix shell nixpkgs#age -c age-keygen -o ~/.config/sops/age/keys.txt"; \
     fi
-
-
-# ── AI Agent Skills ────────────────────────────────────────────────────
-
-# Install a skill repo on demand (bypasses Nix-managed skill list)
-skill-add repo:
-    @echo -e "\n➤ Installing skills from {{repo}}"
-    @bash scripts/ai/skill-add.sh "{{repo}}"
-# List currently installed skills count
-skills-count:
-    @echo -e "\n➤ Installed skills: $$(find ~/.claude/skills -name SKILL.md 2>/dev/null | wc -l)"
-    @echo "   Disk usage: $$(du -sh ~/.claude/skills/ 2>/dev/null | cut -f1)"
-
-# Remove a skill repo's skills (manual cleanup for on-demand installs)
-skill-rm repo:
-    @echo -e "\n➤ Removing skills from {{repo}}"
-    @echo "  Manual step: remove relevant dirs from ~/.claude/skills/"
-
-# Rebuild skills from Nix config (full reinstall, cleans stale)
-skills-rebuild:
-    @echo -e "\n➤ Forcing full skill reinstall on next nh home switch"
-    @rm -f ~/.cache/ai-agents/skills-state.sha256 ~/.cache/ai-agents/skills-installed.marker
-    @echo "✔ Cache cleared. Run 'nh home switch' to reinstall."
-
-# ── Server Inventory ──────────────────────────────────────────────────
-
-# Upload SSH public key to inventory servers (prompts for password on first connect)
-provision-ssh hostname='':
-    @echo -e "\n➤ Provisioning SSH keys to inventory servers…"
-    @./scripts/inventory/provision-ssh.sh {{hostname}}

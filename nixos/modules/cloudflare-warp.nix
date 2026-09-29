@@ -1,7 +1,7 @@
 # Cloudflare WARP (one.one.one.one) client — warp-svc daemon + warp-cli.
 #
 # The GUI (warp-taskbar tray applet) is started per-user via Home-Manager
-# (home/desktop/cloudflare-warp) on hosts that enable this module.
+# (home/cloudflare-warp) on hosts that enable this module.
 #
 # Gotchas (client 2026.7.1343.0 on NixOS):
 # - The client ships with the MASQUE protocol; on this host its

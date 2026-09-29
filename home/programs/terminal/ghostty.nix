@@ -77,7 +77,7 @@
       resize-overlay = "after-first";
       resize-overlay-position = "top-right";
       resize-overlay-duration = "600ms";
-      gtk-tabs-location = "hidden"; # Zellij handles multiplexing
+      gtk-tabs-location = "hidden"; # tmux handles multiplexing
 
       notify-on-command-finish = "unfocused";
       notify-on-command-finish-action = "bell,notify";

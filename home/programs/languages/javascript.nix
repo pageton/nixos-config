@@ -11,11 +11,9 @@
 let
   bunPackage = import ../../_helpers/_bun-package.nix { inherit pkgs; };
 
-  # AI agent CLIs (@anthropic-ai/claude-code, @openai/codex, @github/copilot,
-  # opencode-ai, @colbymchenry/codegraph, @mimo-ai/cli, @oh-my-pi/pi-coding-agent)
-  # are managed by home/programs/ai-agents/services.nix via dedicated auto-update
-  # timers + activation scripts. NOT listed here to avoid redundant downloads
-  # on every home-manager switch (was double-downloading ~2GB per switch).
+  # AI agent CLIs (claude-code, codex, copilot, opencode, pi, zcode, ...) are
+  # installed from the llm-agents flake input by home/ai/. NOT listed
+  # here to avoid redundant downloads on every home-manager switch.
   globalNpmPackages = [
     "btca"
     "skills"

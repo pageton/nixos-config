@@ -50,7 +50,7 @@ This repository contains a declarative NixOS configuration using flakes with the
 git clone https://github.com/pageton/nixos-config.git ~/System
 cd ~/System
 
-# Apply the configuration (runs full pipeline: modules check, lint, format, nh os switch, home-manager switch)
+# Apply the configuration (runs full pipeline: lint, format, flake check, nh os switch, home-manager switch)
 just all
 ```
 
@@ -98,7 +98,7 @@ sudo hostnamectl set-hostname myhost
 7. **Setup SOPS encryption key** (if not already done):
 
 ```bash
-just sops-setup
+nix shell nixpkgs#age -c age-keygen -o ~/.config/sops/age/keys.txt
 ```
 
 8. **Deploy the system:**
@@ -126,17 +126,8 @@ System/
 ├── .sops.yaml                   # SOPS encryption config
 ├── shared/                      # Cross-boundary shared Nix helpers
 │   ├── constants.nix            # Single source of truth (user, fonts, colors, keyboard, ports)
-│   ├── option-helpers.nix       # Typed option constructors (mkBoolOption, mkStrOption, etc.)
 │   ├── alias-helpers.nix        # Shared shell alias injection for zsh/bash
-│   └── *(secret-loader.nix moved to home/_helpers/_secret-loader.nix)*
-├── scripts/                     # Repository-level audit and lab scripts
-│   ├── build/                   # modules/security/performance audit scripts
-│   ├── ai/                      # AI agent launchers, inventory, and log analysis
-│   ├── apps/                    # Desktop app wrappers (youtube-mpv, xdg-open, etc.)
-│   ├── hardware/                # Hardware control scripts (nvidia-fans)
-│   ├── system/                  # System health report collectors
-│   ├── sops/                    # SOPS editing helpers
-│   └── lib/                     # Shared shell helpers (logging, testing, AWK)
+│   └── _*.nix                   # Secret-check and systemd-timer helpers
 │
 ├── hosts/                       # Host-specific configurations
 │   ├── _inventory.nix           # Host list (single source of truth for flake.nix)
@@ -180,14 +171,14 @@ System/
     │   └── ...
     │
     ├── programs/                # Application configurations
-    │   ├── terminal/            # Terminal, shell (zsh), and CLI tools
-    │   │   ├── alacritty.nix    #   Alacritty terminal
-    │   │   ├── shell.nix        #   Zsh configuration
-    │   │   ├── zellij/          #   Zellij terminal multiplexer
+    │   ├── terminal/            # Terminal, shell, and CLI tools
+    │   │   ├── alacritty.nix    #   Alacritty terminal (default)
+    │   │   ├── ghostty.nix      #   Ghostty terminal
+    │   │   ├── shell.nix        #   Bash/Zsh, starship, tmux config
     │   │   └── ...
     │   ├── nvf/                 # NVF (Neovim)
     │   ├── languages/           # Language toolchains (Go, Python, Node.js)
-    │   ├── ai-agents/           # AI coding agent wrappers and launchers
+    │   ├── ai/                  # AI coding agent CLIs (llm-agents.nix)
     │   ├── zen-browser/         # Zen Browser multi-profile setup
     │   ├── isolation/           # Application isolation wrappers
     │   └── ...                  # brave, discord, gpg, obs, spicetify, ssh, etc.
@@ -199,12 +190,10 @@ System/
     │   ├── mime/                # MIME defaults
     │   └── udiskie/             # Auto-mount removable media
     │
-    ├── themes/                  # Theme configurations
-    │   ├── stylix.nix           # Stylix theming engine
-    │   ├── palette.nix          # Catppuccin Mocha color palette
-    │   └── options.nix          # Theme option definitions
-    │
-    └── scripts/                 # User scripts (nerdfont-fzf, build helpers)
+    └── themes/                  # Theme configurations
+        ├── stylix.nix           # Stylix theming engine
+        ├── palette.nix          # Catppuccin Mocha color palette
+        └── options.nix          # Theme option definitions
 ```
 
 ---
@@ -225,6 +214,7 @@ This configuration uses the following flakes:
 | **noctalia**       | Noctalia shell integration                                                                                |
 | **nixcord**        | Discord theming                                                                                           |
 | **nvf**            | Neovim configuration framework                                                                            |
+| **llm-agents**     | AI agent CLIs and desktop apps (Codex, OpenCode, Pi, Herdr, ZCode, …)                                     |
 
 ---
 
@@ -234,39 +224,38 @@ This repository uses [`just`](https://github.com/casey/just) as a command runner
 
 ### Daily Workflow
 
-### Git Hooks
-
-The repository includes pre-commit and pre-push hooks for automated quality checks:
-
 ```bash
-# Install pre-commit hook (runs modules-check + lint + format before each commit)
-ln -sf ../../scripts/build/pre-commit-hook.sh .git/hooks/pre-commit
-
-# Install pre-push hook (enforces GPG-signed commits)
-ln -sf ../../scripts/build/pre-push-hook.sh .git/hooks/pre-push
+just status        # desired vs saved vs active generations (eval only)
+just preview       # build + diff the system, save the reviewed generation
+just switch        # activate exactly that saved system build
+just home-preview  # build + diff Home-Manager, review managed-file changes
+just home-switch   # activate exactly that saved Home-Manager generation
 ```
+
+`just switch` and `just home-switch` never re-evaluate or rebuild: they only
+activate the generation saved by the matching `*-preview` command, so what you
+reviewed is what you get. Use `just nixos` / `just home` (nh) when you want a
+direct rebuild-and-switch instead.
 
 ### Essential Commands
 
 | Command                   | Description                                                                      |
 | ------------------------- | -------------------------------------------------------------------------------- |
 | `just`                    | List all available commands                                                      |
-| `just all`                | **Run full pipeline**: modules, lint, format, security, flake check, nixos, home |
+| `just all`                | **Run full pipeline**: lint, format, flake check, nixos, home                     |
 | `just nixos`              | Rebuild and switch current host (`--hostname $(hostname)`) with faster nh flags  |
 | `just nixos <host>`       | Rebuild and switch a specific host profile (e.g. `just nixos desktop`)           |
 | `just nixos-fast`         | Faster switch path (`NH_NO_VALIDATE=1`, no NOM) for iterative changes            |
 | `just home`               | Apply Home-Manager configuration using nh with lockfile-write disabled           |
-| `just format`             | Format all `.nix` files with `nixfmt`                                            |
-| `just lint`               | Lint all `.nix` files with `statix` + bash shellcheck                            |
-| `just modules`            | Check for missing module imports (**critical before commits**)                   |
-| `just security`           | Scan for risky security patterns and plaintext secret leaks                      |
-| `just perf`               | Print boot/session performance diagnostics                                       |
-| `just hardening`          | Run `systemd-analyze security` report on core services                           |
+| `just status`             | Show desired vs saved vs active generations (eval only, no build)                |
+| `just preview`            | Build + diff system closure vs `/run/current-system`, save generation            |
+| `just switch`             | Activate the saved system preview (hostname guard; run `just preview`)           |
+| `just home-preview`       | Build + diff Home-Manager, report managed-file changes, save generation          |
+| `just home-switch`        | Activate the saved Home-Manager preview (run `just home-preview` first)          |
+| `just format`             | Format all `.nix` (nixfmt) and `.sh` (shfmt) files                               |
+| `just lint`               | Lint `.nix` with statix; `.sh` with shellcheck + shfmt                           |
 | `just check`              | Evaluate full flake outputs with `nix flake check`                               |
-| `just eval-audit`         | Measure eval time for all host nixos/home outputs                                |
-| `just eval-current`       | Measure eval time for current host outputs only                                  |
-| `just qa`                 | Full local QA (modules + security + check + eval-audit)                          |
-| `just qa-fast`            | Fast local QA (modules + security + eval-current)                                |
+| `just qa`                 | Local QA (lint + flake check)                                                     |
 | `just update`             | Update all flake inputs                                                          |
 | `just update-pkgs`        | Update nixpkgs only                                                              |
 | `just update-pkgs-stable` | Update stable nixpkgs                                                            |
@@ -296,7 +285,7 @@ This configuration uses [SOPS](https://github.com/Mic92/sops-nix) with `age` enc
 
 ```bash
 # Setup age key (if not already done)
-just sops-setup
+nix shell nixpkgs#age -c age-keygen -o ~/.config/sops/age/keys.txt
 
 # View current secrets
 just sops-view
@@ -322,8 +311,6 @@ just secrets-add github_token ghp_your_token_here
 | `just sops-decrypt`          | Decrypt to file for manual editing  |
 | `just sops-encrypt`          | Encrypt file back to secrets        |
 | `just sops-key`              | Show public age key                 |
-| `just sops-setup`            | Setup new age key                   |
-| `just setup-keys`            | Setup SSH and GPG keys from secrets |
 
 ### Structure
 
@@ -430,7 +417,7 @@ sudo nixos-generate-config --root /mnt --show-hardware-config > hosts/myhost/har
 mySystem.myModule.enable = true;
 ```
 
-4. Run `just modules` to verify the import is detected.
+4. Run `just check` to verify the configuration evaluates.
 
 ### Adding Home-Manager Programs
 
@@ -518,8 +505,8 @@ config = lib.mkIf (hostname == "desktop") {
 ### Build Errors
 
 ```bash
-# Check for missing modules
-just modules
+# Evaluate flake outputs
+just check
 
 # Lint files
 just lint
@@ -535,7 +522,7 @@ sudo nixos-rebuild switch --flake .#desktop --show-trace
 just sops-key
 
 # Regenerate key
-just sops-setup
+nix shell nixpkgs#age -c age-keygen -o ~/.config/sops/age/keys.txt
 
 # Verify .sops.yaml has correct age key
 cat .sops.yaml

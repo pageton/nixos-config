@@ -23,7 +23,7 @@
       }
     '';
   })
-  # playerctl is provided by services.playerctld (home/desktop/niri/default.nix)
+  # playerctl is provided by services.playerctld (home/niri/default.nix)
 
   # === Screenshot and Capture ===
   grim # Wayland screenshot tool (used by swappy pipeline)

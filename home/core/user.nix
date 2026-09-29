@@ -3,7 +3,6 @@
   user,
   pkgs,
   pkgsStable,
-  inputs,
   constants,
   ...
 }:
@@ -20,11 +19,7 @@
     permittedInsecurePackages = [ "nodejs-slim-20.20.2" ];
   };
 
-  home.packages =
-    let
-      Pkgs = import ../packages { inherit pkgs pkgsStable constants; };
-    in
-    Pkgs ++ [ inputs.zellij-tui.packages.${pkgs.stdenv.hostPlatform.system}.default ];
+  home.packages = import ../packages { inherit pkgs pkgsStable constants; };
 
   home.file.".face" = {
     source = ../assets/profile_picture.png;

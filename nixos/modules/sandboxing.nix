@@ -90,16 +90,6 @@ in
           extraArgs = [ mesaEglFirejailArg ];
         };
 
-        # LibreWolf (Firefox-based) — custom profile extends firefox-common
-        # (firefox.profile hardcodes "firefox" in private-bin, blocking the "librewolf" binary).
-        # Force Mesa EGL inside sandbox — firejail strips session env vars,
-        # so the system-wide override in nvidia.nix doesn't reach sandboxed apps.
-        librewolf = {
-          executable = "${pkgs.lib.getBin pkgsStable.librewolf}/bin/librewolf";
-          profile = "${pkgs.firejail}/etc/firejail/librewolf.profile";
-          extraArgs = [ mesaEglFirejailArg ];
-        };
-
         # Messaging — use upstream profiles
         signal-desktop = {
           executable = "${pkgs.lib.getBin pkgs.signal-desktop}/bin/signal-desktop";
@@ -184,33 +174,14 @@ in
     };
 
     # Disable tor-browser profile (has hardcoded paths incompatible with NixOS)
-    # and create a librewolf profile (firefox.profile hardcodes "firefox" binary name).
     environment = {
       etc = {
         "firejail/tor-browser.profile".enable = false;
-
-        # LibreWolf firejail profile — extends firefox-common (the actual sandbox rules)
-        # instead of firefox.profile (which hardcodes private-bin firefox).
-        "firejail/librewolf.profile".text = ''
-          # LibreWolf — Firefox-based, uses same sandbox rules as Firefox.
-          # Extends firefox-common (which contains the actual restrictions) but
-          # uses "librewolf" as the binary name instead of "firefox".
-          include firefox-common.profile
-          private-bin librewolf, sh, bash, cat, mkdir, ln, rm, grep, sed, awk
-        '';
 
         # KeePassXC browser integration — whitelist the browser socket so
         # keepassxc-proxy (spawned inside the firejail sandbox) can reach KeePassXC.
         # Whitelists both the socket, the symlink, and the legacy kpxc_server path.
         "firejail/brave.local".text = ''
-          noblacklist ''${RUNUSER}/app
-          whitelist ''${RUNUSER}/app/org.keepassxc.KeePassXC
-          whitelist ''${RUNUSER}/kpxc_server
-          whitelist ''${RUNUSER}/org.keepassxc.KeePassXC.BrowserServer
-        '';
-
-        # Apply same KeePassXC whitelist to LibreWolf
-        "firejail/librewolf.local".text = ''
           noblacklist ''${RUNUSER}/app
           whitelist ''${RUNUSER}/app/org.keepassxc.KeePassXC
           whitelist ''${RUNUSER}/kpxc_server

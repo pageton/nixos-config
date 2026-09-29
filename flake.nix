@@ -29,11 +29,11 @@
     niri.url = "github:sodiboo/niri-flake"; # Do NOT follow nixpkgs — mesa compatibility
 
     # Noctalia v5: native C++ desktop shell (bar/launcher/control-center/
-    # notifications/lock/power-menu). The ACTIVE shell — see home/desktop/noctalia/.
+    # notifications/lock/power-menu). The ACTIVE shell — see home/noctalia/.
     # v5 is a fresh architecture (TOML config, Luau plugins) — does not conflict
     # with any v4 install. Binary: `noctalia`; IPC: `noctalia msg <command>`.
     # NOTE: v5 has NO Stylix target (unlike v4's noctalia-shell.enable); theme is
-    # hand-mirrored via programs.noctalia.settings in home/desktop/noctalia/.
+    # hand-mirrored via programs.noctalia.settings in home/noctalia/.
     noctalia = {
       url = "github:noctalia-dev/noctalia";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -54,15 +54,13 @@
       url = "github:lunik1/nix-wallpaper";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    zellij-tui = {
-      url = "github:pageton/zellij-tui";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    herdr = {
-      # repo transferred from ogulcancelik/herdr to herdrdev/herdr; use the
-      # canonical owner (the old owner only works via GitHub redirect)
-      url = "github:herdrdev/herdr";
-      inputs.nixpkgs.follows = "nixpkgs";
+    # Agent CLIs and desktop apps update faster than the pinned nixpkgs.
+    # Keep this input's own tested Nixpkgs pin instead of using `follows`.
+    llm-agents.url = "github:numtide/llm-agents.nix";
+    # Skill content only; pin it separately from the agent executables.
+    mattPocockSkills = {
+      url = "github:mattpocock/skills";
+      flake = false;
     };
   };
 
@@ -84,8 +82,6 @@
       homeStateVersion = "26.05";
       user = "sadiq";
       constants = import ./shared/constants.nix;
-      secretLoader = import ./home/_helpers/_secret-loader.nix;
-      hmSystemdHelpers = import ./shared/_hm-systemd-helpers.nix { inherit (nixpkgs) lib; };
       nixpkgsConfig = {
         allowUnfree = true; # Allow proprietary packages
         allowBroken = false; # Don't allow broken packages
@@ -100,7 +96,7 @@
           # overlay still requires exactly 0.2.0. Bridge it from niri's own
           # pinned nixpkgs (see niri input note: mesa compatibility).
           (_final: prev: {
-            libdisplay-info_0_2 = inputs.niri.inputs.nixpkgs.legacyPackages.${prev.system}.libdisplay-info_0_2;
+            libdisplay-info_0_2 = inputs.niri.inputs.nixpkgs.legacyPackages.${_final.stdenv.hostPlatform.system}.libdisplay-info_0_2;
           })
           inputs.niri.overlays.niri
           (
@@ -210,9 +206,9 @@
               system
               hostname
               constants
-              hmSystemdHelpers
-              secretLoader
               ;
+            aiPackages = inputs.llm-agents.packages.${system};
+            inherit (inputs) mattPocockSkills;
           };
           modules = [
             ./home/home.nix

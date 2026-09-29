@@ -12,7 +12,6 @@ in
 with pkgsStable;
 [
   # === Privacy-Focused Browsers (Mesa EGL wrapped for NVIDIA) ===
-  # LibreWolf is managed by programs.librewolf module (home/programs/librewolf/)
   pkgs.tor # Tor client and service
   (wrapWithMesaEgl "tor-browser" tor-browser)
 

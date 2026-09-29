@@ -135,6 +135,6 @@
   # setting here — systemd Environment= cannot hold the newline that NIX_CONFIG
   # needs for multiple — but http2 is the decisive lever; download-attempts
   # takes effect via nix.settings on the next successful switch.
-  # Applied to the running daemon by scripts/build/fetch-retry.sh.
+  # Applied to the running daemon via this systemd environment (NIX_CONFIG).
   systemd.services.nix-daemon.environment.NIX_CONFIG = "http2 = false";
 }

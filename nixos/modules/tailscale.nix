@@ -1,4 +1,5 @@
 # Tailscale private mesh networking for remote access from trusted devices.
+# Personal Tailscale client that preserves existing VPN routes and DNS.
 
 {
   config,
@@ -21,11 +22,13 @@ in
   config = lib.mkIf cfg.enable {
     services.tailscale = {
       enable = true;
+      # Keep other VPNs' DNS and routes in charge; let NixOS own the firewall.
       extraSetFlags = [
         "--accept-dns=false"
         "--accept-routes=false"
         "--exit-node="
         "--netfilter-mode=nodivert"
+        "--ssh=false"
       ];
       openFirewall = true;
       useRoutingFeatures = "client";

@@ -39,24 +39,11 @@ in
       nvf.enable = false;
       alacritty.enable = true;
       ghostty.enable = true;
-      zellij.enable = true;
-      waybar.enable = false;
       nixcord.enable = false;
       # Noctalia v5 has NO stylix target (unlike v4's noctalia-shell.enable).
       # Theme + wallpaper are hand-mirrored via programs.noctalia.settings in
-      # home/desktop/noctalia/settings.nix (Catppuccin builtin palette + the
+      # home/noctalia/settings.nix (Catppuccin builtin palette + the
       # same repo-tracked image referenced below).
-      librewolf = {
-        enable = true;
-        profileNames = [
-          "personal"
-          "work"
-          "banking"
-          "shopping"
-          "illegal"
-          "i2pd"
-        ];
-      };
     };
 
     # Catppuccin Mocha

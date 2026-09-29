@@ -21,7 +21,6 @@ let
     i2pd-socks = 4447; # I2P SOCKS proxy port
     scrutiny = 8010; # Scrutiny SMART disk monitoring
     glance = 8082; # Glance dashboard
-    zellij-web = 8083; # Zellij web terminal server
     activitywatch = 5600;
     vnc = 5900;
     vnc-web = 6080;
@@ -72,7 +71,7 @@ in
   palette = "catppuccin-mocha";
 
   # Catppuccin Mocha color palette
-  # Mapped to the same semantic structure for compatibility with ai-agents and other modules.
+  # Mapped to the same semantic structure for compatibility with other modules.
   # Cross-reference: themes/palette.nix defines the same colors in base16 format (base00–base0F).
   # Both files MUST stay in sync when palette colors change.
   # Palette reference: https://github.com/catppuccin/catppuccin
@@ -122,16 +121,9 @@ in
     options = "grp:caps_toggle,grp_led:caps";
   };
 
-  # Mullvad SOCKS5 proxy endpoints for browser profiles.
+  # SOCKS5 proxy endpoints for browser profiles.
   # Never mix proxies - each profile gets a dedicated exit.
   proxies = {
-    librewolf = {
-      personal = "se-sto-wg-socks5-001.relays.mullvad.net"; # Sweden
-      work = "de-fra-wg-socks5-001.relays.mullvad.net"; # Germany
-      banking = "nl-ams-wg-socks5-001.relays.mullvad.net"; # Netherlands
-      shopping = "ro-buh-wg-socks5-001.relays.mullvad.net"; # Romania
-      illegal = "ch-zur-wg-socks5-001.relays.mullvad.net"; # Switzerland
-    };
     i2pd = "127.0.0.1"; # Local I2P daemon
   };
 
@@ -149,32 +141,7 @@ in
   urls = builtins.mapAttrs (_name: port: "http://${localhost}:${toString port}") ports;
 
   paths = {
-    scripts = "System/scripts";
     screens = "Screens";
-    opencodeLogDir = ".local/share/opencode/log";
-    codexLogDir = ".codex/log";
-    aiAgentsLogDir = ".local/share/ai-agents/logs";
     eglVendorFile = "/run/opengl-driver/share/glvnd/egl_vendor.d/50_mesa.json";
-  };
-
-  # External service API endpoints.
-  services = {
-    zai = {
-      apiRoot = "https://api.z.ai/api"; # Z.AI API root (Anthropic-compatible + MCP)
-      timeout = 3000000; # API timeout in ms
-      models = {
-        haiku = "glm-5-turbo";
-        sonnet = "glm-5.3-flash[1m]";
-        opus = "glm-5.3[1m]";
-      };
-    };
-    deepseek = {
-      apiRoot = "https://api.deepseek.com";
-      anthropicRoot = "https://api.deepseek.com/anthropic";
-      models = {
-        pro = "deepseek-v4-pro";
-        flash = "deepseek-v4-flash";
-      };
-    };
   };
 }
