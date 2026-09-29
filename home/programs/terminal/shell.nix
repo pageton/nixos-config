@@ -46,18 +46,29 @@ let
     "..." = "cd ../..";
     "...." = "cd ../../..";
     "....." = "cd ../../../..";
+    cp = "cp -i";
     # Opt-in full-access launches; plain CLI names remain available for subcommands.
     cx = "codex --yolo";
+    enix = "nvim ~/System";
     hd = "herdr";
     j = "just";
     killall = "pkill -f";
+    l = "eza --icons --group-directories-first";
+    la = "eza -a";
     ll = "ls -lah";
+    lla = "eza -la";
+    lt = "eza --tree";
     mf = "microfetch";
+    mv = "mv -i";
     myip = "curl -s https://am.i.mullvad.net/ip";
+    nfs = "nix flake show";
+    ns = "nix-shell";
     oc = "opencode --auto";
     open = "xdg-open";
     # Pi's tools already run without approval; this skips project trust for the run.
     p = "pi --approve";
+    rm = "rm -I";
+    v = "nvim";
   };
 in
 {

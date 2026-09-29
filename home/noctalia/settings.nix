@@ -14,6 +14,20 @@ let
   # Repo-tracked wallpaper (current user pick, promoted to default) — single
   # source of truth, matches the login/desktop/screenshot bg.
   wallpaper = ../assets/wallhaven_x6x3gz.png;
+
+  # Shared bar-widget styling: capsule chrome used by the left-lane widgets,
+  # and the options every compact (non-gauge) sysmon stat shares.
+  capsuleWidget = {
+    capsule_fill = "surface_variant";
+    capsule_opacity = 0.68;
+    capsule_radius = 15.0;
+  };
+  sysmonBase = {
+    visualization = "none";
+    show_glyph = true;
+    show_value = true;
+    label_show_units = true;
+  };
 in
 {
   programs.noctalia.settings = {
@@ -71,7 +85,10 @@ in
         position = "top";
         thickness = 40;
         background_opacity = 0.92;
-        border_width = 0.0;
+        # Accent underline — v5 has no bar background_color key (fill is the
+        # theme Surface role), so the Catppuccin blue arrives via the border.
+        border = "#${palette.base0D}";
+        border_width = 1.0;
         radius = 6;
         concave_edge_corners = false;
         margin_ends = 6;
@@ -158,11 +175,8 @@ in
         format = "{:%I:%M %p %a, %b %d}";
         tooltip_format = "{:%A, %B %d, %Y}";
         capsule = true;
-        capsule_fill = "surface_variant";
-        capsule_opacity = 0.68;
         capsule_padding = 10;
-        capsule_radius = 15.0;
-      };
+      } // capsuleWidget;
 
       cpu-usage = {
         type = "sysmon";
@@ -175,46 +189,26 @@ in
       cpu-temperature = {
         type = "sysmon";
         stat = "cpu_temp";
-        visualization = "none";
-        show_glyph = true;
-        show_value = true;
-        label_show_units = true;
-      };
+      } // sysmonBase;
       memory-used = {
         type = "sysmon";
         stat = "ram_used";
-        visualization = "none";
-        show_glyph = true;
-        show_value = true;
-        label_show_units = true;
-      };
+      } // sysmonBase;
       network-rx = {
         type = "sysmon";
         stat = "net_rx";
-        visualization = "none";
-        show_glyph = true;
-        show_value = true;
-        label_show_units = true;
         network_speed_compact = true;
-      };
+      } // sysmonBase;
       network-tx = {
         type = "sysmon";
         stat = "net_tx";
-        visualization = "none";
-        show_glyph = true;
-        show_value = true;
-        label_show_units = true;
         network_speed_compact = true;
-      };
+      } // sysmonBase;
       disk-used = {
         type = "sysmon";
         stat = "disk_used";
         path = "/";
-        visualization = "none";
-        show_glyph = true;
-        show_value = true;
-        label_show_units = true;
-      };
+      } // sysmonBase;
 
       active-window = {
         type = "active_window";
@@ -224,11 +218,8 @@ in
         icon_size = 18;
         title_scroll = "on_hover";
         capsule = true;
-        capsule_fill = "surface_variant";
-        capsule_opacity = 0.68;
         capsule_padding = 9;
-        capsule_radius = 15.0;
-      };
+      } // capsuleWidget;
       workspaces-compact = {
         type = "taskbar";
         scale = 1.25;
@@ -259,11 +250,8 @@ in
         title_scroll = "on_hover";
         hide_when_no_media = true;
         capsule = true;
-        capsule_fill = "surface_variant";
-        capsule_opacity = 0.68;
         capsule_padding = 9;
-        capsule_radius = 15.0;
-      };
+      } // capsuleWidget;
       tray-compact = {
         type = "tray";
         drawer = true;
