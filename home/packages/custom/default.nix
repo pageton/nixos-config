@@ -10,7 +10,6 @@
 builtins.concatLists (
   map (f: import f { inherit pkgs pkgsStable constants; }) [
     ./orca.nix
-    ./t3code.nix
     ./tabby.nix
   ]
 )

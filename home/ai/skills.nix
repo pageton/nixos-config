@@ -1,6 +1,6 @@
 # Link pinned skill bundles into agents' global skill directories.
 
-{ lib, mattPocockSkills, ... }:
+{ lib, mattPocockSkills, chromeDevToolsMcp, ... }:
 
 let
   # Discover all upstream SKILL.md bundles (including newly added ones on a
@@ -8,11 +8,20 @@ let
   skillFiles = builtins.filter (file: builtins.baseNameOf file == "SKILL.md") (
     lib.filesystem.listFilesRecursive (mattPocockSkills + "/skills")
   );
-  skills = map (file: {
-    # The directory name is plain text, not a reference to a store path.
-    name = builtins.unsafeDiscardStringContext (builtins.baseNameOf (builtins.dirOf file));
-    source = builtins.dirOf file;
-  }) skillFiles;
+  skills =
+    map (file: {
+      # The directory name is plain text, not a reference to a store path.
+      name = builtins.unsafeDiscardStringContext (builtins.baseNameOf (builtins.dirOf file));
+      source = builtins.dirOf file;
+    }) skillFiles
+    ++ [
+      # chrome-devtools-mcp ships several bundles; link only the CLI skill that
+      # matches the pinned chrome-devtools binary on PATH (pnpm-tools.nix).
+      {
+        name = "chrome-devtools-cli";
+        source = chromeDevToolsMcp + "/skills/chrome-devtools-cli";
+      }
+    ];
   skillNames = map (skill: skill.name) skills;
 
   # Shared by Codex (including the ChatGPT desktop Codex surface), OpenCode,
@@ -28,7 +37,7 @@ in
   assertions = [
     {
       assertion = skills != [ ] && builtins.length skillNames == builtins.length (lib.unique skillNames);
-      message = "Matt Pocock's skills must contain SKILL.md files with unique directory names";
+      message = "Installed skills must contain SKILL.md files with unique directory names";
     }
   ];
 
