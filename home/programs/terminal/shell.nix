@@ -46,9 +46,12 @@ let
     "..." = "cd ../..";
     "...." = "cd ../../..";
     "....." = "cd ../../../..";
+    # Opt-in full-access launches; plain CLI names remain available for subcommands.
+    agy = "agy --dangerously-skip-permissions";
     cp = "cp -i";
     # Opt-in full-access launches; plain CLI names remain available for subcommands.
     cx = "codex --yolo";
+    g = "git";
     enix = "nvim ~/System";
     hd = "herdr";
     j = "just";
@@ -59,6 +62,7 @@ let
     lla = "eza -la";
     lt = "eza --tree";
     mf = "microfetch";
+    md = "mkdir -pv";
     mv = "mv -i";
     myip = "curl -s https://am.i.mullvad.net/ip";
     nfs = "nix flake show";
@@ -68,6 +72,7 @@ let
     # Pi's tools already run without approval; this skips project trust for the run.
     p = "pi --approve";
     rm = "rm -I";
+    n = "nvim";
     v = "nvim";
   };
 in
@@ -106,6 +111,12 @@ in
         zstyle ':completion:*' menu select
         zstyle ':completion:*' group-name ""
         zstyle ':completion:*:descriptions' format '%F{yellow}%d%f'
+
+        # Alt+Backspace deletes from the cursor to the start of the line. Both
+        # encodings are bound because tmux may deliver the key as ESC-DEL or
+        # ESC-C-H depending on the terminal's backspace configuration.
+        bindkey '\e^?' backward-kill-line
+        bindkey '\e^H' backward-kill-line
       '';
     };
 
