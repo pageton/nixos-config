@@ -1,7 +1,9 @@
 # Install pinned AI applications and import agent settings without managing mutable data.
-
-{ aiPackages, pkgs, ... }:
-
+{
+  aiPackages,
+  pkgs,
+  ...
+}:
 let
   # Codex 0.157 enables daemon auto-start, but this source-built package lacks
   # the complete-package metadata needed to launch the daemon. Override only
@@ -38,6 +40,7 @@ in
 {
   imports = [
     ./herdr.nix
+    ./pi.nix
     ./pnpm-tools.nix
     ./skills.nix
     ./voice
@@ -57,8 +60,7 @@ in
     opencode2
     pi
     skills
-    # t3code-desktop omitted: it is only a .desktop symlinkJoin that collides
-    # with the tailored t3code wrapper in home/packages/custom.
+    t3code-desktop
     zcode
   ];
 }

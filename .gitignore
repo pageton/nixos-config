@@ -31,3 +31,15 @@ inventory/ephemeral/servers.nix
 
 # Mimosa security-scan hook session state
 .mimosa/
+
+# Vendored pi config (System/pi) must stay source-only — no runtime state.
+# Nix builds npm deps and Python venvs into the store instead.
+pi/**/node_modules/
+pi/**/.venv/
+pi/**/auth.json
+pi/**/__pycache__/
+pi/**/*.pyc
+pi/**/.profile/
+
+# pi observational-memory runtime state (per-session, never source)
+.memory/

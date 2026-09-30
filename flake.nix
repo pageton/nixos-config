@@ -62,6 +62,34 @@
       url = "github:mattpocock/skills";
       flake = false;
     };
+    # Chrome DevTools skill content. The repo ships several skill bundles;
+    # home/ai/skills.nix links only chrome-devtools-cli, which drives the
+    # chrome-devtools binary built by home/ai/pnpm-tools.nix.
+    chromeDevToolsMcp = {
+      url = "github:ChromeDevTools/chrome-devtools-mcp/ae0aaef884c41445d83f86f099ef211f4584b791";
+      flake = false;
+    };
+    # pi-btw: /btw side-conversation extension (dbachelder/pi-btw). Content
+    # only — home/ai/pi.nix links the extension + skill into ~/.pi/agent.
+    # Upstream peer-requires pi >=0.85.1; the pi binary comes from llm-agents.
+    piBtw = {
+      url = "github:dbachelder/pi-btw";
+      flake = false;
+    };
+    # pi-observational-memory: tiered subprocess-backed memory (/om, OFF by
+    # default). Content only — home/ai/pi.nix assembles the extension dir.
+    # Needs the `pi` binary on PATH for its observer/consolidator workers.
+    piObservationalMemory = {
+      url = "github:amosblomqvist/pi-observational-memory";
+      flake = false;
+    };
+    # pi-interactive-subagents: async subagents in tmux panes. Content only —
+    # home/ai/pi.nix assembles the extension dir; needs tmux (already managed
+    # in home/programs/terminal) and the `pi` binary for child sessions.
+    piInteractiveSubagents = {
+      url = "github:amosblomqvist/pi-interactive-subagents";
+      flake = false;
+    };
   };
 
   outputs =
@@ -96,7 +124,8 @@
           # overlay still requires exactly 0.2.0. Bridge it from niri's own
           # pinned nixpkgs (see niri input note: mesa compatibility).
           (_final: prev: {
-            libdisplay-info_0_2 = inputs.niri.inputs.nixpkgs.legacyPackages.${_final.stdenv.hostPlatform.system}.libdisplay-info_0_2;
+            libdisplay-info_0_2 =
+              inputs.niri.inputs.nixpkgs.legacyPackages.${_final.stdenv.hostPlatform.system}.libdisplay-info_0_2;
           })
           inputs.niri.overlays.niri
           (
@@ -208,7 +237,13 @@
               constants
               ;
             aiPackages = inputs.llm-agents.packages.${system};
-            inherit (inputs) mattPocockSkills;
+            inherit (inputs)
+              mattPocockSkills
+              chromeDevToolsMcp
+              piBtw
+              piObservationalMemory
+              piInteractiveSubagents
+              ;
           };
           modules = [
             ./home/home.nix
