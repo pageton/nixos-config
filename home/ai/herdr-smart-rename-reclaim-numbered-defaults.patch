@@ -1,0 +1,83 @@
+diff --git a/src/domain.ts b/src/domain.ts
+index 762c0db..bcd2cc0 100644
+--- a/src/domain.ts
++++ b/src/domain.ts
+@@ -141,6 +141,13 @@ export function isDefaultLabel(label: unknown, number?: unknown): boolean {
+   return !value || /^\d+$/.test(value) || value === String(number ?? "");
+ }
+ 
++// Numbered defaults are what Herdr assigns to unnamed tabs and workspaces.
++// An empty label is excluded: unnamed panes legitimately read as empty, and
++// a manual pane name must survive a transient empty label.
++export function isNumberedDefaultLabel(label: unknown): boolean {
++  return /^\d+$/.test(String(label ?? "").trim());
++}
++
+ export function reconcileItem(
+   record: OwnershipRecord | undefined,
+   currentLabel: string,
+@@ -158,6 +165,11 @@ export function reconcileItem(
+       delete next.expectedLabel;
+       next.manual = true;
+     }
++  } else if (eligible && isNumberedDefaultLabel(currentLabel)) {
++    // A numbered default after a named label is Herdr reclaiming an unnamed
++    // target (renumbering or clearing a name), not a manual edit. Return
++    // to the unnamed state so automatic naming resumes.
++    return { ...resetOwnership(record), observedLabel: currentLabel };
+   } else if (next.autoLabel && currentLabel !== next.autoLabel) {
+     next.manual = true;
+   } else if (
+@@ -187,6 +199,15 @@ export function acknowledgeRename(
+     return { ...record };
+   }
+ 
++  // A numbered default label after a non-default one is Herdr resetting
++  // the name (renumbering or clearing), not a manual edit. Fall back to the
++  // unnamed state instead of locking manual ownership, but never cancel an
++  // expected automatic write that has not landed yet. Empty labels are
++  // excluded so manual pane names survive transient empty reads.
++  if (!record.expectedLabel && isNumberedDefaultLabel(label)) {
++    return { ...resetOwnership(record), observedLabel: label };
++  }
++
+   const next = { ...record };
+ 
+   if (
+diff --git a/test/domain.test.ts b/test/domain.test.ts
+index b2f6782..90d28af 100644
+--- a/test/domain.test.ts
++++ b/test/domain.test.ts
+@@ -44,6 +44,32 @@ test("ownership transitions preserve manual names and expected writes", () => {
+   });
+ });
+ 
++test("default label resets release ownership instead of locking it", () => {
++  const named = { autoLabel: "Build API", observedLabel: "Build API" };
++
++  assert.deepEqual(acknowledgeRename(named, "1"), {
++    manual: false,
++    observedLabel: "1",
++  });
++  assert.deepEqual(reconcileItem({ ...named, manual: true }, "1", true), {
++    manual: false,
++    observedLabel: "1",
++  });
++  // Empty pane labels are the unnamed pane state, not a reclaimed tab
++  // number; a manual pane name must survive them.
++  assert.deepEqual(
++    reconcileItem({ manual: true, observedLabel: "My Pane" }, "", true),
++    { manual: true, observedLabel: "" },
++  );
++
++  // A transient default label must not cancel an in-flight automatic write.
++  const pending = {
++    ...prepareRename({}, "Fix Socket Reconnect"),
++    observedLabel: "1",
++  };
++  assert.deepEqual(acknowledgeRename(pending, "1"), pending);
++});
++
+ test("label, workspace, and process policy stays deterministic", () => {
+   for (const [label, valid] of [
+     ["Fix Socket Reconnect", true],
