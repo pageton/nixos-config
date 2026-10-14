@@ -17,8 +17,16 @@
       (obs-move-transition.overrideAttrs (_: {
         env.NIX_CFLAGS_COMPILE = "-Wno-error=deprecated-declarations";
       }))
-      (obs-shaderfilter.overrideAttrs (_: {
+      (obs-shaderfilter.overrideAttrs (prev: {
         env.NIX_CFLAGS_COMPILE = "-Wno-error=deprecated-declarations";
+        # GCC 16 propagates const through the strrchr() builtin, so assigning
+        # its result on a const char* to char* is a hard -Werror failure.
+        # `pos` is only used for pointer arithmetic, so const is correct.
+        postPatch = (prev.postPatch or "") + ''
+          substituteInPlace obs-shaderfilter.c \
+            --replace-fail "char *pos = strrchr(file_name, '/');" \
+                          "const char *pos = strrchr(file_name, '/');"
+        '';
       }))
       obs-source-record # Record individual sources separately
       advanced-scene-switcher # Automate scene switching

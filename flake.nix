@@ -64,30 +64,16 @@
     };
     # Chrome DevTools skill content. The repo ships several skill bundles;
     # home/ai/skills.nix links only chrome-devtools-cli, which drives the
-    # chrome-devtools binary built by home/ai/pnpm-tools.nix.
+    # chrome-devtools binary built by home/ai/chrome-devtools.
     chromeDevToolsMcp = {
       url = "github:ChromeDevTools/chrome-devtools-mcp/ae0aaef884c41445d83f86f099ef211f4584b791";
       flake = false;
     };
-    # pi-btw: /btw side-conversation extension (dbachelder/pi-btw). Content
-    # only — home/ai/pi.nix links the extension + skill into ~/.pi/agent.
-    # Upstream peer-requires pi >=0.85.1; the pi binary comes from llm-agents.
-    piBtw = {
-      url = "github:dbachelder/pi-btw";
-      flake = false;
-    };
-    # pi-observational-memory: tiered subprocess-backed memory (/om, OFF by
-    # default). Content only — home/ai/pi.nix assembles the extension dir.
-    # Needs the `pi` binary on PATH for its observer/consolidator workers.
-    piObservationalMemory = {
-      url = "github:amosblomqvist/pi-observational-memory";
-      flake = false;
-    };
-    # pi-interactive-subagents: async subagents in tmux panes. Content only —
-    # home/ai/pi.nix assembles the extension dir; needs tmux (already managed
-    # in home/programs/terminal) and the `pi` binary for child sessions.
-    piInteractiveSubagents = {
-      url = "github:amosblomqvist/pi-interactive-subagents";
+    # UI/UX design skill bundles (banner, brand, design-system, ui-ux-pro-max…).
+    # home/ai/skills.nix links every bundle and patches ui-ux-pro-max's
+    # SKILL.md, whose commands only resolve inside a Claude plugin install.
+    uiUxProMaxSkills = {
+      url = "github:nextlevelbuilder/ui-ux-pro-max-skill/477bcb28c9812b385cb51a4605ddf30d7b2266e2";
       flake = false;
     };
   };
@@ -112,6 +98,9 @@
       constants = import ./shared/constants.nix;
       nixpkgsConfig = {
         allowUnfree = true; # Allow proprietary packages
+        # The Android SDK components used by the pi-re lab (packages/
+        # android-re-toolchain) require explicit license acceptance.
+        android_sdk.accept_license = true;
         allowBroken = false; # Don't allow broken packages
         allowInsecure = false; # Don't allow insecure packages
         allowUnsupportedSystem = false; # Don't allow unsupported systems
@@ -178,6 +167,16 @@
               cloudflared = prev.cloudflared.overrideAttrs (_: {
                 doCheck = false;
               });
+              # typescript-language-server 6.0.2: fetchPnpmDeps content changed
+              # after the 6.0.2 bump, so nixpkgs' pinned hash is stale and the
+              # FOD fails on fresh builds (hash mismatch). Upstream fix:
+              # nixpkgs ac7b1aaed "typescript-language-server: fix pnpm hash".
+              # Remove once nixos-unstable absorbs it.
+              typescript-language-server = prev.typescript-language-server.overrideAttrs (old: {
+                pnpmDeps = old.pnpmDeps.override {
+                  hash = "sha256-xR/EF60lVBsITKgH7wCM2wHM46PFQevD51KfCENSUH4=";
+                };
+              });
               python3 = prev.python3.override { packageOverrides = pythonPackageOverrides; };
               python3Packages = final.python3.pkgs;
               python313 = prev.python313.override { packageOverrides = pythonPackageOverrides; };
@@ -201,6 +200,36 @@
           })
         ];
       };
+
+      # Rooted Android emulator lab for pi-re (home/ai/pi-re). Mirrors the
+      # upstream lab settings this module was vendored from.
+      androidLab = {
+        acceptLicense = true;
+        apiLevel = "35";
+        imageType = "google_apis";
+        abi = "x86_64";
+        avdName = "pi-re-api35";
+        port = 5580;
+        cores = 4;
+        memoryMiB = 4096;
+        bootTimeoutSeconds = 180;
+        gpuMode = "swangle";
+        hardwareVideoDecoder = false;
+        display = {
+          width = 720;
+          height = 1600;
+          density = 320;
+        };
+        proxyPort = 8089;
+      };
+      # Built from the stable channel: the toolchain pins SDK components and
+      # a Frida 17.5.1 server that unstable (Frida 17.19) no longer matches.
+      androidTools = import ./packages/android-re-toolchain {
+        pkgs = pkgsStable;
+        inherit androidLab;
+      };
+      # Pinned REA static-analysis stack consumed by home/ai/pi-re.
+      reaTools = import ./packages/rea { inherit pkgs; };
 
       makeSystem =
         { hostname, stateVersion }:
@@ -237,13 +266,11 @@
               constants
               ;
             aiPackages = inputs.llm-agents.packages.${system};
-            inherit (inputs)
-              mattPocockSkills
-              chromeDevToolsMcp
-              piBtw
-              piObservationalMemory
-              piInteractiveSubagents
-              ;
+            # Consumed by home/ai/pi-re (vendored from an upstream layout that
+            # passes a `setup` attrset to Home Manager modules).
+            setup = { inherit androidLab; };
+            inherit androidTools reaTools;
+            inherit (inputs) mattPocockSkills chromeDevToolsMcp uiUxProMaxSkills;
           };
           modules = [
             ./home/home.nix

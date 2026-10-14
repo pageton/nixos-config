@@ -43,8 +43,8 @@ in
   };
 
   # Terminal emulator
-  terminal = "ghostty";
-  terminalAppId = "com.mitchellh.ghostty"; # Wayland app-id — used in window rules and dock
+  terminal = "alacritty";
+  terminalAppId = "Alacritty"; # Wayland app-id — used in window rules and dock
 
   # Default text editor
   editor = "nvim";

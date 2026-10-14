@@ -21,7 +21,6 @@
     ../../nixos/modules/observability
     ../../nixos/modules/vaultwarden.nix
     ../../nixos/modules/virtualisation.nix
-    ../../nixos/modules/web-re.nix
   ];
 
   networking.hostName = hostname;

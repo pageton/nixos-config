@@ -38,7 +38,6 @@ in
       neovim.enable = false;
       nvf.enable = false;
       alacritty.enable = true;
-      ghostty.enable = true;
       nixcord.enable = false;
       # Noctalia v5 has NO stylix target (unlike v4's noctalia-shell.enable).
       # Theme + wallpaper are hand-mirrored via programs.noctalia.settings in

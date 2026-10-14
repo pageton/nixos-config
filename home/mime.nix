@@ -15,13 +15,57 @@ let
     video = [ "mpv.desktop" ];
     directory = [ "thunar.desktop" ]; # Using Thunar as file manager
     pdf = [ "zathura.desktop" ]; # Using Zathura as PDF viewer
-    terminal = [ "com.mitchellh.ghostty.desktop" ];
+    terminal = [ "Alacritty.desktop" ];
     discord = [ "discord.desktop" ]; # Using Discord for Discord
     archive = [ "ark.desktop" ]; # Using KDE Ark as archive manager
   };
 
   mimeMap = {
-    text = [ "text/plain" ];
+    # xdg-open's generic desktop path does not inherit text/plain defaults for
+    # these types; define them explicitly so these files do not fall back to a browser.
+    text = [
+      "text/plain"
+      "text/markdown"
+      "text/x-markdown"
+      "text/csv"
+      "text/tab-separated-values"
+      "text/x-log"
+      "text/css"
+      "text/x-scss"
+      "text/javascript"
+      "application/javascript"
+      "application/json"
+      "application/schema+json"
+      "application/ld+json"
+      "application/xml"
+      "text/xml"
+      "application/yaml"
+      "application/x-yaml"
+      "text/yaml"
+      "text/x-yaml"
+      "application/toml"
+      "application/sql"
+      "text/x-csharp"
+      "text/x-patch"
+      "application/x-shellscript"
+      "text/x-shellscript"
+      "text/x-python"
+      "text/x-python3"
+      "text/x-csrc"
+      "text/x-chdr"
+      "text/x-c++src"
+      "text/x-c++hdr"
+      "text/x-java"
+      "text/x-go"
+      "text/rust"
+      "text/x-rust"
+      "text/x-makefile"
+      "text/x-cmake"
+      "text/x-lua"
+      "text/x-perl"
+      "application/x-ruby"
+      "application/x-php"
+    ];
     image = [
       "image/bmp"
       "image/gif"

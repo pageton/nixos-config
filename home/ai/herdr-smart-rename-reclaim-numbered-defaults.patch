@@ -1,83 +1,169 @@
-diff --git a/src/domain.ts b/src/domain.ts
-index 762c0db..bcd2cc0 100644
 --- a/src/domain.ts
 +++ b/src/domain.ts
-@@ -141,6 +141,13 @@ export function isDefaultLabel(label: unknown, number?: unknown): boolean {
+@@ -141,10 +141,18 @@
    return !value || /^\d+$/.test(value) || value === String(number ?? "");
  }
  
 +// Numbered defaults are what Herdr assigns to unnamed tabs and workspaces.
-+// An empty label is excluded: unnamed panes legitimately read as empty, and
-+// a manual pane name must survive a transient empty label.
-+export function isNumberedDefaultLabel(label: unknown): boolean {
-+  return /^\d+$/.test(String(label ?? "").trim());
++// Panes are excluded: an unnamed pane reads as empty, never numbered, so a
++// numeric pane label is a manual name that must survive reconciliation.
++export function isNumberedDefaultLabel(label: string): boolean {
++  return /^\d+$/.test(label.trim());
 +}
 +
  export function reconcileItem(
    record: OwnershipRecord | undefined,
    currentLabel: string,
-@@ -158,6 +165,11 @@ export function reconcileItem(
+   eligible = false,
++  numberedDefaults = false,
+ ): OwnershipRecord {
+   const next = { ...record };
+   const previousObserved = next.observedLabel;
+@@ -158,6 +166,12 @@
        delete next.expectedLabel;
        next.manual = true;
      }
-+  } else if (eligible && isNumberedDefaultLabel(currentLabel)) {
++  } else if (numberedDefaults && isNumberedDefaultLabel(currentLabel)) {
 +    // A numbered default after a named label is Herdr reclaiming an unnamed
-+    // target (renumbering or clearing a name), not a manual edit. Return
-+    // to the unnamed state so automatic naming resumes.
++    // tab or workspace (renumbering or clearing a name), not a manual edit.
++    // Return to the unnamed state so automatic naming resumes. Panes never
++    // pass numberedDefaults: their unnamed state is an empty label.
 +    return { ...resetOwnership(record), observedLabel: currentLabel };
    } else if (next.autoLabel && currentLabel !== next.autoLabel) {
      next.manual = true;
    } else if (
-@@ -187,6 +199,15 @@ export function acknowledgeRename(
+@@ -178,6 +192,7 @@
+ export function acknowledgeRename(
+   record: OwnershipRecord | undefined,
+   label: string,
++  numberedDefaults = false,
+ ): OwnershipRecord {
+   if (!record) return reconcileItem(undefined, label, isDefaultLabel(label));
+ 
+@@ -187,6 +202,25 @@
      return { ...record };
    }
  
 +  // A numbered default label after a non-default one is Herdr resetting
-+  // the name (renumbering or clearing), not a manual edit. Fall back to the
-+  // unnamed state instead of locking manual ownership, but never cancel an
-+  // expected automatic write that has not landed yet. Empty labels are
-+  // excluded so manual pane names survive transient empty reads.
-+  if (!record.expectedLabel && isNumberedDefaultLabel(label)) {
++  // the tab or workspace (renumbering or clearing), not a manual edit: fall
++  // back to the unnamed state instead of locking manual ownership. Panes
++  // never pass numberedDefaults, and empty labels are already excluded, so
++  // manual pane names survive transient empty reads.
++  //
++  // A pending automatic write is not cancelled by this branch: it clears as
++  // manual below, and the next numbered reconcile releases it, so a landed
++  // write still completes while a failed one converges to unnamed within a
++  // snapshot. A one-snapshot blip back to the previous automatic name
++  // re-locks manual the same way — the reset must be sticky to unlock.
++  if (
++    !record.expectedLabel &&
++    numberedDefaults &&
++    isNumberedDefaultLabel(label)
++  ) {
 +    return { ...resetOwnership(record), observedLabel: label };
 +  }
 +
    const next = { ...record };
  
    if (
-diff --git a/test/domain.test.ts b/test/domain.test.ts
-index b2f6782..90d28af 100644
+--- a/src/service.ts
++++ b/src/service.ts
+@@ -193,6 +193,7 @@
+       state.workspaces[workspace.workspace_id],
+       workspace.label,
+       isDefaultLabel(workspace.label, workspace.number),
++      true,
+     );
+   }
+ 
+@@ -202,6 +203,7 @@
+       state.tabs[tab.tab_id],
+       label,
+       isDefaultLabel(label, tab.number),
++      true,
+     );
+   }
+ 
+@@ -309,7 +311,7 @@
+         // Events can wait behind earlier writes. Never replay an obsolete label.
+         if (targetLabel({ kind, id }, current) !== label) return;
+         const collection = records(state, kind);
+-        collection[id] = acknowledgeRename(collection[id], label);
++        collection[id] = acknowledgeRename(collection[id], label, kind !== "pane");
+       },
+     );
+   }
 --- a/test/domain.test.ts
 +++ b/test/domain.test.ts
-@@ -44,6 +44,32 @@ test("ownership transitions preserve manual names and expected writes", () => {
+@@ -44,6 +44,52 @@
    });
  });
  
 +test("default label resets release ownership instead of locking it", () => {
 +  const named = { autoLabel: "Build API", observedLabel: "Build API" };
 +
-+  assert.deepEqual(acknowledgeRename(named, "1"), {
++  assert.deepEqual(acknowledgeRename(named, "1", true), {
 +    manual: false,
 +    observedLabel: "1",
 +  });
-+  assert.deepEqual(reconcileItem({ ...named, manual: true }, "1", true), {
++  assert.deepEqual(reconcileItem({ ...named, manual: true }, "1", true, true), {
 +    manual: false,
 +    observedLabel: "1",
 +  });
-+  // Empty pane labels are the unnamed pane state, not a reclaimed tab
-+  // number; a manual pane name must survive them.
++  // Panes never reclaim numbered labels — their unnamed state is empty —
++  // so both numeric and empty labels preserve a manual pane name.
 +  assert.deepEqual(
 +    reconcileItem({ manual: true, observedLabel: "My Pane" }, "", true),
 +    { manual: true, observedLabel: "" },
 +  );
++  assert.deepEqual(
++    acknowledgeRename({ manual: true, observedLabel: "42" }, "42", false),
++    { manual: true, observedLabel: "42" },
++  );
 +
-+  // A transient default label must not cancel an in-flight automatic write.
++  // Intentional all-digit tab renames match first-seen numbered defaults
++  // and are reclaimed as unnamed (pinned tradeoff, same as "1" above).
++  assert.deepEqual(
++    acknowledgeRename({ ...named, manual: true }, "42", true),
++    { manual: false, observedLabel: "42" },
++  );
++
++  // A pending write acknowledged as a numbered default clears as manual
++  // for one snapshot; the next numbered reconcile then releases ownership,
++  // so a failed write converges to unnamed instead of locking forever.
 +  const pending = {
 +    ...prepareRename({}, "Fix Socket Reconnect"),
-+    observedLabel: "1",
++    observedLabel: "Build API",
 +  };
-+  assert.deepEqual(acknowledgeRename(pending, "1"), pending);
++
++  const acknowledged = acknowledgeRename(pending, "2", true);
++  assert.equal(acknowledged.manual, true);
++  assert.equal(acknowledged.expectedLabel, undefined);
++  assert.deepEqual(reconcileItem(acknowledged, "2", true, true), {
++    manual: false,
++    observedLabel: "2",
++  });
 +});
 +
  test("label, workspace, and process policy stays deterministic", () => {
    for (const [label, valid] of [
      ["Fix Socket Reconnect", true],
+--- a/ai-artifacts/architecture/ownership-and-concurrency.md
++++ b/ai-artifacts/architecture/ownership-and-concurrency.md
+@@ -17,6 +17,7 @@
+     ExpectedWrite --> Automatic: Snapshot or event matches expected label
+     ExpectedWrite --> Manual: Different label observed
+     Automatic --> Manual: External label change observed
++    Automatic --> Unseen: Herdr resets a tab/workspace to a numbered default
+     Manual --> Automatic: Explicit action reclaims this target
+     ExpectedWrite --> PriorRecord: Rename command fails
+     PriorRecord --> Automatic: Restore previous automatic record
+@@ -24,6 +25,8 @@
+ 
+ `reconcileItem` compares the current snapshot with the stored record. `acknowledgeRename` recognizes a matching expected write and ignores unchanged older events that must not consume it. `AutoNameService.acknowledge` first checks the live snapshot, so a delayed label event cannot overwrite newer knowledge.
+ 
++Not every external label change acquires manual ownership: when Herdr itself resets a tab or workspace label back to a numbered default (renumbering after a close, or a cleared name), reconciliation releases the record to the unnamed state and automatic naming resumes. This automatic release applies to tabs and workspaces only — pane labels are never numbered defaults, so a numeric or empty pane label keeps its manual ownership. An intentional all-digit tab rename ("42") is indistinguishable from a reset and is released the same way, matching how first-seen numbered labels are treated.
++
+ An explicit action resets ownership only for its target scope. A manually named pane remains available as evidence for tab naming. `reconcileSnapshot` removes ownership and request records for closed items.
+ 
+ Evidence: [ownership tests](../../test/domain.test.ts), [scope and pane tests](../../test/service.test.ts), and the unchanged-event and delayed-event cases in [reliability.test.ts](../../test/reliability.test.ts).

@@ -22,7 +22,7 @@
           refresh = 143.976;
         };
         position = {
-          x = 2560;
+          x = 0;
           y = 0;
         };
         scale = 1;
@@ -34,7 +34,7 @@
           height = 1440;
         };
         position = {
-          x = 0;
+          x = 1920;
           y = 0;
         };
         scale = 1;

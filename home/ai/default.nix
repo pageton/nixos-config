@@ -1,9 +1,5 @@
 # Install pinned AI applications and import agent settings without managing mutable data.
-{
-  aiPackages,
-  pkgs,
-  ...
-}:
+{ aiPackages, pkgs, ... }:
 let
   # Codex 0.157 enables daemon auto-start, but this source-built package lacks
   # the complete-package metadata needed to launch the daemon. Override only
@@ -15,6 +11,19 @@ let
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram "$out/bin/codex" --add-flags "--disable daemon_auto_start"
+    '';
+  };
+  # t3code's backend spawns with node-pty, whose prebuilt pty.node needs
+  # libstdc++.so.6 that Electron's environment does not provide; without it
+  # the backend crash-loops and the window never opens. Inject the library
+  # path until the package carries the dependency itself.
+  t3codeCli = pkgs.symlinkJoin {
+    name = "t3code-desktop-libstdcpp";
+    paths = [ aiPackages.t3code-desktop ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram "$out/bin/t3code-desktop" \
+        --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath [ pkgs.stdenv.cc.cc.lib ]}
     '';
   };
   # Numtide's V2 package exposes `opencode2`; provide the usual CLI name and
@@ -40,11 +49,18 @@ in
 {
   imports = [
     ./herdr.nix
-    ./pi.nix
-    ./pnpm-tools.nix
+    ./herdr-backup.nix
+    ./chrome-devtools
+    ./pi
+    ./pi-re
     ./skills.nix
     ./voice
   ];
+
+  # Share portable guidance, not Pi's extension-specific instructions. Runtime
+  # settings and credentials remain writable and outside Nix.
+  home.file.".codex/AGENTS.md".source = ./agent-instructions.md;
+  xdg.configFile."opencode/AGENTS.md".source = ./agent-instructions.md;
 
   # Executables come from Numtide; settings, logins, and session data remain
   # in the user's home until deliberately migrated one app at a time.
@@ -55,12 +71,12 @@ in
     ctx
     executor
     herdr
+    officecli
     omp # oh-my-pi
     opencodeCli
-    opencode2
     pi
     skills
-    t3code-desktop
+    t3codeCli
     zcode
   ];
 }

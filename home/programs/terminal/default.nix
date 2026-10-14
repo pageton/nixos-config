@@ -1,27 +1,20 @@
-# Install everyday CLI tools and import terminal and shell configuration.
-
-{ pkgs, ... }:
-
-{
+# Terminal, shell, and CLI tool modules.
+{ pkgs, ... }: {
   imports = [
-    ./alacritty.nix # Alacritty — default terminal
-    ./ghostty.nix # Ghostty terminal emulator
-    ./shell.nix # Shared shell, prompt, and tmux configuration
+    ./tools # CLI tools (bat, eza, atuin, btop, yazi, starship, etc.)
+    ./zsh # Zsh shell configuration
+    ./alacritty.nix # Alacritty terminal emulator
+    ./zellij # Zellij terminal multiplexer (plugins, layouts, keybinds)
+    ./tmux.nix # Tmux terminal multiplexer (session persistence, vim navigation)
+    ./direnv.nix # Per-directory environment loading
+    ./scripts.nix # Custom utility scripts
+    ./shell.nix # Nix shell integration and dev tools
   ];
 
-  # Everyday CLI tools without shell-managed packages.
-  # Only tools not already provided elsewhere: most of yzua's original list
-  # (fd, ripgrep, jq, fx, ffmpeg, …) is kept in home/packages (pkgsStable);
-  # duplicating them here from `pkgs` would collide in the home profile.
-  # Also provided elsewhere: nodejs_22 (languages/javascript),
-  # openssl/openssl.dev (home/packages/networking), pnpm (languages/javascript).
+  # Git is installed here because home/programs/git.nix sets package = null
+  # and the old tools/git module (which installed it) is superseded there.
   home.packages = [
-    pkgs.bat
-    pkgs.btop
-    pkgs.eza
-    pkgs.gh
     pkgs.git
-    pkgs.lazygit
     pkgs.yt-dlp
   ];
 

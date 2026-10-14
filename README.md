@@ -177,7 +177,6 @@ System/
 │       ├── gaming.nix             # Steam, gamescope, gamemode (desktop)
 │       ├── virtualisation.nix     # Docker, VirtualBox, libvirt (desktop)
 │       ├── vaultwarden.nix        # Password manager (desktop)
-│       ├── web-re.nix             # Web RE tools (desktop)
 │       └── amd-thermal.nix        # Ryzen thermal watchdog (desktop)
 │
 └── home/                        # Home-Manager user configuration

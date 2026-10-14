@@ -43,3 +43,4 @@ pi/**/.profile/
 
 # pi observational-memory runtime state (per-session, never source)
 .memory/
+.pi/

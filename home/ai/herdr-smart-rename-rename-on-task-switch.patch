@@ -1,0 +1,120 @@
+--- a/src/domain.ts	2026-10-09 19:06:59.841998639 +0300
++++ b/src/domain.ts	2026-10-09 19:07:46.680560482 +0300
+@@ -118,6 +118,12 @@
+ 
+ export const MODEL_RETRY_MS = 30_000;
+ 
++// Agent task contexts rename directly: the worker already serializes
++// evaluations per tab and fingerprint equality suppresses re-calls for an
++// unchanged context (so cost tracks task switches, not this timer). Only a
++// token gap remains to absorb event bursts around a model-call claim.
++export const TASK_MODEL_RATE_MS = 100;
++
+ const NAMED_SESSION_LIMIT = 8;
+ 
+ export function emptyState(): SmartRenameState {
+@@ -501,7 +507,8 @@
+ 
+   const cooledDown =
+     state.fingerprints[tabId] !== mark &&
+-    now - (state.modelAttempts[tabId] ?? 0) >= MODEL_RATE_MS;
++    now - (state.modelAttempts[tabId] ?? 0) >=
++      (isTaskContext(context) ? TASK_MODEL_RATE_MS : MODEL_RATE_MS);
+ 
+   // Process output changes constantly, so only task contexts skip the
+   // cooldown. The short gap stops a second call while one is still running.
+--- a/src/worker.ts	2026-10-09 19:06:59.843463888 +0300
++++ b/src/worker.ts	2026-10-09 19:07:00.612480216 +0300
+@@ -18,7 +18,9 @@
+   statePaths,
+ } from "./storage.ts";
+ 
+-export const SWEEP_INTERVAL_MS = 60_000;
++// Sweeps are the pickup for renames whose transcript was still empty at the
++// agent-start event, so they run at a near-immediate cadence.
++export const SWEEP_INTERVAL_MS = 5_000;
+ 
+ export function shouldIgnoreProgressRename(
+   progressBases: Map<string, string>,
+--- a/test/domain.test.ts	2026-10-09 19:06:59.843586867 +0300
++++ b/test/domain.test.ts	2026-10-09 19:08:01.886011644 +0300
+@@ -20,8 +20,10 @@
+   MAX_CONTEXT_CHARS,
+   MODEL_RATE_MS,
+   MODEL_RETRY_MS,
++  TASK_MODEL_RATE_MS,
+   type NamingContext,
+ } from "../src/domain.ts";
++import { SWEEP_INTERVAL_MS } from "../src/worker.ts";
+ import { sanitizeText } from "../src/text.ts";
+ 
+ test("ownership transitions preserve manual names and expected writes", () => {
+@@ -168,6 +170,48 @@
+   );
+ });
+ 
++test("task switches rename directly instead of waiting out the rate limit", () => {
++  const state = emptyState();
++  const first = { project: "P", userRequests: ["fix login bug"] };
++
++  assert.equal(
++    shouldCallModel(state, "t1", first, 1_000_000, "s1").allowed,
++    true,
++  );
++  markModelAttempt(state, "t1", 1_000_000);
++  markModelSuccess(state, "t1", first, "s1");
++
++  const next = {
++    project: "P",
++    userRequests: ["fix login bug", "write the archive script"],
++  };
++
++  assert.equal(
++    shouldCallModel(state, "t1", next, 1_000_000 + TASK_MODEL_RATE_MS, "s1")
++      .allowed,
++    true,
++  );
++
++  // Raw process output still waits out the full rate limit.
++  const process = {
++    project: "P",
++    focusedPane: { process: "cargo test", recentOutput: "ok" },
++  };
++
++  assert.equal(
++    shouldCallModel(state, "t1", process, 1_000_000 + TASK_MODEL_RATE_MS)
++      .allowed,
++    false,
++  );
++});
++
++test("renames land directly on task switches", () => {
++  // Cost tracks task switches (fingerprint changes), not these timers, but
++  // pin the direct budget so neither constant regresses to a waiting game.
++  assert.ok(TASK_MODEL_RATE_MS <= 1_000, "task cooldown exceeds direct budget");
++  assert.ok(SWEEP_INTERVAL_MS <= 6_000, "sweep cadence exceeds direct budget");
++});
++
+ test("process hints match real invocations, not paths, output, or arbitrary arguments", () => {
+   for (const [command, label] of [
+     ["node apps/landing-next/index.js", null],
+@@ -215,13 +259,17 @@
+ 
+   markModelSuccess(state, "t1", task, "s1");
+ 
++  // Task switches use the near-zero task cooldown instead of the ten-minute
++  // process limit; the gap still covers an in-flight model-call claim.
+   assert.equal(
+-    shouldCallModel(state, "t1", next, now + MODEL_RETRY_MS, "s1").allowed,
++    shouldCallModel(state, "t1", next, now + TASK_MODEL_RATE_MS - 1, "s1")
++      .allowed,
+     false,
+   );
+ 
+   assert.equal(
+-    shouldCallModel(state, "t1", next, now + MODEL_RATE_MS, "s1").allowed,
++    shouldCallModel(state, "t1", next, now + TASK_MODEL_RATE_MS + 1, "s1")
++      .allowed,
+     true,
+   );
+ 
