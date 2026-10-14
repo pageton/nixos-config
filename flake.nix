@@ -276,8 +276,8 @@
               inherit androidLab;
               # Search backend is independent of Pi's selected chat model/provider.
               pi.webSearch = {
-                provider = "codex-lb";
-                model = "gemini-2.5-flash";
+                provider = "agy";
+                model = "gemini-3.8-flash-low";
               };
               # Read-only research workers; runtime RE jobs retain their separate limits.
               pi.research = {

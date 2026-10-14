@@ -385,6 +385,45 @@ class NativeSearch(unittest.TestCase):
             process.stdout.close()
             process.stderr.close()
 
+    def test_agy_provider_executes_cli_and_returns_structured_results(self):
+        fake_bin = self.root / "bin"
+        fake_bin.mkdir(exist_ok=True)
+        fake_agy = fake_bin / "agy"
+        fake_agy.write_text(
+            f"#!{sys.executable}\n"
+            "import json, sys\n"
+            "args = sys.argv[1:]\n"
+            "print(json.dumps({\n"
+            '    "status": "SUCCESS",\n'
+            '    "structured_output": {\n'
+            '        "output": "Agy search summary",\n'
+            '        "results": [\n'
+            '            {"title": "Agy Source 1", "url": "https://example.com/agy/1", "snippet": "Agy snippet 1"},\n'
+            '            {"title": "Agy Source 2", "url": "https://example.com/agy/2", "snippet": "Agy snippet 2"}\n'
+            "        ]\n"
+            "    }\n"
+            "}))\n"
+        )
+        fake_agy.chmod(0o755)
+        extension = self.configured_extension({"provider": "agy", "model": "gemini-3.8-flash-low"})
+        original_path = self.env.get("PATH", "")
+        self.env["PATH"] = f"{fake_bin}:{original_path}"
+        try:
+            result = self.call(
+                query="test agy search",
+                extension=extension,
+                cli_key="unused",
+            )
+            self.assertFalse(result["isError"], result)
+            self.assertEqual(len(result["result"]["details"]["results"]), 2)
+            self.assertEqual(
+                result["result"]["details"]["results"][0]["url"], "https://example.com/agy/1"
+            )
+            self.assertIn("Agy Source 1", json.dumps(result["result"]))
+            self.assertEqual(self.server.requests, [])
+        finally:
+            self.env["PATH"] = original_path
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

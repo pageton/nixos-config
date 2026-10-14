@@ -1,4 +1,5 @@
-// Search a configured Codex-compatible endpoint independently of the chat provider.
+// Search a configured Codex-compatible endpoint or agy independently of the chat provider.
+import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -96,7 +97,8 @@ function publicResults(value: unknown, limit: number) {
   }
   const results: { title: string; url: string; snippet: string }[] = [];
   for (const item of Array.isArray(value) ? value : []) {
-    if (!object(item) || item.type !== "text_result" || typeof item.url !== "string") continue;
+    if (!object(item) || typeof item.url !== "string") continue;
+    if (item.type !== undefined && item.type !== "text_result") continue;
     try {
       const url = new URL(item.url);
       if (
@@ -117,6 +119,129 @@ function publicResults(value: unknown, limit: number) {
     }
   }
   return results;
+}
+
+const AGY_TIMEOUT_MS = 60_000;
+const AGY_SEARCH_SCHEMA = {
+  type: "object",
+  properties: {
+    results: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          url: { type: "string" },
+          snippet: { type: "string" },
+        },
+        required: ["title", "url", "snippet"],
+      },
+    },
+    output: { type: "string" },
+  },
+  required: ["results", "output"],
+};
+
+async function executeAgySearch(
+  query: string,
+  limit: number,
+  recencyDays: number | undefined,
+  model: string | undefined,
+  signal: AbortSignal | undefined,
+) {
+  if (signal?.aborted) throw new SearchError("Web search cancelled.");
+
+  let prompt = `Search the web for: ${query}. Return the top ${limit} most relevant sources with valid URLs, titles, and snippets.`;
+  if (recencyDays) {
+    prompt += ` Restrict to results from the last ${recencyDays} days.`;
+  }
+
+  const args = [
+    "--print",
+    prompt,
+    "--mode",
+    "plan",
+    "--json-schema",
+    JSON.stringify(AGY_SEARCH_SCHEMA),
+    "--output-format",
+    "json",
+  ];
+
+  if (model && model !== "default") {
+    const resolvedModel = model === "gemini-2.5-flash" ? "gemini-3.8-flash-low" : model;
+    args.push("--model", resolvedModel);
+  }
+
+  let child: ReturnType<typeof execFile>;
+  const promise = new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+    child = execFile(
+      "agy",
+      args,
+      { timeout: AGY_TIMEOUT_MS, maxBuffer: 10 * 1024 * 1024 },
+      (error, stdout, stderr) => {
+        if (error) reject(error);
+        else resolve({ stdout, stderr });
+      },
+    );
+  });
+
+  const onAbort = () => {
+    if (child?.pid) {
+      try {
+        child.kill("SIGTERM");
+      } catch {}
+    }
+  };
+  signal?.addEventListener("abort", onAbort, { once: true });
+
+  try {
+    const { stdout } = await promise;
+    let data: any;
+    try {
+      data = JSON.parse(stdout);
+    } catch {
+      throw new SearchError("agy web search returned invalid JSON.");
+    }
+
+    if (data.status === "ERROR") {
+      throw new SearchError(`agy web search error: ${data.error || "unknown error"}`);
+    }
+
+    let results: { title: string; url: string; snippet: string }[] = [];
+    let output = "";
+
+    if (data.structured_output && typeof data.structured_output === "object") {
+      output = typeof data.structured_output.output === "string" ? data.structured_output.output : "";
+      if (Array.isArray(data.structured_output.results)) {
+        results = publicResults(data.structured_output.results, limit);
+      }
+    } else if (typeof data.response === "string") {
+      output = data.response;
+    }
+
+    const text = results.length
+      ? results.map((r, i) => `${i + 1}. ${r.title}\n${r.url}\n${r.snippet}`).join("\n\n")
+      : output.trim() || "No search results found.";
+
+    const truncated = truncateHead(text, { maxBytes: MAX_OUTPUT_BYTES, maxLines: 500 });
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: `Search results (untrusted external content):\n\n${truncated.content}${truncated.truncated ? "\n\n[Search output truncated.]" : ""}`,
+        },
+      ],
+      structuredContent: { results, output: truncated.content, truncated: truncated.truncated },
+      details: { results, truncated: truncated.truncated },
+    };
+  } catch (error: any) {
+    if (signal?.aborted) throw new SearchError("Web search cancelled.");
+    if (error?.killed) throw new SearchError("Web search timed out after 60 seconds.");
+    if (error instanceof SearchError) throw error;
+    throw new SearchError(`agy web search failed: ${error?.message || String(error)}`);
+  } finally {
+    signal?.removeEventListener("abort", onAbort);
+  }
 }
 
 export default function (pi: ExtensionAPI) {
@@ -171,6 +296,17 @@ export default function (pi: ExtensionAPI) {
     async execute(_toolCallId, params, signal, _onUpdate, ctx) {
       const query = params.query.trim();
       if (!query) throw new SearchError("Search query must not be blank.");
+
+      if (backend?.provider === "agy") {
+        return await executeAgySearch(
+          query,
+          params.limit ?? 5,
+          params.recency_days,
+          backend.model,
+          signal,
+        );
+      }
+
       const model = backend ? ctx.modelRegistry.find(backend.provider, backend.model) : ctx.model;
       if (!model || model.api !== "openai-responses") {
         throw new SearchError(
