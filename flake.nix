@@ -270,9 +270,16 @@
               constants
               ;
             aiPackages = inputs.llm-agents.packages.${system};
-            # Consumed by home/ai/pi-re (vendored from an upstream layout that
-            # passes a `setup` attrset to Home Manager modules).
-            setup = { inherit androidLab; };
+            # Consumed by home/ai/pi and home/ai/pi-re (vendored from an upstream layout
+            # that passes a `setup` attrset to Home Manager modules).
+            setup = {
+              inherit androidLab;
+              # Search backend is independent of Pi's selected chat model/provider.
+              pi.webSearch = {
+                provider = "codex-lb";
+                model = "gemini-2.5-flash";
+              };
+            };
             inherit androidTools reaTools openDesignPackage;
             inherit (inputs) mattPocockSkills chromeDevToolsMcp uiUxProMaxSkills;
           };

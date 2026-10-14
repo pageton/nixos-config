@@ -1,14 +1,14 @@
-# Package local Pi sources while keeping settings, models, and credentials writable.
-
 {
   aiPackages,
   config,
   lib,
   pkgs,
+  setup,
   ...
 }:
 
 let
+  searchConfig = pkgs.writeText "pi-web-search-config.json" (builtins.toJSON setup.pi.webSearch);
   extensions = pkgs.buildNpmPackage {
     pname = "pi-personal-extensions";
     version = "local";
@@ -26,6 +26,9 @@ let
       cp ${./extensions/agy-bridge.ts} "$resources/agy-bridge.ts"
       cp ${./extensions/network-diagnostics.ts} "$resources/network-diagnostics.ts"
       cp -r ${./extensions/prompt-snippets}/. "$resources/prompt-snippets/"
+      cp -r ${./extensions/web-search} "$resources/web-search"
+      chmod u+w "$resources/web-search"
+      cp ${searchConfig} "$resources/web-search/config.json"
       cp -r ${./extensions/interactive-subagents} "$resources/interactive-subagents"
       runHook postInstall
     '';
@@ -70,6 +73,7 @@ in
         "${extensions}/lib/pi-config/network-diagnostics.ts";
       ".pi/agent/extensions/prompt-snippets".source = "${extensions}/lib/pi-config/prompt-snippets";
       ".pi/agent/extensions/web-fetch".source = "${extensions}/lib/pi-config/web-fetch";
+      ".pi/agent/extensions/web-search".source = "${extensions}/lib/pi-config/web-search";
       ".pi/agent/extensions/interactive-subagents".source =
         "${extensions}/lib/pi-config/interactive-subagents";
     };
