@@ -42,6 +42,10 @@ let
         name = "chrome-devtools-cli";
         source = chromeDevToolsMcp + "/skills/chrome-devtools-cli";
       }
+      {
+        name = "app-design";
+        source = ./skills/app-design;
+      }
     ]
     # UI design skills (banner, brand, design-system, slides, …); upstream
     # installs every bundle under .claude/skills (skills.sh name = "*").
