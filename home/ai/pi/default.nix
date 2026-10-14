@@ -25,6 +25,7 @@ let
       cp ${./extensions/ask-user-question.ts} "$resources/ask-user-question.ts"
       cp ${./extensions/agy-bridge.ts} "$resources/agy-bridge.ts"
       cp ${./extensions/network-diagnostics.ts} "$resources/network-diagnostics.ts"
+      cp ${./extensions/upstream-retry.ts} "$resources/upstream-retry.ts"
       cp -r ${./extensions/prompt-snippets}/. "$resources/prompt-snippets/"
       cp -r ${./extensions/web-search} "$resources/web-search"
       chmod u+w "$resources/web-search"
@@ -71,6 +72,8 @@ in
       ".pi/agent/extensions/agy-bridge.ts".source = "${extensions}/lib/pi-config/agy-bridge.ts";
       ".pi/agent/extensions/network-diagnostics.ts".source =
         "${extensions}/lib/pi-config/network-diagnostics.ts";
+      ".pi/agent/extensions/upstream-retry.ts".source =
+        "${extensions}/lib/pi-config/upstream-retry.ts";
       ".pi/agent/extensions/prompt-snippets".source = "${extensions}/lib/pi-config/prompt-snippets";
       ".pi/agent/extensions/web-fetch".source = "${extensions}/lib/pi-config/web-fetch";
       ".pi/agent/extensions/web-search".source = "${extensions}/lib/pi-config/web-search";
