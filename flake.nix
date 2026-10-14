@@ -279,6 +279,12 @@
                 provider = "codex-lb";
                 model = "gemini-2.5-flash";
               };
+              # Read-only research workers; runtime RE jobs retain their separate limits.
+              pi.research = {
+                maxConcurrent = 4;
+                defaultTimeoutSeconds = 600;
+                maxTimeoutSeconds = 1800;
+              };
             };
             inherit androidTools reaTools openDesignPackage;
             inherit (inputs) mattPocockSkills chromeDevToolsMcp uiUxProMaxSkills;
