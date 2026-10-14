@@ -53,6 +53,7 @@ in
     ./chrome-devtools
     ./pi
     ./pi-re
+    ./open-design.nix
     ./skills.nix
     ./voice
   ];

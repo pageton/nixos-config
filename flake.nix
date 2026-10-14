@@ -230,6 +230,10 @@
       };
       # Pinned REA static-analysis stack consumed by home/ai/pi-re.
       reaTools = import ./packages/rea { inherit pkgs; };
+      openDesignPackage = pkgs.callPackage ./packages/open-design {
+        # Reuse the configured browser instead of downloading a render binary.
+        browser = pkgs.google-chrome;
+      };
 
       makeSystem =
         { hostname, stateVersion }:
@@ -269,7 +273,7 @@
             # Consumed by home/ai/pi-re (vendored from an upstream layout that
             # passes a `setup` attrset to Home Manager modules).
             setup = { inherit androidLab; };
-            inherit androidTools reaTools;
+            inherit androidTools reaTools openDesignPackage;
             inherit (inputs) mattPocockSkills chromeDevToolsMcp uiUxProMaxSkills;
           };
           modules = [
@@ -284,6 +288,10 @@
       hosts = import ./hosts/_inventory.nix;
     in
     {
+      packages.${system} = {
+        open-design = openDesignPackage;
+      };
+
       nixosConfigurations = nixpkgs.lib.foldl' (
         configs: host:
         configs // { "${host.hostname}" = makeSystem { inherit (host) hostname stateVersion; }; }
