@@ -9,6 +9,7 @@ import { homedir } from "node:os";
 import { isMuxAvailable, muxSetupHint, sendCommand } from "./tmux.ts";
 import { ChildLaunch, SPAWNING_TOOLS, type AgentDefaults } from "./child-launch.ts";
 import { AgentCatalog } from "./agent-catalog.ts";
+import { currentProfilePolicy } from "./profile-policy.ts";
 
 import {
   getSessionId,
@@ -80,6 +81,13 @@ const SubagentParams = Type.Object({
     }),
   ),
   model: Type.Optional(Type.String({ description: "Model override (overrides agent default)" })),
+  thinking: Type.Optional(
+    Type.String({
+      description:
+        "Thinking level override: off, minimal, low, medium, high, xhigh or max. " +
+        "Overrides the agent profile's thinking; omit to keep the default.",
+    }),
+  ),
   cwd: Type.Optional(
     Type.String({
       description:
@@ -91,9 +99,45 @@ const SubagentParams = Type.Object({
 /** Built-in tools pi provides natively — no extension needs to be loaded. */
 const BUILTIN_TOOLS = new Set(["read", "write", "edit", "bash", "grep", "find", "ls"]);
 
+/** Valid thinking-level overrides for the subagent tool. */
+const THINKING_LEVELS = new Set(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
+
+/**
+ * Provider of the current session, when known. Subagent model picks stay on it:
+ * a codex-lb session only resolves codex-lb models, a zai session zai models.
+ */
+function sessionProvider(ctx: unknown): string | null {
+  const provider = (ctx as { model?: { provider?: string } } | undefined)?.model?.provider;
+  if (provider) return provider;
+  const fromEnv = process.env.PI_PROVIDER;
+  return fromEnv && fromEnv.trim() ? fromEnv.trim() : null;
+}
+
+/**
+ * Intersect with the session's enabledModels scope when configured, so catalog
+ * entries the plan cannot use never surface to agents. An empty intersection
+ * never removes the whole catalog.
+ */
+function scopeToEnabled(
+  ctx: unknown,
+  pool: readonly { provider: string; id: string }[],
+): { provider: string; id: string }[] {
+  const scoped = (
+    ctx as { scopedModels?: { model: { provider: string; id: string } }[] } | undefined
+  )?.scopedModels;
+  if (!scoped?.length) return [...pool];
+  const allowed = new Set(scoped.map((entry) => `${entry.model.provider}/${entry.model.id}`));
+  const filtered = pool.filter((m) => allowed.has(`${m.provider}/${m.id}`));
+  return filtered.length ? filtered : [...pool];
+}
+
 /** Resolve the global agent config directory, respecting PI_CODING_AGENT_DIR. */
 function getAgentConfigDir(): string {
-  return process.env.PI_CODING_AGENT_DIR ?? join(homedir(), ".pi", "agent");
+  return (
+    currentProfilePolicy()?.agentDir ??
+    process.env.PI_CODING_AGENT_DIR ??
+    join(homedir(), ".pi", "agent")
+  );
 }
 
 // ── Runtime tool-extension registration ─────────────────────────────────────
@@ -164,7 +208,7 @@ const agentCatalog = new AgentCatalog(
   () => ({
     package: join(SUBAGENTS_DIR, "../../agents"),
     global: join(getAgentConfigDir(), "agents"),
-    project: join(process.cwd(), ".pi", "agents"),
+    project: currentProfilePolicy() ? null : join(process.cwd(), ".pi", "agents"),
   }),
   process.env.PI_SUBAGENT_ALLOWED,
 );
@@ -177,7 +221,8 @@ function resolveSubagentPaths(
   const cwdIsFromAgent = !params.cwd && agentDefs?.cwd != null;
   const cwdBase = cwdIsFromAgent ? getAgentConfigDir() : process.cwd();
   const effectiveCwd = rawCwd ? (rawCwd.startsWith("/") ? rawCwd : join(cwdBase, rawCwd)) : null;
-  const localAgentDir = effectiveCwd ? join(effectiveCwd, ".pi", "agent") : null;
+  const localAgentDir =
+    effectiveCwd && !currentProfilePolicy() ? join(effectiveCwd, ".pi", "agent") : null;
   const effectiveAgentDir =
     localAgentDir && existsSync(localAgentDir) ? localAgentDir : getAgentConfigDir();
   return { effectiveCwd, localAgentDir, effectiveAgentDir };
@@ -185,7 +230,7 @@ function resolveSubagentPaths(
 
 function getDefaultSessionDirFor(cwd: string, agentDir: string): string {
   const safePath = `--${cwd.replace(/^[/\\]/, "").replace(/[/\\:]/g, "-")}--`;
-  const sessionDir = join(agentDir, "sessions", safePath);
+  const sessionDir = join(currentProfilePolicy()?.sessions ?? join(agentDir, "sessions"), safePath);
   if (!existsSync(sessionDir)) {
     mkdirSync(sessionDir, { recursive: true });
   }
@@ -689,6 +734,9 @@ function startStatusRefresh(pi: ExtensionAPI) {
 }
 
 export const __test__ = {
+  agentCatalog,
+  resolveSubagentPaths,
+  getDefaultSessionDirFor,
   borderLine,
   getShellReadyDelayMs,
   renderSubagentWidgetLines,
@@ -743,7 +791,20 @@ async function launchSubagent(
     params,
     agentDefs,
   );
-  let model = params.model ?? agentDefs?.model;
+  const explicitModel = (value: unknown): string | undefined =>
+    typeof value === "string" && value.trim() ? value : undefined;
+  let model = explicitModel(params.model) ?? explicitModel(agentDefs?.model);
+  const thinking = (() => {
+    const level = explicitModel(params.thinking)?.toLowerCase();
+    if (level === undefined) return undefined;
+    if (!THINKING_LEVELS.has(level)) {
+      throw new Error(
+        `Subagent thinking level ${JSON.stringify(params.thinking)} is invalid. ` +
+          `Use one of: ${[...THINKING_LEVELS].join(", ")}, or omit it to keep the default.`,
+      );
+    }
+    return level;
+  })();
   if (
     agentDefs?.cli !== "claude" &&
     model !== undefined &&
@@ -755,12 +816,37 @@ async function launchSubagent(
     // credentials and provider extensions: leave resolution to that child CLI.
     const requested = model.trim();
     const available = await ctx.modelRegistry.getAvailable();
-    const qualified = available.filter((m) => `${m.provider}/${m.id}` === requested);
-    const matches = qualified.length ? qualified : available.filter((m) => m.id === requested);
-    if (!requested || matches.length === 0) {
+    const provider = sessionProvider(ctx);
+    const providerPool = provider ? available.filter((m) => m.provider === provider) : [];
+    // Scope to the session's provider only when that provider has registered
+    // models; an unknown/empty provider must not empty the whole catalog.
+    const pool = scopeToEnabled(ctx, providerPool.length ? providerPool : available);
+    const qualified = pool.filter((m) => `${m.provider}/${m.id}` === requested);
+    const matches = qualified.length ? qualified : pool.filter((m) => m.id === requested);
+    if (matches.length === 0) {
+      const elsewhere = available.filter(
+        (m) =>
+          m.provider !== provider && (`${m.provider}/${m.id}` === requested || m.id === requested),
+      );
+      if (provider && elsewhere.length) {
+        throw new Error(
+          `Subagent model ${JSON.stringify(model)} belongs to provider ${elsewhere[0].provider}, ` +
+            `but this session's provider is ${provider}; subagents stay on the session's provider. ` +
+            `Pick from: ${pool.map((m) => `${m.provider}/${m.id}`).join(", ")}. ` +
+            "Omit model to inherit the session default.",
+        );
+      }
+      const catalog = pool.map((m) => `${m.provider}/${m.id}`);
+      const shown =
+        catalog.slice(0, 12).join(", ") +
+        (catalog.length > 12 ? `, … (+${catalog.length - 12} more)` : "");
+      const thinkingHint = THINKING_LEVELS.has(requested)
+        ? " It looks like a thinking level; pass it as the thinking option, not model."
+        : "";
       throw new Error(
         `Subagent model ${JSON.stringify(model)} is not an available registered model. ` +
-          "Use an exact model ID with configured authentication, preferably provider/model.",
+          "Use an exact model ID with configured authentication, preferably provider/model. " +
+          `Available: ${shown}. Omit model to inherit the session default.${thinkingHint}`,
       );
     }
     if (matches.length > 1) {
@@ -831,6 +917,7 @@ async function launchSubagent(
           kind: "initial",
           profile: agentDefs,
           model,
+          thinking,
           cwd: effectiveCwd,
           agentDir:
             localAgentDir && existsSync(localAgentDir)
@@ -1208,12 +1295,34 @@ export default function subagentsExtension(pi: ExtensionAPI) {
       "Project-local agents override global ones with the same name.",
     parameters: Type.Object({}),
 
-    async execute() {
+    async execute(_toolCallId, _params, _signal, _onUpdate, ctx) {
       const list = agentCatalog.listVisible();
+
+      let modelsLine = "";
+      try {
+        const available = await ctx?.modelRegistry?.getAvailable();
+        if (available?.length) {
+          const provider = sessionProvider(ctx);
+          const providerPool = provider ? available.filter((m) => m.provider === provider) : [];
+          const pool = scopeToEnabled(ctx, providerPool.length ? providerPool : available);
+          if (pool.length) {
+            const ids = pool.map((m) => `${m.provider}/${m.id}`);
+            modelsLine =
+              `Models usable as subagent model overrides${provider ? ` (session provider ${provider})` : ""}: ` +
+              `${ids.join(", ")}. Subagents stay on the session's provider; ` +
+              "omit model to inherit the session default.";
+          }
+        }
+      } catch {
+        // Listing is best-effort; spawn-time validation remains authoritative.
+      }
 
       if (list.length === 0) {
         return {
-          content: [{ type: "text", text: "No subagent definitions found." }],
+          content: [
+            { type: "text", text: "No subagent definitions found." },
+            ...(modelsLine ? [{ type: "text", text: modelsLine }] : []),
+          ],
           details: { agents: [] },
         };
       }
@@ -1226,7 +1335,10 @@ export default function subagentsExtension(pi: ExtensionAPI) {
       });
 
       return {
-        content: [{ type: "text", text: lines.join("\n") }],
+        content: [
+          { type: "text", text: lines.join("\n") },
+          ...(modelsLine ? [{ type: "text", text: modelsLine }] : []),
+        ],
         details: { agents: list },
       };
     },

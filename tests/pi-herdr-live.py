@@ -13,8 +13,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MUX = (
-    ROOT
-    / "home/ai/pi/extensions/interactive-subagents/pi-extension/subagents/tmux.ts"
+    ROOT / "home/ai/pi-base/extensions/interactive-subagents/pi-extension/subagents/tmux.ts"
+    if (ROOT / "home/ai/pi-base/extensions/interactive-subagents").exists()
+    else ROOT / "home-manager/modules/ai/pi-base/extensions/interactive-subagents/pi-extension/subagents/tmux.ts"
 )
 
 

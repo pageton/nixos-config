@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from pi_test_support import isolated_environment, require_pi
 
 REPO = Path(__file__).resolve().parents[1]
-EXTENSION = (REPO / "home/ai/pi/extensions/web-search/index.ts") if (REPO / "home/ai/pi/extensions/web-search/index.ts").exists() else (REPO / "home-manager/modules/ai/pi/extensions/web-search/index.ts")
+EXTENSION = (REPO / "home/ai/pi-base/extensions/web-search/index.ts") if (REPO / "home/ai/pi-base/extensions/web-search/index.ts").exists() else (REPO / "home-manager/modules/ai/pi-base/extensions/web-search/index.ts")
 TOKEN = "PI_SEARCH_PRIVATE_TOKEN"
 
 

@@ -4,7 +4,6 @@
   lib,
   pkgs,
   mattPocockSkills,
-  chromeDevToolsMcp,
   uiUxProMaxSkills,
   ...
 }:
@@ -40,7 +39,8 @@ let
       # matches the pinned chrome-devtools binary on PATH (chrome-devtools/).
       {
         name = "chrome-devtools-cli";
-        source = chromeDevToolsMcp + "/skills/chrome-devtools-cli";
+        # One shared pin with pi-base's commonSkills (pi-base/chrome-skill.nix).
+        source = (import ./pi-base/chrome-skill.nix { inherit pkgs; }).directory;
       }
       {
         name = "app-design";

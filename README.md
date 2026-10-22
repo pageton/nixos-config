@@ -658,6 +658,25 @@ home-manager expire-generations "-7 days"
 
 ---
 
+---
+
+## Pi profiles
+
+`pi` remains an alias for `pi-coding` (and `p` still adds project approval).
+[Pi base](home/ai/pi-base/README.md) owns common extensions and the
+one live login/model/global settings configuration at the existing `~/.pi/agent`.
+Web search, web/PDF fetching, interactive subagents and the Chrome DevTools CLI/skill
+are shared by all root profiles;
+RE additionally retains its specialized restricted workers.
+Coding retains native discovery/history; `pi-re` uses a separate history
+and explicit domain loadouts. Herdr's `pi --session` restore routes each root back
+to its owning profile and rejects headless worker artifacts.
+
+Close legacy RE sessions before the first Home Manager activation. Migration privately
+archives their original auth/models/settings and merges compatible RE-only
+providers, models and logins into the shared configuration. Current Pi defaults
+and conflicting values stay unchanged. No activation is needed just to evaluate or preview.
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.

@@ -29,7 +29,7 @@ from pi_test_support import (
 )
 
 REPO = Path(__file__).resolve().parents[1]
-EXTENSIONS = (REPO / "home/ai/pi/extensions") if (REPO / "home/ai/pi/extensions").exists() else (REPO / "home-manager/modules/ai/pi/extensions")
+EXTENSIONS = (REPO / "home/ai/pi-base/extensions") if (REPO / "home/ai/pi-base/extensions").exists() else (REPO / "home-manager/modules/ai/pi-base/extensions")
 TEXT_LIMIT = 5 * 1024 * 1024
 PDF_LIMIT = 20 * 1024 * 1024
 

@@ -80,19 +80,21 @@ class Research(unittest.TestCase):
             "python": sys.executable,
             "resources": str(CODE),
             "webSearchExtension": str(
-                (ROOT / "home/ai/pi/extensions/web-search/index.ts")
-                if (ROOT / "home/ai/pi/extensions").exists()
-                else (ROOT / "home-manager/modules/ai/pi/extensions/web-search/index.ts")
+                (ROOT / "home/ai/pi-base/extensions/web-search/index.ts")
+                if (ROOT / "home/ai/pi-base/extensions").exists()
+                else (ROOT / "home-manager/modules/ai/pi-base/extensions/web-search/index.ts")
             ),
             "webFetchExtension": str(
-                (ROOT / "home/ai/pi/extensions/web-fetch/index.ts")
-                if (ROOT / "home/ai/pi/extensions").exists()
-                else (ROOT / "home-manager/modules/ai/pi/extensions/web-fetch/index.ts")
+                (ROOT / "home/ai/pi-base/extensions/web-fetch/index.ts")
+                if (ROOT / "home/ai/pi-base/extensions").exists()
+                else (ROOT / "home-manager/modules/ai/pi-base/extensions/web-fetch/index.ts")
             ),
             "research": {"maxConcurrent": 4, "defaultTimeoutSeconds": 10, "maxTimeoutSeconds": 30},
         }
         self.config.write_text(json.dumps(self.value))
-        self.env.update(PI_CODING_AGENT_DIR=str(self.agent), PI_RE_CONFIG=str(self.config))
+        self.env.update(
+            PI_PROFILE="pi-re", PI_CODING_AGENT_DIR=str(self.agent), PI_RE_CONFIG=str(self.config)
+        )
         self.children = []
         self.addCleanup(self.cleanup)
 

@@ -6,7 +6,7 @@ import test from "node:test";
 import diagnostics, {
   observeBody,
   safeFailure,
-} from "../home/ai/pi/extensions/network-diagnostics.ts";
+} from "../home/ai/pi-base/extensions/network-diagnostics.ts";
 
 test("failure diagnostics allowlist codes and never retain raw messages", () => {
   const secret = "CANARY_TOKEN\r\nAuthorization: secret";

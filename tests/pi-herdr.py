@@ -16,8 +16,9 @@ from pi_test_support import isolated_environment
 
 REPO = Path(__file__).resolve().parents[1]
 SURFACES = (
-    REPO
-    / "home/ai/pi/extensions/interactive-subagents/pi-extension/subagents/tmux.ts"
+    REPO / "home/ai/pi-base/extensions/interactive-subagents/pi-extension/subagents/tmux.ts"
+    if (REPO / "home/ai/pi-base/extensions/interactive-subagents").exists()
+    else REPO / "home-manager/modules/ai/pi-base/extensions/interactive-subagents/pi-extension/subagents/tmux.ts"
 )
 
 SHIM = """#!/usr/bin/env python3

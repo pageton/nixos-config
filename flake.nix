@@ -299,10 +299,21 @@
 
       # Single source of truth — edit hosts/_inventory.nix to add/remove hosts.
       hosts = import ./hosts/_inventory.nix;
+      # Pi profile executables resolve from the first inventoried host's Home
+      # Manager configuration (upstream exposes them from its desktop profile).
+      primaryHome = makeHome { inherit ((builtins.head hosts)) hostname; };
+      piProfile =
+        name:
+        nixpkgs.lib.findFirst (
+          package: nixpkgs.lib.getName package == name
+        ) (throw "The selected Home Manager profile does not provide ${name}") primaryHome.config.home.packages;
     in
     {
       packages.${system} = {
         open-design = openDesignPackage;
+        pi-base = piProfile "pi-base";
+        pi-coding = piProfile "pi-coding";
+        pi-re = piProfile "pi-re";
       };
 
       nixosConfigurations = nixpkgs.lib.foldl' (
