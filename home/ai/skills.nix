@@ -53,6 +53,12 @@ let
         name = "karpathy-guidelines";
         source = karpathySkills + "/skills/karpathy-guidelines";
       }
+      # Managed Impeccable design skill with a pinned engine binary and no
+      # runtime downloads; see impeccable-skill.nix for the patch rationale.
+      {
+        name = "impeccable";
+        source = (import ./impeccable-skill.nix { inherit pkgs; }).path;
+      }
     ]
     # UI design skills (banner, brand, design-system, slides, …); upstream
     # installs every bundle under .claude/skills (skills.sh name = "*").
