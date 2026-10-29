@@ -15,6 +15,9 @@
   makeWrapper,
   zstd,
   git,
+  # Native folder/file picker host command (ThinkRail shells out to zenity or
+  # kdialog when the webview needs a system dialog).
+  zenity,
   # Linux desktop runtime required by the bundled native wrapper
   # (WebKitGTK renderer, GTK3 UI, tray icon, SVG assets).
   gtk3,
@@ -78,7 +81,12 @@ stdenv.mkDerivation (finalAttrs: {
     # (GLXBadWindow + "Failed to create GBM buffer"), leaving the webview
     # blank; fall back to the legacy rendering path. Overridable per user.
     makeWrapper "$appDir/bin/launcher" "$out/bin/thinkrail" \
-      --prefix PATH : ${lib.makeBinPath [ git ]} \
+      --prefix PATH : ${
+        lib.makeBinPath [
+          git
+          zenity
+        ]
+      } \
       --prefix LD_LIBRARY_PATH : ${
         lib.makeLibraryPath [
           gtk3
