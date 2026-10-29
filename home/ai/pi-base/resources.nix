@@ -11,6 +11,7 @@ let
     "ask-user-question.ts"
     "agy-bridge.ts"
     "network-diagnostics.ts"
+    "codex-lb-session.ts"
     "upstream-retry.ts"
     "prompt-snippets"
     "web-fetch"
