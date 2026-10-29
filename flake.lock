@@ -327,6 +327,23 @@
         "type": "github"
       }
     },
+    "karpathySkills": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1776679504,
+        "narHash": "sha256-4z/wRdYH7UXRzF8RJU0sw8xbpx0BW/7CBv5sVEC2knY=",
+        "owner": "multica-ai",
+        "repo": "andrej-karpathy-skills",
+        "rev": "2c606141936f1eeef17fa3043a72095b4765b9c2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "multica-ai",
+        "repo": "andrej-karpathy-skills",
+        "rev": "2c606141936f1eeef17fa3043a72095b4765b9c2",
+        "type": "github"
+      }
+    },
     "llm-agents": {
       "inputs": {
         "bun2nix": "bun2nix",
@@ -725,6 +742,7 @@
       "inputs": {
         "chromeDevToolsMcp": "chromeDevToolsMcp",
         "home-manager": "home-manager",
+        "karpathySkills": "karpathySkills",
         "llm-agents": "llm-agents",
         "mattPocockSkills": "mattPocockSkills",
         "niri": "niri",

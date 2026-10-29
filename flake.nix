@@ -76,6 +76,13 @@
       url = "github:nextlevelbuilder/ui-ux-pro-max-skill/477bcb28c9812b385cb51a4605ddf30d7b2266e2";
       flake = false;
     };
+    # Full upstream Karpathy coding guidelines for all discovered agents.
+    # Pi's global instructions carry a concise adaptation (pi-base/AGENTS.md);
+    # this pinned skill provides the complete reference on demand.
+    karpathySkills = {
+      url = "github:multica-ai/andrej-karpathy-skills/2c606141936f1eeef17fa3043a72095b4765b9c2";
+      flake = false;
+    };
   };
 
   outputs =
@@ -287,7 +294,7 @@
               };
             };
             inherit androidTools reaTools openDesignPackage;
-            inherit (inputs) mattPocockSkills chromeDevToolsMcp uiUxProMaxSkills;
+            inherit (inputs) mattPocockSkills chromeDevToolsMcp uiUxProMaxSkills karpathySkills;
           };
           modules = [
             ./home/home.nix

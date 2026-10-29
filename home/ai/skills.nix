@@ -5,6 +5,7 @@
   pkgs,
   mattPocockSkills,
   uiUxProMaxSkills,
+  karpathySkills,
   ...
 }:
 
@@ -45,6 +46,12 @@ let
       {
         name = "app-design";
         source = ./skills/app-design;
+      }
+      # Full upstream Karpathy coding guidelines; invoke by name when
+      # writing, reviewing, or refactoring code.
+      {
+        name = "karpathy-guidelines";
+        source = karpathySkills + "/skills/karpathy-guidelines";
       }
     ]
     # UI design skills (banner, brand, design-system, slides, …); upstream
