@@ -323,6 +323,8 @@
     in
     {
       packages.${system} = {
+        agent-reach = pkgs.callPackage ./packages/agent-reach { };
+        opencli = pkgs.callPackage ./packages/agent-reach/opencli.nix { };
         open-design = openDesignPackage;
         pi-base = piProfile "pi-base";
         pi-coding = piProfile "pi-coding";

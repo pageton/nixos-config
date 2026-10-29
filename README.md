@@ -30,6 +30,7 @@ This repository contains a declarative NixOS configuration using flakes with the
 - **Desktop environment**: Niri (Wayland) with Noctalia shell and Stylix theming
 - **Security**: SOPS encrypted secrets, Mullvad VPN, Tor support
 - **Development**: NVF (Neovim), Helix, language tooling (Go, Python)
+- **Agent tooling**: Pi coding profiles, Agent Reach platform search ([docs](docs/agent-reach.md))
 - **Automation**: `just` commands for common tasks
 
 ### Supported Hosts

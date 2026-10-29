@@ -50,6 +50,7 @@ in
   imports = [
     ./herdr.nix
     ./herdr-backup.nix
+    ./agent-reach.nix
     ./our-free-model.nix
     ./chrome-devtools
     ./pi
