@@ -74,6 +74,9 @@ stdenv.mkDerivation (finalAttrs: {
     # The launcher preflight-dlopens the desktop stack by soname and then
     # spawns bun with Resources/main.js, so keep the libraries visible even
     # where RPATHs do not apply (bare dlopen lookups).
+    # WebKitGTK's DMABUF renderer cannot allocate GBM buffers on NVIDIA
+    # (GLXBadWindow + "Failed to create GBM buffer"), leaving the webview
+    # blank; fall back to the legacy rendering path. Overridable per user.
     makeWrapper "$appDir/bin/launcher" "$out/bin/thinkrail" \
       --prefix PATH : ${lib.makeBinPath [ git ]} \
       --prefix LD_LIBRARY_PATH : ${
@@ -97,7 +100,8 @@ stdenv.mkDerivation (finalAttrs: {
         ]
       } \
       --set GDK_PIXBUF_MODULE_FILE ${librsvg}/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache \
-      --set-default THINKRAIL_NO_ANALYTICS 1
+      --set-default THINKRAIL_NO_ANALYTICS 1 \
+      --set-default WEBKIT_DISABLE_DMABUF_RENDERER 1
 
     runHook postInstall
   '';

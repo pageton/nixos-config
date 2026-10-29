@@ -338,6 +338,7 @@
       packages.${system} = {
         agent-reach = pkgs.callPackage ./packages/agent-reach { };
         opencli = pkgs.callPackage ./packages/agent-reach/opencli.nix { };
+        thinkrail = pkgs.callPackage ./packages/thinkrail { };
         open-design = openDesignPackage;
         pi-base = piProfile "pi-base";
         pi-coding = piProfile "pi-coding";
