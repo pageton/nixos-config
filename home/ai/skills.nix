@@ -6,6 +6,7 @@
   mattPocockSkills,
   uiUxProMaxSkills,
   karpathySkills,
+  ubModeSkills,
   ...
 }:
 
@@ -58,6 +59,17 @@ let
       {
         name = "impeccable";
         source = (import ./impeccable-skill.nix { inherit pkgs; }).path;
+      }
+      # Uncle Bob's disciplined engineering skill (TDD, complexity/duplication
+      # gates, ordered commits); invoke by name when writing or changing code.
+      {
+        name = "ub-mode";
+        source = ubModeSkills;
+      }
+      # Read-only catalog audit of installed skills; see SKILL.md.
+      {
+        name = "skill-audit";
+        source = ./skills/skill-audit;
       }
     ]
     # UI design skills (banner, brand, design-system, slides, …); upstream

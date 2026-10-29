@@ -83,6 +83,12 @@
       url = "github:multica-ai/andrej-karpathy-skills/2c606141936f1eeef17fa3043a72095b4765b9c2";
       flake = false;
     };
+    # Uncle Bob's disciplined engineering skill (make it work, make it right).
+    # The repo root IS the skill (SKILL.md at top level).
+    ubModeSkills = {
+      url = "github:unclebob/ub-mode/57a8bdd28e45ed41900ace0bafa2ff76dd9ed70f";
+      flake = false;
+    };
   };
 
   outputs =
@@ -294,7 +300,7 @@
               };
             };
             inherit androidTools reaTools openDesignPackage;
-            inherit (inputs) mattPocockSkills chromeDevToolsMcp uiUxProMaxSkills karpathySkills;
+            inherit (inputs) mattPocockSkills chromeDevToolsMcp uiUxProMaxSkills karpathySkills ubModeSkills;
           };
           modules = [
             ./home/home.nix

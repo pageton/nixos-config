@@ -756,6 +756,7 @@
         "sops-nix": "sops-nix",
         "spicetify-nix": "spicetify-nix",
         "stylix": "stylix",
+        "ubModeSkills": "ubModeSkills",
         "uiUxProMaxSkills": "uiUxProMaxSkills"
       }
     },
@@ -997,6 +998,23 @@
       "original": {
         "owner": "numtide",
         "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "ubModeSkills": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792944478,
+        "narHash": "sha256-9NhuidH8rNH8euqBrZwMNwapKmKYYpsKO4hP8XK0JG0=",
+        "owner": "unclebob",
+        "repo": "ub-mode",
+        "rev": "57a8bdd28e45ed41900ace0bafa2ff76dd9ed70f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "unclebob",
+        "repo": "ub-mode",
+        "rev": "57a8bdd28e45ed41900ace0bafa2ff76dd9ed70f",
         "type": "github"
       }
     },

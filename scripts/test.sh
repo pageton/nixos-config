@@ -14,7 +14,7 @@ python3 -B tests/pi_test_support.py
 node --test tests/pi-subagents-recall.test.mjs
 bun test tests/pi-network-diagnostics.test.ts
 for suite in \
-  herdr-backup pi-config pi-profiles pi-test-support pi-subagents pi-extensions pi-web-search pi-herdr \
+  herdr-backup pi-config pi-profiles pi-test-support pi-subagents pi-extensions pi-web-search pi-herdr skill-audit \
   pi-codex-cache pi-upstream-retry pi-resume-dispatch \
   pi-re-config pi-re-rea pi-re-research pi-re-subagent pi-re-browser; do
   printf '\n== %s ==\n' "$suite"
