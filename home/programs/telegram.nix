@@ -4,19 +4,35 @@
 # (https://github.com/pageton/tdesktop/releases — td-setup-linux-x64), pinned
 # by tgVersion below. Updates land by bumping tgVersion + the fetchurl hash
 # (nix-prefetch-url the new URL, convert to SRI with `nix hash convert`).
-# No source build: the tarball ships a mostly-static binary (Qt, tgcalls,
-# lib_ui, ffmpeg baked in).
+# No source build. The tarball's binary comes in two shapes depending on how
+# the fork was cut:
+#
+# - Mostly-static (up to 7.2.x): Qt, tgcalls, lib_ui, ffmpeg baked in; only
+#   dlopen'd runtimes come from the wrapper env below.
+# - Dev-shell build (7.3.3+): dynamically linked against the nix store
+#   closure of the machine that cut the release — PT_INTERP and DT_RUNPATH
+#   embed ~50 absolute /nix/store paths at release time. That makes the
+#   artifact host-specific: it only runs where those paths exist. Garbage
+#   collection keeps them only via the release machine's own roots (the
+#   tdesktop project profile pins its dev-shell closure) — reference
+#   scanning does not cover foreign paths. Releases are cut from
+#   ~/Projects/tdesktop on this machine, so that holds for every release
+#   consumed here; elsewhere the wrappers catch the failed exec and say
+#   so, and the loader names any missing library.
 #
 # Two non-obvious constraints, both worked around in this file:
 #
 # 1. patchelf is unusable. Any --set-interpreter/--set-rpath rewrite of this
-#    ~280MB multi-segment static binary corrupts it — the patched binary
-#    jumps into its own ELF headers during init_array (SIGILL/SIGSEGV,
-#    verified). Instead the stock PT_INTERP payload "/lib64/ld-linux-x86-64.so.2"
-#    (27 bytes) is overwritten IN PLACE with a shorter path (tgLoaderPath)
-#    and NUL-padded: pure string rewrite, no header/segment/size changes.
-#    The wrapper keeps a symlink at tgLoaderPath pointing at the pinned nix
-#    glibc loader, so the kernel can exec the binary directly.
+#    multi-segment binary corrupts it — the patched binary jumps into its own
+#    ELF headers during init_array (SIGILL/SIGSEGV, verified). Instead the
+#    PT_INTERP payload — the stock "/lib64/ld-linux-x86-64.so.2" on the old
+#    static releases, the release machine's store loader on dev-shell builds
+#    — is overwritten IN PLACE with a shorter path (tgLoaderPath) and
+#    NUL-padded: pure string rewrite, no header/segment/size changes. The
+#    wrapper keeps a symlink at tgLoaderPath pointing at the pinned nix
+#    glibc loader, so the kernel can exec the binary directly and THIS
+#    machine's glibc always drives the process (forward-compatible with
+#    every lib in the release closure).
 #
 # 2. Running through nix-ld instead is NOT an option: nix-ld execs the real
 #    glibc loader as the process image, so /proc/self/exe is the LOADER, not
@@ -49,7 +65,7 @@
 { lib, pkgs, ... }:
 let
   # Release version pin; the tarball URL is derived from it.
-  tgVersion = "7.2.8";
+  tgVersion = "7.3.3";
 
   # Short path the PT_INTERP payload is byte-patched to (must stay shorter
   # than the stock 27-byte "/lib64/ld-linux-x86-64.so.2"). The wrapper
@@ -62,7 +78,7 @@ let
 
     src = pkgs.fetchurl {
       url = "https://github.com/pageton/tdesktop/releases/download/v${tgVersion}/td-setup-linux-x64-${tgVersion}.tar.xz";
-      hash = "sha256-/jPP13GmShNKok4u334qRqGRKfIwUYPxJOTsFr/rv2E=";
+      hash = "sha256-JXDQ6xfLPD9YJcVysEKBg0kfnmXgfgQcv8aNLOtuR6A=";
     };
 
     dontConfigure = true;
@@ -77,22 +93,49 @@ let
       runHook preInstall
       install -Dm755 Telegram $out/libexec/Telegram
 
-      # Byte-patch the PT_INTERP payload in place (see header): find the
-      # stock interpreter string, assert it is unique, overwrite it with
-      # tgLoaderPath and NUL-pad the remainder.
-      from='/lib64/ld-linux-x86-64.so.2'
+      # Rewrite PT_INTERP in place with tgLoaderPath, whatever it currently
+      # holds: static releases carry the stock "/lib64/ld-linux-x86-64.so.2",
+      # dev-shell releases the release machine's store loader (currently
+      # glibc 2.42 while this config's libs are built against 2.43 — running
+      # under the older loader aborts with GLIBC_2.43-not-found). The payload
+      # is found via the ELF program headers and overwritten with a shorter
+      # NUL-padded string — no header/segment/size changes (patchelf is
+      # unusable on this binary; see the header). The wrapper keeps the
+      # /tmp/tgld symlink pointing at THIS machine's glibc loader, so the
+      # newest glibc always drives the process and every lib (release
+      # closure included) sees a forward-compatible loader.
+      binary=$out/libexec/Telegram
+      rd() { od -An -tu$2 -j$(( $1 )) -N$2 "$binary" | tr -d ' '; }
+      phoff=$(rd 32 8)
+      phentsize=$(rd 54 2)
+      phnum=$(rd 56 2)
+      interpOff=-1
+      for (( i = 0; i < phnum; i++ )); do
+        off=$(( phoff + i * phentsize ))
+        if [[ $(rd $off 4) -eq 3 ]]; then
+          interpOff=$(rd $(( off + 8 )) 8)
+          break
+        fi
+      done
+      (( interpOff >= 0 )) || { echo "PT_INTERP not found" >&2; exit 1; }
+      len=0
+      while (( $(rd $(( interpOff + len )) 1) != 0 )); do len=$(( len + 1 )); done
       to='${tgLoaderPath}'
-      if (( ''${#to} > ''${#from} )); then
-        echo "tgLoaderPath (''${#to} bytes) must not be longer than $from (''${#from} bytes)" >&2
-        exit 1
-      fi
-      interpOff=$(grep -abo "$from" $out/libexec/Telegram | head -1 | cut -d: -f1)
-      test -n "$interpOff" || { echo "interpreter string not found" >&2; exit 1; }
-      test "$(grep -abo "$from" $out/libexec/Telegram | wc -l)" -eq 1 \
-        || { echo "interpreter string is not unique" >&2; exit 1; }
-      printf '%s' "$to" | dd of=$out/libexec/Telegram bs=1 seek="$interpOff" conv=notrunc status=none
-      dd if=/dev/zero bs=1 count=$(( ''${#from} - ''${#to} )) \
-        | dd of=$out/libexec/Telegram bs=1 seek=$(( interpOff + ''${#to} )) conv=notrunc status=none
+      (( ''${#to} <= len )) \
+        || { echo "tgLoaderPath (''${#to} bytes) does not fit interp payload ($len bytes)" >&2; exit 1; }
+      printf '%s' "$to" | dd of="$binary" bs=1 seek="$interpOff" conv=notrunc status=none
+      dd if=/dev/zero bs=1 count=$(( len - ''${#to} )) \
+        | dd of="$binary" bs=1 seek=$(( interpOff + ''${#to} )) conv=notrunc status=none
+
+      # Dev-shell releases embed their store closure in PT_INTERP/RUNPATH.
+      # Manifest it here for the wrappers: nix's reference scanner does not
+      # register foreign store paths that aren't derivation inputs (verified,
+      # so gc-safety relies on the release machine's own roots — the tdesktop
+      # project profile pins this closure), and the loader ignores the
+      # embedded DT_RUNPATH, so the wrappers turn this list into
+      # LD_LIBRARY_PATH entries to resolve every DT_NEEDED.
+      grep -aoE '/nix/store/[a-z0-9]{32}-[a-zA-Z0-9.+_-]+' "$binary" \
+        | sort -u > $out/libexec/tg-store-closure
 
       runHook postInstall
     '';
@@ -102,11 +145,12 @@ let
   # home/core/desktop-entries.nix for the rationale.
   nvidiaEglEnv = ''
     export GBM_BACKEND=nvidia-drm
-    export __EGL_VENDOR_LIBRARY_FILENAMES=/run/opengl-driver/share/glvnd/egl_vendor.d/10_nvidia.json
     # The NVIDIA EGL loader only searches /etc/egl and /usr/share/egl for the
     # external-platform configs (libnvidia-egl-wayland: the Wayland/GBM/X11
     # EGL platforms) — point it at the driver bundle or EGL falls back to
-    # llvmpipe under native Wayland (QEGLPlatformContext/QRhi errors).
+    # llvmpipe under native Wayland (QEGLPlatformContext/QRhi errors). Same
+    # dir-form overrides the tdesktop dev shell verified with eglinfo.
+    export __EGL_VENDOR_LIBRARY_DIRS=/run/opengl-driver/share/glvnd/egl_vendor.d
     export __EGL_EXTERNAL_PLATFORM_CONFIG_DIRS=/run/opengl-driver/share/egl/egl_external_platform.d
   '';
 
@@ -121,10 +165,15 @@ let
     export QT_QPA_PLATFORMTHEME=gtk3
   '';
 
-  # NixOS has no ld.so.cache and the binary is unpatched (see header), so
-  # EVERYTHING resolves from here: DT_NEEDED (glib/pango/cairo/fontconfig/
-  # freetype), the .note.dlopen metadata (pipewire/pulseaudio/alsa backends +
-  # dbus), and plain dlopens (wayland + xkbcommon at startup, webkitgtk for
+  # NixOS has no ld.so.cache and the binary is unpatched (see header). The
+  # static builds resolved EVERYTHING from here; dev-shell builds get their
+  # DT_NEEDED from the embedded RUNPATH, where LD_LIBRARY_PATH (searched
+  # first) shadows overlapping sonames with the same nixpkgs versions the
+  # static builds used — one proven env for both shapes. gcc.cc.lib keeps
+  # a single (ours, newest) libstdc++ ahead of the release closure's.
+  # Uniquely supplied
+  # either way: the .note.dlopen metadata (pipewire/pulseaudio/alsa backends
+  # + dbus), and plain dlopens (wayland + xkbcommon at startup, webkitgtk for
   # mini apps, gtk3 for QGtk3Theme, geoclue2 for location, libglvnd + mesa
   # for the EGL/GL/OpenGL/GBM dispatchers, libva for hardware video decode).
   runtimeLibsEnv = ''
@@ -135,6 +184,7 @@ let
         pkgs.dbus
         pkgs.fontconfig
         pkgs.freetype
+        pkgs.gcc.cc.lib
         pkgs.geoclue2
         pkgs.glib
         pkgs.gtk3
@@ -151,18 +201,111 @@ let
     }''${LD_LIBRARY_PATH:+:''${LD_LIBRARY_PATH}}"
   '';
 
-  # Webview runtime: glib-networking's GIO modules give WebKit TLS, and the
-  # gsettings schemas (gtk3 + desktop schemas) keep the webview and gtk3 file
-  # dialog from erroring on missing settings. Same effect as nixpkgs'
-  # gappsWrapperArgs on the old wrapper.
+  # Dev-shell releases carry their dependency closure as embedded store
+  # paths, and the loader ignores their DT_RUNPATH (observed: exec dies on
+  # the first DT_NEEDED no matter what RUNPATH lists). The package manifests
+  # those paths in tg-store-closure (see installPhase) — append their /lib
+  # dirs here so every DT_NEEDED resolves through LD_LIBRARY_PATH instead.
+  # Nonexistent dirs are skipped by the loader; static releases ship an
+  # empty manifest, making this a no-op for them.
+  closureLibsEnv = ''
+    closureList='${telegramDesktopPkg}/libexec/tg-store-closure'
+    if [[ -r "$closureList" ]]; then
+      while IFS= read -r p; do
+        # The loader must always pair with its own libc — letting the
+        # release closure's older glibc shadow it breaks every lib built
+        # against a newer one (GLIBC_2.4x-not-found).
+        if [[ $p != *-glibc-* && -d "$p/lib" ]]; then
+          export LD_LIBRARY_PATH="''${LD_LIBRARY_PATH:+''${LD_LIBRARY_PATH}:}$p/lib"
+        fi
+      done < "$closureList"
+    fi
+  '';
+
+  # Dev-shell releases ship no Qt plugin tree: the fork's build generates an
+  # app-local qt.conf + qt-plugins next to the binary, but the release
+  # tarball carries only the bare binary — without it the app segfaults on
+  # emoji loading (the WebP codec lives in qtimageformats, outside qtbase;
+  # the project's dev-shell notes document this exact crash). Point
+  # QT_PLUGIN_PATH at the release closure's Qt plugin dirs, plus a
+  # qtimageformats whose version matches the closure's qtbase exactly — Qt
+  # version-checks plugins and the WebP one is load-bearing. That package
+  # comes from the project's dev shell (not this flake's nixpkgs, whose Qt
+  # has already moved on) and is store-rooted by the project profile like
+  # the rest of the closure.
+  qtPluginsEnv = ''
+    qtPluginList='${telegramDesktopPkg}/libexec/tg-store-closure'
+    QTP=""
+    qtVersion=""
+    webpPlugins=""
+    if [[ -r "$qtPluginList" ]]; then
+      while IFS= read -r p; do
+        if [[ $p == *-qt* && -d "$p/lib/qt-6/plugins" ]]; then
+          QTP+=":$p/lib/qt-6/plugins"
+          case $p in *-qtbase-*) qtVersion="''${p##*-qtbase-}" ;; esac
+        fi
+      done < "$qtPluginList"
+    fi
+    if [[ -n "$qtVersion" ]]; then
+      for d in /nix/store/*-qtimageformats-"$qtVersion"; do
+        if [[ -d "$d/lib/qt-6/plugins/imageformats" ]]; then
+          webpPlugins="$d/lib/qt-6/plugins"
+          QTP+=":$webpPlugins"
+          break
+        fi
+      done
+    fi
+    export QT_PLUGIN_PATH="''${QTP#:}''${QT_PLUGIN_PATH:+:''${QT_PLUGIN_PATH}}"
+    if [[ -z "$webpPlugins" ]] || ! ls "$webpPlugins"/imageformats/libqwebp* >/dev/null 2>&1; then
+      echo "telegram-desktop: no qtimageformats-$qtVersion WebP plugin found in the store — the release segfaults on emoji loading without it (keep the tdesktop project dev shell built)" >&2
+      exit 1
+    fi
+  '';
+
+  # GSettings schema dirs in the deep form glib's schema-source scan
+  # resolves (<entry>/glib-2.0/schemas/gschemas.compiled). This flake's
+  # glib (2.88+) no longer carries the old nixpkgs patch that also matched
+  # <entry>/gsettings-schemas/*/glib-2.0/schemas, so "share"-level
+  # XDG_DATA_DIRS entries match nothing: g_settings_new aborts with the
+  # fatal GLib-GIO-ERROR "No GSettings schemas" (main app via the gtk3 file
+  # dialog) and WebKitWebProcess dies of the same abort, surfacing as
+  # WebView-CRITICAL "Web process terminated: 0" (verified with
+  # g_settings_new + MiniBrowser against both forms). Subdirs are enumerated
+  # at eval time so version-named entries need no pinning; packages without
+  # schemas contribute nothing.
+  gsettingsSchemaDirs = lib.concatStringsSep ":" (
+    lib.flatten (
+      map
+        (
+          p:
+          let
+            d = "${p}/share/gsettings-schemas";
+          in
+          lib.optionals (builtins.pathExists d) (map (n: "${d}/${n}") (lib.attrNames (builtins.readDir d)))
+        )
+        [
+          pkgs.gsettings-desktop-schemas
+          pkgs.gtk3
+        ]
+    )
+  );
+
+  # Webview runtime: glib-networking's GIO modules give WebKit TLS. The
+  # makeSearchPath "share" entries cover mime/icons; the gsettings schemas
+  # (desktop schemas + gtk3's own) ride along ONLY as the deep entries from
+  # gsettingsSchemaDirs — with "share"-level entries alone every GSettings
+  # consumer in the process tree dies on a NULL schema source (see above).
   webviewEnv = ''
     export GIO_EXTRA_MODULES="${pkgs.glib-networking}/lib/gio/modules"
     export XDG_DATA_DIRS="${
-      lib.makeSearchPath "share/gsettings-schemas" [
+      lib.makeSearchPath "share" [
+        pkgs.glib-networking
         pkgs.gsettings-desktop-schemas
         pkgs.gtk3
+        pkgs.shared-mime-info
+        pkgs.webkitgtk_4_1
       ]
-    }''${XDG_DATA_DIRS:+:''${XDG_DATA_DIRS}}"
+    }:${gsettingsSchemaDirs}''${XDG_DATA_DIRS:+:''${XDG_DATA_DIRS}}"
   '';
 
   # Maintain the loader symlink the byte-patched PT_INTERP points at. The
@@ -187,6 +330,8 @@ let
     ${nvidiaEglEnv}
     ${fileDialogThemeEnv}
     ${runtimeLibsEnv}
+    ${closureLibsEnv}
+    ${qtPluginsEnv}
     ${webviewEnv}
     # Session-wide for Kvantum-styled Qt apps, but this build only ships
     # Fusion/Windows styles — the override can never load and just prints a
@@ -212,7 +357,17 @@ let
     updaterDir="''${XDG_DATA_HOME:-$HOME/.local/share}/TelegramDesktop/externalupdater.d"
     mkdir -p "$updaterDir"
     printf '%s\n' '${telegramDesktopPkg}/libexec/Telegram' > "$updaterDir/pageton"
+    # Dev-shell releases only exec on the machine that cut them (their
+    # PT_INTERP/RUNPATH embed that host's store closure) — turn the bare
+    # kernel ENOENT into an explanation. Without execfail a failed exec
+    # kills the script before anything can be said.
+    shopt -s execfail
     exec ${telegramDesktopPkg}/libexec/Telegram -noupdate "$@"
+    status=$?
+    if (( status == 127 )); then
+      echo "telegram-desktop: pageton binary failed to exec — dev-shell releases embed the release host's /nix/store closure and only run there" >&2
+    fi
+    exit "$status"
   '';
 
   telegramDesktopSecond = pkgs.writeShellScriptBin "telegram-desktop-second" ''
@@ -225,7 +380,13 @@ let
     updaterDir="$workdir/externalupdater.d"
     mkdir -p "$updaterDir"
     printf '%s\n' '${telegramDesktopPkg}/libexec/Telegram' > "$updaterDir/pageton"
+    shopt -s execfail
     exec ${telegramDesktopPkg}/libexec/Telegram -noupdate -workdir "$workdir" "$@"
+    status=$?
+    if (( status == 127 )); then
+      echo "telegram-desktop-second: pageton binary failed to exec — dev-shell releases embed the release host's /nix/store closure and only run there" >&2
+    fi
+    exit "$status"
   '';
 in
 {

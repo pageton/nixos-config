@@ -1,4 +1,4 @@
-# Virtualisation: Docker, VirtualBox, libvirt (desktop host only).
+# Virtualisation: Docker, libvirt (desktop host only).
 {
   config,
   lib,
@@ -8,11 +8,9 @@
   ...
 }:
 {
-  # Kernel modules required for virtualization
-  boot.kernelModules = [
-    "kvm-intel" # Intel KVM support
-    "kvm" # Kernel Virtual Machine support
-  ];
+  # KVM modules are host-specific (kvm-amd on AMD, kvm-intel on Intel) and are
+  # set in each host's hardware-configuration.nix; loading the wrong vendor
+  # module makes systemd-modules-load fail at boot.
 
   # Enable IP forwarding for container networking
   boot.kernel.sysctl."net.ipv4.ip_forward" = 1;
@@ -23,10 +21,6 @@
       enable = true;
       enableOnBoot = false; # Enable Docker socket but not daemon
     };
-
-    # VirtualBox virtualization platform
-    virtualbox.host.enable = true;
-    virtualbox.host.enableExtensionPack = true; # Enable USB and PXE boot support
 
     # Libvirt virtualization API
     libvirtd = {
@@ -46,7 +40,6 @@
   users.users."${user}" = {
     extraGroups = [
       "docker" # Access to Docker daemon
-      "vboxusers" # Access to VirtualBox VMs
       "libvirtd" # Access to libvirt VMs
       "kvm" # Access to KVM for hardware acceleration
     ];
@@ -57,7 +50,6 @@
 
   # Install virtualization management tools
   environment.systemPackages = with pkgsStable; [
-    virtualbox # VirtualBox command-line tools and GUI
     virt-manager # GUI for managing libvirt/QEMU/KVM virtual machines
     nvidia-container-toolkit # NVIDIA Container Toolkit CLI tools
     swtpm # Software TPM for VMs

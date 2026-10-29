@@ -20,7 +20,7 @@
       "sd_mod"
     ];
     initrd.kernelModules = [ ];
-    kernelModules = [ ];
+    kernelModules = [ "kvm-intel" ]; # Intel KVM (host-specific; was in shared virtualisation.nix)
     extraModulePackages = [ ];
   };
 

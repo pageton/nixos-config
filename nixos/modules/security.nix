@@ -53,8 +53,12 @@ in
       "slab_nomerge"
       "init_on_alloc=1"
       "init_on_free=1"
-      "module.sig_enforce=1"
-      "lockdown=integrity"
+      # NOTE: "module.sig_enforce=1" and "lockdown=integrity" removed — they
+      # were silent no-ops on 6.18.52 (nixpkgs built kernels without
+      # CONFIG_MODULE_SIG), but nixpkgs >= 2026-10 kernels sign modules with
+      # invalid/empty PKCS#7 signatures; enforcing them rejects nvme/ext4 in
+      # stage 1 and the system cannot find its root disk. Re-enable only after
+      # nixpkgs ships valid module signatures.
       "loglevel=4"
       "mem_sleep_default=deep"
       "random.trust_cpu=off"

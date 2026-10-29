@@ -12,8 +12,8 @@ let
   # Initialization policy only: preserve the original marker and later UI changes.
   # Upstream (yzua) pins "gpt-6.1-sol" on a custom openai-responses provider: this
   # workstation authenticates against the zai provider, so the default model stays
-  # glm-5.3. Max reasoning is pinned per-model; defaultThinkingLevel stays the
-  # generic fallback. The descriptor only drives the missing-model injection path.
+  # glm-5.3. The thinking level is pinned per-model to high; defaultThinkingLevel
+  # stays the generic fallback. The descriptor only drives the missing-model path.
   model = {
     api = "openai-completions";
     metadata = {
@@ -38,7 +38,7 @@ let
         defaultModel = model.metadata.id;
         defaultThinkingLevel = "high";
         modelThinkingLevels = {
-          "zai/glm-5.3" = "max";
+          "zai/glm-5.3" = "high";
         };
         extensions = [ "-builtin:mcp" ];
       };
