@@ -247,6 +247,8 @@
         # Reuse the configured browser instead of downloading a render binary.
         browser = pkgs.google-chrome;
       };
+      # Prebuilt ThinkRail desktop release payload (see packages/thinkrail).
+      thinkrailPackage = pkgs.callPackage ./packages/thinkrail { };
 
       makeSystem =
         { hostname, stateVersion }:
@@ -299,8 +301,19 @@
                 maxTimeoutSeconds = 1800;
               };
             };
-            inherit androidTools reaTools openDesignPackage;
-            inherit (inputs) mattPocockSkills chromeDevToolsMcp uiUxProMaxSkills karpathySkills ubModeSkills;
+            inherit
+              androidTools
+              reaTools
+              openDesignPackage
+              thinkrailPackage
+              ;
+            inherit (inputs)
+              mattPocockSkills
+              chromeDevToolsMcp
+              uiUxProMaxSkills
+              karpathySkills
+              ubModeSkills
+              ;
           };
           modules = [
             ./home/home.nix
@@ -317,9 +330,9 @@
       primaryHome = makeHome { inherit ((builtins.head hosts)) hostname; };
       piProfile =
         name:
-        nixpkgs.lib.findFirst (
-          package: nixpkgs.lib.getName package == name
-        ) (throw "The selected Home Manager profile does not provide ${name}") primaryHome.config.home.packages;
+        nixpkgs.lib.findFirst (package: nixpkgs.lib.getName package == name)
+          (throw "The selected Home Manager profile does not provide ${name}")
+          primaryHome.config.home.packages;
     in
     {
       packages.${system} = {
