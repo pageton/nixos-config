@@ -234,6 +234,8 @@
         # Reuse the configured browser instead of downloading a render binary.
         browser = pkgs.google-chrome;
       };
+      # Prebuilt ThinkRail desktop release payload (see packages/thinkrail).
+      thinkrailPackage = pkgs.callPackage ./packages/thinkrail { };
 
       makeSystem =
         { hostname, stateVersion }:
@@ -286,7 +288,7 @@
                 maxTimeoutSeconds = 1800;
               };
             };
-            inherit androidTools reaTools openDesignPackage;
+            inherit androidTools reaTools openDesignPackage thinkrailPackage;
             inherit (inputs) mattPocockSkills chromeDevToolsMcp uiUxProMaxSkills;
           };
           modules = [
