@@ -35,15 +35,17 @@ python3Packages.buildPythonApplication rec {
     cp ${./test-managed.py} tests/test_nix_managed.py
   '';
 
-  makeWrapperArgs = [
-    "--prefix PATH : ${
+  # Unstable's wrap-python-hook flattens makeWrapperArgs into a single word;
+  # wrap explicitly instead (see upstream nixpkgs wrap-python-hook).
+  postFixup = ''
+    wrapProgram "$out/bin/agent-reach" --prefix PATH : ${
       lib.makeBinPath [
         opencli
         google-chrome
         nodejs
       ]
-    }"
-  ];
+    }
+  '';
 
   # Use Nixpkgs' maintained yt-dlp rather than upstream's exact release pin.
   pythonRelaxDeps = [ "yt-dlp" ];

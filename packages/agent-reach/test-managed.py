@@ -32,7 +32,12 @@ def test_managed_ytdlp_runs_through_channel_wrapper():
 
     from agent_reach.channels.youtube import _run_ytdlp
 
-    assert _run_ytdlp(["--version"], timeout=10).strip() == version("yt-dlp")
+    # Distribution metadata may normalize leading zeros (2026.08.19 vs 2026.8.19).
+    def components(value):
+        return tuple(int(part) for part in value.split(".") if part.isdigit())
+
+    reported = _run_ytdlp(["--version"], timeout=10).strip()
+    assert components(reported) == components(version("yt-dlp"))
 
 
 def test_session_import_is_explicit(monkeypatch):
