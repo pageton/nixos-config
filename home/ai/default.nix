@@ -26,30 +26,6 @@ let
         --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath [ pkgs.stdenv.cc.cc.lib ]}
     '';
   };
-  # The Iran<->China transit to Z.ai's CDN suffers evening packet-loss
-  # bursts (bursty ETIMEDOUTs against zcode.z.ai in the zcode host log).
-  # WARP runs in local SOCKS proxy mode (warp-svc "WarpProxy", listener
-  # 127.0.0.1:40000 — see nixos/modules/cloudflare-warp.nix): traffic exits
-  # via Cloudflare without touching system routes or DNS, so only apps that
-  # opt in are proxied. Probe the listener first: when WARP is down, zcode
-  # falls back to its direct route (plus the pinned hosts entry from
-  # network.nix).
-  zcodeCli = pkgs.symlinkJoin {
-    name = "zcode-warp-socks";
-    paths = [ aiPackages.zcode ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram "$out/bin/zcode" --run '
-        if (exec 3<>/dev/tcp/127.0.0.1/40000) 2>/dev/null; then
-          exec 3<&- 3>&-
-          export https_proxy="socks5://127.0.0.1:40000"
-          export HTTPS_PROXY="socks5://127.0.0.1:40000"
-          export no_proxy="localhost,127.0.0.1,::1,.local,.ts.net"
-          export NO_PROXY="$no_proxy"
-        fi
-      '
-    '';
-  };
   # Numtide's V2 package exposes `opencode2`; provide the usual CLI name and
   # generate matching Zsh completion from that package.
   opencodeCli = pkgs.symlinkJoin {
@@ -105,6 +81,6 @@ in
     pi
     skills
     t3codeCli
-    zcodeCli
+    zcode
   ];
 }
