@@ -1,5 +1,5 @@
 # Package the JetBrains ThinkRail desktop app (Electrobun/Bun + WebKitGTK)
-# from the stable v0.2.0 GitHub release.
+# from the stable GitHub release.
 #
 # The `thinkrail-desktop-linux-x64.tar.gz` asset is only a wrapper: it ships a
 # Zig installer that embeds the app payload. Upstream publishes the very same
@@ -31,11 +31,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "thinkrail";
-  version = "0.2.0";
+  version = "0.3.0";
 
   src = fetchurl {
     url = "https://github.com/JetBrains/thinkrail/releases/download/v${finalAttrs.version}/stable-linux-x64-ThinkRail-${finalAttrs.version}.tar.zst";
-    hash = "sha256-QJuN/aI8Cr5ScTG+/3RyMvW3qR3F34tFrTHShD/yjg0=";
+    hash = "sha256-rQipOt3kmg0niOoh6iaHhg1XE/X42HBbBa1reYKeKro=";
   };
 
   nativeBuildInputs = [
