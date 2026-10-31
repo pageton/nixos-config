@@ -1,11 +1,6 @@
 # Main NixOS configuration for the 'desktop' host.
 # Tower: Ryzen 5 7600X + dedicated NVIDIA GPU + AMD thermal watchdog.
-{
-  stateVersion,
-  hostname,
-  ...
-}:
-{
+{ stateVersion, hostname, ... }: {
   imports = [
     ./hardware-configuration.nix
     ./local-packages.nix
@@ -14,7 +9,7 @@
     # Desktop-only features
     ../../nixos/modules/amd-thermal.nix
     ../../nixos/modules/cloudflared.nix
-    ../../nixos/modules/cloudflare-warp.nix
+
     ../../nixos/modules/gaming.nix
     ../../nixos/modules/loki.nix
     ../../nixos/modules/mullvad.nix
