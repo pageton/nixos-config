@@ -4,7 +4,14 @@
   # NetworkManager for GUI networking
   networking.networkmanager = {
     enable = lib.mkDefault true;
-    dns = lib.mkDefault "systemd-resolved";
+    # "none": do NOT register the DHCP resolver (ISP DNS) as per-link
+    # DNS with systemd-resolved. resolved prefers link scopes over the
+    # global scope, so the ISP resolver would keep intercepting all
+    # queries and defeat the global DoT servers below. With "none",
+    # every lookup goes to the encrypted global resolvers. VPN daemons
+    # (WARP/Mullvad/Tailscale) manage their own DNS and don't rely on
+    # NM registration.
+    dns = lib.mkForce "none";
     wifi.macAddress = "random";
     ethernet.macAddress = "random";
   };
@@ -21,8 +28,8 @@
   # DNS keeps working either way.
   services.resolved = {
     enable = lib.mkDefault true;
-    dnsovertls = "opportunistic";
     settings.Resolve = {
+      DNSOverTLS = "opportunistic";
       DNS = [
         "1.1.1.1#cloudflare-dns.com"
         "8.8.8.8#dns.google"
