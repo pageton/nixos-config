@@ -42,6 +42,22 @@
     };
   };
 
+  # Pin the zcode.z.ai API host to the CDN edge that is fast and stable
+  # from this line. The initaa CDN rotates answers across PoPs; the
+  # 43.109.215.x range it often hands out is heavily throttled here
+  # (3-4s handshakes, intermittent connect timeouts -> zcode
+  # "Reconnecting..."), while 155.102.149.17 measures a stable ~0.3s
+  # (re-verified across 90 minutes). .48 kept as second address for
+  # failover — Node's connect logic tries every A record.
+  # If zcode ever fails to connect again: remove these entries (let DNS
+  # choose) and re-time candidate edges:
+  #   curl -o /dev/null -w '%{time_total}\n' \
+  #     --resolve zcode.z.ai:443:<ip> https://zcode.z.ai/api/v1/mcp/usage
+  networking.hosts = {
+    "155.102.149.17" = [ "zcode.z.ai" ];
+    "155.102.149.48" = [ "zcode.z.ai" ];
+  };
+
   # Reduce boot blocking from wait-online while keeping deterministic network startup.
   # nm-online default timeout is high; this caps startup stall on slow links.
   systemd.services.NetworkManager-wait-online.serviceConfig = {
