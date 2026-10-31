@@ -29,12 +29,7 @@
 # lockdown blocks WARP too. While WARP is connected it rewrites
 # /etc/resolv.conf to Cloudflare DNS (1.1.1.1); when it disconnects cleanly
 # the file is restored.
-{
-  lib,
-  pkgs,
-  ...
-}:
-{
+{ lib, pkgs, ... }: {
   # Upstream module: warp-svc system daemon (root, CAP_NET_ADMIN, nftables),
   # cloudflare-warp package in systemPackages, /var/lib/cloudflare-warp state.
   services.cloudflare-warp = {
@@ -63,4 +58,37 @@
       ''
     ))
   ];
+
+  # Keep WARP in local SOCKS proxy mode ("WarpProxy", listener
+  # 127.0.0.1:40000). Proxy mode establishes the tunnel for the SOCKS
+  # listener only — no system routes, no DNS takeover — so nothing on the
+  # host changes unless an app explicitly uses the proxy (the zcode
+  # wrapper from home/ai/default.nix does). Consumer warp-cli defaults to
+  # full-tunnel Warp mode on connect, which breaks geo-fenced local
+  # services; this oneshot re-asserts proxy mode at boot/daemon restart
+  # and reconnects. All commands are idempotent.
+  systemd.services.warp-proxy-ensure = {
+    description = "Ensure Cloudflare WARP stays in SOCKS proxy mode";
+    after = [ "cloudflare-warp.service" ];
+    wants = [ "cloudflare-warp.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    path = [ pkgs.cloudflare-warp ];
+    script = ''
+      # Wait for the daemon socket (it can take a few seconds after boot).
+      for _ in $(seq 1 30); do
+        warp-cli status >/dev/null 2>&1 && break
+        sleep 2
+      done
+      # Anonymous consumer registration (persisted in /var/lib once made).
+      warp-cli registration show >/dev/null 2>&1 \
+        || warp-cli registration new >/dev/null 2>&1 \
+        || true
+      warp-cli mode proxy || true
+      warp-cli connect || true
+    '';
+  };
 }
