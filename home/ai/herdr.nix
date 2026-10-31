@@ -120,8 +120,17 @@ in
         fi
       done
       rename_config=$(${herdr} plugin config-dir tab-smart-rename)
-      if [ -s "$rename_config/model-selection.json" ]; then
-        run ${herdr} plugin action invoke start --plugin tab-smart-rename
+      # `action invoke start` requires a live Herdr server. Activation must
+      # not fail when none is attached (headless switch, fresh boot, or a
+      # crashed server): the plugin's startup hook launches the worker from
+      # the new generation the next time a server starts, so skipping is
+      # safe. Guard on the socket, and treat invoke failures as non-fatal
+      # (e.g. stale socket left by a crashed server).
+      if [ -s "$rename_config/model-selection.json" ] \
+        && [ -S "$HOME/.config/herdr/herdr.sock" ]; then
+        if ! run ${herdr} plugin action invoke start --plugin tab-smart-rename; then
+          echo "registerHerdrSmartRename: Herdr server unreachable; Smart Rename worker will start on next server launch" >&2
+        fi
       fi
     '';
   };
