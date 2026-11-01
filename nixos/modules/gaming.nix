@@ -1,12 +1,24 @@
-# Gaming: Steam, Proton-GE, MangoHud, Lutris, gamescope (desktop host only).
+# Gaming: Steam, Proton-GE, Proton-CachyOS, SLSsteam, MangoHud, Lutris, gamescope (desktop host only).
 { lib, pkgs, ... }:
+
+let
+  # Steam client modification for Enter The Wired (yzua port); injected via
+  # upstream's documented NixOS LD_AUDIT integration, not a client downgrade.
+  slssteam = pkgs.callPackage ../../packages/slssteam { };
+in
 {
   programs = {
     steam = {
       enable = true;
+      package = pkgs.steam.override {
+        extraEnv.LD_AUDIT = "${slssteam}/library-inject.so:${slssteam}/SLSsteam.so";
+      };
+      # MangoHud available inside the Steam runtime for `mangohud %command%`.
+      extraPackages = [ pkgs.mangohud ];
       gamescopeSession.enable = true;
       extraCompatPackages = with pkgs; [
         proton-ge-bin # Proton-GE for better game compatibility
+        (pkgs.callPackage ../../packages/proton-cachyos-bin { }) # Proton-CachyOS (Steam Linux Runtime)
       ];
     };
 

@@ -16,5 +16,6 @@ _: {
     ./spicetify.nix # Spotify customization via spicetify-nix
     ./thunar.nix # Thunar file manager custom actions
     ./activitywatch.nix # ActivityWatch time tracking
+    ./gaming # ACCELA (Enter The Wired) + steam-mouse-grab helper
   ];
 }

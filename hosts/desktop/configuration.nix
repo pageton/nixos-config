@@ -11,6 +11,7 @@
     ../../nixos/modules/cloudflared.nix
 
     ../../nixos/modules/gaming.nix
+    ../../nixos/modules/sunshine.nix # Moonlight game-streaming host
     ../../nixos/modules/loki.nix
     ../../nixos/modules/mullvad.nix
     ../../nixos/modules/observability

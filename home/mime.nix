@@ -17,6 +17,7 @@ let
     pdf = [ "zathura.desktop" ]; # Using Zathura as PDF viewer
     terminal = [ "Alacritty.desktop" ];
     discord = [ "discord.desktop" ]; # Using Discord for Discord
+    accela = [ "accela.desktop" ]; # ACCELA companion (Enter The Wired)
     archive = [ "ark.desktop" ]; # Using KDE Ark as archive manager
   };
 
@@ -126,6 +127,7 @@ let
       "application/x-bzip2"
     ];
     discord = [ "x-scheme-handler/discord" ];
+    accela = [ "x-scheme-handler/accela" ];
   };
 
   associations =
