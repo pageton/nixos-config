@@ -1,5 +1,7 @@
 /**
- * Surface layer: native Herdr panes inside Herdr, otherwise tmux panes.
+ * Surface layer: native Herdr panes inside Herdr, tmux splits inside tmux,
+ * and otherwise a detached private tmux server (external hosts such as
+ * t3-code or ThinkRail embed pi without any multiplexer environment).
  *
  * Everything the extension does to a pane goes through the small API in this
  * file: create/split a pane, type a command into it, read its screen, close
@@ -9,11 +11,13 @@
  *
  * Panes use backend-specific IDs (`%12` or `w1:p2`). Splits always target
  * the parent pi's pane, so they follow the agent rather than
- * the user's focus.
+ * the user's focus. In detached mode each subagent gets its own session in
+ * the private server (there is no parent pane to split); humans can attach
+ * with `tmux -L <socket> attach` at any time.
  */
 import { execFile, execFileSync } from "node:child_process";
 import { promisify } from "node:util";
-import { writeFileSync, mkdirSync } from "node:fs";
+import { writeFileSync, mkdirSync, existsSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import {
@@ -61,17 +65,107 @@ export function isTmuxAvailable(): boolean {
   return !!process.env.TMUX && hasCommand("tmux");
 }
 
+// ── Detached private server ──
+
+/** Socket name of the private tmux server used outside any multiplexer. */
+const DETACHED_SOCKET_NAME = "pi-subagents";
+
+/**
+ * Directory tmux resolves `-L <name>` sockets in: `${TMUX_TMPDIR:-/tmp}/tmux-$uid`.
+ * Mirrors tmux's own resolution so the identity stat matches the real endpoint.
+ */
+export function tmuxSocketDirectory(): string {
+  const uid = typeof process.getuid === "function" ? process.getuid() : -1;
+  return join(process.env.TMUX_TMPDIR?.trim() || "/tmp", `tmux-${uid}`);
+}
+
+/** Absolute socket path of the detached private server. */
+export function detachedSocketPath(): string {
+  return join(tmuxSocketDirectory(), DETACHED_SOCKET_NAME);
+}
+
+/**
+ * True when no multiplexer owns this process but tmux can run subagents in a
+ * detached private server. Hosts such as t3-code or ThinkRail embed pi without
+ * TMUX/HERDR variables; Herdr still inherits the outer TMUX environment, so
+ * it keeps priority via isHerdrContext().
+ */
+export function detachedActive(): boolean {
+  return !process.env.TMUX && !isHerdrContext();
+}
+
+/** tmux argv prefix that addresses the detached server instead of the default one. */
+function detachedArgs(args: string[]): string[] {
+  return detachedActive() ? ["-L", DETACHED_SOCKET_NAME, ...args] : args;
+}
+
+/** How a human attaches to the detached subagent server. */
+export function detachedAttachHint(): string {
+  return `tmux -L ${DETACHED_SOCKET_NAME} attach`;
+}
+
+/**
+ * Start the detached server once per process before its socket identity is
+ * read. A named holder session keeps the server (and therefore the socket
+ * inode the ownership fence binds to) alive across subagent churn. Concurrent
+ * parents race harmlessly: the loser's duplicate-session error is fine once
+ * any socket exists.
+ */
+let detachedServerEnsured = false;
+export function ensureDetachedServer(): void {
+  if (!detachedActive() || detachedServerEnsured) return;
+  if (!existsSync(detachedSocketPath())) {
+    mkdirSync(tmuxSocketDirectory(), { recursive: true });
+    try {
+      execFileSync(
+        "tmux",
+        detachedArgs([
+          "new-session",
+          "-d",
+          "-s",
+          "pi-holder",
+          "-n",
+          "holder",
+          "-x",
+          "80",
+          "-y",
+          "24",
+          "exec sleep infinity",
+        ]),
+        { encoding: "utf8", stdio: "pipe", timeout: 5000 },
+      );
+    } catch (error) {
+      // A concurrent parent may have created the server first; only fail if
+      // the endpoint truly refused to appear.
+      if (!existsSync(detachedSocketPath())) throw error;
+    }
+  }
+  detachedServerEnsured = true;
+}
+
 export function isMuxAvailable(): boolean {
   // Herdr inherits the outer TMUX variables. Never fall through to that server.
-  return isHerdrContext() ? herdrConfigured() && hasCommand("herdr") : isTmuxAvailable();
+  if (isHerdrContext()) return herdrConfigured() && hasCommand("herdr");
+  // Inside tmux: split the caller's window. Outside: a detached server works
+  // whenever the binary exists, so external hosts get subagents too.
+  return hasCommand("tmux");
 }
 
 export function muxSetupHint(): string {
-  return "Start pi inside Herdr or tmux (`tmux new -A -s pi 'pi'`).";
+  return detachedActive()
+    ? `Subagents need the tmux binary on PATH; inside a multiplexer start pi via \`tmux new -A -s pi 'pi'\`.`
+    : "Start pi inside Herdr or tmux (`tmux new -A -s pi 'pi'`).";
 }
 
 export function muxIdentity(): string {
   if (isHerdrContext()) return herdrIdentity();
+  if (detachedActive()) {
+    // The private server's socket inode is the incarnation: a restarted
+    // server gets a new inode and therefore never re-owns old panes.
+    const stat = statSync(detachedSocketPath(), { bigint: true });
+    if (!stat.isSocket()) throw new Error("Detached tmux endpoint is not a Unix socket");
+    return `detachedtmux:${detachedSocketPath()}:${stat.dev}:${stat.ino}:${stat.ctimeNs}`;
+  }
   // Preserve existing tmux owner identities; final field is the session, not server.
   return (process.env.TMUX ?? "").split(",").slice(0, 2).join(",");
 }
@@ -114,6 +208,7 @@ let rebalanceTimer: ReturnType<typeof setTimeout> | null = null;
 function rebalanceSurfaces(hintPane?: string): void {
   // Prefer the parent pi pane (stable; survives a closing subagent pane).
   if (isHerdrContext()) return; // Herdr owns its layout, not the inherited tmux window.
+  if (detachedActive()) return; // Detached subagents are separate sessions; no shared window to balance.
   const target = process.env.TMUX_PANE ?? hintPane;
   if (!target) return;
   if (rebalanceTimer) clearTimeout(rebalanceTimer);
@@ -140,10 +235,38 @@ function rebalanceSurfaces(hintPane?: string): void {
  * Returns the new pane id (e.g. `%12`).
  */
 export function createSurface(name: string): string {
-  void name; // The pi process inside shows its own title.
+  // The pi process inside shows its own title.
   if (isHerdrContext()) {
     requireTmux();
     return createHerdrTab(name);
+  }
+  if (detachedActive()) {
+    // No parent pane exists to split; give the subagent its own session in
+    // the private server so its pane survives independently and stays
+    // attachable. Generous fixed geometry: nobody is looking until attached.
+    requireTmux();
+    ensureDetachedServer();
+    const pane = execFileSync(
+      "tmux",
+      detachedArgs([
+        "new-session",
+        "-d",
+        "-P",
+        "-F",
+        "#{pane_id}",
+        "-n",
+        name.replace(/\s+/g, "-").slice(0, 40) || "subagent",
+        "-x",
+        "200",
+        "-y",
+        "50",
+      ]),
+      { encoding: "utf8" },
+    ).trim();
+    if (!pane.startsWith("%")) {
+      throw new Error(`Unexpected tmux new-session output: ${pane}`);
+    }
+    return pane;
   }
   return createSurfaceSplit(name, "right", process.env.TMUX_PANE);
 }
@@ -180,7 +303,7 @@ export function createSurfaceSplit(
   }
   args.push("-P", "-F", "#{pane_id}");
 
-  const pane = execFileSync("tmux", args, { encoding: "utf8" }).trim();
+  const pane = execFileSync("tmux", detachedArgs(args), { encoding: "utf8" }).trim();
   if (!pane.startsWith("%")) {
     throw new Error(`Unexpected tmux split-window output: ${pane}`);
   }
@@ -200,8 +323,12 @@ export function sendCommand(surface: string, command: string): void {
     sendHerdrCommand(surface, command);
     return;
   }
-  execFileSync("tmux", ["send-keys", "-t", surface, "-l", command], { encoding: "utf8" });
-  execFileSync("tmux", ["send-keys", "-t", surface, "Enter"], { encoding: "utf8" });
+  execFileSync("tmux", detachedArgs(["send-keys", "-t", surface, "-l", command]), {
+    encoding: "utf8",
+  });
+  execFileSync("tmux", detachedArgs(["send-keys", "-t", surface, "Enter"]), {
+    encoding: "utf8",
+  });
 }
 
 /**
@@ -250,7 +377,7 @@ export function readScreen(surface: string, lines = 50): string {
   if (isHerdrContext()) return readHerdrScreen(surface, lines);
   return execFileSync(
     "tmux",
-    ["capture-pane", "-p", "-t", surface, "-S", `-${Math.max(1, lines)}`],
+    detachedArgs(["capture-pane", "-p", "-t", surface, "-S", `-${Math.max(1, lines)}`]),
     {
       encoding: "utf8",
     },
@@ -265,7 +392,7 @@ export async function readScreenAsync(surface: string, lines = 50): Promise<stri
   if (isHerdrContext()) return readHerdrScreenAsync(surface, lines);
   const { stdout } = await execFileAsync(
     "tmux",
-    ["capture-pane", "-p", "-t", surface, "-S", `-${Math.max(1, lines)}`],
+    detachedArgs(["capture-pane", "-p", "-t", surface, "-S", `-${Math.max(1, lines)}`]),
     { encoding: "utf8" },
   );
   return stdout;
@@ -280,7 +407,7 @@ export function closeSurface(surface: string): void {
     closeHerdrSurface(surface);
     return;
   }
-  execFileSync("tmux", ["kill-pane", "-t", surface], { encoding: "utf8" });
+  execFileSync("tmux", detachedArgs(["kill-pane", "-t", surface]), { encoding: "utf8" });
   rebalanceSurfaces();
 }
 
@@ -290,8 +417,10 @@ export function closeSurface(surface: string): void {
 export async function surfaceExists(surface: string): Promise<boolean> {
   requireTmux();
   if (isHerdrContext()) return herdrSurfaceExists(surface);
-  const { stdout } = await execFileAsync("tmux", ["list-panes", "-a", "-F", "#{pane_id}"], {
-    encoding: "utf8",
-  });
+  const { stdout } = await execFileAsync(
+    "tmux",
+    detachedArgs(["list-panes", "-a", "-F", "#{pane_id}"]),
+    { encoding: "utf8" },
+  );
   return stdout.trim().split("\n").includes(surface);
 }
