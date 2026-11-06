@@ -295,6 +295,11 @@ class PiRegressions(unittest.TestCase):
         path = self.root / "events"
         return [json.loads(line) for line in path.read_text().splitlines()] if path.exists() else []
 
+    # Probe startup compiles the extension through pi's loader; heavy host
+    # load can exceed a tight budget, so default generously (probes finish in
+    # ~3s when idle) and allow scaling per run.
+    PROBE_STARTUP_TIMEOUT = float(os.environ.get("PI_TEST_STARTUP_TIMEOUT", "30"))
+
     def wait_for(self, predicate, process, timeout=8):
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
@@ -452,7 +457,7 @@ class PiRegressions(unittest.TestCase):
         process = self.start(scenario, fixture, done=False)
         # These probes run during session_start without starting an agent loop.
         # Wait for their output, then close RPC explicitly.
-        self.wait_for(lambda: (self.root / "results.json").exists(), process, timeout=15)
+        self.wait_for(lambda: (self.root / "results.json").exists(), process, timeout=self.PROBE_STARTUP_TIMEOUT)
         _, error = process.communicate(timeout=2)
         self.assertEqual(process.returncode, 0, error.decode())
         results = json.loads((self.root / "results.json").read_text())
