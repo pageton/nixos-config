@@ -586,6 +586,13 @@ function renderSubagentWidgetLines(agents: RunningSubagent[], width: number): st
   return lines;
 }
 
+/** Render mode of the current session: "tui" renders component factories;
+ * anything else (e.g. "rpc" hosts like ThinkRail) needs plain string lines. */
+function uiRenderMode(ctx: ExtensionContext): "tui" | "other" {
+  const mode = (ctx as { mode?: unknown }).mode;
+  return typeof mode === "string" && mode !== "tui" ? "other" : "tui";
+}
+
 function updateWidget() {
   if (!latestCtx?.hasUI) return;
 
@@ -596,6 +603,16 @@ function updateWidget() {
       widgetInterval = null;
       (globalThis as any)[WIDGET_INTERVAL_KEY] = null;
     }
+    return;
+  }
+
+  if (uiRenderMode(latestCtx) === "other") {
+    // RPC hosts ignore component factories; give them pre-rendered lines.
+    latestCtx.ui.setWidget(
+      "subagent-status",
+      renderSubagentWidgetLines(Array.from(runningSubagents.values()), 60),
+      { placement: "aboveEditor" },
+    );
     return;
   }
 

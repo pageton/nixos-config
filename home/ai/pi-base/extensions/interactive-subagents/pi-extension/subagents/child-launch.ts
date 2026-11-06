@@ -1,6 +1,9 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { shellEscape } from "./tmux.ts";
+// headlessActive comes through the surface seam (tmux.ts) so offline fixtures
+// control the dispatch mode consistently with the rest of the surface layer.
+import { headlessActive, shellEscape } from "./tmux.ts";
+import type { HeadlessSpawn } from "./headless.ts";
 import { writeSubagentLoadout, type SubagentLoadout } from "./session.ts";
 import type { LaunchPlan, RunningSubagent } from "./managed-run.ts";
 import {
@@ -79,6 +82,29 @@ function writeArtifact(file: string, content: string): string {
  * ManagedRuns invokes this only after claiming the session; it still owns
  * registration, writer fencing, dispatch and supervision.
  */
+/** Shared with managed-run so typed and native dispatch build the same env. */
+export function subagentEnvironment(
+  loadout: SubagentLoadout,
+  running: RunningSubagent,
+  autoExit: boolean,
+): Record<string, string | undefined> {
+  return {
+    PI_CODING_AGENT_DIR:
+      loadout.profilePolicy?.agentDir ?? loadout.agentDir ?? process.env.PI_CODING_AGENT_DIR,
+    PI_PROFILE: loadout.profilePolicy?.profile ?? "pi-coding",
+    PI_BASE_CHILD_POLICY: loadout.profilePolicy ? JSON.stringify(loadout.profilePolicy) : "",
+    PI_CODING_AGENT_SESSION_DIR: loadout.profilePolicy?.sessions ?? "",
+    PI_SUBAGENT_ALLOWED: loadout.spawnable?.length ? loadout.spawnable.join(",") : undefined,
+    PI_SUBAGENT_AGENT: loadout.agent ?? undefined,
+    PI_SUBAGENT_NAME: running.name,
+    PI_SUBAGENT_SESSION: running.sessionFile,
+    PI_SUBAGENT_ID: running.id,
+    PI_SUBAGENT_WRITER_TOKEN: undefined, // the owning runtime supplies it at dispatch
+    PI_SUBAGENT_ACTIVITY_FILE: running.activityFile,
+    PI_SUBAGENT_AUTO_EXIT: autoExit ? "1" : undefined,
+  };
+}
+
 export class ChildLaunch {
   constructor(
     private readonly subagentsDir: string,
@@ -130,9 +156,14 @@ export class ChildLaunch {
     };
   }
 
-  private sandbox(parts: string[], loadout: SubagentLoadout, running: RunningSubagent): void {
-    if (loadout.model) parts.push("--model", shellEscape(loadout.model));
-    if (loadout.thinking) parts.push("--thinking", shellEscape(loadout.thinking));
+  private sandbox(
+    parts: string[],
+    loadout: SubagentLoadout,
+    running: RunningSubagent,
+    esc: (value: string) => string = shellEscape,
+  ): void {
+    if (loadout.model) parts.push("--model", esc(loadout.model));
+    if (loadout.thinking) parts.push("--thinking", esc(loadout.thinking));
     const policy = loadout.profilePolicy;
     if (policy) {
       parts.push(
@@ -150,9 +181,9 @@ export class ChildLaunch {
         join(running.parentArtifactDir, `context/${running.id}-profile.md`),
         instructions.join("\n\n"),
       );
-      parts.push("--append-system-prompt", shellEscape(file));
-      for (const skill of policy.skills) parts.push("--skill", shellEscape(skill));
-      for (const extension of policy.extensions) parts.push("-e", shellEscape(extension));
+      parts.push("--append-system-prompt", esc(file));
+      for (const skill of policy.skills) parts.push("--skill", esc(skill));
+      for (const extension of policy.extensions) parts.push("-e", esc(extension));
     }
     if (
       (loadout.toolAllowlist || policy) &&
@@ -168,7 +199,7 @@ export class ChildLaunch {
       );
       if (!existsSync(provider))
         throw new Error("The free-model provider extension is missing; refusing a fallback model.");
-      if (!policy?.extensions.includes(provider)) parts.push("-e", shellEscape(provider));
+      if (!policy?.extensions.includes(provider)) parts.push("-e", esc(provider));
     }
     if (loadout.identity && (!policy || loadout.systemPromptMode === "replace")) {
       const flag =
@@ -180,11 +211,11 @@ export class ChildLaunch {
         ),
         loadout.identity,
       );
-      parts.push(flag, shellEscape(file));
+      parts.push(flag, esc(file));
     }
     // A null allowlist deliberately preserves unrestricted launches/resumes.
     if (loadout.toolAllowlist) {
-      parts.push("--no-extensions", "--tools", shellEscape(loadout.toolAllowlist));
+      parts.push("--no-extensions", "--tools", esc(loadout.toolAllowlist));
       const extensions = new Set<string>();
       if (!policy) {
         // Restricted coding children disable discovery, so a provider-only
@@ -199,7 +230,7 @@ export class ChildLaunch {
         const file = this.toolExtensionPath(tool);
         if (file && existsSync(file)) extensions.add(file);
       }
-      for (const file of extensions) parts.push("-e", shellEscape(file));
+      for (const file of extensions) parts.push("-e", esc(file));
     }
   }
 
@@ -228,17 +259,34 @@ export class ChildLaunch {
             agentDir: request.agentDir,
           };
     if (request.kind === "initial") writeSubagentLoadout(running.sessionFile, loadout);
+    const subagentDone = join(this.subagentsDir, "subagent-done.ts");
     const parts = [
       policy ? shellEscape(policy.pi) : "pi",
       policy ? "--no-approve" : "--approve",
       "--session",
       shellEscape(running.sessionFile),
       "-e",
-      shellEscape(join(this.subagentsDir, "subagent-done.ts")),
+      shellEscape(subagentDone),
     ];
     this.sandbox(parts, loadout, running);
+    // The same argv without shell escaping feeds the native (headless) spawn.
+    const rawArgs = [
+      policy ? policy.pi : "pi",
+      policy ? "--no-approve" : "--approve",
+      "--session",
+      running.sessionFile,
+      "-e",
+      subagentDone,
+    ];
+    this.sandbox(rawArgs, loadout, running, (value) => value);
+    const resume = request.kind === "resume";
+    // Without a pane nobody can drive a parked session: native children always
+    // settle and exit; follow-ups resume the session instead.
+    const autoExit = headlessActive() || resume || (profile?.autoExit ?? false);
 
     let resumeMsgFile: string | undefined;
+    let initialPrompt: string | null = null;
+    let skillNames: string[] = [];
     if (request.kind === "resume") {
       if (running.task) {
         resumeMsgFile = writeArtifact(
@@ -250,10 +298,11 @@ export class ChildLaunch {
           running.task,
         );
         parts.push(shellEscape(`@${resumeMsgFile}`));
+        initialPrompt = running.task;
       }
     } else {
       const direct = profile?.sessionMode === "fork";
-      const modeHint = profile?.autoExit
+      const modeHint = autoExit
         ? "Complete your task autonomously. When you are finished, simply stop — your session ends automatically."
         : "Complete your task. The user can interact with you at any time, and the session ends when the user exits the pane.";
       const summaryInstruction = profile?.autoExit
@@ -272,30 +321,60 @@ export class ChildLaunch {
             ),
             fullTask,
           )}`;
-      const skills = (profile?.skills ?? "")
+      initialPrompt = direct ? running.task : fullTask;
+      skillNames = (profile?.skills ?? "")
         .split(",")
         .map((skill) => skill.trim())
-        .filter(Boolean)
-        .map((skill) => `/skill:${skill}`);
+        .filter(Boolean);
+      const skills = skillNames.map((skill) => `/skill:${skill}`);
       // Pi concatenates @file with messages[0]. Keep /skill: in separate
       // follow-ups for blank sessions so the child's skill expansion works.
       for (const arg of [...(!direct && skills.length ? [""] : []), ...skills, taskArg]) {
         parts.push(shellEscape(arg));
       }
     }
-    const resume = request.kind === "resume";
+    const headlessSpawn: HeadlessSpawn | undefined = headlessActive()
+      ? {
+          file: rawArgs[0]!,
+          args: [
+            ...rawArgs.slice(1),
+            "--mode",
+            "rpc",
+            ...skillNames.flatMap((skill) => ["--skill", skill]),
+          ],
+          env: subagentEnvironment(loadout, running, autoExit),
+          cwd: loadout.cwd,
+          initialPrompt,
+          scriptFile: join(
+            running.parentArtifactDir,
+            "subagent-scripts",
+            resume
+              ? `${safeName(running.name, "resume")}-resume-${Date.now()}.sh`
+              : `${safeName(running.name, "subagent")}-${running.id}.sh`,
+          ),
+          scriptPreamble: [
+            `# Subagent ${resume ? "resume" : "launch"} (native) for ${running.name}`,
+            `# Generated: ${new Date().toISOString()}`,
+            `# Session: ${running.sessionFile}`,
+            ...(resumeMsgFile ? [`# Resume message file: ${resumeMsgFile}`] : []),
+          ].join("\n"),
+        }
+      : undefined;
     return {
       kind: "pi",
       parts,
       loadout,
       // Resumes always run autonomously, independent of the saved initial policy.
-      autoExit: resume || (profile?.autoExit ?? false),
-      launchScriptFile: join(
-        running.parentArtifactDir,
-        "subagent-scripts",
-        resume
-          ? `${safeName(running.name, "resume")}-resume-${Date.now()}.sh`
-          : `${safeName(running.name, "subagent")}-${running.id}.sh`,
+      autoExit,
+      headlessSpawn,
+      launchScriptFile:
+        headlessSpawn?.scriptFile ??
+        join(
+          running.parentArtifactDir,
+          "subagent-scripts",
+          resume
+            ? `${safeName(running.name, "resume")}-resume-${Date.now()}.sh`
+            : `${safeName(running.name, "subagent")}-${running.id}.sh`,
       ),
       scriptPreamble: [
         `# Subagent ${resume ? "resume" : "launch"} script for ${running.name}`,

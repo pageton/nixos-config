@@ -37,7 +37,12 @@ import {
   shellEscape,
   muxIdentity,
   isSurfaceId,
+  spawnHeadlessChild,
+  writeHeadlessScript,
+  headlessActive,
+  type HeadlessSpawn,
 } from "./tmux.ts";
+import { subagentEnvironment } from "./child-launch.ts";
 
 export interface SubagentResult {
   name: string;
@@ -96,6 +101,8 @@ export type LaunchPlan = {
       parts: string[];
       loadout: SubagentLoadout;
       autoExit: boolean;
+      /** Native subprocess dispatch for hosts without a multiplexer. */
+      headlessSpawn?: HeadlessSpawn;
     }
   | {
       kind: "command";
@@ -159,6 +166,7 @@ export class ManagedRuns {
     try {
       const identity = muxIdentity();
       if (/^herdr:.+:\d+:\d+:\d+$/.test(identity)) return identity;
+      if (/^headless:[0-9a-f-]+:[0-9a-f-]+$/.test(identity)) return identity;
       if (/^\/[^,]+,\d+$/.test(identity)) {
         // TMUX's socket path + PID alone can be reused after a server restart.
         // Bind v2 ownership to the actual socket incarnation as Herdr does.
@@ -207,9 +215,11 @@ export class ManagedRuns {
         !owner.token ||
         owner.sessionFile !== resolve(sessionFile) ||
         typeof owner.surface !== "string" ||
-        !(/^%\d+$/.test(owner.surface) || isHerdrSurface(owner.surface)) ||
+        !(/^%\d+$/.test(owner.surface) || isHerdrSurface(owner.surface) || /^h\d+-\d+$/.test(owner.surface)) ||
         typeof owner.mux !== "string" ||
-        !/^(?:herdr:.+:\d+:\d+:\d+|\/[^,]+,\d+:\d+:\d+:\d+)$/.test(owner.mux) ||
+        !/^(?:herdr:.+:\d+:\d+:\d+|headless:[0-9a-f-]+:[0-9a-f-]+|\/[^,]+,\d+:\d+:\d+:\d+)$/.test(
+          owner.mux,
+        ) ||
         typeof owner.supervisor !== "string" ||
         !owner.supervisor ||
         typeof owner.delivered !== "boolean" ||
@@ -556,10 +566,39 @@ export class ManagedRuns {
       if (!this.owns(running))
         throw new RunOwnershipError("Cannot dispatch: subagent ownership changed.");
       const command = plan.kind === "pi" ? this.piCommand(running, plan) : plan.command;
-      sendLongCommand(surface, `${command}; echo '__SUBAGENT_DONE_'$?'__'`, {
-        scriptPath: plan.launchScriptFile,
-        scriptPreamble: plan.scriptPreamble,
-      });
+      if (plan.kind === "pi" && plan.headlessSpawn) {
+        // Native dispatch for hosts without a multiplexer: spawn the child
+        // process directly instead of typing a command into a pane. Keep the
+        // same provenance script artifact the pane surfaces write.
+        writeHeadlessScript(plan.headlessSpawn);
+        spawnHeadlessChild(surface, {
+          ...plan.headlessSpawn,
+          env: {
+            ...plan.headlessSpawn.env,
+            PI_SUBAGENT_SURFACE: running.surface,
+            PI_SUBAGENT_WRITER_TOKEN: this.owners.get(running)?.token,
+          },
+        });
+      } else if (headlessActive()) {
+        // Claude roles and other raw commands: same native dispatch, but the
+        // sentinel echo stays in the shell string as the pane surfaces do.
+        const claudeSpawn = {
+          file: "bash",
+          args: ["-c", `${command}; echo '__SUBAGENT_DONE_'$?'__'`],
+          env: {} as Record<string, string | undefined>,
+          cwd: null as string | null,
+          initialPrompt: null as string | null,
+          scriptFile: plan.launchScriptFile,
+          scriptPreamble: plan.scriptPreamble,
+        };
+        writeHeadlessScript(claudeSpawn);
+        spawnHeadlessChild(surface, claudeSpawn);
+      } else {
+        sendLongCommand(surface, `${command}; echo '__SUBAGENT_DONE_'$?'__'`, {
+          scriptPath: plan.launchScriptFile,
+          scriptPreamble: plan.scriptPreamble,
+        });
+      }
       owner.phase = "dispatched";
       this.writeOwner(owner);
       this.running.set(running.id, running);
@@ -579,20 +618,9 @@ export class ManagedRuns {
   private piCommand(running: RunningSubagent, plan: Extract<LaunchPlan, { kind: "pi" }>): string {
     const { loadout } = plan;
     const env: Record<string, string | undefined> = {
-      PI_CODING_AGENT_DIR:
-        loadout.profilePolicy?.agentDir ?? loadout.agentDir ?? process.env.PI_CODING_AGENT_DIR,
-      PI_PROFILE: loadout.profilePolicy?.profile ?? "pi-coding",
-      PI_BASE_CHILD_POLICY: loadout.profilePolicy ? JSON.stringify(loadout.profilePolicy) : "",
-      PI_CODING_AGENT_SESSION_DIR: loadout.profilePolicy?.sessions ?? "",
-      PI_SUBAGENT_ALLOWED: loadout.spawnable?.length ? loadout.spawnable.join(",") : undefined,
-      PI_SUBAGENT_AGENT: loadout.agent ?? undefined,
-      PI_SUBAGENT_NAME: running.name,
-      PI_SUBAGENT_SESSION: running.sessionFile,
-      PI_SUBAGENT_ID: running.id,
+      ...subagentEnvironment(loadout, running, plan.autoExit),
       PI_SUBAGENT_WRITER_TOKEN: this.owners.get(running)?.token,
-      PI_SUBAGENT_ACTIVITY_FILE: running.activityFile,
       PI_SUBAGENT_SURFACE: running.surface,
-      PI_SUBAGENT_AUTO_EXIT: plan.autoExit ? "1" : undefined,
     };
     const prefix = Object.entries(env)
       .filter((entry): entry is [string, string] => entry[1] !== undefined)
