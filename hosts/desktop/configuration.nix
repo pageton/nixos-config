@@ -9,6 +9,7 @@
     # Desktop-only features
     ../../nixos/modules/amd-thermal.nix
     ../../nixos/modules/cloudflared.nix
+    ../../nixos/modules/gpu-unlock.nix # RTX 3070 tensor-core unlock
 
     ../../nixos/modules/gaming.nix
     ../../nixos/modules/sunshine.nix # Moonlight game-streaming host
