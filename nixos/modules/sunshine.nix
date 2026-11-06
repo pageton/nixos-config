@@ -45,10 +45,16 @@
   };
 
   # Pair by address (Moonlight manual host entry); no mDNS service announcements.
-  services.avahi.publish = {
-    enable = lib.mkForce false;
-    userServices = lib.mkForce false;
-  };
+  # The upstream Sunshine module still assigns the legacy avahi publish options
+  # (publish.enable/userServices) via mkDefault, which nixpkgs flags as obsolete;
+  # null them out — publishing is disabled through the settings API below, so
+  # the legacy values are unused.
+  services.avahi.publish.enable = lib.mkForce null;
+  services.avahi.publish.userServices = lib.mkForce null;
+  # Sunshine enables avahi-daemon; keep it on the LAN interface only, matching
+  # the firewall scoping above (validation.nix enforces an explicit list).
+  services.avahi.settings.server.allow-interfaces = [ "eno1" ];
+  services.avahi.settings.publish."disable-publishing" = true;
 
   systemd.user.services.sunshine = {
     unitConfig.ConditionUser = user;

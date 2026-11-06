@@ -46,8 +46,8 @@
 
     # === Network Service Security ===
     {
-      assertion = !config.services.avahi.enable || config.services.avahi.allowInterfaces != [ ];
-      message = "Avahi must have explicit allowInterfaces list for security. Don't expose mDNS on all interfaces.";
+      assertion = !config.services.avahi.enable || config.services.avahi.settings.server.allow-interfaces != null;
+      message = "Avahi must have explicit settings.server.allow-interfaces list for security. Don't expose mDNS on all interfaces.";
     }
   ];
 }
