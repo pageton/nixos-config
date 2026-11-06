@@ -202,26 +202,29 @@ export default function(pi){pi.on('session_start',(_,ctx)=>{
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         models = {row["id"]: row for row in json.loads(metadata.read_text())}
-        self.assertEqual(models["opencode/glm-fixture-free"]["levels"], ["low", "high", "max"])
+        # Upstream 0.2.16 exposes `off` whenever a model has variants and maps a
+        # lone `max` variant onto the `xhigh` slot instead of exposing raw
+        # variant ids as levels.
+        self.assertEqual(models["opencode/glm-fixture-free"]["levels"], ["off", "low", "high", "xhigh"])
         self.assertEqual(
             models["opencode/nemotron-fixture-free"]["levels"],
             ["off", "minimal", "low", "medium", "high", "xhigh"],
         )
         self.assertEqual(
             models["opencode/beam-fixture-free"]["levels"],
-            ["low", "medium", "high", "xhigh", "max"],
+            ["off", "low", "medium", "high", "xhigh"],
         )
         self.assertEqual(models["opencode/off-fixture-free"]["levels"], ["off", "low"])
         self.assertEqual(models["opencode/default-fixture-free"]["levels"], ["off"])
         for model, level, expected in (
             ("glm-fixture-free", "low", "low"),
             ("glm-fixture-free", "high", "high"),
-            ("glm-fixture-free", "max", "max"),
-            ("glm-fixture-free", "off", "low"),
-            ("nemotron-fixture-free", "off", "none"),
+            ("glm-fixture-free", "xhigh", "max"),
+            ("glm-fixture-free", "off", None),
+            ("nemotron-fixture-free", "off", None),
             ("beam-fixture-free", "xhigh", "xhigh"),
-            ("beam-fixture-free", "max", "max"),
-            ("off-fixture-free", "off", "off"),
+            ("beam-fixture-free", "medium", "medium"),
+            ("off-fixture-free", "off", None),
             ("default-fixture-free", "off", None),
         ):
             with self.subTest(model=model, thinking=level):

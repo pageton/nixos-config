@@ -35,15 +35,14 @@ let
 in
 pkgs.stdenvNoCC.mkDerivation {
   pname = "pi-opencode-cli-bridge";
-  version = "0.2.14";
+  version = "0.2.16";
   src = pkgs.fetchzip {
-    url = "https://github.com/Gybra/pi-opencode-cli-bridge/archive/0366a962dbcd729220cd4771b30d2d48c63cd686.tar.gz";
-    hash = "sha256-hLM04FbxhgHlVTPm6zmp2kZwBeWgJ8VsPe7OJ6YEWaM=";
+    url = "https://github.com/Gybra/pi-opencode-cli-bridge/archive/abd9540655241b6b06b6efd77992a5fd14fc8a8d.tar.gz";
+    hash = "sha256-YrmUPZU+AzfxxzjwyQqapeGymDvL0IUVGNZ22dzFrzI=";
   };
   dontBuild = true;
   patches = [
     ./opencode-cli-tool-envelope.patch
-    ./opencode-cli-thinking.patch
   ];
   postPatch = ''
     # Preserve the upstream provider/protocol; only choose the managed executable.
