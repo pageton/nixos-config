@@ -1,12 +1,16 @@
 # Package the JetBrains ThinkRail desktop app (Electrobun/Bun + WebKitGTK)
-# from the stable GitHub release.
+# from a GitHub release.
 #
 # The `thinkrail-desktop-linux-x64.tar.gz` asset is only a wrapper: it ships a
 # Zig installer that embeds the app payload. Upstream publishes the very same
-# payload as a standalone archive (`stable-linux-x64-ThinkRail-<version>.tar.zst`)
-# whose hash is pinned in the release SHA256SUMS manifest — this is what the
-# installer unpacks into ~/.local/share, so fetch it directly and install the
-# tree declaratively instead of running the installer at build time.
+# payload as a standalone archive
+# (`stable-linux-x64-ThinkRail-<version>.tar.zst`) whose hash is pinned in
+# the release SHA256SUMS manifest — this is what the installer unpacks into
+# ~/.local/share, so fetch it directly and install the tree declaratively
+# instead of running the installer at build time. Canary nightlies differ:
+# their asset name doubles the channel
+# (`canary-linux-x64-ThinkRail-canary-<version>.tar.zst`) and the desktop
+# entry is `ThinkRail-canary.desktop` instead of `ThinkRail.desktop`.
 {
   lib,
   stdenv,
@@ -31,11 +35,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "thinkrail";
-  version = "0.3.0";
+  version = "0.3.1";
 
   src = fetchurl {
     url = "https://github.com/JetBrains/thinkrail/releases/download/v${finalAttrs.version}/stable-linux-x64-ThinkRail-${finalAttrs.version}.tar.zst";
-    hash = "sha256-rQipOt3kmg0niOoh6iaHhg1XE/X42HBbBa1reYKeKro=";
+    hash = "sha256-j4iJ4p48sOi7g6H+ikJkTW8rEfR+ORCfI4QZhRM3t0I=";
   };
 
   nativeBuildInputs = [
