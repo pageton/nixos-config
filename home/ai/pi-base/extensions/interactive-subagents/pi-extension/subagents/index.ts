@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { readFileSync, existsSync, mkdirSync, unlinkSync } from "node:fs";
 import { homedir } from "node:os";
 import { isMuxAvailable, muxSetupHint, sendCommand } from "./tmux.ts";
+import { isHeadlessSurface, readHeadlessScreen } from "./headless.ts";
 import { ChildLaunch, SPAWNING_TOOLS, type AgentDefaults } from "./child-launch.ts";
 import { AgentCatalog } from "./agent-catalog.ts";
 import { currentProfilePolicy } from "./profile-policy.ts";
@@ -572,7 +573,12 @@ function renderSubagentWidgetLines(agents: RunningSubagent[], width: number): st
     const agentTag = agent.agent ? ` (${agent.agent})` : "";
     const snapshot = statusMonitor.snapshot(agent, Date.now());
     const icon = widgetIcon(snapshot.kind);
-    const left = ` ${icon} ${elapsed}  ${agent.name}${agentTag} `;
+    const taskPreview = agent.task
+      .split("\n")
+      .find((line) => line.trim())
+      ?.replace(/\s+/g, " ")
+      .slice(0, 40);
+    const left = ` ${icon} ${elapsed}  ${agent.name}${agentTag}${taskPreview ? ` — ${taskPreview}` : ""} `;
     const right = statusConfig.enabled
       ? formatWidgetRightLabel(snapshot)
       : agent.cli === "claude"
@@ -580,10 +586,78 @@ function renderSubagentWidgetLines(agents: RunningSubagent[], width: number): st
         : " starting… ";
 
     lines.push(borderLine(left, right, width));
+    // Live output preview: the child's most recent meaningful output lines,
+    // refreshed by the widget cycle (pane capture or headless log tail).
+    for (const tail of liveTails.get(agent.id) ?? []) {
+      lines.push(borderLine(`   │ ${tail}`, "", width));
+    }
   }
 
   lines.push(borderBottom(width));
   return lines;
+}
+
+// ── Live output tails ──
+
+/** Latest presentable output lines per running subagent id. */
+const liveTails = new Map<string, string[]>();
+
+const TAIL_DIM = "\x1b[38;2;128;128;128m";
+
+/** Reduce one raw output line (pane screen text or a headless RPC event) to a
+ * short human-readable tail line; empty string drops protocol noise. */
+function summarizeTailLine(line: string): string {
+  const trimmed = line.trim();
+  if (!trimmed || trimmed.startsWith("__SUBAGENT_DONE_")) return "";
+  if (!trimmed.startsWith("{")) {
+    // Pane text: skip blanks, prompts and the launch command echo.
+    if (/^\$ |^bash |^# |^\[.*\]$/.test(trimmed)) return "";
+    return trimmed.replace(/\s+/g, " ").slice(0, 110);
+  }
+  try {
+    const event = JSON.parse(trimmed);
+    if (event.type === "message_update" && event.message?.role === "assistant") {
+      const text = (event.message.content ?? [])
+        .filter((part: any) => part?.type === "text")
+        .map((part: any) => part.text)
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
+      return text ? text.slice(0, 110) : "";
+    }
+    if (event.type === "tool_execution_start") return `tool: ${event.toolName ?? "?"}`;
+    if (event.type === "tool_execution_end") return `tool done: ${event.toolName ?? "?"}`;
+    if (event.type === "agent_start") return "turn started";
+    if (event.type === "agent_settled") return "turn settled";
+    return "";
+  } catch {
+    return "";
+  }
+}
+
+/** Refresh the cached live tail for every running subagent. Pane surfaces
+ * are captured synchronously; headless children read their log tail. */
+function refreshLiveTails(): void {
+  for (const id of liveTails.keys()) {
+    if (!runningSubagents.has(id)) liveTails.delete(id);
+  }
+  for (const agent of runningSubagents.values()) {
+    let tail: string[] = [];
+    try {
+      const raw = isHeadlessSurface(agent.surface)
+        ? readHeadlessScreen(agent.surface, 80)
+        : readScreen(agent.surface, 24);
+      tail = raw
+        .split("\n")
+        .map(summarizeTailLine)
+        .filter(Boolean)
+        .slice(-2)
+        .map((line) => `${TAIL_DIM}${line}${RST}`);
+    } catch {
+      // Surface not readable yet (spawn in flight) — keep the previous tail.
+    }
+    if (tail.length) liveTails.set(agent.id, tail);
+  }
 }
 
 /** Render mode of the current session: "tui" renders component factories;
@@ -597,6 +671,7 @@ function updateWidget() {
   if (!latestCtx?.hasUI) return;
 
   if (runningSubagents.size === 0) {
+    liveTails.clear();
     latestCtx.ui.setWidget("subagent-status", undefined);
     if (widgetInterval) {
       clearInterval(widgetInterval);
@@ -607,7 +682,9 @@ function updateWidget() {
   }
 
   if (uiRenderMode(latestCtx) === "other") {
-    // RPC hosts ignore component factories; give them pre-rendered lines.
+    // RPC hosts ignore component factories; give them pre-rendered lines with
+    // live output tails so their widget view streams like the TUI's does.
+    refreshLiveTails();
     latestCtx.ui.setWidget(
       "subagent-status",
       renderSubagentWidgetLines(Array.from(runningSubagents.values()), 60),
@@ -816,6 +893,7 @@ function startWidgetRefresh() {
   if (widgetInterval) return;
   updateWidget(); // immediate first render
   widgetInterval = setInterval(() => {
+    refreshLiveTails();
     updateWidget();
   }, 1000);
   (globalThis as any)[WIDGET_INTERVAL_KEY] = widgetInterval;

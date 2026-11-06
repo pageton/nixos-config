@@ -526,6 +526,9 @@ class PiRegressions(unittest.TestCase):
         self.assertEqual(results["resume"]["status"], "started", results)
         self.assertEqual(results["secondResult"]["details"]["exitCode"], 0, results)
         self.assertIn("RUN_NATIVE", results["secondResult"]["content"])
+        self.assertGreater(results["widgetKinds"], 0, results["widgetKinds"])
+        self.assertIn("native", results["widgetLines"])
+        self.assertIn("offline task", results["widgetLines"])
         prompts = [event for event in results["prompts"] if event["kind"] == "prompt"]
         self.assertEqual(len(prompts), 3, results["prompts"])
         self.assertIn("offline task", prompts[0]["message"])

@@ -20,6 +20,8 @@ export default function (pi: ExtensionAPI) {
     const deliveryAttempts: string[] = [];
     let throwDelivery = false;
     let widgetUpdates = 0;
+    let widgetPayloadKinds: string[] = [];
+    let lastWidgetLines: string[] = [];
     let questionWakeups = 0;
     const unhandled: string[] = [];
     const reportUnhandled = (error: unknown) => unhandled.push(String(error));
@@ -48,8 +50,14 @@ export default function (pi: ExtensionAPI) {
       cwd: root,
       hasUI: true,
       ui: {
-        setWidget() {
+        setWidget(_key: string, content: unknown) {
           widgetUpdates++;
+          if (Array.isArray(content)) {
+            widgetPayloadKinds.push("array");
+            lastWidgetLines = content as string[];
+          } else {
+            widgetPayloadKinds.push(typeof content === "function" ? "function" : String(content));
+          }
         },
       },
       sessionManager: {
@@ -250,6 +258,8 @@ export default function (pi: ExtensionAPI) {
         process.env.PI_TEST_NATIVE_LOG = nativeLog;
         process.env.PI_TEST_NATIVE_MODE = "steer";
         results.envTmpdir = process.env.TMPDIR ?? null;
+        // Widget emission for RPC hosts: pre-rendered string lines, not factories.
+        (context as { mode?: string }).mode = "rpc";
         const initial = await spawn("native");
         results.initial = initial.details;
         const initialRun = __test__.runningSubagents.get(initial.details.id)!;
@@ -263,6 +273,8 @@ export default function (pi: ExtensionAPI) {
         ).details;
         await waitForDelivery(1);
         results.firstResult = { details: delivered[0].details, content: delivered[0].content };
+        results.widgetKinds = widgetPayloadKinds.filter((kind) => kind === "array").length;
+        results.widgetLines = lastWidgetLines.join("\n");
         // Resume the finished session natively; it delivers a second result.
         results.resume = (
           await run("subagent_message", { name: "native", message: "SECOND_TASK" })
