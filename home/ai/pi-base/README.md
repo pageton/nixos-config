@@ -83,9 +83,9 @@ is intentionally not a security boundary. See [RE](../pi-re/README.md) and
 
 ## Free models: official OpenCode CLI and local Kilo proxy
 
-`opencode-cli-bridge.nix` pins [pi-opencode-cli-bridge 0.2.14](https://github.com/Gybra/pi-opencode-cli-bridge)
-at `0366a962dbcd729220cd4771b30d2d48c63cd686`. The **opencode-cli** provider
-runs the installed official OpenCode 2.2.0 CLI; it does not impersonate the client
+`opencode-cli-bridge.nix` pins [pi-opencode-cli-bridge 0.2.16](https://github.com/Gybra/pi-opencode-cli-bridge)
+at `abd9540655241b6b06b6efd77992a5fd14fc8a8d`. The **opencode-cli** provider
+runs the installed official OpenCode 2.2.5 CLI; it does not impersonate the client
 through the anonymous HTTP gateway. Select `opencode-cli` in `/model`, for
 example `opencode-cli/opencode/deepseek-v4.1-flash-free`. Root defaults and
 credentials stay unchanged. Restart existing Pi sessions after activation to
@@ -304,6 +304,15 @@ The Chrome CLI retains its own daemon.
 Edit TypeScript directly in `extensions/`: `ask-user-question.ts`,
 `codex-lb-session.ts`, `upstream-retry.ts`, `prompt-snippets/index.ts`, `web-fetch/index.ts`, `web-search/index.ts`, and
 `extensions/interactive-subagents/pi-extension/subagents/`.
+
+`antigravity-bridge.nix` pins the published `@estebanforge/pi-antigravity-bridge`
+npm tarball as a local `antigravity-bridge` extension (the upstream thinking
+patch space was absorbed by bridge 0.2.16). The lockfile beside it was
+generated for the exact published `package.json` with
+`npm install --package-lock-only --legacy-peer-deps`; bump the tarball and
+regenerate the lock together. It replaced the mutable
+`npm:@estebanforge/pi-antigravity-bridge` entry in Pi settings, so updates now
+flow through this flake instead of `pi update --extensions`.
 Shared agent roles are in `agents/`; coding prompts remain in `../pi-coding/prompts/`. Stage new files, run the checks and Home Manager
 preview, then `just home-switch` and `/reload` in Pi to load edits.
 

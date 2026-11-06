@@ -15,6 +15,7 @@ let
     "upstream-retry.ts"
     "our-free-model.ts"
     "opencode-cli"
+    "antigravity-bridge"
     "prompt-snippets"
     "web-fetch"
     "web-search"

@@ -6,6 +6,7 @@
 }:
 let
   opencodeBridge = import ./opencode-cli-bridge.nix { inherit aiPackages pkgs; };
+  antigravityBridge = import ./antigravity-bridge.nix { inherit pkgs; };
   searchConfig = pkgs.writeText "pi-web-search-config.json" (builtins.toJSON setup.pi.webSearch);
 in
 pkgs.buildNpmPackage {
@@ -28,6 +29,7 @@ pkgs.buildNpmPackage {
     cp ${./extensions/upstream-retry.ts} "$resources/upstream-retry.ts"
     cp ${./extensions/our-free-model.ts} "$resources/our-free-model.ts"
     cp -r ${opencodeBridge} "$resources/opencode-cli"
+    cp -r ${antigravityBridge} "$resources/antigravity-bridge"
     cp -r ${./extensions/prompt-snippets}/. "$resources/prompt-snippets/"
     cp -r ${./extensions/interactive-subagents} "$resources/interactive-subagents"
     cp -r ${./extensions/web-search} "$resources/web-search"
