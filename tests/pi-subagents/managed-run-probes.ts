@@ -20,8 +20,6 @@ export default function (pi: ExtensionAPI) {
     const deliveryAttempts: string[] = [];
     let throwDelivery = false;
     let widgetUpdates = 0;
-    let widgetPayloadKinds: string[] = [];
-    let lastWidgetLines: string[] = [];
     let questionWakeups = 0;
     const unhandled: string[] = [];
     const reportUnhandled = (error: unknown) => unhandled.push(String(error));
@@ -50,14 +48,8 @@ export default function (pi: ExtensionAPI) {
       cwd: root,
       hasUI: true,
       ui: {
-        setWidget(_key: string, content: unknown) {
+        setWidget() {
           widgetUpdates++;
-          if (Array.isArray(content)) {
-            widgetPayloadKinds.push("array");
-            lastWidgetLines = content as string[];
-          } else {
-            widgetPayloadKinds.push(typeof content === "function" ? "function" : String(content));
-          }
         },
       },
       sessionManager: {
@@ -96,12 +88,10 @@ export default function (pi: ExtensionAPI) {
       if (writerState(session) !== "dead") throw new Error("Mock writer death not established");
     };
     const calls = () =>
-      existsSync(join(root, "tmux-calls"))
-        ? readFileSync(join(root, "tmux-calls"), "utf8")
-            .trim()
-            .split("\n")
-            .map((line) => JSON.parse(line))
-        : [];
+      readFileSync(join(root, "tmux-calls"), "utf8")
+        .trim()
+        .split("\n")
+        .map((line) => JSON.parse(line));
     const spawn = (name: string) =>
       run("subagent", { agent: "fixture", name, task: "offline task" });
     const resume = () => run("subagent_message", { name: "managed", message: "offline followup" });
@@ -249,44 +239,6 @@ export default function (pi: ExtensionAPI) {
         mode("managed");
         results.retry = (await resume()).details;
         await waitForDelivery(3);
-      } else if (scenario === "headless") {
-        // Native dispatch without any multiplexer: the child is a supervised
-        // `pi --mode rpc` subprocess (here a fake binary on PATH), the task
-        // and follow-ups arrive as RPC prompts, and exit appends the same
-        // terminal sentinel the pane surfaces scrape.
-        const nativeLog = join(root, "native-pi-log.jsonl");
-        process.env.PI_TEST_NATIVE_LOG = nativeLog;
-        process.env.PI_TEST_NATIVE_MODE = "steer";
-        results.envTmpdir = process.env.TMPDIR ?? null;
-        // Widget emission for RPC hosts: pre-rendered string lines, not factories.
-        (context as { mode?: string }).mode = "rpc";
-        const initial = await spawn("native");
-        results.initial = initial.details;
-        const initialRun = __test__.runningSubagents.get(initial.details.id)!;
-        results.surfaceForm = /^h\d+-\d+$/.test(initialRun.surface);
-        results.ownerMux = owner(initial.details.sessionFile).mux;
-        results.ownerSurface = owner(initial.details.sessionFile).surface;
-        results.launchScript = readFileSync(initial.details.launchScriptFile, "utf8");
-        // Steer the still-running child: the fake binary waits for a second prompt.
-        results.steer = (
-          await run("subagent_message", { name: "native", message: "STEER_MARKER" })
-        ).details;
-        await waitForDelivery(1);
-        results.firstResult = { details: delivered[0].details, content: delivered[0].content };
-        results.widgetKinds = widgetPayloadKinds.filter((kind) => kind === "array").length;
-        results.widgetLines = lastWidgetLines.join("\n");
-        // Resume the finished session natively; it delivers a second result.
-        results.resume = (
-          await run("subagent_message", { name: "native", message: "SECOND_TASK" })
-        ).details;
-        await waitForDelivery(2);
-        results.secondResult = { details: delivered[1].details, content: delivered[1].content };
-        results.prompts = existsSync(nativeLog)
-          ? readFileSync(nativeLog, "utf8")
-              .trim()
-              .split("\n")
-              .map((line) => JSON.parse(line))
-          : [];
       } else if (scenario === "cleanup-errors") {
         mode("managed-cleanup-fault");
         process.on("unhandledRejection", reportUnhandled);

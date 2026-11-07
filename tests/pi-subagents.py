@@ -153,65 +153,6 @@ elif args[0] == 'list-panes':
                 print(f'%{n}')
 """
 
-# A stand-in `pi` binary for native (headless) subagent dispatch: it speaks
-# just enough of the RPC stdin protocol (prompt lines), records what it saw,
-# writes a session file plus writer lease like the real child does, and exits.
-FAKE_PI = """#!/usr/bin/env python3
-import json, os, select, sys, time
-from pathlib import Path
-args = sys.argv[1:]
-session = Path(args[args.index('--session') + 1])
-log = Path(os.environ['PI_TEST_NATIVE_LOG'])
-def record(kind, payload):
-    with log.open('a') as stream:
-        stream.write(json.dumps({'kind': kind, **payload}) + '\\n')
-record('argv', {
-    'args': args,
-    'env_keys': sorted(key for key in os.environ if key.startswith('PI_SUBAGENT')),
-    'writer_token': bool(os.environ.get('PI_SUBAGENT_WRITER_TOKEN')),
-})
-prompts = []
-deadline = time.monotonic() + 20
-pending = b''
-while time.monotonic() < deadline:
-    # Raw reads with manual line splitting: buffered stdin would swallow a
-    # second prompt that arrives in the same pipe chunk as the first.
-    ready, _, _ = select.select([sys.stdin], [], [], 1.0 if prompts else 8.0)
-    if not ready:
-        break
-    chunk = os.read(0, 65536)
-    if not chunk:
-        break
-    pending += chunk
-    while b'\\n' in pending:
-        line, pending = pending.split(b'\\n', 1)
-        if not line.strip():
-            continue
-        command = json.loads(line)
-        if command.get('type') == 'prompt':
-            prompts.append(command['message'])
-            record('prompt', {'message': command['message']})
-if os.environ.get('PI_TEST_NATIVE_FAIL'):
-    sys.exit(3)
-session.parent.mkdir(parents=True, exist_ok=True)
-with session.open('a') as stream:
-    stream.write(json.dumps({'type': 'session', 'id': 'native-child', 'version': 3, 'cwd': os.getcwd()}) + '\\n')
-    stream.write(json.dumps({'type': 'message', 'message': {'role': 'assistant',
-               'content': [{'type': 'text', 'text': 'RUN_NATIVE'}]}}) + '\\n')
-# Same writer lease shape the real subagent child records at startup; this
-# process is gone by the time ownership probes read it, proving writer death.
-stat = Path(f'/proc/{os.getpid()}/stat').read_text().rsplit(')', 1)[1].split()
-Path(str(session) + '.writer.json').write_text(json.dumps({
-    'version': 1, 'sessionFile': str(session.resolve()),
-    'runningChildId': os.environ['PI_SUBAGENT_ID'],
-    'token': os.environ['PI_SUBAGENT_WRITER_TOKEN'],
-    'pid': os.getpid(), 'startTime': stat[19],
-    'machineId': Path('/etc/machine-id').read_text().strip(),
-    'bootId': Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
-    'pidNamespace': os.readlink(f'/proc/{os.getpid()}/ns/pid')}))
-sys.exit(0)
-"""
-
 
 class PiRegressions(unittest.TestCase):
     def setUp(self):
@@ -295,11 +236,6 @@ class PiRegressions(unittest.TestCase):
         path = self.root / "events"
         return [json.loads(line) for line in path.read_text().splitlines()] if path.exists() else []
 
-    # Probe startup compiles the extension through pi's loader; heavy host
-    # load can exceed a tight budget, so default generously (probes finish in
-    # ~3s when idle) and allow scaling per run.
-    PROBE_STARTUP_TIMEOUT = float(os.environ.get("PI_TEST_STARTUP_TIMEOUT", "30"))
-
     def wait_for(self, predicate, process, timeout=8):
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
@@ -381,7 +317,7 @@ class PiRegressions(unittest.TestCase):
         self.finish(process)
         self.assertIn("provider_call:2", [event["event"] for event in self.events()])
 
-    def probes(self, scenario, detached=False):
+    def probes(self, scenario):
         if not hasattr(self, "mock_writer"):
             self.mock_writer = subprocess.Popen(
                 [sys.executable, "-c", "import time; time.sleep(300)"],
@@ -406,30 +342,12 @@ class PiRegressions(unittest.TestCase):
             self.mux_endpoint = socket.socket(socket.AF_UNIX)
             self.addCleanup(self.mux_endpoint.close)
             self.mux_endpoint.bind(str(self.root / "tmux.sock"))
-        environment = dict(
+        self.env.update(
             PATH=f"{bindir}:{self.env['PATH']}",
+            TMUX=f"{self.root / 'tmux.sock'},123,0",
+            TMUX_PANE="%0",
             PI_SUBAGENT_SHELL_READY_DELAY_MS="20",
         )
-        if detached:
-            # External hosts (t3-code/ThinkRail) expose no multiplexer
-            # environment: pi runs native subprocess subagents instead. The
-            # child `pi` binary is a fixture speaking the RPC stdin protocol;
-            # its registry lives under a private TMPDIR root.
-            socket_dir = self.root / "tmp" / f"tmux-{os.getuid()}"
-            socket_dir.mkdir(parents=True, exist_ok=True)
-            self.detached_endpoint = socket.socket(socket.AF_UNIX)
-            self.addCleanup(self.detached_endpoint.close)
-            self.detached_endpoint.bind(str(socket_dir / "pi-subagents"))
-            fake_pi = bindir / "pi"
-            fake_pi.write_text(FAKE_PI)
-            fake_pi.chmod(0o755)
-            environment.update(TMPDIR=str(self.root / "tmp"))
-        else:
-            environment.update(
-                TMUX=f"{self.root / 'tmux.sock'},123,0",
-                TMUX_PANE="%0",
-            )
-        self.env.update(environment)
         agents = self.agent / "agents"
         agents.mkdir(exist_ok=True)
         (agents / "fixture.md").write_text(
@@ -450,14 +368,13 @@ class PiRegressions(unittest.TestCase):
                 "ownership-park",
                 "ownership-restart",
                 "ownership-refusals",
-                "headless",
             }
             else "runtime-probes.ts"
         )
         process = self.start(scenario, fixture, done=False)
         # These probes run during session_start without starting an agent loop.
         # Wait for their output, then close RPC explicitly.
-        self.wait_for(lambda: (self.root / "results.json").exists(), process, timeout=self.PROBE_STARTUP_TIMEOUT)
+        self.wait_for(lambda: (self.root / "results.json").exists(), process, timeout=15)
         _, error = process.communicate(timeout=2)
         self.assertEqual(process.returncode, 0, error.decode())
         results = json.loads((self.root / "results.json").read_text())
@@ -512,37 +429,6 @@ class PiRegressions(unittest.TestCase):
         )
         self.assertEqual(results["resume"]["name"], "duplicate", results)
         self.assertEqual(results["reservations"], [], results)
-
-    def test_native_subagents_run_headless_without_tmux(self):
-        results = self.probes("headless", detached=True)
-        self.assertTrue(results["surfaceForm"], results)
-        self.assertTrue(results["ownerMux"].startswith("headless:"), results)
-        self.assertRegex(results["ownerSurface"], r"^h\d+-\d+$")
-        self.assertIn('--mode" "rpc"', results["launchScript"])
-        self.assertIn("Headless dispatch", results["launchScript"])
-        self.assertEqual(results["steer"]["status"], "steered", results)
-        self.assertEqual(results["firstResult"]["details"]["exitCode"], 0, results)
-        self.assertIn("RUN_NATIVE", results["firstResult"]["content"])
-        self.assertEqual(results["resume"]["status"], "started", results)
-        self.assertEqual(results["secondResult"]["details"]["exitCode"], 0, results)
-        self.assertIn("RUN_NATIVE", results["secondResult"]["content"])
-        self.assertGreater(results["widgetKinds"], 0, results["widgetKinds"])
-        self.assertIn("native", results["widgetLines"])
-        self.assertIn("offline task", results["widgetLines"])
-        prompts = [event for event in results["prompts"] if event["kind"] == "prompt"]
-        self.assertEqual(len(prompts), 3, results["prompts"])
-        self.assertIn("offline task", prompts[0]["message"])
-        self.assertEqual(prompts[1]["message"], "STEER_MARKER")
-        self.assertEqual(prompts[2]["message"], "SECOND_TASK")
-        argv = [event for event in results["prompts"] if event["kind"] == "argv"]
-        self.assertEqual(len(argv), 2, results["prompts"])
-        for event in argv:
-            self.assertIn("--mode", event["args"])
-            self.assertTrue(event["writer_token"])
-            self.assertIn("PI_SUBAGENT_AUTO_EXIT", event["env_keys"])
-        registry = self.root / "tmp" / f"pi-subagents-headless-{os.getuid()}"
-        self.assertEqual(list(registry.glob('*.json')), [], "registry entries must not leak")
-        self.assertTrue(list(registry.glob('*.log')), "child logs are kept as evidence")
 
     def test_managed_runs_complete_and_resume_only_new_output(self):
         results = self.probes("lifecycle")

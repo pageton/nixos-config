@@ -1,18 +1,14 @@
 # pi-interactive-subagents
 
-Async subagents for [pi](https://github.com/badlogic/pi-mono), running in native Herdr tabs, tmux panes, or — without any multiplexer — as native supervised pi subprocesses. Spawn a sub-agent, keep working in the main session, and get the result steered back when it finishes. Fully non-blocking.
+Async subagents for [pi](https://github.com/badlogic/pi-mono), running in native Herdr tabs or tmux panes. Spawn a sub-agent, keep working in the main session, and get the result steered back when it finishes. Fully non-blocking.
 
-**Herdr + tmux + native fork.** Inside Herdr, each subagent gets its own named background
+**Herdr + tmux fork.** Inside Herdr, each subagent gets its own named background
 tab in the caller's workspace, keeping the parent full-size. Native Herdr takes
-priority over any inherited outer tmux environment. Inside plain tmux, subagents
-split panes off the parent. Outside every multiplexer — external hosts such as
-t3-code or ThinkRail that embed pi without a terminal — subagents run as native
-headless children: `pi --mode rpc` subprocesses the extension supervises directly
-(see [Native headless mode](#native-headless-mode)). See [Acknowledgements](#acknowledgements) for the upstream project, which also supports cmux, zellij, and WezTerm.
+priority over any inherited outer tmux environment. Outside Herdr, the tmux behavior below is unchanged. See [Acknowledgements](#acknowledgements) for the upstream project, which also supports cmux, zellij, and WezTerm.
 
 ## How it works
 
-`subagent()` returns immediately. The sub-agent runs in its own native Herdr tab, a tmux right split off the parent Pi pane, or a native headless subprocess. Creation never steals keyboard focus. A live widget above the input tracks every running sub-agent, and when one finishes, its result is steered into the main session as a notification that triggers a new turn.
+`subagent()` returns immediately. The sub-agent runs in its own native Herdr tab, or a tmux right split off the parent Pi pane. Creation never steals keyboard focus. A live widget above the input tracks every running sub-agent, and when one finishes, its result is steered into the main session as a notification that triggers a new turn.
 
 ```text
 ╭─ Subagents ──────────────────────────── 2 running ─╮
@@ -35,7 +31,7 @@ export PI_SUBAGENT_SHELL_READY_DELAY_MS=2500   # default: 500
 
 | Tool | Description |
 | --- | --- |
-| `subagent` | Spawn a sub-agent in a dedicated Herdr tab, tmux pane, or native headless process (async) |
+| `subagent` | Spawn a sub-agent in a dedicated Herdr or tmux pane (async) |
 | `subagent_message` | Message a sub-agent by name — steers it if running, resumes its session if finished |
 | `subagents_list` | List available agent definitions |
 | `ask_question` | *(sub-agent sessions only)* Ask the orchestrator a question and wait for the reply |
@@ -70,27 +66,6 @@ subagent_message({ name: "scout", message: "Also check the auth middleware" });
 - **Finished** — the session is resumed with the message as the follow-up task, like a fresh spawn: fire-and-forget, always autonomous, result steered back later. The resumed run reclaims its original name.
 
 Every spawn records name → session file in `artifacts/<sessionId>/subagent-registry.json`, so names stay addressable across pi restarts. A nested sub-agent that spawns children gets its own registry keyed by its own session id. Resume is refused with a clear error (listing known names) if the name isn't registered, the session file is gone, or the session predates sandboxed resume.
-
-### Native headless mode
-
-When pi runs without Herdr and without tmux (GUI hosts like t3-code or ThinkRail,
-`--mode rpc` embedders, or a bare terminal), each subagent is a detached
-`pi --mode rpc` child in its own process group:
-
-- The task and follow-up steering are delivered as RPC `prompt` commands on the
-  child's stdin pipe — the same semantics as typing into a pane.
-- The child's output is logged to `$TMPDIR/pi-subagents-headless-$UID/h<id>.log`;
-  process exit appends the same `__SUBAGENT_DONE_<code>__` sentinel the pane
-  surfaces scrape, so completion evidence and result delivery are identical.
-- Children always auto-exit (there is no pane for a human to drive); follow-ups
-  arrive via `subagent_message`, which resumes the finished session natively.
-- Ownership fencing binds to the host's machine-id/boot-id, and a per-surface
-  registry file records the child pid + log so a restarted parent can still
-  inspect, resume, or clean up adopted runs.
-
-Headless children are supervised processes, not panes: nothing to attach to in
-a multiplexer, and a child whose spawning process died can be inspected but not
-steered (its stdin pipe went with the parent) — wait for its result and resume.
 
 **Resume replays the original sandbox.** At spawn time the fully-resolved loadout — tool allowlist, backing extensions, model, thinking level, system prompt, spawn whitelist, cwd — is snapshotted to `<session>.loadout.json`. Resume rebuilds the exact same restricted process from that snapshot rather than relaunching unrestricted.
 
@@ -223,7 +198,7 @@ Status display is configured via `config.json` in the extension directory (copy 
 ## Requirements
 
 - [pi](https://github.com/badlogic/pi-mono)
-- [tmux](https://github.com/tmux/tmux) — only for pane-based surfaces; native headless mode has no external requirements
+- [tmux](https://github.com/tmux/tmux)
 
 ```bash
 tmux new -A -s pi 'pi'

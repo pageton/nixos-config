@@ -6,9 +6,7 @@
 # `npm install --package-lock-only --legacy-peer-deps` (legacy mode keeps the
 # host-provided @earendil-works/* peer out of the tree — Pi injects those at
 # runtime and a physical copy would shadow its module mapping).
-{
-  pkgs,
-}:
+{ pkgs }:
 pkgs.buildNpmPackage {
   pname = "pi-antigravity-bridge";
   version = "1.9.0";

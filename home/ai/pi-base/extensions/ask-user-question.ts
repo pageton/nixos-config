@@ -597,102 +597,6 @@ function withUILock<T>(fn: () => Promise<T>): Promise<T> {
   return sharedUiLock.withLock(fn);
 }
 
-/** Run mode of the host. Hosts that do not expose one are treated as the
- * full TUI; RPC hosts (ThinkRail, t3-code, ...) report "rpc", where
- * ctx.ui.custom() is a no-op and only portable dialogs are available. */
-function ctxMode(ctx: any): string {
-  return typeof ctx?.mode === "string" ? ctx.mode : "tui";
-}
-
-/** Dialog backstop for hosts that never answer extension UI requests: a
- * generous timeout resolves the dialog as cancelled instead of hanging the
- * agent forever. Aborting the turn cancels immediately via the signal. */
-const DIALOG_TIMEOUT_MS = 10 * 60 * 1000;
-
-function dialogOpts(opts: { signal?: AbortSignal }): { signal?: AbortSignal; timeout: number } {
-  return { timeout: DIALOG_TIMEOUT_MS, ...(opts.signal ? { signal: opts.signal } : {}) };
-}
-
-/** Single choice through portable dialogs for hosts without terminal UI:
- * a select list, plus an input dialog when "Other" is picked. */
-async function askSingleChoiceDialog(
-  ctx: any,
-  question: string,
-  context: string | undefined,
-  options: AskOption[],
-  opts: { signal?: AbortSignal },
-): Promise<AskAnswer | null> {
-  const otherLabel = getOtherLabel(options);
-  const labels = [...options.map((option) => option.label), otherLabel];
-  const title = context ? `${question}\n\n${context}` : question;
-  const picked = await ctx.ui.select(title, labels, dialogOpts(opts));
-  if (picked === undefined) return null;
-  const index = options.findIndex((option) => option.label === picked);
-  if (index !== -1) {
-    return {
-      type: "option",
-      label: options[index].label,
-      value: options[index].value,
-      index: index + 1,
-    };
-  }
-  const custom = await ctx.ui.input(`${question} — your answer`, undefined, dialogOpts(opts));
-  const trimmed = custom?.trim();
-  if (!trimmed) return null;
-  return { type: "other", label: trimmed, value: trimmed };
-}
-
-/** Multi choice through one portable editor dialog: the answer is parsed as
- * comma- or newline-separated option numbers, option labels, or free text
- * (recorded as an Other answer, mirroring the TUI's always-available Other). */
-async function askMultiChoiceDialog(
-  ctx: any,
-  question: string,
-  context: string | undefined,
-  options: AskOption[],
-  opts: { signal?: AbortSignal },
-): Promise<AskAnswer[] | null> {
-  const listing = options.map((option, index) => `${index + 1}. ${option.label}`).join("\n");
-  const prompt = [
-    question,
-    ...(context ? ["", context] : []),
-    "",
-    "Pick one or more (comma or newline separated):",
-    listing,
-    "",
-    "Numbers or exact labels select options; any other text becomes a custom answer.",
-  ].join("\n");
-  const raw = await ctx.ui.editor(prompt, undefined, dialogOpts(opts));
-  if (raw === undefined) return null;
-  const answers: AskAnswer[] = [];
-  const picked = new Set<number>();
-  for (const token of raw.split(/[\n,]+/)) {
-    const text = token.trim();
-    if (!text) continue;
-    const numeric = Number.parseInt(text, 10);
-    const byNumber =
-      String(numeric) === text && numeric >= 1 && numeric <= options.length ? numeric - 1 : -1;
-    const byLabel = options.findIndex(
-      (option) => option.label.toLowerCase() === text.toLowerCase(),
-    );
-    const index = byNumber !== -1 ? byNumber : byLabel;
-    if (index !== -1) {
-      picked.add(index);
-      continue;
-    }
-    answers.push({ type: "other", label: text, value: text });
-  }
-  for (const index of [...picked].sort((a, b) => a - b)) {
-    answers.push({
-      type: "option",
-      label: options[index].label,
-      value: options[index].value,
-      index: index + 1,
-    });
-  }
-  return answers.length > 0 ? sortAnswers(answers) : null;
-}
-
 export default function askUserQuestion(pi: ExtensionAPI) {
   pi.registerTool({
     name: "ask_user_question",
@@ -735,14 +639,9 @@ export default function askUserQuestion(pi: ExtensionAPI) {
         // Herdr listens on Pi's event bus; emitting is harmless without its integration.
         pi.events.emit("herdr:blocked", { active: true, label: params.question });
         try {
-          // RPC-style hosts have no terminal for custom components; fall back
-          // to the portable dialog protocol (select/input/editor) there.
-          const terminalUi = ctxMode(ctx) === "tui";
           if (mode === "text") {
             const editorTitle = context ? `${params.question}\n\n${context}` : params.question;
-            const answer = terminalUi
-              ? await ctx.ui.editor(editorTitle)
-              : await ctx.ui.editor(editorTitle, undefined, dialogOpts({ signal }));
+            const answer = await ctx.ui.editor(editorTitle);
             if (answer === undefined) {
               return cancelledResult(params.question, mode, context);
             }
@@ -752,18 +651,14 @@ export default function askUserQuestion(pi: ExtensionAPI) {
           }
 
           if (mode === "single-select") {
-            const answer = terminalUi
-              ? await askSingleChoice(ctx, params.question, context, options)
-              : await askSingleChoiceDialog(ctx, params.question, context, options, { signal });
+            const answer = await askSingleChoice(ctx, params.question, context, options);
             if (!answer) {
               return cancelledResult(params.question, mode, context);
             }
             return buildResult(params.question, context, mode, [answer]);
           }
 
-          const answers = terminalUi
-            ? await askMultiChoice(ctx, params.question, context, options)
-            : await askMultiChoiceDialog(ctx, params.question, context, options, { signal });
+          const answers = await askMultiChoice(ctx, params.question, context, options);
           if (!answers) {
             return cancelledResult(params.question, mode, context);
           }

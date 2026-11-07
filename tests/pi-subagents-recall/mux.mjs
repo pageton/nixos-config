@@ -21,10 +21,6 @@ export function muxIdentity() {
 }
 export function isMuxAvailable() { return true; }
 export function muxSetupHint() { return "offline only"; }
-// The offline fixture always reports an inherited multiplexer, never native children.
-export function headlessActive() { return false; }
-export function spawnHeadlessChild() { throw new Error("Offline fixture must not spawn native children"); }
-export function writeHeadlessScript() {}
 export function shellEscape(s) { return "'" + s.replace(/'/g, "'\\''") + "'"; }
 export function createSurface(name) {
   writeFileSync(path("proc-mode.json"), JSON.stringify("live"));

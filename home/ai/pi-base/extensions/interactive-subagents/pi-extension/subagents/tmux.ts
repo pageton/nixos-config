@@ -1,7 +1,5 @@
 /**
- * Surface layer: native Herdr panes inside Herdr, tmux splits inside tmux,
- * and otherwise native headless subprocesses (external hosts such as t3-code
- * or ThinkRail embed pi without any multiplexer environment).
+ * Surface layer: native Herdr panes inside Herdr, otherwise tmux panes.
  *
  * Everything the extension does to a pane goes through the small API in this
  * file: create/split a pane, type a command into it, read its screen, close
@@ -9,10 +7,9 @@
  * Keeping the tmux calls isolated here means index.ts
  * stays testable without a multiplexer running.
  *
- * Panes use backend-specific IDs (`%12`, `w1:p2`, or `h42-7` for headless
- * children). Splits always target the parent pi's pane, so they follow the
- * agent rather than the user's focus. Headless children are supervised pi
- * processes (see headless.ts) with no pane at all.
+ * Panes use backend-specific IDs (`%12` or `w1:p2`). Splits always target
+ * the parent pi's pane, so they follow the agent rather than
+ * the user's focus.
  */
 import { execFile, execFileSync } from "node:child_process";
 import { promisify } from "node:util";
@@ -32,22 +29,6 @@ import {
   closeHerdrSurface,
   herdrSurfaceExists,
 } from "./herdr.ts";
-import {
-  closeHeadlessSurface,
-  createHeadlessSurface,
-  headlessActive,
-  headlessIdentity,
-  headlessSurfaceExists,
-  isHeadlessSurface,
-  readHeadlessScreen,
-  readHeadlessScreenAsync,
-  sendHeadlessCommand,
-  spawnHeadlessChild,
-  writeHeadlessScript,
-  type HeadlessSpawn,
-} from "./headless.ts";
-
-export { spawnHeadlessChild, writeHeadlessScript, headlessActive, type HeadlessSpawn };
 
 const execFileAsync = promisify(execFile);
 
@@ -81,27 +62,22 @@ export function isTmuxAvailable(): boolean {
 }
 
 export function isMuxAvailable(): boolean {
-  // Herdr inherits the outer TMUX variables. Never fall through to other surfaces.
-  if (isHerdrContext()) return herdrConfigured() && hasCommand("herdr");
-  // Inside tmux: split the caller's window. Outside: native headless children
-  // need no external tool at all, so subagents work in every host.
-  return true;
+  // Herdr inherits the outer TMUX variables. Never fall through to that server.
+  return isHerdrContext() ? herdrConfigured() && hasCommand("herdr") : isTmuxAvailable();
 }
 
 export function muxSetupHint(): string {
-  return "Start pi inside Herdr or tmux (`tmux new -A -s pi 'pi'`) for pane-based subagents.";
+  return "Start pi inside Herdr or tmux (`tmux new -A -s pi 'pi'`).";
 }
 
 export function muxIdentity(): string {
   if (isHerdrContext()) return herdrIdentity();
-  if (!isTmuxAvailable()) return headlessIdentity();
   // Preserve existing tmux owner identities; final field is the session, not server.
   return (process.env.TMUX ?? "").split(",").slice(0, 2).join(",");
 }
 
 export function isSurfaceId(surface: string): boolean {
-  if (isHerdrContext()) return isHerdrSurface(surface);
-  return /^%\d+$/.test(surface) || isHeadlessSurface(surface);
+  return isHerdrContext() ? isHerdrSurface(surface) : /^%\d+$/.test(surface);
 }
 
 function requireTmux(): void {
@@ -164,15 +140,10 @@ function rebalanceSurfaces(hintPane?: string): void {
  * Returns the new pane id (e.g. `%12`).
  */
 export function createSurface(name: string): string {
-  // The pi process inside shows its own title.
+  void name; // The pi process inside shows its own title.
   if (isHerdrContext()) {
     requireTmux();
     return createHerdrTab(name);
-  }
-  if (!isTmuxAvailable()) {
-    // No multiplexer at all (t3-code, ThinkRail, bare terminal): run the
-    // subagent as a native supervised subprocess instead of a pane.
-    return createHeadlessSurface(name);
   }
   return createSurfaceSplit(name, "right", process.env.TMUX_PANE);
 }
@@ -229,17 +200,8 @@ export function sendCommand(surface: string, command: string): void {
     sendHerdrCommand(surface, command);
     return;
   }
-  if (isHeadlessSurface(surface)) {
-    // Steering a native child: queue another RPC prompt on its stdin.
-    sendHeadlessCommand(surface, command);
-    return;
-  }
-  execFileSync("tmux", ["send-keys", "-t", surface, "-l", command], {
-    encoding: "utf8",
-  });
-  execFileSync("tmux", ["send-keys", "-t", surface, "Enter"], {
-    encoding: "utf8",
-  });
+  execFileSync("tmux", ["send-keys", "-t", surface, "-l", command], { encoding: "utf8" });
+  execFileSync("tmux", ["send-keys", "-t", surface, "Enter"], { encoding: "utf8" });
 }
 
 /**
@@ -286,7 +248,6 @@ export function sendLongCommand(
 export function readScreen(surface: string, lines = 50): string {
   requireTmux();
   if (isHerdrContext()) return readHerdrScreen(surface, lines);
-  if (isHeadlessSurface(surface)) return readHeadlessScreen(surface, lines);
   return execFileSync(
     "tmux",
     ["capture-pane", "-p", "-t", surface, "-S", `-${Math.max(1, lines)}`],
@@ -302,7 +263,6 @@ export function readScreen(surface: string, lines = 50): string {
 export async function readScreenAsync(surface: string, lines = 50): Promise<string> {
   requireTmux();
   if (isHerdrContext()) return readHerdrScreenAsync(surface, lines);
-  if (isHeadlessSurface(surface)) return readHeadlessScreenAsync(surface, lines);
   const { stdout } = await execFileAsync(
     "tmux",
     ["capture-pane", "-p", "-t", surface, "-S", `-${Math.max(1, lines)}`],
@@ -320,10 +280,6 @@ export function closeSurface(surface: string): void {
     closeHerdrSurface(surface);
     return;
   }
-  if (isHeadlessSurface(surface)) {
-    closeHeadlessSurface(surface);
-    return;
-  }
   execFileSync("tmux", ["kill-pane", "-t", surface], { encoding: "utf8" });
   rebalanceSurfaces();
 }
@@ -334,11 +290,8 @@ export function closeSurface(surface: string): void {
 export async function surfaceExists(surface: string): Promise<boolean> {
   requireTmux();
   if (isHerdrContext()) return herdrSurfaceExists(surface);
-  if (isHeadlessSurface(surface)) return headlessSurfaceExists(surface);
-  const { stdout } = await execFileAsync(
-    "tmux",
-    ["list-panes", "-a", "-F", "#{pane_id}"],
-    { encoding: "utf8" },
-  );
+  const { stdout } = await execFileAsync("tmux", ["list-panes", "-a", "-F", "#{pane_id}"], {
+    encoding: "utf8",
+  });
   return stdout.trim().split("\n").includes(surface);
 }

@@ -41,9 +41,7 @@ pkgs.stdenvNoCC.mkDerivation {
     hash = "sha256-YrmUPZU+AzfxxzjwyQqapeGymDvL0IUVGNZ22dzFrzI=";
   };
   dontBuild = true;
-  patches = [
-    ./opencode-cli-tool-envelope.patch
-  ];
+  patches = [ ./opencode-cli-tool-envelope.patch ];
   postPatch = ''
     # Preserve the upstream provider/protocol; only choose the managed executable.
     substituteInPlace src/cli.ts \
