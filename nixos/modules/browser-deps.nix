@@ -1,7 +1,6 @@
 # Browser dependencies for Chrome/Chromium-based applications (Puppeteer etc.).
 # Most libraries are provided by nix-ld.nix; this covers packages + env.
-{ pkgs, ... }:
-{
+{ pkgs, ... }: {
   environment.systemPackages = with pkgs; [
     # Chromium directly for testing and fallback
     chromium

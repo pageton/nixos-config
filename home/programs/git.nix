@@ -2,11 +2,7 @@
 # Identity comes from shared/constants.nix (single source of truth).
 # Adapted from yzua/nixos-config home-manager git module (SSH signing → GPG).
 
-{
-  pkgs,
-  constants,
-  ...
-}:
+{ pkgs, constants, ... }:
 
 {
   programs.git = {
@@ -29,9 +25,7 @@
       key = constants.user.signingKey;
       signByDefault = true;
     };
-    settings.user = {
-      inherit (constants.user) name email;
-    };
+    settings.user = { inherit (constants.user) name email; };
 
     # Git aliases restored from the old tools/git.nix module.
     settings.alias = {

@@ -186,9 +186,7 @@
               # nixpkgs ac7b1aaed "typescript-language-server: fix pnpm hash".
               # Remove once nixos-unstable absorbs it.
               typescript-language-server = prev.typescript-language-server.overrideAttrs (old: {
-                pnpmDeps = old.pnpmDeps.override {
-                  hash = "sha256-xR/EF60lVBsITKgH7wCM2wHM46PFQevD51KfCENSUH4=";
-                };
+                pnpmDeps = old.pnpmDeps.override { hash = "sha256-xR/EF60lVBsITKgH7wCM2wHM46PFQevD51KfCENSUH4="; };
               });
               python3 = prev.python3.override { packageOverrides = pythonPackageOverrides; };
               python3Packages = final.python3.pkgs;

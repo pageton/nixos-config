@@ -1,11 +1,6 @@
 # Loki log aggregation with Grafana Alloy (replaces Promtail, removed in 26.05).
 # Desktop host only. Boot-deferred: loki + alloy start ~90s after boot.
-{
-  lib,
-  pkgs,
-  ...
-}:
-{
+{ lib, pkgs, ... }: {
   services.loki = {
     enable = true;
 

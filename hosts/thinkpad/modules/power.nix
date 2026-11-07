@@ -1,6 +1,5 @@
 # Laptop power management and kernel modules.
-{ pkgs, ... }:
-{
+{ pkgs, ... }: {
   powerManagement.enable = true;
 
   services = {

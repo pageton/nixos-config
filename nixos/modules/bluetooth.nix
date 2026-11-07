@@ -1,6 +1,5 @@
 # Bluetooth: BlueZ + Blueman.
-{ pkgsStable, ... }:
-{
+{ pkgsStable, ... }: {
   hardware.bluetooth = {
     enable = true;
     powerOnBoot = true;

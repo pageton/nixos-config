@@ -29,12 +29,7 @@
 # lockdown blocks WARP too. While WARP is connected it rewrites
 # /etc/resolv.conf to Cloudflare DNS (1.1.1.1); when it disconnects cleanly
 # the file is restored.
-{
-  lib,
-  pkgs,
-  ...
-}:
-{
+{ lib, pkgs, ... }: {
   # Upstream module: warp-svc system daemon (root, CAP_NET_ADMIN, nftables),
   # cloudflare-warp package in systemPackages, /var/lib/cloudflare-warp state.
   services.cloudflare-warp = {

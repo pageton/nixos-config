@@ -1,7 +1,6 @@
 # System stability and performance tuning: OOM guard, fstrim, keyring,
 # sysctl, systemd timeouts, PAM limits.
-{ lib, pkgsStable, ... }:
-{
+{ lib, pkgsStable, ... }: {
   services = {
     fstrim = {
       enable = true;

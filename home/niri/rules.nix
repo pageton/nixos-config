@@ -60,9 +60,7 @@ in
     # Floating: browser extension popups (Bitwarden, etc.)
     # app-id format: brave-<extension_id>-<Profile>
     {
-      matches = [
-        { app-id = "^brave-[a-z]{32}"; }
-      ];
+      matches = [ { app-id = "^brave-[a-z]{32}"; } ];
       open-floating = true;
       open-focused = true;
       default-column-width.fixed = 380;

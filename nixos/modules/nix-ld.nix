@@ -1,6 +1,5 @@
 # Nix-ld: run non-NixOS dynamically linked binaries.
-{ pkgs, ... }:
-{
+{ pkgs, ... }: {
   programs.nix-ld = {
     enable = true;
 

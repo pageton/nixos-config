@@ -1,8 +1,7 @@
 # Cross-module conflict assertions.
 # Only real NixOS options here — module membership is decided by explicit
 # imports in hosts/<name>/configuration.nix.
-{ config, lib, ... }:
-{
+{ config, lib, ... }: {
   assertions = [
     # === Power Management Daemon Conflicts ===
     {
@@ -46,7 +45,8 @@
 
     # === Network Service Security ===
     {
-      assertion = !config.services.avahi.enable || config.services.avahi.settings.server.allow-interfaces != null;
+      assertion =
+        !config.services.avahi.enable || config.services.avahi.settings.server.allow-interfaces != null;
       message = "Avahi must have explicit settings.server.allow-interfaces list for security. Don't expose mDNS on all interfaces.";
     }
   ];

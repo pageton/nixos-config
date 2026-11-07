@@ -7,10 +7,11 @@
 # (`stable-linux-x64-ThinkRail-<version>.tar.zst`) whose hash is pinned in
 # the release SHA256SUMS manifest — this is what the installer unpacks into
 # ~/.local/share, so fetch it directly and install the tree declaratively
-# instead of running the installer at build time. Canary nightlies differ:
-# their asset name doubles the channel
-# (`canary-linux-x64-ThinkRail-canary-<version>.tar.zst`) and the desktop
-# entry is `ThinkRail-canary.desktop` instead of `ThinkRail.desktop`.
+# instead of running the installer at build time. Canary nightlies differ in
+# three ways: the asset name doubles the channel
+# (`canary-linux-x64-ThinkRail-canary-<version>.tar.zst`), the archive root
+# is `ThinkRail-canary/`, and the desktop entry is
+# `ThinkRail-canary.desktop` instead of `ThinkRail.desktop`.
 {
   lib,
   stdenv,
@@ -35,11 +36,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "thinkrail";
-  version = "0.3.1";
+  version = "0.3.2";
 
   src = fetchurl {
     url = "https://github.com/JetBrains/thinkrail/releases/download/v${finalAttrs.version}/stable-linux-x64-ThinkRail-${finalAttrs.version}.tar.zst";
-    hash = "sha256-j4iJ4p48sOi7g6H+ikJkTW8rEfR+ORCfI4QZhRM3t0I=";
+    hash = "sha256-haMSnMAF6sNBkrQbbG4y5vLgixHSkVQDvm1uEX0VWvo=";
   };
 
   nativeBuildInputs = [

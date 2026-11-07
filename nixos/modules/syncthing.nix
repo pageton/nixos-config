@@ -1,6 +1,5 @@
 # Syncthing decentralized file synchronization.
-{ user, ... }:
-{
+{ user, ... }: {
   services.syncthing = {
     enable = true;
     inherit user;

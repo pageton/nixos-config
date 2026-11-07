@@ -1,6 +1,5 @@
 # Flatpak with Flathub remote.
-{ config, ... }:
-{
+{ config, ... }: {
   services.flatpak.enable = true;
 
   # Configure Flatpak to use Flathub as the default remote

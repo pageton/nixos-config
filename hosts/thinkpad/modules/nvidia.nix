@@ -1,8 +1,7 @@
 # NVIDIA Optimus (hybrid graphics) for ThinkPad.
 # Bus IDs in NixOS format (PCI:bus:device:function), hex-free.
 # Verify with: lspci | grep -E 'VGA|3D'
-{ lib, ... }:
-{
+{ lib, ... }: {
   hardware.nvidia = {
     powerManagement = {
       enable = true;

@@ -1,9 +1,5 @@
 # Operational security: session lock on idle/lid-close, NTS time sync, RAM-only swap.
-{
-  lib,
-  ...
-}:
-{
+{ lib, ... }: {
   # Session lock on idle and lid-close — physical access protection
   services = {
     logind.settings.Login = {

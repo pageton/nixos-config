@@ -1,9 +1,5 @@
 # Tor SOCKS proxy and onion routing.
-{
-  constants,
-  ...
-}:
-{
+{ constants, ... }: {
   # Reduce bootstrap failures by waiting for VPN tunnel + DNS to be ready.
   # Without this, Tor retries ~34 relays during boot before succeeding.
   systemd.services.tor = {

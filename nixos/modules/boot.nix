@@ -1,6 +1,5 @@
 # Bootloader (GRUB) and kernel selection.
-{ pkgs, ... }:
-{
+{ pkgs, ... }: {
   boot.kernelPackages = pkgs.linuxPackages_6_18;
 
   boot.loader = {

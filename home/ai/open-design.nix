@@ -1,6 +1,5 @@
 # Install the local OpenDesign workspace without managing credentials or agent skills.
-{ openDesignPackage, ... }:
-{
+{ openDesignPackage, ... }: {
   home.packages = [ openDesignPackage ];
 
   xdg.desktopEntries.open-design = {

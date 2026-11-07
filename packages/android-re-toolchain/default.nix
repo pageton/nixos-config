@@ -82,16 +82,12 @@ let
   # pidfds to stop the exact guest process, never a check-then-kill bare PID.
   guestSignal =
     assert androidLab.abi == abi;
-    pkgs.runCommandCC "pi-re-guest-signal-x86_64"
-      {
-        buildInputs = [ pkgs.glibc.static ];
-      }
-      ''
-        mkdir -p "$out/share/pi-re"
-        $CC -O2 -Wall -Wextra -Werror -static \
-          ${./guest-signal.c} \
-          -o "$out/share/pi-re/guest-signal"
-      '';
+    pkgs.runCommandCC "pi-re-guest-signal-x86_64" { buildInputs = [ pkgs.glibc.static ]; } ''
+      mkdir -p "$out/share/pi-re"
+      $CC -O2 -Wall -Wextra -Werror -static \
+        ${./guest-signal.c} \
+        -o "$out/share/pi-re/guest-signal"
+    '';
   python = pkgs.python3.withPackages (p: [
     p.frida-python
     p.mitmproxy

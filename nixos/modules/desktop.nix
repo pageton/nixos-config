@@ -74,9 +74,7 @@
   # === Keyboard layout (xkb, used by console + greeter + XWayland) ===
   services.xserver = {
     enable = true;
-    xkb = {
-      inherit (constants.keyboard) layout variant options;
-    };
+    xkb = { inherit (constants.keyboard) layout variant options; };
   };
 
   # === XDG Desktop Portal ===

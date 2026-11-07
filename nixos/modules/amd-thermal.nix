@@ -10,11 +10,7 @@
 # amd_pstate=active provides hardware-managed frequency scaling with EPP hints.
 # Setting EPP to "power" biases aggressively toward efficiency while allowing
 # boost on demand.
-{
-  lib,
-  pkgs,
-  ...
-}:
+{ lib, pkgs, ... }:
 let
   # Thermal watchdog: monitors k10temp and clamps max frequency when hot.
   # Restores full frequency when cooled back down.

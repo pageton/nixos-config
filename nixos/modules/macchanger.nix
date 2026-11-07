@@ -1,10 +1,6 @@
 # MAC address randomization for privacy.
 # Randomizes MAC addresses on all ethernet/wireless interfaces at startup.
-{
-  pkgs,
-  ...
-}:
-{
+{ pkgs, ... }: {
   environment.systemPackages = with pkgs; [ macchanger ];
 
   systemd.services.macchanger = {

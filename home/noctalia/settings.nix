@@ -176,7 +176,8 @@ in
         tooltip_format = "{:%A, %B %d, %Y}";
         capsule = true;
         capsule_padding = 10;
-      } // capsuleWidget;
+      }
+      // capsuleWidget;
 
       cpu-usage = {
         type = "sysmon";
@@ -189,26 +190,31 @@ in
       cpu-temperature = {
         type = "sysmon";
         stat = "cpu_temp";
-      } // sysmonBase;
+      }
+      // sysmonBase;
       memory-used = {
         type = "sysmon";
         stat = "ram_used";
-      } // sysmonBase;
+      }
+      // sysmonBase;
       network-rx = {
         type = "sysmon";
         stat = "net_rx";
         network_speed_compact = true;
-      } // sysmonBase;
+      }
+      // sysmonBase;
       network-tx = {
         type = "sysmon";
         stat = "net_tx";
         network_speed_compact = true;
-      } // sysmonBase;
+      }
+      // sysmonBase;
       disk-used = {
         type = "sysmon";
         stat = "disk_used";
         path = "/";
-      } // sysmonBase;
+      }
+      // sysmonBase;
 
       active-window = {
         type = "active_window";
@@ -219,7 +225,8 @@ in
         title_scroll = "on_hover";
         capsule = true;
         capsule_padding = 9;
-      } // capsuleWidget;
+      }
+      // capsuleWidget;
       workspaces-compact = {
         type = "taskbar";
         scale = 1.25;
@@ -251,7 +258,8 @@ in
         hide_when_no_media = true;
         capsule = true;
         capsule_padding = 9;
-      } // capsuleWidget;
+      }
+      // capsuleWidget;
       tray-compact = {
         type = "tray";
         drawer = true;
