@@ -57,6 +57,7 @@ in
     ./pi-re
     ./open-design.nix
     ./thinkrail.nix
+    ./zai-forward.nix
     ./skills.nix
     ./voice
   ];
