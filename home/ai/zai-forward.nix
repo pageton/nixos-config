@@ -24,6 +24,10 @@ in
     Unit = {
       Description = "Loopback CONNECT forward for ZCode z.ai traffic";
       After = [ "network-online.target" ];
+      # ZCode depends on this fail-closed; never let a transient failure
+      # (e.g. port 18901 briefly held by a manual instance) leave the unit
+      # permanently dead behind the start limit. RestartSec=1 floors the rate.
+      StartLimitIntervalSec = 0;
     };
     Service = {
       Type = "exec";
